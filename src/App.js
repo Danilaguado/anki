@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react"; // Corregido: "=>" cambiado a "from"
+// src/App.js
+import React, { useState, useEffect } from "react";
 
-// ¡IMPORTANTE! Reemplaza esta URL con la URL de tu Google Apps Script desplegado como Aplicación Web
-// La URL más reciente que me proporcionaste: https://script.google.com/macros/s/AKfycbyD1WBnR6uw4V_unykmOlBGsXVOMS1G5P8Dm8uh44nwFZfTLnNN2FGYK5EHDsmsqhPH/exec
-const APPS_SCRIPT_WEB_APP_URL =
-  "https://script.google.com/macros/s/AKfycbyD1WBnR6uw4V_unykmOlBGsXVOMS1G5P8Dm8uh44nwFZfTLnNN2FGYK5EHDsmsqhPH/exec";
+// Ya no necesitamos la URL de Apps Script, ¡usaremos nuestras API Routes de Vercel!
+// const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyD1WBnR6uw4V_unykmOlBGsXVOMS1G5P8Dm8uh44nwFZfTLnNN2FGYK5EHDsmsqhPH/exec";
 
 // Main App Component
 const App = () => {
@@ -26,26 +25,25 @@ const App = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState(null);
 
-  // --- Función para cargar datos desde Apps Script ---
+  // --- Función para cargar datos desde las API de Vercel ---
   const fetchCategories = async () => {
     setIsLoading(true);
     setMessage("Cargando datos...");
     try {
-      const url = new URL(APPS_SCRIPT_WEB_APP_URL);
-      url.searchParams.append("cachebuster", new Date().getTime()); // Parámetro para evitar caché
+      // Llamada a la API de Vercel para obtener todas las categorías y tarjetas
+      const url = "/api/categories/get-all";
+      console.log("Intentando fetch GET de:", url);
+      const response = await fetch(url);
 
-      console.log("Intentando fetch GET de:", url.toString()); // Log de la URL exacta
-      const response = await fetch(url.toString());
-
-      console.log("Raw response status (GET):", response.status);
-      console.log("Raw response statusText (GET):", response.statusText);
+      console.log("Raw response status (fetchCategories):", response.status);
+      console.log(
+        "Raw response statusText (fetchCategories):",
+        response.statusText
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(
-          "Error HTTP Response Text (fetchCategories GET):",
-          errorText
-        );
+        console.error("Error HTTP Response Text (fetchCategories):", errorText);
         throw new Error(
           `Error HTTP: ${response.status} - ${
             response.statusText
@@ -56,21 +54,20 @@ const App = () => {
       let data;
       try {
         const rawText = await response.text();
-        console.log("Respuesta Apps Script (texto crudo GET):", rawText);
-
+        console.log(
+          "Respuesta de la API de Vercel (texto crudo fetchCategories):",
+          rawText
+        );
         data = JSON.parse(rawText);
       } catch (jsonError) {
-        console.error(
-          "Error al parsear JSON (fetchCategories GET):",
-          jsonError
-        );
+        console.error("Error al parsear JSON (fetchCategories):", jsonError);
         throw new Error(
-          `Respuesta no es JSON válido o está vacía (GET). Error de parseo: "${jsonError.message}". Contenido recibido: "(ver consola para texto crudo)"`
+          `Respuesta no es JSON válido o está vacía. Error de parseo: "${jsonError.message}". Contenido recibido: "(ver consola para texto crudo)"`
         );
       }
 
       console.log(
-        "Datos recibidos del Apps Script (tipo y contenido GET):",
+        "Datos recibidos de la API de Vercel (tipo y contenido fetchCategories):",
         typeof data,
         data
       );
@@ -80,7 +77,7 @@ const App = () => {
       }
       if (!Array.isArray(data)) {
         console.error(
-          "El Apps Script no devolvió un array como se esperaba (fetchCategories GET):",
+          "La API de Vercel no devolvió un array como se esperaba (fetchCategories):",
           data
         );
         if (typeof data === "object" && Object.keys(data).length === 0) {
@@ -108,9 +105,12 @@ const App = () => {
 
       setMessage("Datos cargados exitosamente.");
     } catch (error) {
-      console.error("Error al cargar categorías (catch principal GET):", error);
+      console.error(
+        "Error al cargar categorías (catch principal fetchCategories):",
+        error
+      );
       setMessage(
-        `Error al cargar los datos: ${error.message}. Este error suele indicar un problema con el despliegue del Apps Script o con la respuesta que envía. Revisa la URL y los logs de Apps Script.`
+        `Error al cargar los datos: ${error.message}. Asegúrate de que las funciones Serverless de Vercel estén desplegadas y configuradas correctamente.`
       );
       setCategories([]);
       setSelectedCategoryId(null);
@@ -193,7 +193,7 @@ const App = () => {
   };
 
   /**
-   * Añade una nueva categoría llamando al Apps Script backend.
+   * Añade una nueva categoría llamando a la API de Vercel.
    */
   const addCategory = async () => {
     if (!newCategoryName.trim()) {
@@ -203,15 +203,12 @@ const App = () => {
     setIsLoading(true);
     setMessage("Creando categoría...");
     try {
-      console.log(
-        "Intentando fetch POST (addCategory) a:",
-        APPS_SCRIPT_WEB_APP_URL
-      );
-      const response = await fetch(APPS_SCRIPT_WEB_APP_URL, {
+      const url = "/api/categories/add"; // Ruta de la API de Vercel
+      console.log("Intentando fetch POST (addCategory) a:", url);
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "addCategory",
           name: newCategoryName.trim(),
         }),
       });
@@ -236,16 +233,19 @@ const App = () => {
       if (result.success) {
         setNewCategoryName("");
         setMessage(`Categoría "${newCategoryName}" creada.`);
-        await fetchCategories();
+        await fetchCategories(); // Refrescar datos después de añadir
       } else {
         throw new Error(
           result.error || "Error desconocido al añadir categoría."
         );
       }
     } catch (error) {
-      console.error("Error al añadir categoría (catch principal):", error);
+      console.error(
+        "Error al añadir categoría (catch principal addCategory):",
+        error
+      );
       setMessage(
-        `Error al crear la categoría: ${error.message}. Esto puede ser un problema de CORS, URL o un error en el servidor del Apps Script (revisa los logs).`
+        `Error al crear la categoría: ${error.message}. Revisa la consola y los logs de Vercel.`
       );
     } finally {
       setIsLoading(false);
@@ -253,7 +253,7 @@ const App = () => {
   };
 
   /**
-   * Añade una nueva tarjeta a la categoría seleccionada llamando al Apps Script backend.
+   * Añade una nueva tarjeta a la categoría seleccionada llamando a la API de Vercel.
    */
   const addCardManually = async () => {
     if (!selectedCategoryId) {
@@ -267,38 +267,46 @@ const App = () => {
     setIsLoading(true);
     setMessage("Añadiendo tarjeta...");
     try {
-      console.log(
-        "Intentando fetch POST (addCardManually) a:",
-        APPS_SCRIPT_WEB_APP_URL
-      );
-      const response = await fetch(APPS_SCRIPT_WEB_APP_URL, {
+      const url = "/api/cards/add"; // Ruta de la API de Vercel
+      console.log("Intentando fetch POST (addCardManually) a:", url);
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "addCard",
           categoryId: selectedCategoryId,
           question: newCardQuestion.trim(),
           answer: newCardAnswer.trim(),
-          langQuestion: "en-US",
-          langAnswer: "es-ES",
+          langQuestion: "en-US", // Puedes ajustar esto según tu necesidad o añadir un input para el usuario
+          langAnswer: "es-ES", // Puedes ajustar esto según tu necesidad o añadir un input para el usuario
         }),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error HTTP Response Text (addCardManually):", errorText);
+        throw new Error(
+          `Error HTTP: ${response.status} - ${
+            response.statusText
+          }. Respuesta del servidor: ${errorText.substring(0, 200)}...`
+        );
+      }
+
       const result = await response.json();
       if (result.success) {
         setNewCardQuestion("");
         setNewCardAnswer("");
         setMessage("Tarjeta añadida manualmente.");
-        await fetchCategories();
+        await fetchCategories(); // Refrescar datos después de añadir
       } else {
         throw new Error(result.error || "Error desconocido al añadir tarjeta.");
       }
     } catch (error) {
       console.error(
-        "Error al añadir tarjeta manualmente (catch principal):",
+        "Error al añadir tarjeta manualmente (catch principal addCardManually):",
         error
       );
       setMessage(
-        `Error al añadir la tarjeta: ${error.message}. Esto puede ser un problema de CORS, URL o un error en el servidor del Apps Script (revisa los logs).`
+        `Error al añadir la tarjeta: ${error.message}. Revisa la consola y los logs de Vercel.`
       );
     } finally {
       setIsLoading(false);
@@ -315,7 +323,7 @@ const App = () => {
   };
 
   /**
-   * Guarda el nombre editado de la categoría llamando al Apps Script backend.
+   * Guarda el nombre editado de la categoría llamando a la API de Vercel.
    */
   const saveEditedCategory = async () => {
     if (!editedCategoryName.trim()) {
@@ -325,25 +333,36 @@ const App = () => {
     setIsLoading(true);
     setMessage("Actualizando categoría...");
     try {
-      console.log(
-        "Intentando fetch POST (saveEditedCategory) a:",
-        APPS_SCRIPT_WEB_APP_URL
-      );
-      const response = await fetch(APPS_SCRIPT_WEB_APP_URL, {
-        method: "POST",
+      const url = "/api/categories/update"; // Ruta de la API de Vercel
+      console.log("Intentando fetch PUT (saveEditedCategory) a:", url);
+      const response = await fetch(url, {
+        method: "PUT", // Usamos PUT para actualizar
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "updateCategory",
           id: isEditingCategory,
           name: editedCategoryName.trim(),
         }),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          "Error HTTP Response Text (saveEditedCategory):",
+          errorText
+        );
+        throw new Error(
+          `Error HTTP: ${response.status} - ${
+            response.statusText
+          }. Respuesta del servidor: ${errorText.substring(0, 200)}...`
+        );
+      }
+
       const result = await response.json();
       if (result.success) {
         setMessage(`Categoría "${editedCategoryName}" actualizada.`);
         setIsEditingCategory(null);
         setEditedCategoryName("");
-        await fetchCategories();
+        await fetchCategories(); // Refrescar datos después de actualizar
       } else {
         throw new Error(
           result.error || "Error desconocido al actualizar categoría."
@@ -351,11 +370,11 @@ const App = () => {
       }
     } catch (error) {
       console.error(
-        "Error al guardar categoría editada (catch principal):",
+        "Error al guardar categoría editada (catch principal saveEditedCategory):",
         error
       );
       setMessage(
-        `Error al actualizar la categoría: ${error.message}. Esto puede ser un problema de CORS, URL o un error en el servidor del Apps Script (revisa los logs).`
+        `Error al actualizar la categoría: ${error.message}. Revisa la consola y los logs de Vercel.`
       );
     } finally {
       setIsLoading(false);
@@ -380,40 +399,50 @@ const App = () => {
   };
 
   /**
-   * Realiza la eliminación de una categoría llamando al Apps Script backend.
+   * Realiza la eliminación de una categoría llamando a la API de Vercel.
    */
   const deleteCategory = async () => {
     if (!categoryToDeleteId) return;
     setIsLoading(true);
     setMessage("Eliminando categoría...");
     try {
-      console.log(
-        "Intentando fetch POST (deleteCategory) a:",
-        APPS_SCRIPT_WEB_APP_URL
-      );
-      const response = await fetch(APPS_SCRIPT_WEB_APP_URL, {
-        method: "POST",
+      // Usamos parámetros de consulta para el ID en DELETE, como en la API de Vercel
+      const url = `/api/categories/delete?id=${categoryToDeleteId}`;
+      console.log("Intentando fetch DELETE (deleteCategory) a:", url);
+      const response = await fetch(url, {
+        method: "DELETE", // Usamos DELETE
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "deleteCategory",
-          id: categoryToDeleteId,
-        }),
+        // No se envía body con DELETE si el ID va en la URL
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error HTTP Response Text (deleteCategory):", errorText);
+        throw new Error(
+          `Error HTTP: ${response.status} - ${
+            response.statusText
+          }. Respuesta del servidor: ${errorText.substring(0, 200)}...`
+        );
+      }
+
       const result = await response.json();
       if (result.success) {
         setMessage(`Categoría eliminada.`);
         setShowDeleteConfirm(false);
         setCategoryToDeleteId(null);
-        await fetchCategories();
+        await fetchCategories(); // Refrescar datos después de eliminar
       } else {
         throw new Error(
           result.error || "Error desconocido al eliminar categoría."
         );
       }
     } catch (error) {
-      console.error("Error al eliminar categoría (catch principal):", error);
+      console.error(
+        "Error al eliminar categoría (catch principal deleteCategory):",
+        error
+      );
       setMessage(
-        `Error al eliminar la categoría: ${error.message}. Esto puede ser un problema de CORS, URL o un error en el servidor del Apps Script (revisa los logs).`
+        `Error al eliminar la categoría: ${error.message}. Revisa la consola y los logs de Vercel.`
       );
     } finally {
       setIsLoading(false);
@@ -696,9 +725,6 @@ const App = () => {
           </div>
         </div>
       )}
-
-      {/* --- ELIMINADA: Sección "Exportar Datos para el Código" --- */}
-      {/* Ahora los datos se guardan en Google Sheets */}
 
       {/* Delete Confirmation Modal (Custom UI) */}
       {showDeleteConfirm && (
