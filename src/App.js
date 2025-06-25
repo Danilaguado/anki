@@ -1,8 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from "react";
-
-// Ya no necesitamos la URL de Apps Script, ¡usaremos nuestras API Routes de Vercel!
-// const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyD1WBnR6uw4V_unykmOlBGsXVOMS1G5P8Dm8uh44nwFZfTLnNN2FGYK5EHDsmsqhPH/exec";
+import "./index.css"; // Asegúrate de que esta línea esté presente para importar tu CSS
 
 // Main App Component
 const App = () => {
@@ -458,36 +456,29 @@ const App = () => {
   };
 
   return (
-    <div className='min-h-screen bg-gray-100 p-4 flex flex-col items-center'>
-      <h1 className='text-4xl font-extrabold text-gray-900 mb-8 mt-4 rounded-xl px-4 py-2 bg-white shadow-lg'>
-        Mi Entrenador de Vocabulario
-      </h1>
+    <div className='app-container'>
+      <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
 
       {message && (
-        <div
-          className='bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-xl relative mb-6 w-full max-w-2xl text-center shadow-md'
-          role='alert'
-        >
-          <span className='block sm:inline'>{message}</span>
+        <div className='message-box' role='alert'>
+          <span className='message-text'>{message}</span>
         </div>
       )}
 
       {/* Nuevo: Indicador de carga */}
       {isLoading && (
-        <div className='bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-xl relative mb-6 w-full max-w-2xl text-center shadow-md'>
-          <span className='block sm:inline'>Cargando o procesando...</span>
+        <div className='loading-box'>
+          <span className='loading-text'>Cargando o procesando...</span>
         </div>
       )}
 
       {/* Section: Gestionar Categorías */}
-      <div className='w-full max-w-2xl bg-white p-6 rounded-xl shadow-lg mb-8'>
-        <h2 className='text-2xl font-bold text-gray-800 mb-4'>
-          Gestionar Categorías
-        </h2>
-        <div className='flex flex-col sm:flex-row gap-4 mb-6'>
+      <div className='section-container'>
+        <h2 className='section-title'>Gestionar Categorías</h2>
+        <div className='input-group'>
           <input
             type='text'
-            className='flex-grow p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500'
+            className='input-field'
             placeholder='Nombre de la nueva categoría'
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
@@ -495,52 +486,45 @@ const App = () => {
           />
           <button
             onClick={addCategory}
-            className='bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition duration-200'
+            className='button primary-button'
             disabled={isLoading}
           >
             Crear Categoría
           </button>
         </div>
 
-        <h3 className='text-xl font-semibold text-gray-700 mb-3'>
-          Tus Categorías:
-        </h3>
+        <h3 className='subsection-title'>Tus Categorías:</h3>
         {categories.length === 0 ? (
-          <p className='text-gray-500'>
-            No hay categorías. Crea una para empezar.
-          </p>
+          <p className='info-text'>No hay categorías. Crea una para empezar.</p>
         ) : (
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
+          <div className='categories-grid'>
             {categories.map((cat) => (
               <div
                 key={cat.id}
-                className={`flex flex-col gap-2 p-3 rounded-xl border-2 transition duration-200
-                                ${
-                                  selectedCategoryId === cat.id
-                                    ? "border-indigo-600 bg-indigo-50 text-indigo-800 font-bold"
-                                    : "border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-700"
-                                }`}
+                className={`category-item ${
+                  selectedCategoryId === cat.id ? "selected" : ""
+                }`}
               >
                 {isEditingCategory === cat.id ? (
-                  <div className='flex flex-col gap-2'>
+                  <div className='edit-category-form'>
                     <input
                       type='text'
-                      className='p-2 border border-gray-400 rounded-lg text-gray-800'
+                      className='input-field edit-input'
                       value={editedCategoryName}
                       onChange={(e) => setEditedCategoryName(e.target.value)}
                       disabled={isLoading}
                     />
-                    <div className='flex gap-2'>
+                    <div className='edit-buttons'>
                       <button
                         onClick={saveEditedCategory}
-                        className='flex-grow bg-green-500 hover:bg-green-600 text-white text-sm py-1 px-2 rounded-lg'
+                        className='button save-button'
                         disabled={isLoading}
                       >
                         Guardar
                       </button>
                       <button
                         onClick={cancelEditCategory}
-                        className='flex-grow bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-2 rounded-lg'
+                        className='button cancel-button'
                         disabled={isLoading}
                       >
                         Cancelar
@@ -551,22 +535,22 @@ const App = () => {
                   <>
                     <button
                       onClick={() => setSelectedCategoryId(cat.id)}
-                      className='text-left font-semibold'
+                      className='category-button'
                       disabled={isLoading}
                     >
                       {cat.name} ({cat.cards ? cat.cards.length : 0} tarjetas)
                     </button>
-                    <div className='flex gap-2 justify-end'>
+                    <div className='category-actions'>
                       <button
                         onClick={() => startEditCategory(cat)}
-                        className='bg-yellow-500 hover:bg-yellow-600 text-white text-xs py-1 px-2 rounded-md shadow-sm'
+                        className='button edit-button'
                         disabled={isLoading}
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => confirmDeleteCategory(cat.id)}
-                        className='bg-red-500 hover:bg-red-600 text-white text-xs py-1 px-2 rounded-md shadow-sm'
+                        className='button delete-button'
                         disabled={isLoading}
                       >
                         Eliminar
@@ -582,26 +566,26 @@ const App = () => {
 
       {/* Section: Anki Card Display */}
       {selectedCategoryId && currentCategory ? (
-        <div className='card-container w-full max-w-md bg-white p-8 rounded-xl shadow-lg flex flex-col gap-6 mb-8'>
-          <h2 className='text-2xl font-bold text-gray-800'>
-            Tema Actual: {currentCategory.name}
-          </h2>
+        <div className='card-container'>
+          <h2 className='card-title'>Tema Actual: {currentCategory.name}</h2>
           {currentCards.length > 0 ? (
             <>
-              <div className='card-content min-h-[120px] flex flex-col justify-center items-center'>
-                <div id='question-text' className='card-text'>
+              <div className='card-content-area'>
+                <div id='question-text' className='card-text question'>
                   {currentCard.question}
                 </div>
                 <div
                   id='answer-text'
-                  className={`card-answer ${isAnswerVisible ? "" : "hidden"}`}
+                  className={`card-text answer ${
+                    isAnswerVisible ? "" : "hidden"
+                  }`}
                 >
                   {currentCard.answer}
                 </div>
               </div>
 
               {/* Audio Speed Buttons */}
-              <div className='flex flex-wrap justify-center gap-2'>
+              <div className='audio-buttons-group'>
                 <button
                   onClick={() =>
                     playAudio(
@@ -610,7 +594,7 @@ const App = () => {
                       1
                     )
                   }
-                  className='btn btn-audio bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-200 text-sm'
+                  className='button audio-button normal'
                   disabled={isLoading}
                 >
                   Normal (1x)
@@ -623,7 +607,7 @@ const App = () => {
                       0.8
                     )
                   }
-                  className='btn btn-audio bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-200 text-sm'
+                  className='button audio-button slow'
                   disabled={isLoading}
                 >
                   Lento (0.8x)
@@ -636,7 +620,7 @@ const App = () => {
                       0.5
                     )
                   }
-                  className='btn btn-audio bg-green-400 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-200 text-sm'
+                  className='button audio-button very-slow'
                   disabled={isLoading}
                 >
                   Muy Lento (0.5x)
@@ -645,43 +629,43 @@ const App = () => {
 
               <button
                 onClick={toggleAnswerVisibility}
-                className='btn btn-primary bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition duration-200'
+                className='button toggle-answer-button'
                 disabled={isLoading}
               >
                 {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
               </button>
 
-              <div className='navigation-buttons flex justify-between gap-4'>
+              <div className='navigation-buttons-group'>
                 <button
                   onClick={prevCard}
-                  className='btn btn-secondary bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-xl shadow-md transition duration-200 flex-grow'
+                  className='button nav-button prev'
                   disabled={isLoading}
                 >
                   Anterior
                 </button>
                 <button
                   onClick={nextCard}
-                  className='btn btn-primary bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition duration-200 flex-grow'
+                  className='button nav-button next'
                   disabled={isLoading}
                 >
                   Siguiente
                 </button>
               </div>
 
-              <div className='card-counter text-gray-600 text-sm mt-2'>
+              <div className='card-counter'>
                 Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
                 {currentCards.length}
               </div>
             </>
           ) : (
-            <p className='text-gray-500'>
+            <p className='info-text'>
               No hay tarjetas en esta categoría. Añade algunas manualmente.
             </p>
           )}
         </div>
       ) : (
-        <div className='w-full max-w-md bg-white p-8 rounded-xl shadow-lg flex flex-col gap-6 mb-8'>
-          <p className='text-gray-600 text-center'>
+        <div className='card-container placeholder'>
+          <p className='info-text'>
             Selecciona una categoría o crea una nueva para empezar a estudiar.
           </p>
         </div>
@@ -689,19 +673,17 @@ const App = () => {
 
       {/* Section: Add Cards */}
       {selectedCategoryId && (
-        <div className='w-full max-w-2xl bg-white p-6 rounded-xl shadow-lg mb-8'>
-          <h2 className='text-2xl font-bold text-gray-800 mb-4'>
+        <div className='section-container'>
+          <h2 className='section-title'>
             Añadir Tarjetas a "{currentCategory?.name || "..."}"
           </h2>
 
           {/* Manual Card Addition */}
-          <h3 className='text-xl font-semibold text-gray-700 mb-3'>
-            Añadir Manualmente:
-          </h3>
-          <div className='flex flex-col gap-4 mb-6'>
+          <h3 className='subsection-title'>Añadir Manualmente:</h3>
+          <div className='input-group-vertical'>
             <input
               type='text'
-              className='p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='input-field'
               placeholder='Pregunta (Inglés)'
               value={newCardQuestion}
               onChange={(e) => setNewCardQuestion(e.target.value)}
@@ -709,7 +691,7 @@ const App = () => {
             />
             <input
               type='text'
-              className='p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='input-field'
               placeholder='Respuesta (Español)'
               value={newCardAnswer}
               onChange={(e) => setNewCardAnswer(e.target.value)}
@@ -717,7 +699,7 @@ const App = () => {
             />
             <button
               onClick={addCardManually}
-              className='bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition duration-200'
+              className='button add-card-button'
               disabled={isLoading}
             >
               Añadir Tarjeta Manualmente
@@ -728,25 +710,25 @@ const App = () => {
 
       {/* Delete Confirmation Modal (Custom UI) */}
       {showDeleteConfirm && (
-        <div className='fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50'>
-          <div className='bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center'>
-            <p className='text-lg font-semibold text-gray-800 mb-4'>
+        <div className='modal-overlay'>
+          <div className='modal-content'>
+            <p className='modal-title'>
               ¿Estás seguro que quieres eliminar esta categoría?
             </p>
-            <p className='text-sm text-gray-600 mb-6'>
+            <p className='modal-text'>
               Esta acción no se puede deshacer y la categoría se perderá.
             </p>
-            <div className='flex justify-center gap-4'>
+            <div className='modal-buttons'>
               <button
                 onClick={deleteCategory}
-                className='bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-xl shadow-md transition duration-200'
+                className='button modal-delete-button'
                 disabled={isLoading}
               >
                 Sí, Eliminar
               </button>
               <button
                 onClick={cancelDelete}
-                className='bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-5 rounded-xl shadow-md transition duration-200'
+                className='button modal-cancel-button'
                 disabled={isLoading}
               >
                 Cancelar
