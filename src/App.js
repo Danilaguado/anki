@@ -23,6 +23,20 @@ const App = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState(null);
 
+  // Nuevo estado para la navegación de páginas
+  const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage'
+
+  // --- Funciones de Navegación ---
+  const navigateToHome = () => setCurrentPage("home");
+  const navigateToAddCard = (categoryId) => {
+    setSelectedCategoryId(categoryId);
+    setCurrentPage("addCardPage");
+  };
+  const navigateToPracticePage = (categoryId) => {
+    setSelectedCategoryId(categoryId);
+    setCurrentPage("practicePage");
+  };
+
   // --- Función para cargar datos desde las API de Vercel ---
   const fetchCategories = async () => {
     setIsLoading(true);
@@ -56,13 +70,16 @@ const App = () => {
 
       setCategories(data);
 
-      const prevSelectedId = selectedCategoryId;
-      if (prevSelectedId && data.some((cat) => cat.id === prevSelectedId)) {
-        setSelectedCategoryId(prevSelectedId);
-      } else if (data.length > 0) {
-        setSelectedCategoryId(data[0].id);
-      } else {
-        setSelectedCategoryId(null);
+      // Si volvemos a home o la categoría seleccionada ya no existe, ajusta la selección
+      if (
+        currentPage === "home" ||
+        !data.some((cat) => cat.id === selectedCategoryId)
+      ) {
+        if (data.length > 0) {
+          setSelectedCategoryId(data[0].id);
+        } else {
+          setSelectedCategoryId(null);
+        }
       }
 
       setMessage("Datos cargados exitosamente.");
@@ -100,15 +117,11 @@ const App = () => {
    * @param {string} lang - El código de idioma (ej. 'en-US' para inglés, 'es-ES' para español).
    */
   const playAudio = async (text, lang) => {
-    // 'rate' ya no se usa directamente aquí
     if (!text) {
       setMessage("No hay texto para reproducir audio.");
       return;
     }
 
-    // Un nuevo estado local para solo controlar la reproducción de audio si es necesario,
-    // o simplemente usar isLoading para simplificar si no hay solapamiento.
-    // Por ahora, usaremos isLoading para deshabilitar los botones mientras se carga/reproduce.
     setIsLoading(true);
     setMessage("Generando audio con ElevenLabs...");
 
@@ -119,7 +132,6 @@ const App = () => {
         body: JSON.stringify({
           text: text,
           lang: lang,
-          // rate: rate // Ya no se envía 'rate' directamente, ElevenLabs usa estabilidad/claridad
         }),
       });
 
@@ -133,24 +145,22 @@ const App = () => {
 
       const { audioContent } = await response.json();
       if (audioContent) {
-        // Construye un Blob desde el Base64 y crea un URL de objeto
         const audioBlob = b64toBlob(audioContent, "audio/mpeg");
         const audioUrl = URL.createObjectURL(audioBlob);
 
         const audio = new Audio(audioUrl);
         audio.play();
 
-        // Libera el Blob URL cuando el audio termine de reproducirse
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl);
-          setMessage(""); // Limpia el mensaje al terminar
-          setIsLoading(false); // Habilita los botones de nuevo
+          setMessage("");
+          setIsLoading(false);
         };
         audio.onerror = (e) => {
           console.error("Error al reproducir audio:", e);
           setMessage("Error al reproducir el audio.");
           URL.revokeObjectURL(audioUrl);
-          setIsLoading(false); // Habilita los botones de nuevo
+          setIsLoading(false);
         };
         setMessage("Reproduciendo...");
       } else {
@@ -159,7 +169,7 @@ const App = () => {
     } catch (error) {
       console.error("Error al reproducir audio con ElevenLabs TTS:", error);
       setMessage(`No se pudo generar voz: ${error.message}.`);
-      setIsLoading(false); // Asegúrate de restablecer isLoading en caso de error
+      setIsLoading(false);
     }
   };
 
@@ -189,14 +199,10 @@ const App = () => {
    */
   const renderClickableText = (text, lang) => {
     if (!text) return null;
-    // Dividir el texto por espacios, mantener los delimitadores (espacios, puntuación)
-    // Usamos una expresión regular para capturar palabras y separadores
     const parts = text.match(/(\w+|[^\w\s]+|\s+)/g) || [];
 
     return parts.map((part, index) => {
-      // Si la parte es solo espacio o puntuación, no la hacemos clicable
       if (part.trim() === "" || !/\w/.test(part)) {
-        // Si no contiene caracteres de palabra
         return <span key={index}>{part}</span>;
       }
       return (
@@ -253,8 +259,7 @@ const App = () => {
     setIsLoading(true);
     setMessage("Creando categoría...");
     try {
-      const url = "/api/categories/add"; // Ruta de la API de Vercel
-      console.log("Intentando fetch POST (addCategory) a:", url);
+      const url = "/api/categories/add";
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -305,7 +310,7 @@ const App = () => {
     setIsLoading(true);
     setMessage("Añadiendo tarjeta...");
     try {
-      const url = "/api/cards/add"; // Ruta de la API de Vercel
+      const url = "/api/cards/add";
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -469,8 +474,10 @@ const App = () => {
     setCategoryToDeleteId(null);
   };
 
-  return (
-    <div className='app-container'>
+  // --- Renderización de Páginas ---
+
+  const renderHomePage = () => (
+    <>
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
 
       {message && (
@@ -549,13 +556,24 @@ const App = () => {
                   ) : (
                     <>
                       <button
-                        onClick={() => setSelectedCategoryId(cat.id)}
+                        onClick={() =>
+                          navigateToPracticePage(cat.id)
+                        } /* Navega a la página de práctica */
                         className='category-button'
                         disabled={isLoading}
                       >
                         {cat.name} ({cat.cards ? cat.cards.length : 0} tarjetas)
                       </button>
                       <div className='category-actions'>
+                        <button
+                          onClick={() =>
+                            navigateToAddCard(cat.id)
+                          } /* Nuevo botón para añadir tarjetas */
+                          className='button add-item-button'
+                          disabled={isLoading}
+                        >
+                          Agregar
+                        </button>
                         <button
                           onClick={() => startEditCategory(cat)}
                           className='button edit-button'
@@ -578,132 +596,175 @@ const App = () => {
             </div>
           )}
         </div>
+      </div>
+    </>
+  );
 
-        <div className='card-and-add-wrapper'>
-          {selectedCategoryId && currentCategory ? (
-            <div className='card-container'>
-              <h2 className='card-title'>
-                Tema Actual: {currentCategory.name}
-              </h2>
-              {currentCards.length > 0 ? (
-                <>
-                  <div className='card-content-area'>
-                    <div id='question-text' className='card-text question'>
-                      {renderClickableText(
-                        currentCard.question,
-                        currentCard.langQuestion || "en-US"
-                      )}
-                    </div>
-                    <div
-                      id='answer-text'
-                      className={`card-text answer ${
-                        isAnswerVisible ? "" : "hidden"
-                      }`}
-                    >
-                      {renderClickableText(
-                        currentCard.answer,
-                        currentCard.langAnswer || "es-ES"
-                      )}
-                    </div>
-                  </div>
+  const renderAddCardPage = () => (
+    <>
+      <h1 className='app-title'>Añadir Tarjetas</h1>
+      {message && (
+        <div className='message-box' role='alert'>
+          <span className='message-text'>{message}</span>
+        </div>
+      )}
+      {isLoading && (
+        <div className='loading-box'>
+          <span className='loading-text'>Cargando o procesando...</span>
+        </div>
+      )}
+      <div className='main-content-wrapper'>
+        <div className='section-container'>
+          <h2 className='section-title'>
+            Añadir Tarjetas a "{currentCategory?.name || "..."}"
+          </h2>
 
-                  {/* Único botón de Reproducir para toda la pregunta */}
-                  <button
-                    onClick={() =>
-                      playAudio(
-                        currentCard.question,
-                        currentCard.langQuestion || "en-US"
-                      )
-                    }
-                    className='button audio-button full-card'
-                    disabled={isLoading}
-                  >
-                    Reproducir Tarjeta
-                  </button>
-
-                  <button
-                    onClick={toggleAnswerVisibility}
-                    className='button toggle-answer-button'
-                    disabled={isLoading}
-                  >
-                    {isAnswerVisible
-                      ? "Ocultar Traducción"
-                      : "Mostrar Traducción"}
-                  </button>
-
-                  <div className='navigation-buttons-group'>
-                    <button
-                      onClick={prevCard}
-                      className='button nav-button prev'
-                      disabled={isLoading}
-                    >
-                      Anterior
-                    </button>
-                    <button
-                      onClick={nextCard}
-                      className='button nav-button next'
-                      disabled={isLoading}
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-
-                  <div className='card-counter'>
-                    Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0}{" "}
-                    de {currentCards.length}
-                  </div>
-                </>
-              ) : (
-                <p className='info-text'>
-                  No hay tarjetas en esta categoría. Añade algunas manualmente.
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className='card-container placeholder'>
-              <p className='info-text'>
-                Selecciona una categoría o crea una nueva para empezar a
-                estudiar.
-              </p>
-            </div>
-          )}
-
-          {selectedCategoryId && (
-            <div className='section-container'>
-              <h2 className='section-title'>
-                Añadir Tarjetas a "{currentCategory?.name || "..."}"
-              </h2>
-
-              <h3 className='subsection-title'>Añadir Manualmente:</h3>
-              <div className='input-group-vertical'>
-                <input
-                  type='text'
-                  className='input-field'
-                  placeholder='Pregunta (Inglés)'
-                  value={newCardQuestion}
-                  onChange={(e) => setNewCardQuestion(e.target.value)}
-                  disabled={isLoading}
-                />
-                <input
-                  type='text'
-                  className='input-field'
-                  placeholder='Respuesta (Español)'
-                  value={newCardAnswer}
-                  onChange={(e) => setNewCardAnswer(e.target.value)}
-                  disabled={isLoading}
-                />
-                <button
-                  onClick={addCardManually}
-                  className='button add-card-button'
-                  disabled={isLoading}
-                >
-                  Añadir Tarjeta Manualmente
-                </button>
-              </div>
-            </div>
-          )}
+          <h3 className='subsection-title'>Añadir Manualmente:</h3>
+          <div className='input-group-vertical'>
+            <input
+              type='text'
+              className='input-field'
+              placeholder='Pregunta (Inglés)'
+              value={newCardQuestion}
+              onChange={(e) => setNewCardQuestion(e.target.value)}
+              disabled={isLoading}
+            />
+            <input
+              type='text'
+              className='input-field'
+              placeholder='Respuesta (Español)'
+              value={newCardAnswer}
+              onChange={(e) => setNewCardAnswer(e.target.value)}
+              disabled={isLoading}
+            />
+            <button
+              onClick={addCardManually}
+              className='button add-card-button'
+              disabled={isLoading}
+            >
+              Añadir Tarjeta Manualmente
+            </button>
+          </div>
+          <button
+            onClick={navigateToHome}
+            className='button back-button'
+            disabled={isLoading}
+          >
+            Volver al Inicio
+          </button>
         </div>
       </div>
+    </>
+  );
+
+  const renderPracticePage = () => (
+    <>
+      <h1 className='app-title'>Practicar Tarjetas</h1>
+      {message && (
+        <div className='message-box' role='alert'>
+          <span className='message-text'>{message}</span>
+        </div>
+      )}
+      {isLoading && (
+        <div className='loading-box'>
+          <span className='loading-text'>Cargando o procesando...</span>
+        </div>
+      )}
+      <div className='main-content-wrapper'>
+        <div className='card-container'>
+          <h2 className='card-title'>
+            Tema Actual: {currentCategory?.name || "N/A"}
+          </h2>
+          {currentCards.length > 0 ? (
+            <>
+              <div className='card-content-area'>
+                <div id='question-text' className='card-text question'>
+                  {renderClickableText(
+                    currentCard.question,
+                    currentCard.langQuestion || "en-US"
+                  )}
+                </div>
+                <div
+                  id='answer-text'
+                  className={`card-text answer ${
+                    isAnswerVisible ? "" : "hidden"
+                  }`}
+                >
+                  {renderClickableText(
+                    currentCard.answer,
+                    currentCard.langAnswer || "es-ES"
+                  )}
+                </div>
+              </div>
+
+              {/* Único botón de Reproducir para toda la tarjeta */}
+              <button
+                onClick={() =>
+                  playAudio(
+                    currentCard.question,
+                    currentCard.langQuestion || "en-US"
+                  )
+                }
+                className='button audio-button full-card primary-button' /* Usando primary-button */
+                disabled={isLoading}
+              >
+                Reproducir Tarjeta
+              </button>
+
+              <button
+                onClick={toggleAnswerVisibility}
+                className='button toggle-answer-button'
+                disabled={isLoading}
+              >
+                {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
+              </button>
+
+              <div className='navigation-buttons-group'>
+                <button
+                  onClick={prevCard}
+                  className='button nav-button prev'
+                  disabled={isLoading}
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={nextCard}
+                  className='button nav-button next'
+                  disabled={isLoading}
+                >
+                  Siguiente
+                </button>
+              </div>
+
+              <div className='card-counter'>
+                Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
+                {currentCards.length}
+              </div>
+            </>
+          ) : (
+            <p className='info-text'>
+              No hay tarjetas en esta categoría. Puedes añadir algunas desde la
+              sección "Gestionar Categorías".
+            </p>
+          )}
+          <button
+            onClick={navigateToHome}
+            className='button back-button'
+            disabled={isLoading}
+          >
+            Volver al Inicio
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
+  // --- Renderización Principal de App ---
+  return (
+    <div className='app-container'>
+      {currentPage === "home" && renderHomePage()}
+      {currentPage === "addCardPage" && renderAddCardPage()}
+      {currentPage === "practicePage" && renderPracticePage()}
 
       {showDeleteConfirm && (
         <div className='modal-overlay'>
