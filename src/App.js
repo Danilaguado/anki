@@ -458,257 +458,259 @@ const App = () => {
   return (
     <div className='app-container'>
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
-
       {message && (
         <div className='message-box' role='alert'>
           <span className='message-text'>{message}</span>
         </div>
       )}
-
-      {/* Nuevo: Indicador de carga */}
       {isLoading && (
         <div className='loading-box'>
           <span className='loading-text'>Cargando o procesando...</span>
         </div>
       )}
-
-      {/* Section: Gestionar Categorías */}
-      <div className='section-container'>
-        <h2 className='section-title'>Gestionar Categorías</h2>
-        <div className='input-group'>
-          <input
-            type='text'
-            className='input-field'
-            placeholder='Nombre de la nueva categoría'
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            disabled={isLoading}
-          />
-          <button
-            onClick={addCategory}
-            className='button primary-button'
-            disabled={isLoading}
-          >
-            Crear Categoría
-          </button>
-        </div>
-
-        <h3 className='subsection-title'>Tus Categorías:</h3>
-        {categories.length === 0 ? (
-          <p className='info-text'>No hay categorías. Crea una para empezar.</p>
-        ) : (
-          <div className='categories-grid'>
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className={`category-item ${
-                  selectedCategoryId === cat.id ? "selected" : ""
-                }`}
-              >
-                {isEditingCategory === cat.id ? (
-                  <div className='edit-category-form'>
-                    <input
-                      type='text'
-                      className='input-field edit-input'
-                      value={editedCategoryName}
-                      onChange={(e) => setEditedCategoryName(e.target.value)}
-                      disabled={isLoading}
-                    />
-                    <div className='edit-buttons'>
-                      <button
-                        onClick={saveEditedCategory}
-                        className='button save-button'
-                        disabled={isLoading}
-                      >
-                        Guardar
-                      </button>
-                      <button
-                        onClick={cancelEditCategory}
-                        className='button cancel-button'
-                        disabled={isLoading}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setSelectedCategoryId(cat.id)}
-                      className='category-button'
-                      disabled={isLoading}
-                    >
-                      {cat.name} ({cat.cards ? cat.cards.length : 0} tarjetas)
-                    </button>
-                    <div className='category-actions'>
-                      <button
-                        onClick={() => startEditCategory(cat)}
-                        className='button edit-button'
-                        disabled={isLoading}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => confirmDeleteCategory(cat.id)}
-                        className='button delete-button'
-                        disabled={isLoading}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Section: Anki Card Display */}
-      {selectedCategoryId && currentCategory ? (
-        <div className='card-container'>
-          <h2 className='card-title'>Tema Actual: {currentCategory.name}</h2>
-          {currentCards.length > 0 ? (
-            <>
-              <div className='card-content-area'>
-                <div id='question-text' className='card-text question'>
-                  {currentCard.question}
-                </div>
-                <div
-                  id='answer-text'
-                  className={`card-text answer ${
-                    isAnswerVisible ? "" : "hidden"
-                  }`}
-                >
-                  {currentCard.answer}
-                </div>
-              </div>
-
-              {/* Audio Speed Buttons */}
-              <div className='audio-buttons-group'>
-                <button
-                  onClick={() =>
-                    playAudio(
-                      currentCard.question,
-                      currentCard.langQuestion || "en-US",
-                      1
-                    )
-                  }
-                  className='button audio-button normal'
-                  disabled={isLoading}
-                >
-                  Normal (1x)
-                </button>
-                <button
-                  onClick={() =>
-                    playAudio(
-                      currentCard.question,
-                      currentCard.langQuestion || "en-US",
-                      0.8
-                    )
-                  }
-                  className='button audio-button slow'
-                  disabled={isLoading}
-                >
-                  Lento (0.8x)
-                </button>
-                <button
-                  onClick={() =>
-                    playAudio(
-                      currentCard.question,
-                      currentCard.langQuestion || "en-US",
-                      0.5
-                    )
-                  }
-                  className='button audio-button very-slow'
-                  disabled={isLoading}
-                >
-                  Muy Lento (0.5x)
-                </button>
-              </div>
-
-              <button
-                onClick={toggleAnswerVisibility}
-                className='button toggle-answer-button'
-                disabled={isLoading}
-              >
-                {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
-              </button>
-
-              <div className='navigation-buttons-group'>
-                <button
-                  onClick={prevCard}
-                  className='button nav-button prev'
-                  disabled={isLoading}
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={nextCard}
-                  className='button nav-button next'
-                  disabled={isLoading}
-                >
-                  Siguiente
-                </button>
-              </div>
-
-              <div className='card-counter'>
-                Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
-                {currentCards.length}
-              </div>
-            </>
-          ) : (
-            <p className='info-text'>
-              No hay tarjetas en esta categoría. Añade algunas manualmente.
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className='card-container placeholder'>
-          <p className='info-text'>
-            Selecciona una categoría o crea una nueva para empezar a estudiar.
-          </p>
-        </div>
-      )}
-
-      {/* Section: Add Cards */}
-      {selectedCategoryId && (
+      <div className='main-content-wrapper'>
         <div className='section-container'>
-          <h2 className='section-title'>
-            Añadir Tarjetas a "{currentCategory?.name || "..."}"
-          </h2>
-
-          {/* Manual Card Addition */}
-          <h3 className='subsection-title'>Añadir Manualmente:</h3>
-          <div className='input-group-vertical'>
+          <h2 className='section-title'>Gestionar Categorías</h2>
+          <div className='input-group'>
             <input
               type='text'
               className='input-field'
-              placeholder='Pregunta (Inglés)'
-              value={newCardQuestion}
-              onChange={(e) => setNewCardQuestion(e.target.value)}
-              disabled={isLoading}
-            />
-            <input
-              type='text'
-              className='input-field'
-              placeholder='Respuesta (Español)'
-              value={newCardAnswer}
-              onChange={(e) => setNewCardAnswer(e.target.value)}
+              placeholder='Nombre de la nueva categoría'
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
               disabled={isLoading}
             />
             <button
-              onClick={addCardManually}
-              className='button add-card-button'
+              onClick={addCategory}
+              className='button primary-button'
               disabled={isLoading}
             >
-              Añadir Tarjeta Manualmente
+              Crear Categoría
             </button>
           </div>
-        </div>
-      )}
 
-      {/* Delete Confirmation Modal (Custom UI) */}
+          <h3 className='subsection-title'>Tus Categorías:</h3>
+          {categories.length === 0 ? (
+            <p className='info-text'>
+              No hay categorías. Crea una para empezar.
+            </p>
+          ) : (
+            <div className='categories-grid'>
+              {categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className={`category-item ${
+                    selectedCategoryId === cat.id ? "selected" : ""
+                  }`}
+                >
+                  {isEditingCategory === cat.id ? (
+                    <div className='edit-category-form'>
+                      <input
+                        type='text'
+                        className='input-field edit-input'
+                        value={editedCategoryName}
+                        onChange={(e) => setEditedCategoryName(e.target.value)}
+                        disabled={isLoading}
+                      />
+                      <div className='edit-buttons'>
+                        <button
+                          onClick={saveEditedCategory}
+                          className='button save-button'
+                          disabled={isLoading}
+                        >
+                          Guardar
+                        </button>
+                        <button
+                          onClick={cancelEditCategory}
+                          className='button cancel-button'
+                          disabled={isLoading}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setSelectedCategoryId(cat.id)}
+                        className='category-button'
+                        disabled={isLoading}
+                      >
+                        {cat.name} ({cat.cards ? cat.cards.length : 0} tarjetas)
+                      </button>
+                      <div className='category-actions'>
+                        <button
+                          onClick={() => startEditCategory(cat)}
+                          className='button edit-button'
+                          disabled={isLoading}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => confirmDeleteCategory(cat.id)}
+                          className='button delete-button'
+                          disabled={isLoading}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className='card-and-add-wrapper'>
+          {" "}
+          {/* Nuevo wrapper para la tarjeta y añadir tarjetas */}
+          {selectedCategoryId && currentCategory ? (
+            <div className='card-container'>
+              <h2 className='card-title'>
+                Tema Actual: {currentCategory.name}
+              </h2>
+              {currentCards.length > 0 ? (
+                <>
+                  <div className='card-content-area'>
+                    <div id='question-text' className='card-text question'>
+                      {currentCard.question}
+                    </div>
+                    <div
+                      id='answer-text'
+                      className={`card-text answer ${
+                        isAnswerVisible ? "" : "hidden"
+                      }`}
+                    >
+                      {currentCard.answer}
+                    </div>
+                  </div>
+
+                  <div className='audio-buttons-group'>
+                    <button
+                      onClick={() =>
+                        playAudio(
+                          currentCard.question,
+                          currentCard.langQuestion || "en-US",
+                          1
+                        )
+                      }
+                      className='button audio-button normal'
+                      disabled={isLoading}
+                    >
+                      Normal (1x)
+                    </button>
+                    <button
+                      onClick={() =>
+                        playAudio(
+                          currentCard.question,
+                          currentCard.langQuestion || "en-US",
+                          0.8
+                        )
+                      }
+                      className='button audio-button slow'
+                      disabled={isLoading}
+                    >
+                      Lento (0.8x)
+                    </button>
+                    <button
+                      onClick={() =>
+                        playAudio(
+                          currentCard.question,
+                          currentCard.langQuestion || "en-US",
+                          0.5
+                        )
+                      }
+                      className='button audio-button very-slow'
+                      disabled={isLoading}
+                    >
+                      Muy Lento (0.5x)
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={toggleAnswerVisibility}
+                    className='button toggle-answer-button'
+                    disabled={isLoading}
+                  >
+                    {isAnswerVisible
+                      ? "Ocultar Traducción"
+                      : "Mostrar Traducción"}
+                  </button>
+
+                  <div className='navigation-buttons-group'>
+                    <button
+                      onClick={prevCard}
+                      className='button nav-button prev'
+                      disabled={isLoading}
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      onClick={nextCard}
+                      className='button nav-button next'
+                      disabled={isLoading}
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+
+                  <div className='card-counter'>
+                    Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0}{" "}
+                    de {currentCards.length}
+                  </div>
+                </>
+              ) : (
+                <p className='info-text'>
+                  No hay tarjetas en esta categoría. Añade algunas manualmente.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className='card-container placeholder'>
+              <p className='info-text'>
+                Selecciona una categoría o crea una nueva para empezar a
+                estudiar.
+              </p>
+            </div>
+          )}
+          {selectedCategoryId && (
+            <div className='section-container'>
+              <h2 className='section-title'>
+                Añadir Tarjetas a "{currentCategory?.name || "..."}"
+              </h2>
+
+              <h3 className='subsection-title'>Añadir Manualmente:</h3>
+              <div className='input-group-vertical'>
+                <input
+                  type='text'
+                  className='input-field'
+                  placeholder='Pregunta (Inglés)'
+                  value={newCardQuestion}
+                  onChange={(e) => setNewCardQuestion(e.target.value)}
+                  disabled={isLoading}
+                />
+                <input
+                  type='text'
+                  className='input-field'
+                  placeholder='Respuesta (Español)'
+                  value={newCardAnswer}
+                  onChange={(e) => setNewCardAnswer(e.target.value)}
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={addCardManually}
+                  className='button add-card-button'
+                  disabled={isLoading}
+                >
+                  Añadir Tarjeta Manualmente
+                </button>
+              </div>
+            </div>
+          )}
+        </div>{" "}
+        {/* Fin de card-and-add-wrapper */}
+      </div>{" "}
+      {/* Fin de main-content-wrapper */}
       {showDeleteConfirm && (
         <div className='modal-overlay'>
           <div className='modal-content'>

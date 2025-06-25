@@ -1,19 +1,23 @@
 /* src/index.css */
 
+/* Fuentes */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap");
+
 /* Restablecimiento básico y estilos generales del cuerpo */
 body {
   margin: 0;
-  font-family: "Inter", sans-serif; /* Usando Inter o una fuente sans-serif genérica */
+  font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f3f4f6; /* Color de fondo general */
+  background-color: #e0f2f7; /* Un azul claro muy sutil para el fondo */
   color: #333;
+  line-height: 1.6;
+  padding: 1rem; /* Padding general para el cuerpo */
 }
 
 /* Contenedor principal de la aplicación */
 .app-container {
   min-height: 100vh;
-  padding: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -22,80 +26,129 @@ body {
 
 /* Título principal */
 .app-title {
-  font-size: 2.25rem;
+  font-size: 2.5rem; /* Más grande */
   font-weight: 800;
-  color: #1f2937;
-  margin-bottom: 2rem;
-  margin-top: 1rem;
-  border-radius: 0.75rem;
-  padding: 0.5rem 1rem;
+  color: #2c3e50; /* Azul oscuro */
+  margin-bottom: 2.5rem;
+  margin-top: 1.5rem;
+  border-radius: 1rem; /* Bordes más redondeados */
+  padding: 0.8rem 1.8rem;
   background-color: #ffffff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
   text-align: center;
+  position: relative; /* Para posibles decoraciones futuras */
+  overflow: hidden; /* Asegura que la sombra se vea bien */
+  transition: transform 0.3s ease-in-out;
+}
+
+.app-title:hover {
+  transform: translateY(-5px); /* Pequeño efecto hover */
+}
+
+/* Wrapper para centrar las secciones principales y aplicar responsive */
+.main-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem; /* Espacio entre secciones */
+  width: 100%;
+  max-width: 1000px; /* Máximo ancho en pantallas grandes */
+  margin: 0 auto; /* Centrar */
+  padding-bottom: 2rem; /* Espacio inferior */
+}
+
+/* Nuevo wrapper para la tarjeta y la sección de añadir tarjetas */
+.card-and-add-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  align-items: center; /* Centra las secciones dentro de este wrapper */
+}
+
+@media (min-width: 768px) {
+  /* Tablet y escritorio */
+  .main-content-wrapper {
+    flex-direction: row; /* Elementos en fila */
+    justify-content: center; /* Centrar horizontalmente */
+    align-items: flex-start; /* Alinear arriba si tienen alturas diferentes */
+  }
+  .section-container {
+    flex: 1; /* Para que ocupen el espacio disponible */
+    max-width: 450px; /* Limita el ancho de la sección de categorías */
+  }
+  .card-and-add-wrapper {
+    flex: 1; /* También ocupa el espacio disponible */
+    max-width: 450px; /* Limita el ancho del contenido de la tarjeta/añadir */
+  }
 }
 
 /* Cajas de mensaje y carga */
 .message-box,
 .loading-box {
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   border-radius: 0.75rem;
-  position: relative;
   margin-bottom: 1.5rem;
   width: 100%;
-  max-width: 32rem;
+  max-width: 900px; /* Adapta el ancho al wrapper principal */
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  border-left: 5px solid; /* Borde lateral para énfasis */
+  box-sizing: border-box;
 }
 
 .message-box {
-  background-color: #dbeafe;
-  border: 1px solid #93c5fd;
-  color: #1e40af;
+  background-color: #e3f2fd; /* Azul claro */
+  border-color: #2196f3; /* Azul vibrante */
+  color: #1976d2; /* Azul oscuro para el texto */
 }
 
 .loading-box {
-  background-color: #fef3c7;
-  border: 1px solid #fbbf24;
-  color: #b45309;
-}
-
-.message-text,
-.loading-text {
-  display: block;
+  background-color: #fffde7; /* Amarillo muy claro */
+  border-color: #ffc107; /* Amarillo vibrante */
+  color: #ffa000; /* Naranja para el texto */
 }
 
 /* Contenedores de sección (Gestionar Categorías, Añadir Tarjetas) */
 .section-container {
-  width: 100%;
-  max-width: 32rem;
   background-color: #ffffff;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-  margin-bottom: 2rem;
+  padding: 1.8rem; /* Más padding */
+  border-radius: 1rem;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem; /* Solo para móvil, en desktop se maneja con gap del wrapper */
+  box-sizing: border-box;
+  width: 100%; /* Asegura que ocupe el ancho disponible */
+}
+
+@media (min-width: 768px) {
+  .section-container {
+    margin-bottom: 0; /* Desactiva el margen vertical cuando están en fila */
+  }
 }
 
 /* Títulos de sección */
 .section-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #1f2937;
-  margin-bottom: 1rem;
+  font-size: 1.75rem; /* Más grande */
+  font-weight: 700;
+  color: #3f51b5; /* Azul índigo */
+  margin-bottom: 1.2rem;
+  border-bottom: 2px solid #e8eaf6; /* Línea separadora */
+  padding-bottom: 0.5rem;
 }
 
 /* Títulos de subsección */
 .subsection-title {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.75rem;
+  color: #424242;
+  margin-bottom: 1rem;
 }
 
 /* Grupos de entrada (input + botón) */
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.8rem;
   margin-bottom: 1.5rem;
 }
 
@@ -108,77 +161,77 @@ body {
 .input-group-vertical {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.8rem;
   margin-bottom: 1.5rem;
 }
 
 /* Campos de entrada */
 .input-field {
   flex-grow: 1;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #bdbdbd; /* Gris claro */
+  border-radius: 0.5rem;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  font-size: 1rem;
 }
 
 .input-field:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+  border-color: #673ab7; /* Morado */
+  box-shadow: 0 0 0 3px rgba(103, 58, 183, 0.25);
 }
 
 /* Estilos de los botones generales */
 .button {
   font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  transition: background-color 0.2s, transform 0.2s;
+  padding: 0.8rem 1.6rem;
+  border-radius: 0.6rem; /* ligeramente menos redondeado que antes */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
   cursor: pointer;
   border: none;
   text-align: center;
   display: inline-block;
+  font-size: 1rem;
 }
 
 .button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-2px); /* Efecto de "levantamiento" */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .primary-button {
-  background-color: #4f46e5;
+  background-color: #4caf50; /* Verde vibrante */
   color: #ffffff;
 }
-
 .primary-button:hover:not(:disabled) {
-  background-color: #4338ca;
+  background-color: #388e3c;
 }
 
 /* Botón para añadir categoría (igual que primary-button) */
-.add-category-button {
-  background-color: #4f46e5;
-  color: #ffffff;
-}
-
-.add-category-button:hover:not(:disabled) {
-  background-color: #4338ca;
-}
+/* .add-category-button {} ya cubierto por primary-button */
 
 /* Botón para añadir tarjeta */
 .add-card-button {
-  background-color: #9333ea;
+  background-color: #9c27b0; /* Morado intenso */
   color: #ffffff;
 }
-
 .add-card-button:hover:not(:disabled) {
-  background-color: #7e22ce;
+  background-color: #7b1fa2;
 }
 
 /* Grid de categorías */
 .categories-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.75rem;
+  gap: 0.8rem;
 }
 
 @media (min-width: 640px) {
@@ -197,24 +250,29 @@ body {
 .category-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  gap: 0.6rem;
+  padding: 1rem;
   border-radius: 0.75rem;
-  border: 2px solid #d1d5db;
-  transition: background-color 0.2s, border-color 0.2s;
-  background-color: #f9fafb;
-  color: #374151;
+  border: 2px solid #e0e0e0; /* Gris claro para el borde */
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+  background-color: #fcfcfc;
+  color: #424242;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .category-item.selected {
-  border-color: #4f46e5;
-  background-color: #eef2ff;
-  color: #312e81;
-  font-weight: bold;
+  border-color: #3f51b5; /* Azul índigo más oscuro */
+  background-color: #e8eaf6; /* Fondo azul muy claro */
+  color: #283593; /* Texto azul más oscuro */
+  font-weight: 700; /* Más énfasis */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .category-item:hover:not(.selected) {
-  background-color: #f3f4f6;
+  background-color: #f5f5f5;
+  border-color: #c5cae9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .category-button {
@@ -226,6 +284,7 @@ body {
   cursor: pointer;
   color: inherit;
   width: 100%;
+  font-size: 1.05rem;
 }
 
 .category-button:disabled {
@@ -235,130 +294,138 @@ body {
 
 .category-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
   justify-content: flex-end;
 }
 
 /* Botones de acción en la categoría (Editar, Eliminar) */
 .edit-button {
-  background-color: #f59e0b;
-  color: #ffffff;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background-color: #ffc107; /* Amarillo */
+  color: #333;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
-
 .edit-button:hover:not(:disabled) {
-  background-color: #d97706;
+  background-color: #ffb300;
 }
 
 .delete-button {
-  background-color: #ef4444;
+  background-color: #f44336; /* Rojo */
   color: #ffffff;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
-
 .delete-button:hover:not(:disabled) {
-  background-color: #dc2626;
+  background-color: #d32f2f;
 }
 
 /* Formulario de edición de categoría */
 .edit-category-form {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .edit-input {
-  padding: 0.5rem;
-  border: 1px solid #9ca3af;
-  border-radius: 0.5rem;
-  color: #1f2937;
+  padding: 0.6rem;
+  border: 1px solid #9e9e9e; /* Gris medio */
+  border-radius: 0.4rem;
+  color: #212121;
+  font-size: 1rem;
 }
 
 .edit-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .save-button {
   flex-grow: 1;
-  background-color: #22c55e;
+  background-color: #4caf50;
   color: #ffffff;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
 }
-
 .save-button:hover:not(:disabled) {
-  background-color: #16a34a;
+  background-color: #388e3c;
 }
 
 .cancel-button {
   flex-grow: 1;
-  background-color: #ef4444;
-  color: #ffffff;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
+  background-color: #e0e0e0;
+  color: #424242;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
 }
-
 .cancel-button:hover:not(:disabled) {
-  background-color: #dc2626;
+  background-color: #bdbdbd;
 }
 
 /* Contenedor de la tarjeta Anki */
 .card-container {
   width: 100%;
-  max-width: 28rem;
+  max-width: 400px; /* Ancho fijo para la tarjeta */
   background-color: #ffffff;
-  padding: 2rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  padding: 2.2rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 1.8rem;
+  box-sizing: border-box; /* Incluir padding en el ancho */
 }
 
 .card-container.placeholder {
-  padding: 2rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 150px;
+  min-height: 200px; /* Un poco más alto para el mensaje de placeholder */
+  background-color: #f5f5f5;
+  border: 2px dashed #cfd8dc; /* Borde punteado */
+  color: #78909c;
 }
 
 .card-title {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: bold;
-  color: #1f2937;
+  color: #3f51b5; /* Azul índigo */
+  text-align: center;
+  margin-bottom: 0.5rem;
 }
 
 .card-content-area {
-  min-height: 7.5rem;
+  min-height: 150px; /* Altura mínima para la pregunta/respuesta */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa; /* Fondo ligero para el área de texto */
+  border-radius: 0.75rem;
+  border: 1px solid #eceff1;
 }
 
 .card-text {
-  font-size: 1.5rem;
+  font-size: 1.8rem; /* Tamaño de texto más grande */
+  font-weight: 600;
   text-align: center;
-  color: #1f2937;
+  color: #263238; /* Gris oscuro casi negro */
+  margin: 0.5rem 0; /* Margen para separar pregunta y respuesta */
 }
 
 .card-text.question {
-  /* Estilos específicos para la pregunta si es necesario */
+  /* No hay estilos adicionales, ya definidos en .card-text */
 }
 
 .card-text.answer {
-  color: #4a5568;
+  color: #455a64; /* Un gris un poco más claro para la respuesta */
+  font-weight: normal; /* La respuesta puede ser de peso normal */
 }
 
 .card-text.hidden {
@@ -370,47 +437,49 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.7rem;
 }
 
 .audio-button {
-  font-size: 0.875rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.6rem;
+  font-weight: 500;
 }
 
 .audio-button.normal {
-  background-color: #16a34a;
+  background-color: #43a047; /* Verde más oscuro */
   color: #ffffff;
 }
 .audio-button.normal:hover:not(:disabled) {
-  background-color: #15803d;
+  background-color: #388e3c;
 }
 
 .audio-button.slow {
-  background-color: #22c55e;
+  background-color: #66bb6a; /* Verde medio */
   color: #ffffff;
 }
 .audio-button.slow:hover:not(:disabled) {
-  background-color: #16a34a;
+  background-color: #43a047;
 }
 
 .audio-button.very-slow {
-  background-color: #4ade80;
+  background-color: #a5d6a7; /* Verde claro */
   color: #ffffff;
 }
 .audio-button.very-slow:hover:not(:disabled) {
-  background-color: #22c55e;
+  background-color: #81c784;
 }
 
 /* Botón de mostrar/ocultar traducción */
 .toggle-answer-button {
-  background-color: #4f46e5;
+  background-color: #3f51b5; /* Azul índigo */
   color: #ffffff;
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 1.8rem;
+  font-size: 1.1rem;
 }
 .toggle-answer-button:hover:not(:disabled) {
-  background-color: #4338ca;
+  background-color: #303f9f;
 }
 
 /* Grupos de botones de navegación */
@@ -422,70 +491,76 @@ body {
 
 .nav-button {
   flex-grow: 1;
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 1.8rem;
+  font-size: 1.1rem;
 }
 
 .nav-button.prev {
-  background-color: #d1d5db;
-  color: #1f2937;
+  background-color: #e0e0e0; /* Gris */
+  color: #424242;
 }
 .nav-button.prev:hover:not(:disabled) {
-  background-color: #9ca3af;
+  background-color: #bdbdbd;
 }
 
 .nav-button.next {
-  background-color: #4f46e5;
+  background-color: #3f51b5; /* Azul índigo */
   color: #ffffff;
 }
 .nav-button.next:hover:not(:disabled) {
-  background-color: #4338ca;
+  background-color: #303f9f;
 }
 
 /* Contador de tarjetas */
 .card-counter {
-  color: #4b5563;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
+  color: #757575; /* Gris oscuro */
+  font-size: 0.95rem;
+  margin-top: 0.8rem;
   text-align: center;
 }
 
 /* Texto informativo (ej. "No hay categorías") */
 .info-text {
-  color: #6b7280;
+  color: #757575;
   text-align: center;
+  font-style: italic;
 }
 
 /* Modal de confirmación de eliminación */
 .modal-overlay {
   position: fixed;
-  inset: 0;
-  background-color: rgba(75, 85, 99, 0.5);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Fondo semi-transparente más oscuro */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 50;
+  z-index: 1000; /* Asegura que esté por encima de todo */
 }
 
 .modal-content {
   background-color: #ffffff;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-  max-width: 24rem;
-  width: 100%;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+  max-width: 450px;
+  width: 90%; /* Responsive */
   text-align: center;
+  box-sizing: border-box;
 }
 
 .modal-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #333;
   margin-bottom: 1rem;
 }
 
 .modal-text {
-  font-size: 0.875rem;
-  color: #4b5563;
+  font-size: 1rem;
+  color: #555;
   margin-bottom: 1.5rem;
 }
 
@@ -496,19 +571,38 @@ body {
 }
 
 .modal-delete-button {
-  background-color: #dc2626;
+  background-color: #d32f2f; /* Rojo más oscuro */
   color: #ffffff;
-  padding: 0.5rem 1.25rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
 }
 .modal-delete-button:hover:not(:disabled) {
-  background-color: #b91c1c;
+  background-color: #c62828;
 }
 
 .modal-cancel-button {
-  background-color: #d1d5db;
-  color: #1f2937;
-  padding: 0.5rem 1.25rem;
+  background-color: #9e9e9e; /* Gris medio */
+  color: #ffffff; /* Texto blanco para mayor contraste */
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
 }
 .modal-cancel-button:hover:not(:disabled) {
-  background-color: #9ca3af;
+  background-color: #757575;
+}
+
+/* Responsive para títulos */
+@media (max-width: 480px) {
+  .app-title {
+    font-size: 1.8rem;
+    padding: 0.6rem 1rem;
+  }
+  .section-title {
+    font-size: 1.4rem;
+  }
+  .card-title {
+    font-size: 1.5rem;
+  }
+  .card-text {
+    font-size: 1.3rem;
+  }
 }
