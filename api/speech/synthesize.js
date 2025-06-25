@@ -14,18 +14,15 @@ export default async function handler(req, res) {
       .json({ success: false, error: "Texto y idioma son requeridos." });
   }
 
-  // Obtiene la clave de ElevenLabs desde variables de entorno
   const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
   if (!ELEVENLABS_API_KEY) {
     console.error("ELEVENLABS_API_KEY no configurada en variables de entorno.");
-    return res.status(500).json({
-      success: false,
-      error: "Key de ElevenLabs faltante en configuración.",
-    });
+    return res
+      .status(500)
+      .json({ success: false, error: "Key de ElevenLabs faltante." });
   }
 
   try {
-    // Mapea idioma a Voice ID de ElevenLabs
     const voiceId = getElevenLabsVoiceId(lang);
     if (!voiceId) {
       return res
@@ -33,7 +30,6 @@ export default async function handler(req, res) {
         .json({ success: false, error: `Idioma '${lang}' no soportado.` });
     }
 
-    // Llama a la API de ElevenLabs
     const elevenLabsResponse = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       {
@@ -49,20 +45,20 @@ export default async function handler(req, res) {
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
-            // Puedes añadir speaking_rate si tu plan lo permite
           },
         }),
       }
     );
 
     if (!elevenLabsResponse.ok) {
-      // Parseo mejorado del error para detalle legible
-      const errText = await elevenLabsResponse.text();
+      const textErr = await elevenLabsResponse.text();
       let detail;
       try {
-        detail = JSON.parse(errText).detail || errText;
+        // Intentamos parsear JSON y luego stringify para verlo completo
+        const obj = JSON.parse(textErr);
+        detail = JSON.stringify(obj, null, 2);
       } catch {
-        detail = errText;
+        detail = textErr;
       }
       console.error("ElevenLabs API error detail:", detail);
       throw new Error(
@@ -70,7 +66,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // Convierte el arrayBuffer a Base64 para enviar al cliente
     const audioBuffer = await elevenLabsResponse.arrayBuffer();
     const audioContent = Buffer.from(audioBuffer).toString("base64");
 
@@ -83,20 +78,16 @@ export default async function handler(req, res) {
   }
 }
 
-/**
- * Devuelve el Voice ID de ElevenLabs según el código de idioma.
- * Personaliza estos IDs con tus voces favoritas.
- */
 function getElevenLabsVoiceId(lang) {
   switch (lang) {
     case "en-US":
-      return "21m00Tcm4TlvDq8ikWAM"; // Rachel
+      return "21m00Tcm4TlvDq8ikWAM";
     case "es-ES":
-      return "pNnIDT4R8wUaP8B3BvDq"; // Antonio
+      return "pNnIDT4R8wUaP8B3BvDq";
     case "es-LA":
-      return "EXAVITQu4vr4xnSDxMaL"; // Bella (soporta español)
+      return "EXAVITQu4vr4xnSDxMaL";
     case "fr-FR":
-      return "TxGEqnHWrfWFTCxWZLAD"; // Antoni (soporta francés)
+      return "TxGEqnHWrfWFTCxWZLAD";
     default:
       return null;
   }
