@@ -141,24 +141,65 @@ const App = () => {
    * @param {string} lang - El código de idioma (ej. 'en-US' para inglés).
    * @param {number} rate - La velocidad del habla (ej. 1 para normal, 0.8 para más lento, 0.5 para el más lento).
    */
-  const playAudio = (text, lang, rate = 1) => {
+  const playAudio = async (text, lang, rate = 1) => {
     if (!text) {
       setMessage("No hay texto para reproducir audio.");
       return;
     }
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.pitch = 1;
-      utterance.rate = rate;
-      window.speechSynthesis.speak(utterance);
-    } else {
-      setMessage(
-        "La API de Síntesis de Voz no es compatible con este navegador."
-      );
-      console.warn("SpeechSynthesis API not supported in this browser.");
+
+    setIsLoading(true);
+    setMessage("Generando audio con ElevenLabs...");
+
+    try {
+      const res = await fetch("/api/speech/synthesize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, lang, rate }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `${res.status} ${res.statusText}`);
+      }
+
+      const { audioContent } = await res.json();
+      // Construimos un URL de blob a partir del Base64
+      const audioBlob = b64toBlob(audioContent, "audio/mpeg");
+      const url = URL.createObjectURL(audioBlob);
+
+      const audio = new Audio(url);
+      audio.play();
+
+      // Opcional: limpiar el blob URL cuando termine
+      audio.addEventListener("ended", () => URL.revokeObjectURL(url));
+
+      setMessage("");
+    } catch (e) {
+      console.error("Error ElevenLabs TTS:", e);
+      setMessage(`No se pudo generar voz: ${e.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  /**
+   * Convierte un Base64 string en un Blob
+   */
+  function b64toBlob(b64Data, contentType = "", sliceSize = 512) {
+    const byteCharacters = atob(b64Data);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      const slice = byteCharacters.slice(offset, offset + sliceSize);
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      byteArrays.push(new Uint8Array(byteNumbers));
+    }
+
+    return new Blob(byteArrays, { type: contentType });
+  }
 
   /**
    * Alterna la visibilidad de la respuesta en la tarjeta actual.
