@@ -858,6 +858,13 @@ const App = () => {
               <div className='card-counter'>
                 Tarjeta {currentCardIndex + 1} de {currentCards.length}
               </div>
+              <button
+                onClick={navigateToHome}
+                className='button back-button'
+                disabled={isLoading}
+              >
+                Volver al Inicio
+              </button>
             </div>
           ) : (
             <p className='info-text'>
@@ -865,13 +872,6 @@ const App = () => {
               sección "Gestionar Categorías".
             </p>
           )}
-          <button
-            onClick={navigateToHome}
-            className='button back-button'
-            disabled={isLoading}
-          >
-            Volver al Inicio
-          </button>
         </div>
       </>
     );
