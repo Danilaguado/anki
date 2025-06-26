@@ -461,6 +461,12 @@ const App = () => {
   /**
    * Guarda el nombre editado de la categoría llamando a la API de Vercel.
    */
+  // Añade esto junto con tus otras funciones en el componente App
+  const cancelEditCategory = () => {
+    setIsEditingCategory(null);
+    setEditedCategoryName("");
+  };
+
   const saveEditedCategory = async () => {
     if (!editedCategoryName.trim()) {
       setMessage("El nombre de la categoría no puede estar vacío.");
