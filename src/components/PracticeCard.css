@@ -94,7 +94,7 @@
 }
 
 .nav-button {
-  flex: 1;
+  flex: 1; /* Hará que los botones se estiren para llenar el espacio, pero siempre en línea */
   background-color: var(--primary-color);
   color: var(--text-color-light);
 }
@@ -121,7 +121,7 @@
 
 .microphone-play-buttons-group {
   display: flex;
-  justify-content: center;
+  justify-content: center; /* Centrar los botones */
   align-items: center;
   gap: 15px;
   margin-bottom: 10px;
@@ -130,13 +130,13 @@
 .audio-button-round {
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  border-radius: 50%; /* 100% redondeado */
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
+  flex-shrink: 0; /* No se estira para ocupar todo el ancho */
 }
 
 .audio-button-round svg {
@@ -145,12 +145,12 @@
 }
 
 .recorded-text-display {
-  background-color: #ecf0f1; /* Gris claro */
-  padding: 10px 15px;
+  background-color: #000000; /* Fondo negro */
+  color: #ffffff; /* Letras blancas */
+  padding: 0; /* Sin padding */
   border-radius: 8px;
   margin-top: 10px;
   font-size: 1.1em;
-  color: var(--text-color-dark);
   text-align: center;
   word-break: break-word; /* Asegura que el texto largo se rompa */
 }
@@ -163,7 +163,6 @@
     font-size: 1.2em;
   }
 
-  .navigation-buttons-group {
-    flex-direction: column;
-  }
+  /* Aquí se eliminó el flex-direction: column para que los botones de navegación no se apilen */
+  /* .navigation-buttons-group { flex-direction: column; } */
 }
