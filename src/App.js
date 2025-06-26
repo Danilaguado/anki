@@ -15,7 +15,6 @@ const App = () => {
   const [newCardAnswer, setNewCardAnswer] = useState(""); // Inicialización correcta
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const audioCache = useRef(new Map());
 
   // State para la edición de categorías
   const [isEditingCategory, setIsEditingCategory] = useState(null);
@@ -29,10 +28,12 @@ const App = () => {
   // Añadimos 'quizPage'
   const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage', 'quizPage'
 
-  // Nuevo estado para el texto grabado del STT
+  // Nuevo estado para el texto grabado del STT (se usa para micrófono y texto escrito correcto en quiz)
   const [recordedText, setRecordedText] = useState("");
+  // Nuevo estado para la respuesta escrita por el usuario en el quiz
+  const [userTypedAnswer, setUserTypedAnswer] = useState("");
 
-  // Nuevo estado para el feedback de coincidencia de pronunciación
+  // Nuevo estado para el feedback de coincidencia de pronunciación/texto
   const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
 
   // Nuevo: Path al archivo de audio para aciertos
@@ -55,18 +56,21 @@ const App = () => {
 
     setCurrentPage("home");
     setRecordedText("");
+    setUserTypedAnswer(""); // Limpiar respuesta escrita
     setMatchFeedback(null);
   };
   const navigateToAddCard = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("addCardPage");
     setRecordedText("");
+    setUserTypedAnswer(""); // Limpiar respuesta escrita
     setMatchFeedback(null);
   };
   const navigateToPracticePage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("practicePage");
     setRecordedText("");
+    setUserTypedAnswer(""); // Limpiar respuesta escrita
     setMatchFeedback(null);
   };
   // Nuevo: Función para navegar a la página del quiz
@@ -74,6 +78,7 @@ const App = () => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("quizPage"); // Cambia a la nueva página de quiz
     setRecordedText("");
+    setUserTypedAnswer(""); // Limpiar respuesta escrita
     setMatchFeedback(null);
     // No limpiamos masteredCardIds aquí, solo al volver al inicio
   };
@@ -143,6 +148,7 @@ const App = () => {
     setCurrentCardIndex(0);
     setIsAnswerVisible(false);
     setRecordedText("");
+    setUserTypedAnswer(""); // Limpiar al cambiar de tarjeta/categoría
     setMatchFeedback(null);
     // Importante: al cambiar de categoría en el quiz, también reinicia las tarjetas acertadas
     masteredCardIds.current.clear();
@@ -172,19 +178,53 @@ const App = () => {
   };
 
   /**
-   * Maneja el resultado del reconocimiento de voz.
-   * Se adapta para el modo quiz.
+   * Maneja el resultado del reconocimiento de voz (micrófono).
    * @param {string} transcript - El texto transcrito.
    */
   const handleSpeechResult = (transcript) => {
-    // Si estamos en modo quiz, el recordedText solo se muestra si es correcto
-    if (currentPage === "quizPage" && currentCard && currentCard.question) {
+    if (currentCard && currentCard.question) {
       const normalizedTranscript = normalizeText(transcript);
       const normalizedQuestion = normalizeText(currentCard.question);
 
       if (normalizedTranscript === normalizedQuestion) {
         setMatchFeedback("correct");
         setRecordedText(transcript); // Mostrar transcripción solo si es correcta
+        if (currentPage === "quizPage") {
+          // Solo añadir a acertadas en modo quiz
+          masteredCardIds.current.add(currentCard.id);
+        }
+        const audio = new Audio(CORRECT_SOUND_PATH);
+        audio
+          .play()
+          .catch((e) =>
+            console.error("Error al reproducir sonido de acierto:", e)
+          );
+      } else {
+        setMatchFeedback("incorrect");
+        setRecordedText(""); // Limpiar si es incorrecto (para micro o texto escrito)
+      }
+    } else {
+      setMatchFeedback(null);
+      setRecordedText("");
+    }
+  };
+
+  /**
+   * Valida la respuesta escrita por el usuario en el modo quiz.
+   */
+  const checkTypedAnswer = () => {
+    if (!userTypedAnswer.trim()) {
+      setMessage("Por favor, escribe tu respuesta.");
+      return;
+    }
+
+    if (currentCard && currentCard.question) {
+      const normalizedTyped = normalizeText(userTypedAnswer);
+      const normalizedQuestion = normalizeText(currentCard.question);
+
+      if (normalizedTyped === normalizedQuestion) {
+        setMatchFeedback("correct");
+        setRecordedText(userTypedAnswer); // Mostrar texto escrito solo si es correcto
         masteredCardIds.current.add(currentCard.id); // Marcar como acertada
         const audio = new Audio(CORRECT_SOUND_PATH);
         audio
@@ -196,27 +236,15 @@ const App = () => {
         setMatchFeedback("incorrect");
         setRecordedText(""); // Limpiar si es incorrecto
       }
-    } else {
-      // Comportamiento normal para la página de práctica (si la queremos de vuelta)
-      // O simplemente setear recordedText y feedback
-      setRecordedText(transcript);
-      if (currentCard && currentCard.question) {
-        const normalizedTranscript = normalizeText(transcript);
-        const normalizedQuestion = normalizeText(currentCard.question);
-        if (normalizedTranscript === normalizedQuestion) {
-          setMatchFeedback("correct");
-          const audio = new Audio(CORRECT_SOUND_PATH);
-          audio
-            .play()
-            .catch((e) =>
-              console.error("Error al reproducir sonido de acierto:", e)
-            );
-        } else {
-          setMatchFeedback("incorrect");
-        }
-      } else {
-        setMatchFeedback(null);
-      }
+    }
+  };
+
+  /**
+   * Maneja el evento de tecla para el campo de respuesta del quiz (permite Enter para verificar).
+   */
+  const handleQuizInputKeyDown = (e) => {
+    if (e.key === "Enter") {
+      checkTypedAnswer();
     }
   };
 
@@ -377,6 +405,7 @@ const App = () => {
       setCurrentCardIndex((prevIndex) => (prevIndex + 1) % currentCards.length);
       setIsAnswerVisible(false);
       setRecordedText("");
+      setUserTypedAnswer(""); // Limpiar respuesta escrita
       setMatchFeedback(null);
     }
   };
@@ -392,6 +421,7 @@ const App = () => {
       );
       setIsAnswerVisible(false);
       setRecordedText("");
+      setUserTypedAnswer(""); // Limpiar respuesta escrita
       setMatchFeedback(null);
     }
   };
@@ -859,7 +889,11 @@ const App = () => {
                 <SpeechToTextButton
                   onResult={handleSpeechResult}
                   disabled={isLoading}
-                  lang={currentCard.langQuestion || "en-US"}
+                  lang={
+                    currentCard.question
+                      ? currentCard.langQuestion || "en-US"
+                      : "en-US"
+                  } // Pasa el idioma de la pregunta
                 />
 
                 <button
@@ -912,7 +946,8 @@ const App = () => {
               </div>
 
               <div className='card-counter'>
-                Tarjeta {currentCardIndex + 1} de {currentCards.length}
+                Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
+                {currentCards.length}
               </div>
             </div>
           ) : (
@@ -1105,7 +1140,7 @@ const App = () => {
                 Sí, Eliminar
               </button>
               <button
-                onClick={cancelEditCategory}
+                onClick={cancelDelete}
                 className='button modal-cancel-button'
                 disabled={isLoading}
               >
