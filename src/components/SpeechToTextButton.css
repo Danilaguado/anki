@@ -12,7 +12,7 @@
   justify-content: center;
   transition: background-color 0.3s ease, transform 0.2s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  margin: 0 auto; /* Centrar */
+  /* Eliminado: margin: 0 auto; para permitir que el flexbox padre lo posicione */
   flex-shrink: 0;
 }
 
