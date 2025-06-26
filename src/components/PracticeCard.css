@@ -123,7 +123,7 @@
   display: flex;
   justify-content: space-evenly; /* Centrar y espaciar uniformemente los botones */
   align-items: center;
-  /* gap: 15px;  // El gap se hace menos relevante con space-evenly, puedes mantenerlo o quitarlo según prefieras */
+  width: 100%; /* Asegura que el contenedor flex ocupe todo el ancho disponible */
   margin-bottom: 10px;
 }
 
@@ -153,6 +153,11 @@
   font-size: 1.1em;
   text-align: center;
   word-break: break-word; /* Asegura que el texto largo se rompa */
+
+  /* Cambios para que el fondo abarque solo el texto y se centre */
+  display: block; /* Asegura que ocupe su propia línea para el margin auto */
+  width: fit-content; /* El ancho se ajusta al contenido */
+  margin: 10px auto; /* Centra el bloque horizontalmente */
 }
 
 @media (max-width: 768px) {
