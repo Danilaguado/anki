@@ -25,7 +25,7 @@ const App = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState(null); // Para eliminar categorías
   const [cardToDeleteId, setCardToDeleteId] = useState(null); // Para eliminar tarjetas
-  const [cardToDeleteCategoryId, setCardToDeleteCategoryId] = useState(null); // Para eliminar tarjetas
+  const [cardToDeleteCategoryId, setCardToDeleteCategoryId] = useState(null); // Para la categoría de la tarjeta a eliminar
 
   // Nuevo estado para la navegación de páginas
   // Añadimos 'editCategoryPage'
@@ -502,30 +502,18 @@ const App = () => {
 
   /**
    * Añade una nueva tarjeta a la categoría seleccionada llamando a la API de Vercel.
+   * @param {string} categoryId - El ID de la categoría.
+   * @param {object} cardData - Datos de la tarjeta (question, answer, langQuestion, langAnswer).
+   * @returns {Promise<object>} La tarjeta añadida si tiene éxito.
    */
-  const addCardManually = async () => {
-    if (!selectedCategoryId) {
-      setMessage("Por favor, selecciona una categoría primero.");
-      return;
-    }
-    if (!newCardQuestion.trim() || !newCardAnswer.trim()) {
-      setMessage("La pregunta y la respuesta no pueden estar vacías.");
-      return;
-    }
-    setIsLoading(true);
+  const handleAddCard = async (categoryId, cardData) => {
     setMessage("Añadiendo tarjeta...");
     try {
       const url = "/api/cards/add";
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          categoryId: selectedCategoryId,
-          question: newCardQuestion.trim(),
-          answer: newCardAnswer.trim(),
-          langQuestion: "en-US",
-          langAnswer: "es-ES",
-        }),
+        body: JSON.stringify({ categoryId, ...cardData }),
       });
 
       if (!response.ok) {
@@ -536,21 +524,58 @@ const App = () => {
           }. Respuesta: ${errorText.substring(0, 200)}...`
         );
       }
-
       const result = await response.json();
       if (result.success) {
-        setNewCardQuestion("");
-        setNewCardAnswer("");
-        setMessage("Tarjeta añadida manualmente.");
-        await fetchCategories();
+        setMessage("Tarjeta añadida.");
+        return result.data; // Devuelve la tarjeta añadida
       } else {
         throw new Error(result.error || "Error desconocido al añadir tarjeta.");
       }
     } catch (error) {
-      console.error("Error al añadir tarjeta manualmente:", error);
-      setMessage(`Error al añadir la tarjeta: ${error.message}.`);
-    } finally {
-      setIsLoading(false);
+      console.error("Error al añadir tarjeta:", error);
+      setMessage(`Error al añadir tarjeta: ${error.message}.`);
+      throw error; // Re-lanza el error para que el componente que llama lo maneje
+    }
+  };
+
+  /**
+   * Actualiza una tarjeta existente en la base de datos.
+   * @param {string} categoryId - El ID de la categoría a la que pertenece la tarjeta.
+   * @param {string} cardId - El ID de la tarjeta a actualizar.
+   * @param {object} updatedFields - Los campos a actualizar (ej. { question: 'new q', answer: 'new a' }).
+   * @returns {Promise<object>} La tarjeta actualizada si tiene éxito.
+   */
+  const handleUpdateCard = async (categoryId, cardId, updatedFields) => {
+    setMessage("Actualizando tarjeta...");
+    try {
+      const url = "/api/cards/update"; // Necesitarás un nuevo endpoint en tu backend para esto
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categoryId, cardId, ...updatedFields }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Error HTTP: ${response.status} - ${
+            response.statusText
+          }. Respuesta: ${errorText.substring(0, 200)}...`
+        );
+      }
+      const result = await response.json();
+      if (result.success) {
+        setMessage("Tarjeta actualizada.");
+        return result.data; // Devuelve la tarjeta actualizada
+      } else {
+        throw new Error(
+          result.error || "Error desconocido al actualizar tarjeta."
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar tarjeta:", error);
+      setMessage(`Error al actualizar tarjeta: ${error.message}.`);
+      throw error; // Re-lanza el error para que el componente que llama lo maneje
     }
   };
 
@@ -566,21 +591,16 @@ const App = () => {
   /**
    * Guarda el nombre editado de la categoría llamando a la API de Vercel.
    */
-  const saveEditedCategory = async () => {
-    if (!editedCategoryName.trim()) {
-      setMessage("El nombre de la categoría no puede estar vacío.");
-      return;
-    }
-    setIsLoading(true);
-    setMessage("Actualizando categoría...");
+  const saveEditedCategory = async (categoryId, newName) => {
+    setMessage("Actualizando nombre de categoría...");
     try {
       const url = "/api/categories/update";
       const response = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: isEditingCategory,
-          name: editedCategoryName.trim(),
+          id: categoryId,
+          name: newName,
         }),
       });
 
@@ -595,10 +615,8 @@ const App = () => {
 
       const result = await response.json();
       if (result.success) {
-        setMessage(`Categoría "${editedCategoryName}" actualizada.`);
-        setIsEditingCategory(null);
-        setEditedCategoryName("");
-        await fetchCategories();
+        setMessage(`Categoría "${newName}" actualizada.`);
+        return result.data;
       } else {
         throw new Error(
           result.error || "Error desconocido al actualizar categoría."
@@ -607,8 +625,7 @@ const App = () => {
     } catch (error) {
       console.error("Error al guardar categoría editada:", error);
       setMessage(`Error al actualizar la categoría: ${error.message}.`);
-    } finally {
-      setIsLoading(false);
+      throw error; // Re-lanza el error
     }
   };
 
@@ -616,8 +633,9 @@ const App = () => {
    * Cancela el proceso de edición de la categoría.
    */
   const cancelEditCategory = () => {
-    setShowDeleteConfirm(false);
-    setCategoryToDeleteId(null);
+    // Esta función maneja la cancelación del estado de edición en la página principal
+    setIsEditingCategory(null);
+    setEditedCategoryName("");
   };
 
   /**
@@ -626,6 +644,8 @@ const App = () => {
    */
   const confirmDeleteCategory = (categoryId) => {
     setCategoryToDeleteId(categoryId);
+    setCardToDeleteId(null); // Asegurarse de que no estamos eliminando una tarjeta
+    setCardToDeleteCategoryId(null);
     setShowDeleteConfirm(true);
   };
 
@@ -635,8 +655,9 @@ const App = () => {
    * @param {string} cardId - El ID de la tarjeta a eliminar.
    */
   const confirmDeleteCard = (categoryId, cardId) => {
-    setCategoryToDeleteId(categoryId); // Reutilizamos el estado para el ID de la categoría
+    setCategoryToDeleteId(categoryId); // Guardamos la categoría por si es necesaria
     setCardToDeleteId(cardId); // Guardamos el ID de la tarjeta
+    setCardToDeleteCategoryId(categoryId); // Guardamos la categoría de la tarjeta
     setShowDeleteConfirm(true); // Mostramos el modal de confirmación
   };
 
@@ -650,7 +671,7 @@ const App = () => {
     let successMessage;
     let errorMessage;
 
-    if (cardToDeleteId && categoryToDeleteId) {
+    if (cardToDeleteId && cardToDeleteCategoryId) {
       // Es una tarjeta
       url = `/api/cards/delete?categoryId=${cardToDeleteCategoryId}&cardId=${cardToDeleteId}`;
       successMessage = `Tarjeta ${cardToDeleteId} eliminada.`;
@@ -692,9 +713,7 @@ const App = () => {
         setCardToDeleteCategoryId(null); // Limpiar después de usar
         await fetchCategories(); // Refrescar datos
         // Si eliminamos una tarjeta en la página de edición, forzar recarga de esa categoría
-        if (currentPage === "editCategoryPage") {
-          setSelectedCategoryId(selectedCategoryId); // Forzar re-render para actualizar tarjetas
-        }
+        // La recarga de categorías en fetchCategories ya debería actualizar la categoría seleccionada
       } else {
         throw new Error(result.error || `Error desconocido al eliminar.`);
       }
@@ -1107,7 +1126,7 @@ const App = () => {
                   disabled={isLoading}
                   lang={
                     currentCard.question
-                      ? currentCard.langQuestion || "en-US"
+                      ? currentCard.question.lang || "en-US"
                       : "en-US"
                   } // El idioma a reconocer es el inglés de la pregunta
                 />
@@ -1116,7 +1135,7 @@ const App = () => {
                   onClick={() =>
                     playAudio(
                       currentCard.question,
-                      currentCard.langQuestion || "en-US"
+                      currentCard.question.lang || "en-US"
                     )
                   }
                   className='button audio-button-round primary-button'
@@ -1234,9 +1253,8 @@ const App = () => {
         <div className='modal-overlay'>
           <div className='modal-content'>
             <p className='modal-title'>
-              {cardToDeleteId
-                ? "¿Estás seguro que quieres eliminar esta tarjeta?"
-                : "¿Estás seguro que quieres eliminar esta categoría?"}
+              ¿Estás seguro que quieres eliminar{" "}
+              {cardToDeleteId ? "esta tarjeta" : "esta categoría"}?
             </p>
             <p className='modal-text'>
               Esta acción no se puede deshacer y{" "}
