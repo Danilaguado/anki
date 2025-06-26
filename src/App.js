@@ -700,6 +700,7 @@ const App = () => {
           <span className='message-text'>{message}</span>
         </div>
       )}
+
       {isLoading && (
         <div className='loading-box'>
           <span className='loading-text'>Cargando o procesando...</span>
@@ -750,14 +751,8 @@ const App = () => {
   );
 
   const renderPracticePage = () => {
-    // Es importante que el componente devuelva un único elemento raíz.
-    // Si hay un `currentCard` se muestra la tarjeta, si no, solo el mensaje.
-    // Ambos casos deben estar envueltos si los mensajes de feedback están fuera.
-
     return (
       <>
-        {" "}
-        {/* Fragmento para envolver múltiples elementos si es necesario */}
         {message && (
           <div className='message-box' role='alert'>
             <span className='message-text'>{message}</span>
@@ -769,7 +764,7 @@ const App = () => {
           </div>
         )}
         <div className='main-content-wrapper'>
-          {currentCard /* Condición principal: hay tarjeta para mostrar */ ? (
+          {currentCard ? (
             <div className='card-container'>
               {/* Texto grabado del micrófono */}
               {recordedText && (
@@ -777,7 +772,6 @@ const App = () => {
               )}
 
               {/* Área de contenido de la tarjeta con pregunta y respuesta */}
-              {/* Aplicar clase condicional para el feedback de coincidencia */}
               <div
                 className={`card-content-area ${
                   matchFeedback === "correct" ? "match-correct" : ""
@@ -788,8 +782,7 @@ const App = () => {
                     currentCard.question,
                     currentCard.langQuestion || "en-US",
                     true
-                  )}{" "}
-                  {/* Pregunta es clicable */}
+                  )}
                 </div>
                 <div
                   id='answer-text'
@@ -797,7 +790,6 @@ const App = () => {
                     isAnswerVisible ? "" : "hidden"
                   }`}
                 >
-                  {/* Traducción no es clicable ni subrayada */}
                   {renderClickableText(
                     currentCard.answer,
                     currentCard.langAnswer || "es-ES",
@@ -808,16 +800,12 @@ const App = () => {
 
               {/* Contenedor para el botón de micrófono y reproducir tarjeta (flexbox) */}
               <div className='microphone-play-buttons-group'>
-                {/* Botón de Speech-to-Text (Micrófono) */}
                 <SpeechToTextButton
                   onResult={handleSpeechResult}
                   disabled={isLoading}
-                  lang={
-                    currentCard.langQuestion || "en-US"
-                  } /* Idioma del reconocimiento, basado en la pregunta */
+                  lang={currentCard.langQuestion || "en-US"}
                 />
 
-                {/* Botón único de Reproducir para toda la tarjeta (ahora con icono SVG) */}
                 <button
                   onClick={() =>
                     playAudio(
@@ -825,11 +813,10 @@ const App = () => {
                       currentCard.langQuestion || "en-US"
                     )
                   }
-                  className='button audio-button-round primary-button' /* Nueva clase para botón redondo */
+                  className='button audio-button-round primary-button'
                   disabled={isLoading}
                   aria-label='Reproducir Tarjeta Completa'
                 >
-                  {/* Icono SVG de Play */}
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     width='100%'
