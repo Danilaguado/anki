@@ -510,10 +510,9 @@ const App = () => {
   /**
    * Cancela el proceso de edición de la categoría.
    */
-  // Añade esto junto con tus otras funciones en el componente App
   const cancelEditCategory = () => {
-    setIsEditingCategory(null);
-    setEditedCategoryName("");
+    setShowDeleteConfirm(false);
+    setCategoryToDeleteId(null);
   };
 
   /**
@@ -528,7 +527,6 @@ const App = () => {
   /**
    * Realiza la eliminación de una categoría llamando a la API de Vercel.
    */
-
   const deleteCategory = async () => {
     if (!categoryToDeleteId) return;
     setIsLoading(true);
