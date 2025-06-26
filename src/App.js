@@ -241,14 +241,14 @@ const App = () => {
         audio.play();
 
         audio.onended = () => {
-          URL.revokeObjectURL(audioUrl); // Liberar el Blob URL cuando termine
+          // Ya no revocamos aquí, solo al volver al inicio
           setMessage("");
           setIsLoading(false);
         };
         audio.onerror = (e) => {
           console.error("Error al reproducir audio:", e);
           setMessage("Error al reproducir el audio.");
-          URL.revokeObjectURL(audioUrl);
+          // Ya no revocamos aquí, solo al volver al inicio
           setIsLoading(false);
         };
         setMessage("Reproduciendo...");
@@ -461,12 +461,6 @@ const App = () => {
   /**
    * Guarda el nombre editado de la categoría llamando a la API de Vercel.
    */
-  // Añade esto junto con tus otras funciones en el componente App
-  const cancelEditCategory = () => {
-    setIsEditingCategory(null);
-    setEditedCategoryName("");
-  };
-
   const saveEditedCategory = async () => {
     if (!editedCategoryName.trim()) {
       setMessage("El nombre de la categoría no puede estar vacío.");
@@ -514,9 +508,9 @@ const App = () => {
   };
 
   /**
-   * Cancela la operación de eliminación.
+   * Cancela el proceso de edición de la categoría.
    */
-  const cancelDelete = () => {
+  const cancelEditCategory = () => {
     setShowDeleteConfirm(false);
     setCategoryToDeleteId(null);
   };
@@ -824,7 +818,7 @@ const App = () => {
                   aria-label='Reproducir Tarjeta Completa'
                 >
                   <svg
-                    xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)'
+                    xmlns='http://www.w3.org/2000/svg'
                     width='100%'
                     height='100%'
                     fill='currentColor'
