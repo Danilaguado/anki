@@ -25,19 +25,21 @@ const App = () => {
   const [categoryToDeleteId, setCategoryToDeleteId] = useState(null);
 
   // Nuevo estado para la navegación de páginas
-  const [currentPage, setCurrentPage] = useState("home");
+  // Añadimos 'quizPage'
+  const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage', 'quizPage'
 
   // Nuevo estado para el texto grabado del STT
   const [recordedText, setRecordedText] = useState("");
 
   // Nuevo estado para el feedback de coincidencia de pronunciación
-  const [matchFeedback, setMatchFeedback] = useState(null);
-
-  // Caché para los URLs de audio (persistirá mientras App esté montada)
-  const audioCache = useRef(new Map());
+  const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
 
   // Nuevo: Path al archivo de audio para aciertos
+  // Asegúrate de que este path sea accesible públicamente, usualmente se coloca en la carpeta `public/`
   const CORRECT_SOUND_PATH = "/correct-6033.mp3";
+
+  // Nuevo: Set para guardar los IDs de las tarjetas acertadas en la sesión del quiz
+  const masteredCardIds = useRef(new Set()); // Se inicializa con useRef para persistir a través de renders
 
   // --- Funciones de Navegación ---
   const navigateToHome = () => {
@@ -45,6 +47,10 @@ const App = () => {
     audioCache.current.forEach((url) => URL.revokeObjectURL(url));
     audioCache.current.clear(); // Vaciar el mapa
     console.log("Caché de audio limpiado al volver al inicio.");
+
+    // Limpiar también las tarjetas acertadas del quiz al volver al inicio
+    masteredCardIds.current.clear();
+    console.log("Tarjetas acertadas del quiz limpiadas.");
 
     setCurrentPage("home");
     setRecordedText("");
@@ -61,6 +67,14 @@ const App = () => {
     setCurrentPage("practicePage");
     setRecordedText("");
     setMatchFeedback(null);
+  };
+  // Nuevo: Función para navegar a la página del quiz
+  const navigateToQuizPage = (categoryId) => {
+    setSelectedCategoryId(categoryId);
+    setCurrentPage("quizPage"); // Cambia a la nueva página de quiz
+    setRecordedText("");
+    setMatchFeedback(null);
+    // No limpiamos masteredCardIds aquí, solo al volver al inicio
   };
 
   // --- Función para cargar datos desde las API de Vercel ---
@@ -129,6 +143,8 @@ const App = () => {
     setIsAnswerVisible(false);
     setRecordedText("");
     setMatchFeedback(null);
+    // Importante: al cambiar de categoría en el quiz, también reinicia las tarjetas acertadas
+    masteredCardIds.current.clear();
   }, [selectedCategoryId]);
 
   // Obtiene los datos de la categoría actual
@@ -156,33 +172,50 @@ const App = () => {
 
   /**
    * Maneja el resultado del reconocimiento de voz.
+   * Se adapta para el modo quiz.
    * @param {string} transcript - El texto transcrito.
    */
   const handleSpeechResult = (transcript) => {
-    setRecordedText(transcript);
-
-    if (currentCard && currentCard.question) {
+    // Si estamos en modo quiz, el recordedText solo se muestra si es correcto
+    if (currentPage === "quizPage" && currentCard && currentCard.question) {
       const normalizedTranscript = normalizeText(transcript);
       const normalizedQuestion = normalizeText(currentCard.question);
 
       if (normalizedTranscript === normalizedQuestion) {
         setMatchFeedback("correct");
-        // Reproducir sonido de acierto
+        setRecordedText(transcript); // Mostrar transcripción solo si es correcta
+        masteredCardIds.current.add(currentCard.id); // Marcar como acertada
         const audio = new Audio(CORRECT_SOUND_PATH);
         audio
           .play()
           .catch((e) =>
             console.error("Error al reproducir sonido de acierto:", e)
           );
-        // Opcional: Podrías poner isLoading a true aquí si quieres que los botones se deshabiliten
-        // mientras suena el audio de acierto, y luego a false en audio.onended.
-        // Por la brevedad del sonido de acierto, usualmente no es necesario,
-        // pero lo menciono para que lo sepas.
       } else {
         setMatchFeedback("incorrect");
+        setRecordedText(""); // Limpiar si es incorrecto
       }
     } else {
-      setMatchFeedback(null);
+      // Comportamiento normal para la página de práctica (si la queremos de vuelta)
+      // O simplemente setear recordedText y feedback
+      setRecordedText(transcript);
+      if (currentCard && currentCard.question) {
+        const normalizedTranscript = normalizeText(transcript);
+        const normalizedQuestion = normalizeText(currentCard.question);
+        if (normalizedTranscript === normalizedQuestion) {
+          setMatchFeedback("correct");
+          const audio = new Audio(CORRECT_SOUND_PATH);
+          audio
+            .play()
+            .catch((e) =>
+              console.error("Error al reproducir sonido de acierto:", e)
+            );
+        } else {
+          setMatchFeedback("incorrect");
+        }
+      } else {
+        setMatchFeedback(null);
+      }
     }
   };
 
@@ -586,7 +619,7 @@ const App = () => {
     <>
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
 
-      {/* {message && (
+      {message && (
         <div className='message-box' role='alert'>
           <span className='message-text'>{message}</span>
         </div>
@@ -596,7 +629,7 @@ const App = () => {
         <div className='loading-box'>
           <span className='loading-text'>Cargando o procesando...</span>
         </div>
-      )} */}
+      )}
 
       <div className='main-content-wrapper'>
         <div className='section-container'>
@@ -679,6 +712,14 @@ const App = () => {
                           disabled={isLoading}
                         >
                           Agregar
+                        </button>
+                        {/* Nuevo botón para iniciar Quiz */}
+                        <button
+                          onClick={() => navigateToQuizPage(cat.id)}
+                          className='button quiz-button'
+                          disabled={isLoading}
+                        >
+                          Quiz
                         </button>
                         <button
                           onClick={() => startEditCategory(cat)}
@@ -767,7 +808,7 @@ const App = () => {
   const renderPracticePage = () => {
     return (
       <>
-        {/* {message && (
+        {message && (
           <div className='message-box' role='alert'>
             <span className='message-text'>{message}</span>
           </div>
@@ -776,7 +817,7 @@ const App = () => {
           <div className='loading-box'>
             <span className='loading-text'>Cargando o procesando...</span>
           </div>
-        )} */}
+        )}
         <div className='main-content-wrapper'>
           {currentCard ? (
             <div className='card-container'>
@@ -872,13 +913,6 @@ const App = () => {
               <div className='card-counter'>
                 Tarjeta {currentCardIndex + 1} de {currentCards.length}
               </div>
-              <button
-                onClick={navigateToHome}
-                className='button back-button'
-                disabled={isLoading}
-              >
-                Volver al Inicio
-              </button>
             </div>
           ) : (
             <p className='info-text'>
@@ -886,6 +920,137 @@ const App = () => {
               sección "Gestionar Categorías".
             </p>
           )}
+          <button
+            onClick={navigateToHome}
+            className='button back-button'
+            disabled={isLoading}
+          >
+            Volver al Inicio
+          </button>
+        </div>
+      </>
+    );
+  };
+
+  // --- renderQuizPage: Nueva función para la página del quiz ---
+  const renderQuizPage = () => {
+    return (
+      <>
+        {message && (
+          <div className='message-box' role='alert'>
+            <span className='message-text'>{message}</span>
+          </div>
+        )}
+        {isLoading && (
+          <div className='loading-box'>
+            <span className='loading-text'>Cargando o procesando...</span>
+          </div>
+        )}
+        <div className='main-content-wrapper'>
+          {currentCard ? (
+            <div className='card-container'>
+              {/* El texto grabado solo se muestra si el matchFeedback es correcto */}
+              {recordedText && matchFeedback === "correct" && (
+                <div className='recorded-text-display'>{recordedText}</div>
+              )}
+
+              {/* Área de contenido de la tarjeta - INVERTIDA: muestra español */}
+              <div
+                className={`card-content-area ${
+                  matchFeedback === "correct" ? "match-correct" : ""
+                } ${matchFeedback === "incorrect" ? "match-incorrect" : ""}`}
+              >
+                <div
+                  id='question-text'
+                  className='card-text question quiz-question'
+                >
+                  {" "}
+                  {/* Clase para estilizar la pregunta del quiz */}
+                  {/* Aquí se muestra la respuesta (frase en español) */}
+                  {/* No es clicable en el quiz */}
+                  {renderClickableText(
+                    currentCard.answer,
+                    currentCard.langAnswer || "es-ES",
+                    false
+                  )}
+                </div>
+                {/* La respuesta en inglés no se muestra aquí en el modo quiz */}
+                {/* <div id="answer-text" className="card-text answer hidden">
+                     {renderClickableText(currentCard.question, currentCard.langQuestion || "en-US", false)} 
+                </div> */}
+              </div>
+
+              {/* Contenedor para el botón de micrófono y reproducir (inglés) */}
+              <div className='microphone-play-buttons-group'>
+                <SpeechToTextButton
+                  onResult={handleSpeechResult} // La misma lógica, pero comparará con el inglés
+                  disabled={isLoading}
+                  lang={currentCard.langQuestion || "en-US"} // El idioma a reconocer es el inglés de la pregunta
+                />
+
+                <button
+                  onClick={() =>
+                    playAudio(
+                      currentCard.question,
+                      currentCard.langQuestion || "en-US"
+                    )
+                  }
+                  className='button audio-button-round primary-button'
+                  disabled={isLoading}
+                  aria-label='Reproducir Frase en Inglés'
+                >
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    width='100%'
+                    height='100%'
+                    fill='currentColor'
+                    viewBox='0 0 16 16'
+                  >
+                    <path d='M10.804 8 5 4.633v6.734zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696z' />
+                  </svg>
+                </button>
+              </div>
+
+              {/* El botón de Mostrar/Ocultar Traducción NO VA en el modo quiz */}
+
+              <div className='navigation-buttons-group'>
+                <button
+                  onClick={prevCard}
+                  className='button nav-button prev'
+                  disabled={isLoading}
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={nextCard}
+                  className='button nav-button next'
+                  disabled={isLoading}
+                >
+                  Siguiente
+                </button>
+              </div>
+
+              <div className='card-counter'>
+                Tarjeta {currentCardIndex + 1} de {currentCards.length}
+                {/* Opcional: Mostrar progreso o tarjetas acertadas */}
+                {masteredCardIds.current.has(currentCard.id) && (
+                  <span className='quiz-mastered-indicator'> (Acertada)</span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className='info-text'>
+              No hay tarjetas en esta categoría para el quiz. Puedes añadir
+              algunas desde la sección "Gestionar Categorías".
+            </p>
+          )}
+          <button
+            onClick={navigateToHome}
+            className='button back-button'
+            disabled={isLoading}
+          >
+            Volver al Inicio
+          </button>
         </div>
       </>
     );
@@ -897,7 +1062,8 @@ const App = () => {
       {currentPage === "home" && renderHomePage()}
       {currentPage === "addCardPage" && renderAddCardPage()}
       {currentPage === "practicePage" && renderPracticePage()}
-
+      {currentPage === "quizPage" && renderQuizPage()}{" "}
+      {/* Nuevo: Renderizar la página del quiz */}
       {showDeleteConfirm && (
         <div className='modal-overlay'>
           <div className='modal-content'>
@@ -916,7 +1082,7 @@ const App = () => {
                 Sí, Eliminar
               </button>
               <button
-                onClick={cancelEditCategory}
+                onClick={cancelDelete}
                 className='button modal-cancel-button'
                 disabled={isLoading}
               >
