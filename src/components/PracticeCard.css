@@ -121,9 +121,9 @@
 
 .microphone-play-buttons-group {
   display: flex;
-  justify-content: center; /* Centrar los botones */
+  justify-content: space-evenly; /* Centrar y espaciar uniformemente los botones */
   align-items: center;
-  gap: 15px;
+  /* gap: 15px;  // El gap se hace menos relevante con space-evenly, puedes mantenerlo o quitarlo según prefieras */
   margin-bottom: 10px;
 }
 
