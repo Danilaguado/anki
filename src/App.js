@@ -637,7 +637,7 @@ const App = () => {
                           Guardar
                         </button>
                         <button
-                          onClick={cancelEditCategory}
+                          onClick={navigateToHome}
                           className='button cancel-button'
                           disabled={isLoading}
                         >
