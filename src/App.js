@@ -108,10 +108,10 @@ const App = () => {
 
   // Reinicia el índice de la tarjeta y la visibilidad de la respuesta cuando cambia la categoría seleccionada
   useEffect(() => {
-    setCurrentCardIndex(0);
-    setIsAnswerVisible(false);
-    setRecordedText(""); // Limpiar texto grabado al cambiar de tarjeta
-  }, [selectedCategoryId, currentCardIndex]); // Depende de selectedCategoryId y currentCardIndex
+    setCurrentCardIndex(0); // Reiniciar el índice de la tarjeta
+    setIsAnswerVisible(false); // Ocultar la respuesta
+    setRecordedText(""); // Limpiar texto grabado al cambiar de categoría
+  }, [selectedCategoryId]); // ¡Corregido! Solo se ejecuta cuando cambia la categoría seleccionada
 
   // Obtiene los datos de la categoría actual
   const currentCategory = Array.isArray(categories)
@@ -702,7 +702,7 @@ const App = () => {
               )}
 
               {/* Contenedor del botón de Speech-to-Text (Micrófono) */}
-              <div className='speech-button-container'>
+              <div className='speech-button-container speech-button-container-spacing'>
                 <SpeechToTextButton
                   onResult={handleSpeechResult}
                   disabled={isLoading}
@@ -712,7 +712,23 @@ const App = () => {
                 />
               </div>
 
+              {/* Botón único de Reproducir para toda la tarjeta */}
+              <button
+                onClick={() =>
+                  playAudio(
+                    currentCard.question,
+                    currentCard.langQuestion || "en-US"
+                  )
+                }
+                className='button audio-button full-card primary-button'
+                disabled={isLoading}
+              >
+                Reproducir Tarjeta
+              </button>
+
               <div className='card-content-area'>
+                {" "}
+                {/* Movido después del botón de reproducción de tarjeta */}
                 <div id='question-text' className='card-text question'>
                   {renderClickableText(
                     currentCard.question,
@@ -731,20 +747,6 @@ const App = () => {
                   )}
                 </div>
               </div>
-
-              {/* Único botón de Reproducir para toda la tarjeta */}
-              <button
-                onClick={() =>
-                  playAudio(
-                    currentCard.question,
-                    currentCard.langQuestion || "en-US"
-                  )
-                }
-                className='button audio-button full-card primary-button'
-                disabled={isLoading}
-              >
-                Reproducir Tarjeta
-              </button>
 
               <button
                 onClick={toggleAnswerVisibility}
