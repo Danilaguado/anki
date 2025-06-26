@@ -834,6 +834,10 @@ const App = () => {
                   Siguiente
                 </button>
               </div>
+
+              <div className='card-counter'>
+                Tarjeta {currentCardIndex + 1} de {currentCards.length}
+              </div>
               <button
                 onClick={navigateToHome}
                 className='button back-button'
@@ -841,9 +845,6 @@ const App = () => {
               >
                 Volver al Inicio
               </button>
-              <div className='card-counter'>
-                Tarjeta {currentCardIndex + 1} de {currentCards.length}
-              </div>
             </div> /* Cierre de card-container */
           ) : (
             /* Si no hay tarjetas */
