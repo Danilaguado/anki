@@ -147,8 +147,8 @@
 .recorded-text-display {
   background-color: #000000; /* Fondo negro */
   color: #ffffff; /* Letras blancas */
-  padding: 0; /* Sin padding */
-  border-radius: 8px;
+  padding: 1; /* Sin padding */
+  /* border-radius: 8px; */
   margin-top: 10px;
   font-size: 1.1em;
   text-align: center;
