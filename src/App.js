@@ -576,13 +576,13 @@ const App = () => {
         <div className='message-box' role='alert'>
           <span className='message-text'>{message}</span>
         </div>
-      )} */}
+      )}
 
       {isLoading && (
         <div className='loading-box'>
           <span className='loading-text'>Cargando o procesando...</span>
         </div>
-      )}
+      )} */}
 
       <div className='main-content-wrapper'>
         <div className='section-container'>
@@ -695,7 +695,7 @@ const App = () => {
   const renderAddCardPage = () => (
     <>
       <h1 className='app-title'>Añadir Tarjetas</h1>
-      {message && (
+      {/* {message && (
         <div className='message-box' role='alert'>
           <span className='message-text'>{message}</span>
         </div>
@@ -705,7 +705,7 @@ const App = () => {
         <div className='loading-box'>
           <span className='loading-text'>Cargando o procesando...</span>
         </div>
-      )}
+      )} */}
       <div className='main-content-wrapper'>
         <div className='section-container'>
           <h2 className='section-title'>
@@ -757,12 +757,12 @@ const App = () => {
           <div className='message-box' role='alert'>
             <span className='message-text'>{message}</span>
           </div>
-        )} */}
+        )}
         {isLoading && (
           <div className='loading-box'>
             <span className='loading-text'>Cargando o procesando...</span>
           </div>
-        )}
+        )} */}
         <div className='main-content-wrapper'>
           {currentCard ? (
             <div className='card-container'>
