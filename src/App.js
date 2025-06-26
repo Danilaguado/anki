@@ -138,6 +138,20 @@ const App = () => {
     currentCards.length > 0 ? currentCards[currentCardIndex] : null;
 
   /**
+   * Normaliza un texto para la comparación (quita puntuación, convierte a minúsculas, elimina apóstrofes, normaliza espacios).
+   * @param {string} text - El texto a normalizar.
+   * @returns {string} El texto normalizado.
+   */
+  const normalizeText = (text) => {
+    if (!text) return "";
+    return text
+      .toLowerCase() // Convertir a minúsculas
+      .replace(/[.,/#!$%^&*;:{}=\-_`~()?¿!¡'"´`]/g, "") // Quitar puntuación y apóstrofes
+      .replace(/\s{2,}/g, " ") // Reemplazar múltiples espacios con uno solo
+      .trim(); // Eliminar espacios al inicio/final
+  };
+
+  /**
    * Maneja el resultado del reconocimiento de voz.
    * @param {string} transcript - El texto transcrito.
    */
@@ -145,17 +159,10 @@ const App = () => {
     setRecordedText(transcript);
 
     if (currentCard && currentCard.question) {
-      const normalizedTranscript = transcript.toLowerCase().trim();
-      const normalizedQuestion = currentCard.question.toLowerCase().trim();
+      const normalizedTranscript = normalizeText(transcript);
+      const normalizedQuestion = normalizeText(currentCard.question);
 
-      const cleanTranscript = normalizedTranscript
-        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
-        .replace(/\s{2,}/g, " ");
-      const cleanQuestion = normalizedQuestion
-        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
-        .replace(/\s{2,}/g, " ");
-
-      if (cleanTranscript === cleanQuestion) {
+      if (normalizedTranscript === normalizedQuestion) {
         setMatchFeedback("correct");
       } else {
         setMatchFeedback("incorrect");
@@ -743,8 +750,14 @@ const App = () => {
   );
 
   const renderPracticePage = () => {
+    // Es importante que el componente devuelva un único elemento raíz.
+    // Si hay un `currentCard` se muestra la tarjeta, si no, solo el mensaje.
+    // Ambos casos deben estar envueltos si los mensajes de feedback están fuera.
+
     return (
       <>
+        {" "}
+        {/* Fragmento para envolver múltiples elementos si es necesario */}
         {message && (
           <div className='message-box' role='alert'>
             <span className='message-text'>{message}</span>
@@ -756,7 +769,7 @@ const App = () => {
           </div>
         )}
         <div className='main-content-wrapper'>
-          {currentCard ? (
+          {currentCard /* Condición principal: hay tarjeta para mostrar */ ? (
             <div className='card-container'>
               {/* Texto grabado del micrófono */}
               {recordedText && (
@@ -764,6 +777,7 @@ const App = () => {
               )}
 
               {/* Área de contenido de la tarjeta con pregunta y respuesta */}
+              {/* Aplicar clase condicional para el feedback de coincidencia */}
               <div
                 className={`card-content-area ${
                   matchFeedback === "correct" ? "match-correct" : ""
@@ -774,7 +788,8 @@ const App = () => {
                     currentCard.question,
                     currentCard.langQuestion || "en-US",
                     true
-                  )}
+                  )}{" "}
+                  {/* Pregunta es clicable */}
                 </div>
                 <div
                   id='answer-text'
@@ -782,6 +797,7 @@ const App = () => {
                     isAnswerVisible ? "" : "hidden"
                   }`}
                 >
+                  {/* Traducción no es clicable ni subrayada */}
                   {renderClickableText(
                     currentCard.answer,
                     currentCard.langAnswer || "es-ES",
@@ -792,12 +808,16 @@ const App = () => {
 
               {/* Contenedor para el botón de micrófono y reproducir tarjeta (flexbox) */}
               <div className='microphone-play-buttons-group'>
+                {/* Botón de Speech-to-Text (Micrófono) */}
                 <SpeechToTextButton
                   onResult={handleSpeechResult}
                   disabled={isLoading}
-                  lang={currentCard.langQuestion || "en-US"}
+                  lang={
+                    currentCard.langQuestion || "en-US"
+                  } /* Idioma del reconocimiento, basado en la pregunta */
                 />
 
+                {/* Botón único de Reproducir para toda la tarjeta (ahora con icono SVG) */}
                 <button
                   onClick={() =>
                     playAudio(
@@ -805,10 +825,11 @@ const App = () => {
                       currentCard.langQuestion || "en-US"
                     )
                   }
-                  className='button audio-button-round primary-button'
+                  className='button audio-button-round primary-button' /* Nueva clase para botón redondo */
                   disabled={isLoading}
                   aria-label='Reproducir Tarjeta Completa'
                 >
+                  {/* Icono SVG de Play */}
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     width='100%'
