@@ -10,13 +10,15 @@ const App = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
-  const [newCategoryName, setNewCategoryName] = "";
-  const [newCardQuestion, setNewCardQuestion] = "";
-  const [newCardAnswer, setNewCardAnswer] = "";
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCardQuestion, setNewCardQuestion] = useState("");
+  // CORRECCIÓN: Inicialización correcta de useState
+  const [newCardAnswer, setNewCardAnswer] = useState("");
   const [message, setMessage] = useState(""); // Para feedback al usuario
   const [isLoading, setIsLoading] = useState(false); // Estado para indicar carga/procesamiento de cualquier operación
 
   // State para la edición de categorías
+  // CORRECCIÓN: Inicialización correcta de useState
   const [isEditingCategory, setIsEditingCategory] = useState(null);
   const [editedCategoryName, setEditedCategoryName] = useState("");
 
@@ -30,20 +32,26 @@ const App = () => {
   // Nuevo estado para el texto grabado del STT
   const [recordedText, setRecordedText] = useState("");
 
+  // Nuevo estado para el feedback de coincidencia de pronunciación
+  const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
+
   // --- Funciones de Navegación ---
   const navigateToHome = () => {
     setCurrentPage("home");
     setRecordedText(""); // Limpiar texto grabado al volver a la home
+    setMatchFeedback(null); // Limpiar feedback al cambiar de página
   };
   const navigateToAddCard = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("addCardPage");
     setRecordedText(""); // Limpiar texto grabado al ir a añadir tarjeta
+    setMatchFeedback(null); // Limpiar feedback al cambiar de página
   };
   const navigateToPracticePage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("practicePage");
     setRecordedText(""); // Limpiar texto grabado al ir a practicar
+    setMatchFeedback(null); // Limpiar feedback al cambiar de página
   };
 
   // --- Función para cargar datos desde las API de Vercel ---
@@ -111,14 +119,17 @@ const App = () => {
     setCurrentCardIndex(0); // Reiniciar el índice de la tarjeta
     setIsAnswerVisible(false); // Ocultar la respuesta
     setRecordedText(""); // Limpiar texto grabado al cambiar de categoría
-  }, [selectedCategoryId]); // ¡Corregido! Solo se ejecuta cuando cambia la categoría seleccionada
+    setMatchFeedback(null); // Limpiar feedback al cambiar de categoría
+  }, [selectedCategoryId]);
 
   // Obtiene los datos de la categoría actual
   const currentCategory = Array.isArray(categories)
     ? categories.find((cat) => cat.id === selectedCategoryId)
     : undefined;
   const currentCards = currentCategory ? currentCategory.cards || [] : [];
-  const currentCard = currentCards[currentCardIndex];
+  // Asegurarse de que currentCard no sea undefined si currentCards está vacío
+  const currentCard =
+    currentCards.length > 0 ? currentCards[currentCardIndex] : null;
 
   /**
    * Maneja el resultado del reconocimiento de voz.
@@ -126,6 +137,29 @@ const App = () => {
    */
   const handleSpeechResult = (transcript) => {
     setRecordedText(transcript); // Actualiza el estado con el texto grabado
+
+    // Comparar la transcripción con el texto de la pregunta
+    if (currentCard && currentCard.question) {
+      // Asegurarse de que currentCard exista
+      const normalizedTranscript = transcript.toLowerCase().trim();
+      const normalizedQuestion = currentCard.question.toLowerCase().trim();
+
+      // Simplificar comparación: quitar puntuación y múltiples espacios para una mejor coincidencia
+      const cleanTranscript = normalizedTranscript
+        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
+        .replace(/\s{2,}/g, " ");
+      const cleanQuestion = normalizedQuestion
+        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
+        .replace(/\s{2,}/g, " ");
+
+      if (cleanTranscript === cleanQuestion) {
+        setMatchFeedback("correct");
+      } else {
+        setMatchFeedback("incorrect");
+      }
+    } else {
+      setMatchFeedback(null); // No hay pregunta para comparar
+    }
   };
 
   /**
@@ -212,10 +246,14 @@ const App = () => {
    * Renderiza un texto como una serie de palabras clicables.
    * @param {string} text - El texto a renderizar.
    * @param {string} lang - El código de idioma para la reproducción de audio.
-   * @returns {JSX.Element[]} Un array de elementos <span> para cada palabra.
+   * @param {boolean} isClickable - Si el texto debe ser clicable para reproducir audio.
+   * @returns {JSX.Element[]} Un array de elementos <span> para cada palabra o texto plano.
    */
-  const renderClickableText = (text, lang) => {
+  const renderClickableText = (text, lang, isClickable = true) => {
     if (!text) return null;
+    if (!isClickable) {
+      return <span>{text}</span>; // Si no es clicable, renderiza el texto plano
+    }
     const parts = text.match(/(\w+|[^\w\s]+|\s+)/g) || [];
 
     return parts.map((part, index) => {
@@ -250,6 +288,7 @@ const App = () => {
       setCurrentCardIndex((prevIndex) => (prevIndex + 1) % currentCards.length);
       setIsAnswerVisible(false);
       setRecordedText(""); // Limpiar texto grabado al cambiar de tarjeta
+      setMatchFeedback(null); // Limpiar feedback de coincidencia
     }
   };
 
@@ -264,6 +303,7 @@ const App = () => {
       );
       setIsAnswerVisible(false);
       setRecordedText(""); // Limpiar texto grabado al cambiar de tarjeta
+      setMatchFeedback(null); // Limpiar feedback de coincidencia
     }
   };
 
@@ -678,120 +718,70 @@ const App = () => {
 
   const renderPracticePage = () => (
     <>
-      <h1 className='app-title'>Practicar Tarjetas</h1>
       {message && (
-        <div className='message-box' role='alert'>
-          <span className='message-text'>{message}</span>
+        <div className='message-box'>
+          <span>{message}</span>
         </div>
       )}
       {isLoading && (
         <div className='loading-box'>
-          <span className='loading-text'>Cargando o procesando...</span>
+          <span>Cargando...</span>
         </div>
       )}
       <div className='main-content-wrapper'>
-        <div className='card-container'>
-          <h2 className='card-title'>
-            Tema Actual: {currentCategory?.name || "N/A"}
-          </h2>
-          {currentCards.length > 0 ? (
-            <>
-              {/* Texto grabado del micrófono */}
-              {recordedText && (
-                <div className='recorded-text-display'>{recordedText}</div>
-              )}
-
-              {/* Área de contenido de la tarjeta con pregunta y respuesta */}
-              <div className='card-content-area'>
-                <div id='question-text' className='card-text question'>
-                  {renderClickableText(
-                    currentCard.question,
-                    currentCard.langQuestion || "en-US"
-                  )}
-                </div>
-                <div
-                  id='answer-text'
-                  className={`card-text answer ${
-                    isAnswerVisible ? "" : "hidden"
-                  }`}
-                >
+        {currentCard ? (
+          <div className='card-container'>
+            {recordedText && (
+              <div className='recorded-text-display'>{recordedText}</div>
+            )}
+            <div className={`card-content-area ${matchFeedback}`}>
+              <div className='card-text question'>
+                {renderClickableText(
+                  currentCard.question,
+                  currentCard.langQuestion || "en-US",
+                  true
+                )}
+              </div>
+              {isAnswerVisible && (
+                <div className='card-text answer'>
                   {renderClickableText(
                     currentCard.answer,
-                    currentCard.langAnswer || "es-ES"
+                    currentCard.langAnswer || "es-ES",
+                    false
                   )}
                 </div>
-              </div>
-
-              {/* Contenedor del botón de Speech-to-Text (Micrófono) */}
-              <div className='speech-button-container speech-button-container-spacing'>
-                <SpeechToTextButton
-                  onResult={handleSpeechResult}
-                  disabled={isLoading}
-                  lang={
-                    currentCard?.langQuestion || "en-US"
-                  } /* Idioma del reconocimiento, basado en la pregunta */
-                />
-              </div>
-
-              {/* Botón único de Reproducir para toda la tarjeta */}
+              )}
+            </div>
+            <div className='controls'>
+              <SpeechToTextButton
+                onResult={handleSpeechResult}
+                disabled={isLoading}
+                lang={currentCard.langQuestion}
+              />
               <button
                 onClick={() =>
-                  playAudio(
-                    currentCard.question,
-                    currentCard.langQuestion || "en-US"
-                  )
+                  playAudio(currentCard.question, currentCard.langQuestion)
                 }
-                className='button audio-button full-card primary-button'
-                disabled={isLoading}
               >
-                Reproducir Tarjeta
+                🔈
               </button>
-
-              {/* Botón de Mostrar/Ocultar Traducción */}
-              <button
-                onClick={toggleAnswerVisibility}
-                className='button toggle-answer-button'
-                disabled={isLoading}
-              >
-                {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
+              <button onClick={toggleAnswerVisibility}>
+                {isAnswerVisible ? "Ocultar" : "Mostrar"}
               </button>
-
-              <div className='navigation-buttons-group'>
-                <button
-                  onClick={prevCard}
-                  className='button nav-button prev'
-                  disabled={isLoading}
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={nextCard}
-                  className='button nav-button next'
-                  disabled={isLoading}
-                >
-                  Siguiente
-                </button>
-              </div>
-
-              <div className='card-counter'>
-                Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
-                {currentCards.length}
-              </div>
-            </>
-          ) : (
-            <p className='info-text'>
-              No hay tarjetas en esta categoría. Puedes añadir algunas desde la
-              sección "Gestionar Categorías".
-            </p>
-          )}
-          <button
-            onClick={navigateToHome}
-            className='button back-button'
-            disabled={isLoading}
-          >
-            Volver al Inicio
-          </button>
-        </div>
+              <button onClick={prevCard}>Anterior</button>
+              <button onClick={nextCard}>Siguiente</button>
+            </div>
+            <div className='card-counter'>
+              Tarjeta {currentCardIndex + 1} de {currentCards.length}
+            </div>
+            <button onClick={navigateToHome}>Volver al Inicio</button>
+          </div>
+        ) : (
+          <p className='info-text'>
+            No hay tarjetas en esta categoría. Agrégalas desde "Gestionar
+            Categorías".
+          </p>
+        )}
       </div>
     </>
   );
