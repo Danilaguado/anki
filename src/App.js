@@ -1,5 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from "react";
+import SpeechToTextButton from "./components/SpeechToTextButton";
 import "./index.css"; // Asegúrate de que esta línea esté presente para importar tu CSS
 
 // Main App Component
@@ -14,7 +15,6 @@ const App = () => {
   const [newCardAnswer, setNewCardAnswer] = useState("");
   const [message, setMessage] = useState(""); // Para feedback al usuario
   const [isLoading, setIsLoading] = useState(false); // Estado para indicar carga/procesamiento de cualquier operación
-
   // State para la edición de categorías
   const [isEditingCategory, setIsEditingCategory] = useState(null);
   const [editedCategoryName, setEditedCategoryName] = useState("");
@@ -25,6 +25,9 @@ const App = () => {
 
   // Nuevo estado para la navegación de páginas
   const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage'
+
+  //Para el botón Speech to text
+  const [speechResult, setSpeechResult] = useState("");
 
   // --- Funciones de Navegación ---
   const navigateToHome = () => setCurrentPage("home");
@@ -671,90 +674,55 @@ const App = () => {
         </div>
       )}
       <div className='main-content-wrapper'>
-        <div className='card-container'>
-          <h2 className='card-title'>
-            Tema Actual: {currentCategory?.name || "N/A"}
-          </h2>
-          {currentCards.length > 0 ? (
-            <>
-              <div className='card-content-area'>
-                <div id='question-text' className='card-text question'>
-                  {renderClickableText(
-                    currentCard.question,
-                    currentCard.langQuestion || "en-US"
-                  )}
-                </div>
-                <div
-                  id='answer-text'
-                  className={`card-text answer ${
-                    isAnswerVisible ? "" : "hidden"
-                  }`}
-                >
-                  {renderClickableText(
-                    currentCard.answer,
-                    currentCard.langAnswer || "es-ES"
-                  )}
-                </div>
-              </div>
+        {selectedCategoryId && currentCategory && (
+          <div className='card-container'>
+            <h2 className='card-title'>Tema Actual: {currentCategory.name}</h2>
 
-              {/* Único botón de Reproducir para toda la tarjeta */}
-              <button
-                onClick={() =>
-                  playAudio(
-                    currentCard.question,
-                    currentCard.langQuestion || "en-US"
-                  )
-                }
-                className='button audio-button full-card primary-button' /* Usando primary-button */
-                disabled={isLoading}
+            {speechResult && (
+              <div
+                style={{
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  padding: "8px",
+                  marginBottom: "10px",
+                  borderRadius: "6px",
+                  textAlign: "center",
+                }}
               >
-                Reproducir Tarjeta
-              </button>
-
-              <button
-                onClick={toggleAnswerVisibility}
-                className='button toggle-answer-button'
-                disabled={isLoading}
-              >
-                {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
-              </button>
-
-              <div className='navigation-buttons-group'>
-                <button
-                  onClick={prevCard}
-                  className='button nav-button prev'
-                  disabled={isLoading}
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={nextCard}
-                  className='button nav-button next'
-                  disabled={isLoading}
-                >
-                  Siguiente
-                </button>
+                {speechResult}
               </div>
+            )}
 
-              <div className='card-counter'>
-                Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
-                {currentCards.length}
+            <div className='card-content-area'>
+              <div id='question-text' className='card-text question'>
+                {currentCard.question.split(" ").map((word, idx) => (
+                  <span
+                    key={idx}
+                    className='word'
+                    onClick={() => playAudio(word, currentCard.langQuestion)}
+                    style={{ cursor: "pointer", margin: "0 4px" }}
+                  >
+                    {word}
+                  </span>
+                ))}
               </div>
-            </>
-          ) : (
-            <p className='info-text'>
-              No hay tarjetas en esta categoría. Puedes añadir algunas desde la
-              sección "Gestionar Categorías".
-            </p>
-          )}
-          <button
-            onClick={navigateToHome}
-            className='button back-button'
-            disabled={isLoading}
-          >
-            Volver al Inicio
-          </button>
-        </div>
+            </div>
+
+            <SpeechToTextButton onResult={setSpeechResult} />
+
+            <button
+              onClick={() =>
+                playAudio(currentCard.question, currentCard.langQuestion)
+              }
+              className='button primary-button'
+              disabled={isLoading}
+            >
+              Reproducir Tarjeta
+            </button>
+
+            {/* resto de botones de navegación, mostrar respuesta, etc. */}
+          </div>
+        )}
       </div>
     </>
   );
