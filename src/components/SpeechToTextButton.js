@@ -1,89 +1,125 @@
 // src/components/SpeechToTextButton.js
-import React, { useState, useRef } from "react";
+// Contenido original, asegúrate de que sea este mismo archivo.
+import React, { useState, useEffect } from "react";
 
-const SpeechToTextButton = ({ onResult, disabled, lang = "en-US" }) => {
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef(null);
+// Web Speech API
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
-  const startListening = () => {
-    if (
-      !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
-    ) {
-      alert(
-        "Tu navegador no soporta reconocimiento de voz. Por favor, usa Chrome u otro navegador compatible."
+// Configuración de reconocimiento
+if (recognition) {
+  recognition.interimResults = false; // Solo resultados finales
+  recognition.continuous = false; // Un solo reconocimiento por botón
+  // recognition.maxAlternatives = 1; // La alternativa más probable
+}
+
+const SpeechToTextButton = ({ onResult, lang = "en-US", disabled }) => {
+  const [isRecording, setIsRecording] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!recognition) {
+      setError(
+        "La API de reconocimiento de voz no está disponible en este navegador."
       );
       return;
     }
 
-    if (disabled) return; // No iniciar si está deshabilitado por isLoading
-
-    // Detener cualquier escucha previa si existe
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current.onend = null; // Prevenir que onend se dispare accidentalmente
-    }
-
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.lang = lang; // Usar el idioma pasado por prop
-    recognition.interimResults = false; // Solo resultados finales
-    recognition.maxAlternatives = 1;
+    recognition.lang = lang; // Establece el idioma dinámicamente
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      onResult(transcript); // Pasa el resultado al componente padre
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join("");
+      onResult(transcript);
+      setIsRecording(false);
+      setError(null);
     };
 
     recognition.onerror = (event) => {
-      console.error("Error en reconocimiento de voz:", event.error);
+      console.error("Speech Recognition Error:", event.error);
       if (event.error === "not-allowed") {
-        alert(
-          "Permiso de micrófono denegado. Por favor, permite el acceso al micrófono en la configuración de tu navegador."
+        setError(
+          "Acceso al micrófono denegado. Por favor, permite el acceso en la configuración del navegador."
         );
       } else if (event.error === "no-speech") {
-        onResult("No se detectó voz.");
+        setError("No se detectó voz. Por favor, inténtalo de nuevo.");
       } else {
-        onResult(`Error de reconocimiento: ${event.error}`);
+        setError(`Error de reconocimiento de voz: ${event.error}`);
       }
+      setIsRecording(false);
     };
 
     recognition.onend = () => {
-      setIsListening(false);
-      recognitionRef.current = null; // Limpiar referencia
+      // Si onend se llama sin un resultado o error previo, significa que se detuvo manualmente
+      // o no se detectó suficiente voz para un resultado.
+      if (isRecording) {
+        // Si el estado sigue siendo grabando, significa que no hubo onresult/onerror
+        setIsRecording(false);
+      }
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
-    setIsListening(true);
-  };
+    return () => {
+      recognition.stop();
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+    };
+  }, [lang, onResult, isRecording]); // Dependencia de isRecording para manejar onend
 
-  const stopListening = () => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
+  const toggleRecording = () => {
+    if (!recognition) {
+      setError("La API de reconocimiento de voz no está disponible.");
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
+      setIsRecording(false);
+    } else {
+      setError(null); // Limpiar errores previos
+      try {
+        recognition.start();
+        setIsRecording(true);
+      } catch (e) {
+        console.error("Error al iniciar el reconocimiento:", e);
+        setError(
+          "Error al iniciar el reconocimiento de voz. Inténtalo de nuevo."
+        );
+        setIsRecording(false);
+      }
     }
   };
 
   return (
-    <button
-      onMouseDown={startListening}
-      onMouseUp={stopListening}
-      onTouchStart={startListening}
-      onTouchEnd={stopListening}
-      className={`speech-to-text-button ${isListening ? "listening" : ""}`}
-      disabled={disabled}
-      aria-label='Iniciar/Detener reconocimiento de voz'
-    >
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        fill='currentColor'
-        viewBox='0 0 16 16'
+    <>
+      <button
+        onClick={toggleRecording}
+        className={`speech-to-text-button button ${
+          isRecording ? "recording" : ""
+        }`}
+        disabled={disabled || !recognition}
+        aria-label={
+          isRecording ? "Detener grabación de voz" : "Iniciar grabación de voz"
+        }
       >
-        <path d='M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z' />
-        <path d='M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5' />
-      </svg>
-    </button>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='100%'
+          height='100%'
+          fill='currentColor'
+          viewBox='0 0 16 16'
+        >
+          {isRecording ? (
+            <path d='M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z' />
+          ) : (
+            <path d='M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5' />
+          )}
+        </svg>
+      </button>
+      {error && <p className='error-text'>{error}</p>}
+    </>
   );
 };
 
