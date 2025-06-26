@@ -249,8 +249,9 @@ body {
 /* Ítem de categoría */
 .category-item {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  /* Flex-grow para que la categoría ocupe el espacio */
+  /* Los botones ahora se posicionan absolutamente para no afectar el flujo del texto */
+  align-items: flex-start; /* Alinea los elementos al inicio del cross-axis */
   padding: 1rem;
   border-radius: 0.75rem;
   border: 2px solid #e0e0e0; /* Gris claro para el borde */
@@ -259,8 +260,8 @@ body {
   background-color: #fcfcfc;
   color: #424242;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  /* Ajuste para que el texto de la categoría no se alargue demasiado */
-  position: relative; /* Necesario para que la altura sea más controlable */
+  position: relative; /* Necesario para que .category-actions se posicione absolutamente */
+  min-height: 4.5rem; /* Altura mínima para que los botones tengan espacio */
 }
 
 .category-item.selected {
@@ -285,12 +286,12 @@ body {
   padding: 0;
   cursor: pointer;
   color: inherit;
-  width: 100%;
+  flex-grow: 1; /* Permitir que el texto ocupe el espacio */
   font-size: 1.05rem;
   white-space: nowrap; /* Evita que el texto se rompa */
   overflow: hidden; /* Oculta el desbordamiento */
   text-overflow: ellipsis; /* Añade puntos suspensivos */
-  padding-right: 50px; /* Deja espacio para los botones */
+  padding-right: 120px; /* Espacio para los botones de acción */
   box-sizing: border-box;
 }
 
@@ -299,16 +300,19 @@ body {
   cursor: not-allowed;
 }
 
-/* Contenedor de acciones de categoría: ahora es flex column para justificado vertical */
+/* Contenedor de acciones de categoría: ahora es flex row y posicionado absoluto */
 .category-actions {
   display: flex;
-  flex-direction: column; /* Cambiado a columna */
+  flex-direction: row; /* Cambiado a fila para botones uno al lado del otro */
   gap: 0.4rem; /* Espacio más pequeño entre botones */
-  /* Reajustado para posicionar a la derecha absoluta */
-  position: absolute;
+  position: absolute; /* Posicionamiento absoluto */
   top: 0.75rem; /* Alineado con el padding de .category-item */
   right: 0.75rem; /* Alineado con el padding de .category-item */
-  align-items: flex-end; /* Justifica a la derecha */
+  align-items: center; /* Centrar verticalmente los iconos */
+  height: calc(
+    100% - 1.5rem
+  ); /* Ocupa la altura del padre menos el padding vertical */
+  justify-content: flex-end; /* Justificar a la derecha */
 }
 
 /* Estilos para los botones de icono dentro de .category-actions */
@@ -340,11 +344,7 @@ body {
 .quiz-button {
   background-color: #ff9800; /* Naranja */
   color: #ffffff;
-  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
-  padding: 0;
-  border-radius: 50%;
-  width: 36px; /* Tamaño del botón de icono */
-  height: 36px;
+  /* Ya están definidos por .category-actions .button */
 }
 .quiz-button:hover:not(:disabled) {
   background-color: #fb8c00;
@@ -354,11 +354,7 @@ body {
 .add-item-button {
   background-color: #2196f3; /* Azul más vibrante */
   color: #ffffff;
-  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
-  padding: 0;
-  border-radius: 50%;
-  width: 36px; /* Tamaño del botón de icono */
-  height: 36px;
+  /* Ya están definidos por .category-actions .button */
 }
 .add-item-button:hover:not(:disabled) {
   background-color: #1976d2; /* Azul más oscuro al hover */
@@ -368,11 +364,7 @@ body {
 .edit-button {
   background-color: #ffc107; /* Amarillo */
   color: #333; /* Texto oscuro para contraste */
-  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
-  padding: 0;
-  border-radius: 50%;
-  width: 36px; /* Tamaño del botón de icono */
-  height: 36px;
+  /* Ya están definidos por .category-actions .button */
 }
 .edit-button:hover:not(:disabled) {
   background-color: #ffb300;
@@ -381,11 +373,7 @@ body {
 .delete-button {
   background-color: #f44336; /* Rojo */
   color: #ffffff;
-  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
-  padding: 0;
-  border-radius: 50%;
-  width: 36px; /* Tamaño del botón de icono */
-  height: 36px;
+  /* Ya están definidos por .category-actions .button */
 }
 .delete-button:hover:not(:disabled) {
   background-color: #d32f2f;
