@@ -249,20 +249,19 @@ body {
 /* Ítem de categoría */
 .category-item {
   display: flex;
-  flex-direction: column; /* Cambiado a columna para apilar texto y botones */
+  flex-direction: column; /* Columna para apilar texto y acciones */
   align-items: flex-start; /* Alinea el texto a la izquierda */
-  gap: 0.6rem; /* Espacio entre el texto y el grupo de botones */
+  gap: 0.4rem; /* Espacio entre el texto y el grupo de botones de acción */
   padding: 1rem;
   border-radius: 0.75rem;
-  border: 2px solid #e0e0e0; /* Gris claro para el borde */
+  border: 2px solid #e0e0e0;
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out;
   background-color: #fcfcfc;
   color: #424242;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: relative;
-  min-height: 4.5rem; /* Altura mínima para que los botones tengan espacio */
-  /* Eliminado justify-content: space-between; ya que ahora es columna */
+  min-height: 4.5rem; /* Altura mínima para asegurar espacio */
 }
 
 .category-item.selected {
@@ -295,7 +294,6 @@ body {
   text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es muy largo */
   box-sizing: border-box;
   line-height: 1.3; /* Ajuste para texto multi-línea */
-  /* Eliminado padding-right fijo, ya no es necesario con la nueva disposición */
 }
 
 .category-button:disabled {
@@ -303,16 +301,15 @@ body {
   cursor: not-allowed;
 }
 
-/* Contenedor de acciones de categoría: ahora es flex row y posicionado absoluto */
+/* Contenedor de acciones de categoría: Alinear a la derecha y en fila */
 .category-actions {
   display: flex;
-  flex-direction: row; /* Los botones de acción seguirán uno al lado del otro */
+  flex-direction: row; /* Botones uno al lado del otro */
   gap: 0.4rem; /* Espacio entre botones */
   align-items: center; /* Centrar verticalmente los iconos */
-  flex-shrink: 0; /* IMPEDIR que este grupo de botones se encoja */
-  /* Posicionar a la derecha dentro de la columna */
-  align-self: flex-end; /* Alinear este grupo a la derecha dentro del .category-item (que es columna) */
-  margin-top: 0.5rem; /* Espacio entre el nombre de la categoría y los botones */
+  justify-content: flex-end; /* Justificar a la derecha */
+  width: 100%; /* Ocupa todo el ancho disponible */
+  margin-top: 0.5rem; /* Espacio entre el nombre de la categoría y este grupo */
 }
 
 /* Estilos para los botones de icono dentro de .category-actions */
