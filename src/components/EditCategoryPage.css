@@ -1,0 +1,137 @@
+/* src/components/EditCategoryPage.css */
+
+.edit-category-page {
+  padding-top: 20px; /* Espacio para el título de la página */
+}
+
+.edit-category-page .section-container {
+  margin-bottom: 25px;
+}
+
+.edit-category-page .section-title {
+  margin-bottom: 15px;
+}
+
+.edit-category-page .input-group {
+  flex-direction: column; /* Apila label e input */
+  align-items: flex-start; /* Alinea a la izquierda */
+  margin-bottom: 15px;
+}
+
+.edit-category-page .input-label {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--text-color-dark);
+  font-size: 0.95em;
+}
+
+.edit-category-page .input-field {
+  width: 100%; /* Asegura que el input ocupe todo el ancho */
+  max-width: 400px; /* Limita el ancho en pantallas grandes */
+}
+
+.cards-edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.card-edit-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background-color: #fefefe;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.card-edit-inputs {
+  display: flex;
+  flex-wrap: wrap; /* Permite que los inputs se envuelvan en pantallas pequeñas */
+  gap: 15px;
+  flex-grow: 1; /* Ocupa el espacio disponible */
+  align-items: flex-end; /* Alinea los labels con los inputs si tienen diferentes alturas */
+}
+
+.card-input-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Permite que cada grupo de input crezca */
+  min-width: 180px; /* Ancho mínimo para los inputs */
+}
+
+.card-input-group .input-field {
+  margin-bottom: 0; /* Ya no es necesario margin-bottom en los inputs individuales aquí */
+}
+
+.delete-card-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute; /* Posicionamiento absoluto para el botón de eliminar */
+  top: 10px;
+  right: 10px;
+  background-color: var(--error-color); /* Color rojo para eliminar */
+  color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 10; /* Asegura que esté por encima de otros elementos */
+}
+
+.delete-card-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.delete-card-button:hover:not(:disabled) {
+  background-color: #c0392b;
+  transform: scale(1.05);
+}
+
+.add-new-card-button {
+  margin-top: 20px;
+  width: auto; /* Ajusta el ancho al contenido */
+  align-self: center; /* Centrar dentro del contenedor flex */
+}
+
+.edit-actions-group {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-edit-inputs {
+    flex-direction: column; /* Apila los inputs de las tarjetas en móviles */
+    width: 100%;
+  }
+
+  .card-input-group {
+    width: 100%; /* Ocupa todo el ancho disponible */
+    min-width: unset;
+  }
+
+  .edit-actions-group {
+    flex-direction: column; /* Apila los botones de acción en móviles */
+  }
+
+  .edit-actions-group .button {
+    width: 100%;
+  }
+
+  .delete-card-button {
+    position: static; /* Quita el posicionamiento absoluto en móviles */
+    margin: 10px auto 0; /* Centra el botón si es una línea separada */
+    width: 100%;
+    border-radius: 8px; /* Hazlo rectangular en móvil si no es absoluto */
+  }
+}

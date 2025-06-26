@@ -9,10 +9,11 @@ import PracticeCard from "./components/PracticeCard";
 import QuizCard from "./components/QuizCard";
 import MessageDisplay from "./components/MessageDisplay";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
+import EditCategoryPage from "./components/EditCategoryPage"; // ¡Nuevo componente!
 
 // Importar utilidades
 import { playAudio, b64toBlob } from "./utils/audioUtils";
-import { normalizeText, renderClickableText } from "./utils/textUtils"; // Se mueve aquí aunque se pase como prop a PracticeCard/QuizCard
+import { normalizeText, renderClickableText } from "./utils/textUtils";
 
 // Main App Component
 const App = () => {
@@ -27,16 +28,16 @@ const App = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // State para la edición de categorías
-  const [isEditingCategory, setIsEditingCategory] = useState(null);
-  const [editedCategoryName, setEditedCategoryName] = useState("");
+  // State para la edición de categorías (ya no es inline, ahora es una página)
+  // const [isEditingCategory, setIsEditingCategory] = useState(null); // Esto ya no se usará para la edición directa
+  // const [editedCategoryName, setEditedCategoryName] = useState(""); // Esto ya no se usará para la edición directa
 
-  // State para el modal de confirmación de eliminación
+  // State para el modal de confirmación de eliminación de CATEGORÍA
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState(null);
 
   // Nuevo estado para la navegación de páginas
-  const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage', 'quizPage'
+  const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage', 'quizPage', 'editCategoryPage'
 
   // Nuevo estado para el texto grabado del STT (siempre muestra lo del micro)
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
@@ -78,28 +79,39 @@ const App = () => {
   const navigateToAddCard = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("addCardPage");
+    setNewCardQuestion(""); // Limpiar campos al navegar
+    setNewCardAnswer(""); // Limpiar campos al navegar
     setRecordedMicrophoneText("");
     setUserTypedAnswer("");
     setMatchFeedback(null);
-    setQuizCorrectAnswerDisplay(""); // Limpiar al ir a añadir tarjeta
+    setQuizCorrectAnswerDisplay("");
   };
   const navigateToPracticePage = (categoryId) => {
     setSelectedCategoryId(categoryId);
+    setCurrentCardIndex(0); // Reinicia el índice al entrar a la práctica
+    setIsAnswerVisible(false); // Oculta la respuesta al inicio
     setCurrentPage("practicePage");
     setRecordedMicrophoneText("");
     setUserTypedAnswer("");
     setMatchFeedback(null);
-    setQuizCorrectAnswerDisplay(""); // Limpiar al ir a práctica
+    setQuizCorrectAnswerDisplay("");
   };
-  // Nuevo: Función para navegar a la página del quiz
   const navigateToQuizPage = (categoryId) => {
     setSelectedCategoryId(categoryId);
+    setCurrentCardIndex(0); // Reinicia el índice al entrar al quiz
     setCurrentPage("quizPage"); // Cambia a la nueva página de quiz
     setRecordedMicrophoneText("");
     setUserTypedAnswer("");
     setMatchFeedback(null);
-    setQuizCorrectAnswerDisplay(""); // Limpiar al ir a quiz
-    // No limpiamos masteredCardIds aquí, solo al volver al inicio
+    setQuizCorrectAnswerDisplay("");
+    masteredCardIds.current.clear(); // Reiniciar tarjetas acertadas para el nuevo quiz
+  };
+  // Nueva función de navegación para la página de edición de categoría
+  const navigateToEditCategoryPage = (categoryId) => {
+    setSelectedCategoryId(categoryId);
+    setCurrentPage("editCategoryPage");
+    setMessage(""); // Limpiar mensajes al navegar a la página de edición
+    setIsLoading(false); // Limpiar estado de carga
   };
 
   // --- Función para cargar datos desde las API de Vercel ---
@@ -135,9 +147,10 @@ const App = () => {
 
       setCategories(data);
 
+      // Si la categoría seleccionada ya no existe o estamos en home, seleccionar la primera o ninguna
       if (
-        currentPage === "home" ||
-        !data.some((cat) => cat.id === selectedCategoryId)
+        currentPage === "home" || // Si estamos en home, seleccionamos la primera
+        !data.some((cat) => cat.id === selectedCategoryId) // Si la categoría actual no está en los datos, reseteamos
       ) {
         if (data.length > 0) {
           setSelectedCategoryId(data[0].id);
@@ -171,7 +184,7 @@ const App = () => {
     setMatchFeedback(null);
     setQuizCorrectAnswerDisplay(""); // Limpiar al cambiar de tarjeta/categoría
     masteredCardIds.current.clear();
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, currentPage]); // Añadir currentPage como dependencia para resetear al cambiar de página
 
   // Obtiene los datos de la categoría actual
   const currentCategory = Array.isArray(categories)
@@ -189,16 +202,19 @@ const App = () => {
   const handleSpeechResult = (transcript) => {
     setRecordedMicrophoneText(transcript); // Siempre mostrar lo que el micrófono grabó
 
+    // La lógica de comparación debe ser la misma tanto para práctica como para quiz
     if (currentCard && currentCard.question) {
       const normalizedTranscript = normalizeText(transcript);
-      const normalizedQuestion = normalizeText(currentCard.question);
+      const normalizedTargetText =
+        currentPage === "quizPage"
+          ? normalizeText(currentCard.question) // En quiz, se compara con la pregunta (inglés)
+          : normalizeText(currentCard.question); // En práctica, también se compara con la pregunta (inglés)
 
-      if (normalizedTranscript === normalizedQuestion) {
+      if (normalizedTranscript === normalizedTargetText) {
         setMatchFeedback("correct");
         if (currentPage === "quizPage") {
-          // Solo añadir a acertadas en modo quiz
           masteredCardIds.current.add(currentCard.id);
-          setQuizCorrectAnswerDisplay(currentCard.question); // Mostrar la respuesta correcta en inglés
+          setQuizCorrectAnswerDisplay(currentCard.question);
         }
         const audio = new Audio(CORRECT_SOUND_PATH);
         audio
@@ -208,7 +224,7 @@ const App = () => {
           );
       } else {
         setMatchFeedback("incorrect");
-        setQuizCorrectAnswerDisplay(""); // Si es incorrecto, no mostrar la respuesta correcta
+        setQuizCorrectAnswerDisplay("");
       }
     } else {
       setMatchFeedback(null);
@@ -397,80 +413,21 @@ const App = () => {
   };
 
   /**
-   * Inicia el proceso de edición para una categoría.
-   * @param {object} category - El objeto de la categoría a editar.
-   */
-  const startEditCategory = (category) => {
-    setIsEditingCategory(category.id);
-    setEditedCategoryName(category.name);
-  };
-
-  /**
-   * Guarda el nombre editado de la categoría llamando a la API de Vercel.
-   */
-  const saveEditedCategory = async () => {
-    if (!editedCategoryName.trim()) {
-      setMessage("El nombre de la categoría no puede estar vacío.");
-      return;
-    }
-    setIsLoading(true);
-    setMessage("Actualizando categoría...");
-    try {
-      const url = "/api/categories/update";
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: isEditingCategory,
-          name: editedCategoryName.trim(),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Error HTTP: ${response.status} - ${
-            response.statusText
-          }. Respuesta: ${errorText.substring(0, 200)}...`
-        );
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setMessage(`Categoría "${editedCategoryName}" actualizada.`);
-        setIsEditingCategory(null);
-        setEditedCategoryName("");
-        await fetchCategories();
-      } else {
-        throw new Error(
-          result.error || "Error desconocido al actualizar categoría."
-        );
-      }
-    } catch (error) {
-      console.error("Error al guardar categoría editada:", error);
-      setMessage(`Error al actualizar la categoría: ${error.message}.`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Cancela el proceso de edición de la categoría o la eliminación.
-   */
-  const cancelAction = () => {
-    setIsEditingCategory(null);
-    setEditedCategoryName("");
-    setShowDeleteConfirm(false);
-    setCategoryToDeleteId(null);
-  };
-
-  /**
-   * Muestra el modal de confirmación de eliminación.
-   * @param {string} categoryId - El ID de la categoría a eliminar.
+   * Función para confirmar la eliminación de una categoría.
    */
   const confirmDeleteCategory = (categoryId) => {
     setCategoryToDeleteId(categoryId);
     setShowDeleteConfirm(true);
+  };
+
+  /**
+   * Cancela la acción de edición o eliminación de categoría.
+   */
+  const cancelAction = () => {
+    // setIsEditingCategory(null); // Esto ya no se usa para la edición directa
+    // setEditedCategoryName(""); // Esto ya no se usa para la edición directa
+    setShowDeleteConfirm(false);
+    setCategoryToDeleteId(null);
   };
 
   /**
@@ -501,7 +458,8 @@ const App = () => {
         setMessage(`Categoría eliminada.`);
         setShowDeleteConfirm(false);
         setCategoryToDeleteId(null);
-        await fetchCategories();
+        await fetchCategories(); // Recargar categorías para reflejar el cambio
+        navigateToHome(); // Asegurarse de volver a la vista principal
       } else {
         throw new Error(
           result.error || "Error desconocido al eliminar categoría."
@@ -515,31 +473,40 @@ const App = () => {
     }
   };
 
+  // Función para pasar a EditCategoryPage para que recargue las categorías en App.js
+  const handleSaveCategoryChanges = async () => {
+    setMessage("Recargando datos después de la edición...");
+    await fetchCategories(); // Recargar los datos después de guardar cambios en EditCategoryPage
+    setMessage("Datos actualizados.");
+  };
+
   // --- Renderización Principal de App ---
   return (
     <div className='app-container'>
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
 
+      {/* MessageDisplay se encarga de mostrar mensajes y estado de carga */}
       <MessageDisplay message={message} isLoading={isLoading} />
 
       {currentPage === "home" && (
         <CategoryList
           categories={categories}
           selectedCategoryId={selectedCategoryId}
-          isEditingCategory={isEditingCategory}
-          editedCategoryName={editedCategoryName}
+          // isEditingCategory={isEditingCategory} // Ya no se usa para edición inline
+          // editedCategoryName={editedCategoryName} // Ya no se usa para edición inline
           newCategoryName={newCategoryName}
           isLoading={isLoading}
           onSelectCategory={setSelectedCategoryId}
           onNavigateToAddCard={navigateToAddCard}
           onNavigateToPracticePage={navigateToPracticePage}
           onNavigateToQuizPage={navigateToQuizPage}
-          onStartEditCategory={startEditCategory}
-          onSaveEditedCategory={saveEditedCategory}
-          onCancelEditCategory={cancelAction}
-          onConfirmDeleteCategory={confirmDeleteCategory}
+          onNavigateToEditCategoryPage={navigateToEditCategoryPage} // ¡Nueva prop!
+          // onStartEditCategory={startEditCategory} // Ya no se usa para edición inline
+          // onSaveEditedCategory={saveEditedCategory} // Ya no se usa para edición inline
+          // onCancelEditCategory={cancelAction} // Esto solo es para el modal de delete category ahora
+          onConfirmDeleteCategory={confirmDeleteCategory} // Sigue siendo para el modal de delete category
           onNewCategoryNameChange={setNewCategoryName}
-          onEditedCategoryNameChange={setEditedCategoryName}
+          // onEditedCategoryNameChange={setEditedCategoryName} // Ya no se usa para edición inline
           onAddCategory={addCategory}
         />
       )}
@@ -569,7 +536,7 @@ const App = () => {
           onToggleAnswerVisible={toggleAnswerVisible}
           onNextCard={nextCard}
           onPrevCard={prevCard}
-          onHandleSpeechResult={handleSpeechResult} // Pasar la función del App.js
+          onHandleSpeechResult={handleSpeechResult}
           onPlayAudio={(text, lang) =>
             playAudio(
               text,
@@ -594,7 +561,7 @@ const App = () => {
           matchFeedback={matchFeedback}
           quizCorrectAnswerDisplay={quizCorrectAnswerDisplay}
           isLoading={isLoading}
-          onHandleSpeechResult={handleSpeechResult} // Pasar la función del App.js
+          onHandleSpeechResult={handleSpeechResult}
           onPlayAudio={(text, lang) =>
             playAudio(
               text,
@@ -611,6 +578,16 @@ const App = () => {
           onNextCard={nextCard}
           onPrevCard={prevCard}
           onNavigateToHome={navigateToHome}
+        />
+      )}
+
+      {currentPage === "editCategoryPage" && (
+        <EditCategoryPage
+          category={currentCategory} // Pasamos la categoría completa
+          onSaveCategoryChanges={handleSaveCategoryChanges} // Función para recargar categorías
+          onNavigateToHome={navigateToHome}
+          isLoading={isLoading} // Pasamos el isLoading general de App
+          setMessage={setMessage} // Pasamos la función setMessage de App
         />
       )}
 
