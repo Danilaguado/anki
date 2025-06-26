@@ -716,75 +716,135 @@ const App = () => {
     </>
   );
 
-  const renderPracticePage = () => (
-    <>
-      {message && (
-        <div className='message-box'>
-          <span>{message}</span>
-        </div>
-      )}
-      {isLoading && (
-        <div className='loading-box'>
-          <span>Cargando...</span>
-        </div>
-      )}
+  const renderPracticePage = () => {
+    return (
       <div className='main-content-wrapper'>
-        {currentCard ? (
+        {currentCards.length > 0 ? (
           <div className='card-container'>
+            {/* Mensajes de feedback */}
+            {message && (
+              <div className='message-box' role='alert'>
+                <span className='message-text'>{message}</span>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className='loading-box'>
+                <span className='loading-text'>Cargando o procesando...</span>
+              </div>
+            )}
+
+            {/* Texto grabado del micrófono */}
             {recordedText && (
               <div className='recorded-text-display'>{recordedText}</div>
             )}
-            <div className={`card-content-area ${matchFeedback}`}>
-              <div className='card-text question'>
+
+            {/* Área de contenido de la tarjeta con pregunta y respuesta */}
+            <div
+              className={`card-content-area ${
+                matchFeedback === "correct" ? "match-correct" : ""
+              } ${matchFeedback === "incorrect" ? "match-incorrect" : ""}`}
+            >
+              <div id='question-text' className='card-text question'>
                 {renderClickableText(
-                  currentCard.question,
-                  currentCard.langQuestion || "en-US",
+                  currentCard?.question,
+                  currentCard?.langQuestion || "en-US",
                   true
                 )}
               </div>
-              {isAnswerVisible && (
-                <div className='card-text answer'>
-                  {renderClickableText(
-                    currentCard.answer,
-                    currentCard.langAnswer || "es-ES",
-                    false
-                  )}
-                </div>
-              )}
+              <div
+                id='answer-text'
+                className={`card-text answer ${
+                  isAnswerVisible ? "" : "hidden"
+                }`}
+              >
+                {renderClickableText(
+                  currentCard?.answer,
+                  currentCard?.langAnswer || "es-ES",
+                  false
+                )}
+              </div>
             </div>
-            <div className='controls'>
+
+            {/* Botones de micrófono y reproducir */}
+            <div className='microphone-play-buttons-group'>
               <SpeechToTextButton
                 onResult={handleSpeechResult}
                 disabled={isLoading}
-                lang={currentCard.langQuestion}
+                lang={currentCard?.langQuestion || "en-US"}
               />
               <button
                 onClick={() =>
-                  playAudio(currentCard.question, currentCard.langQuestion)
+                  playAudio(
+                    currentCard?.question,
+                    currentCard?.langQuestion || "en-US"
+                  )
                 }
+                className='button audio-button-round primary-button'
+                disabled={isLoading}
+                aria-label='Reproducir Tarjeta Completa'
               >
-                🔈
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  width='100%'
+                  height='100%'
+                  fill='currentColor'
+                  viewBox='0 0 16 16'
+                >
+                  <path d='M10.804 8 5 4.633v6.734zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696z' />
+                </svg>
               </button>
-              <button onClick={toggleAnswerVisibility}>
-                {isAnswerVisible ? "Ocultar" : "Mostrar"}
-              </button>
-              <button onClick={prevCard}>Anterior</button>
-              <button onClick={nextCard}>Siguiente</button>
             </div>
+
+            {/* Mostrar/Ocultar Traducción */}
+            <button
+              onClick={toggleAnswerVisibility}
+              className='button toggle-answer-button'
+              disabled={isLoading}
+            >
+              {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
+            </button>
+
+            {/* Navegación entre tarjetas */}
+            <div className='navigation-buttons-group'>
+              <button
+                onClick={prevCard}
+                className='button nav-button prev'
+                disabled={isLoading}
+              >
+                Anterior
+              </button>
+              <button
+                onClick={nextCard}
+                className='button nav-button next'
+                disabled={isLoading}
+              >
+                Siguiente
+              </button>
+            </div>
+
             <div className='card-counter'>
-              Tarjeta {currentCardIndex + 1} de {currentCards.length}
+              Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
+              {currentCards.length}
             </div>
-            <button onClick={navigateToHome}>Volver al Inicio</button>
           </div>
         ) : (
           <p className='info-text'>
-            No hay tarjetas en esta categoría. Agrégalas desde "Gestionar
-            Categorías".
+            No hay tarjetas en esta categoría. Puedes añadir algunas desde la
+            sección "Gestionar Categorías".
           </p>
         )}
+
+        <button
+          onClick={navigateToHome}
+          className='button back-button'
+          disabled={isLoading}
+        >
+          Volver al Inicio
+        </button>
       </div>
-    </>
-  );
+    );
+  };
 
   // --- Renderización Principal de App ---
   return (
