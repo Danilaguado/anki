@@ -726,9 +726,17 @@ const App = () => {
                 Reproducir Tarjeta
               </button>
 
+              {/* Botón de Mostrar/Ocultar Traducción */}
+              <button
+                onClick={toggleAnswerVisibility}
+                className='button toggle-answer-button'
+                disabled={isLoading}
+              >
+                {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
+              </button>
+
+              {/* Área de contenido de la tarjeta con pregunta y respuesta */}
               <div className='card-content-area'>
-                {" "}
-                {/* Movido después del botón de reproducción de tarjeta */}
                 <div id='question-text' className='card-text question'>
                   {renderClickableText(
                     currentCard.question,
@@ -747,14 +755,6 @@ const App = () => {
                   )}
                 </div>
               </div>
-
-              <button
-                onClick={toggleAnswerVisibility}
-                className='button toggle-answer-button'
-                disabled={isLoading}
-              >
-                {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
-              </button>
 
               <div className='navigation-buttons-group'>
                 <button
