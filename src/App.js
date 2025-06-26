@@ -15,6 +15,7 @@ const App = () => {
   const [newCardAnswer, setNewCardAnswer] = useState(""); // Inicialización correcta
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const audioCache = useRef(new Map());
 
   // State para la edición de categorías
   const [isEditingCategory, setIsEditingCategory] = useState(null);
@@ -1140,7 +1141,7 @@ const App = () => {
                 Sí, Eliminar
               </button>
               <button
-                onClick={cancelDelete}
+                onClick={navigateToHome}
                 className='button modal-cancel-button'
                 disabled={isLoading}
               >
