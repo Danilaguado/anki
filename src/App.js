@@ -1,7 +1,7 @@
 // src/App.js
 import React, { useState, useEffect } from "react";
-import SpeechToTextButton from "./components/SpeechToTextButton";
-import "./index.css"; // Asegúrate de que esta línea esté presente para importar tu CSS
+import "./index.css";
+import SpeechToTextButton from "./components/SpeechToTextButton"; // Importar el nuevo componente STT
 
 // Main App Component
 const App = () => {
@@ -15,6 +15,7 @@ const App = () => {
   const [newCardAnswer, setNewCardAnswer] = useState("");
   const [message, setMessage] = useState(""); // Para feedback al usuario
   const [isLoading, setIsLoading] = useState(false); // Estado para indicar carga/procesamiento de cualquier operación
+
   // State para la edición de categorías
   const [isEditingCategory, setIsEditingCategory] = useState(null);
   const [editedCategoryName, setEditedCategoryName] = useState("");
@@ -26,18 +27,23 @@ const App = () => {
   // Nuevo estado para la navegación de páginas
   const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage'
 
-  //Para el botón Speech to text
-  const [speechResult, setSpeechResult] = useState("");
+  // Nuevo estado para el texto grabado del STT
+  const [recordedText, setRecordedText] = useState("");
 
   // --- Funciones de Navegación ---
-  const navigateToHome = () => setCurrentPage("home");
+  const navigateToHome = () => {
+    setCurrentPage("home");
+    setRecordedText(""); // Limpiar texto grabado al volver a la home
+  };
   const navigateToAddCard = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("addCardPage");
+    setRecordedText(""); // Limpiar texto grabado al ir a añadir tarjeta
   };
   const navigateToPracticePage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("practicePage");
+    setRecordedText(""); // Limpiar texto grabado al ir a practicar
   };
 
   // --- Función para cargar datos desde las API de Vercel ---
@@ -73,7 +79,6 @@ const App = () => {
 
       setCategories(data);
 
-      // Si volvemos a home o la categoría seleccionada ya no existe, ajusta la selección
       if (
         currentPage === "home" ||
         !data.some((cat) => cat.id === selectedCategoryId)
@@ -105,7 +110,8 @@ const App = () => {
   useEffect(() => {
     setCurrentCardIndex(0);
     setIsAnswerVisible(false);
-  }, [selectedCategoryId]);
+    setRecordedText(""); // Limpiar texto grabado al cambiar de tarjeta
+  }, [selectedCategoryId, currentCardIndex]); // Depende de selectedCategoryId y currentCardIndex
 
   // Obtiene los datos de la categoría actual
   const currentCategory = Array.isArray(categories)
@@ -113,6 +119,14 @@ const App = () => {
     : undefined;
   const currentCards = currentCategory ? currentCategory.cards || [] : [];
   const currentCard = currentCards[currentCardIndex];
+
+  /**
+   * Maneja el resultado del reconocimiento de voz.
+   * @param {string} transcript - El texto transcrito.
+   */
+  const handleSpeechResult = (transcript) => {
+    setRecordedText(transcript); // Actualiza el estado con el texto grabado
+  };
 
   /**
    * Reproduce audio para un texto dado en un idioma específico usando ElevenLabs.
@@ -235,6 +249,7 @@ const App = () => {
     if (currentCards.length > 0) {
       setCurrentCardIndex((prevIndex) => (prevIndex + 1) % currentCards.length);
       setIsAnswerVisible(false);
+      setRecordedText(""); // Limpiar texto grabado al cambiar de tarjeta
     }
   };
 
@@ -248,6 +263,7 @@ const App = () => {
           (prevIndex - 1 + currentCards.length) % currentCards.length
       );
       setIsAnswerVisible(false);
+      setRecordedText(""); // Limpiar texto grabado al cambiar de tarjeta
     }
   };
 
@@ -674,55 +690,106 @@ const App = () => {
         </div>
       )}
       <div className='main-content-wrapper'>
-        {selectedCategoryId && currentCategory && (
-          <div className='card-container'>
-            <h2 className='card-title'>Tema Actual: {currentCategory.name}</h2>
+        <div className='card-container'>
+          <h2 className='card-title'>
+            Tema Actual: {currentCategory?.name || "N/A"}
+          </h2>
+          {currentCards.length > 0 ? (
+            <>
+              {/* Texto grabado del micrófono */}
+              {recordedText && (
+                <div className='recorded-text-display'>{recordedText}</div>
+              )}
 
-            {speechResult && (
-              <div
-                style={{
-                  backgroundColor: "#000",
-                  color: "#fff",
-                  padding: "8px",
-                  marginBottom: "10px",
-                  borderRadius: "6px",
-                  textAlign: "center",
-                }}
+              {/* Contenedor del botón de Speech-to-Text (Micrófono) */}
+              <div className='speech-button-container'>
+                <SpeechToTextButton
+                  onResult={handleSpeechResult}
+                  disabled={isLoading}
+                  lang={
+                    currentCard?.langQuestion || "en-US"
+                  } /* Idioma del reconocimiento, basado en la pregunta */
+                />
+              </div>
+
+              <div className='card-content-area'>
+                <div id='question-text' className='card-text question'>
+                  {renderClickableText(
+                    currentCard.question,
+                    currentCard.langQuestion || "en-US"
+                  )}
+                </div>
+                <div
+                  id='answer-text'
+                  className={`card-text answer ${
+                    isAnswerVisible ? "" : "hidden"
+                  }`}
+                >
+                  {renderClickableText(
+                    currentCard.answer,
+                    currentCard.langAnswer || "es-ES"
+                  )}
+                </div>
+              </div>
+
+              {/* Único botón de Reproducir para toda la tarjeta */}
+              <button
+                onClick={() =>
+                  playAudio(
+                    currentCard.question,
+                    currentCard.langQuestion || "en-US"
+                  )
+                }
+                className='button audio-button full-card primary-button'
+                disabled={isLoading}
               >
-                {speechResult}
+                Reproducir Tarjeta
+              </button>
+
+              <button
+                onClick={toggleAnswerVisibility}
+                className='button toggle-answer-button'
+                disabled={isLoading}
+              >
+                {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
+              </button>
+
+              <div className='navigation-buttons-group'>
+                <button
+                  onClick={prevCard}
+                  className='button nav-button prev'
+                  disabled={isLoading}
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={nextCard}
+                  className='button nav-button next'
+                  disabled={isLoading}
+                >
+                  Siguiente
+                </button>
               </div>
-            )}
 
-            <div className='card-content-area'>
-              <div id='question-text' className='card-text question'>
-                {currentCard.question.split(" ").map((word, idx) => (
-                  <span
-                    key={idx}
-                    className='word'
-                    onClick={() => playAudio(word, currentCard.langQuestion)}
-                    style={{ cursor: "pointer", margin: "0 4px" }}
-                  >
-                    {word}
-                  </span>
-                ))}
+              <div className='card-counter'>
+                Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
+                {currentCards.length}
               </div>
-            </div>
-
-            <SpeechToTextButton onResult={setSpeechResult} />
-
-            <button
-              onClick={() =>
-                playAudio(currentCard.question, currentCard.langQuestion)
-              }
-              className='button primary-button'
-              disabled={isLoading}
-            >
-              Reproducir Tarjeta
-            </button>
-
-            {/* resto de botones de navegación, mostrar respuesta, etc. */}
-          </div>
-        )}
+            </>
+          ) : (
+            <p className='info-text'>
+              No hay tarjetas en esta categoría. Puedes añadir algunas desde la
+              sección "Gestionar Categorías".
+            </p>
+          )}
+          <button
+            onClick={navigateToHome}
+            className='button back-button'
+            disabled={isLoading}
+          >
+            Volver al Inicio
+          </button>
+        </div>
       </div>
     </>
   );

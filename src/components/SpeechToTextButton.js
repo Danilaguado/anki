@@ -1,6 +1,7 @@
+// src/components/SpeechToTextButton.js
 import React, { useState, useRef } from "react";
 
-const SpeechToTextButton = ({ onResult }) => {
+const SpeechToTextButton = ({ onResult, disabled, lang = "en-US" }) => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
 
@@ -8,29 +9,49 @@ const SpeechToTextButton = ({ onResult }) => {
     if (
       !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
     ) {
-      alert("Tu navegador no soporta reconocimiento de voz.");
+      alert(
+        "Tu navegador no soporta reconocimiento de voz. Por favor, usa Chrome u otro navegador compatible."
+      );
       return;
+    }
+
+    if (disabled) return; // No iniciar si está deshabilitado por isLoading
+
+    // Detener cualquier escucha previa si existe
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current.onend = null; // Prevenir que onend se dispare accidentalmente
     }
 
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
+    recognition.lang = lang; // Usar el idioma pasado por prop
+    recognition.interimResults = false; // Solo resultados finales
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
-      onResult(transcript);
+      onResult(transcript); // Pasa el resultado al componente padre
     };
 
     recognition.onerror = (event) => {
-      console.error("Error en reconocimiento:", event.error);
+      console.error("Error en reconocimiento de voz:", event.error);
+      if (event.error === "not-allowed") {
+        alert(
+          "Permiso de micrófono denegado. Por favor, permite el acceso al micrófono en la configuración de tu navegador."
+        );
+      } else if (event.error === "no-speech") {
+        onResult("No se detectó voz.");
+      } else {
+        onResult(`Error de reconocimiento: ${event.error}`);
+      }
     };
 
     recognition.onend = () => {
       setIsListening(false);
+      recognitionRef.current = null; // Limpiar referencia
     };
 
     recognition.start();
@@ -39,7 +60,7 @@ const SpeechToTextButton = ({ onResult }) => {
   };
 
   const stopListening = () => {
-    if (recognitionRef.current) {
+    if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
     }
   };
@@ -50,24 +71,13 @@ const SpeechToTextButton = ({ onResult }) => {
       onMouseUp={stopListening}
       onTouchStart={startListening}
       onTouchEnd={stopListening}
-      style={{
-        backgroundColor: isListening ? "#888" : "#ccc",
-        borderRadius: "50%",
-        border: "none",
-        padding: "14px",
-        cursor: "pointer",
-        transition: "all 0.2s ease-in-out",
-        transform: isListening ? "scale(1.03)" : "scale(1)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className={`speech-to-text-button ${isListening ? "listening" : ""}`}
+      disabled={disabled}
+      aria-label='Iniciar/Detener reconocimiento de voz'
     >
       <svg
         xmlns='http://www.w3.org/2000/svg'
-        width='20'
-        height='20'
-        fill='white'
+        fill='currentColor'
         viewBox='0 0 16 16'
       >
         <path d='M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z' />

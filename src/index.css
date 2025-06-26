@@ -534,6 +534,71 @@ body {
   font-style: italic;
 }
 
+/* Contenedor del botón de Speech-to-Text */
+.speech-button-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem; /* Espacio entre el botón y el texto */
+  margin-top: 0.5rem; /* Espacio con el título de la tarjeta */
+}
+
+/* Estilos para el botón de Speech-to-Text (micrófono) */
+.speech-to-text-button {
+  width: 60px; /* Tamaño del botón */
+  height: 60px;
+  border-radius: 50%; /* 100% redondeado */
+  background-color: #ccc; /* Gris claro */
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.speech-to-text-button:hover {
+  background-color: #bbb; /* Gris un poco más oscuro al hover */
+  transform: scale(1.01); /* Pequeño aumento al pasar el ratón */
+}
+
+.speech-to-text-button.listening {
+  background-color: #888; /* Gris oscuro al estar presionadp/escuchando */
+  transform: scale(1.03); /* Aumento del 3% */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+}
+
+.speech-to-text-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: scale(1); /* Sin transformación si está deshabilitado */
+  box-shadow: none;
+}
+
+/* SVG dentro del botón */
+.speech-to-text-button svg {
+  width: 50%; /* Asegura que el SVG ocupe la mitad del botón */
+  height: 50%;
+  color: white; /* Color blanco para el icono */
+}
+
+/* Texto grabado del micrófono */
+.recorded-text-display {
+  background-color: #212121; /* Fondo negro */
+  color: #ffffff; /* Letra blanca */
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem; /* Separación con la pregunta en inglés */
+  font-size: 1.2rem;
+  font-weight: 500;
+  text-align: center;
+  width: fit-content; /* Ajustar al contenido */
+  max-width: 90%; /* Máximo ancho */
+  margin-left: auto;
+  margin-right: auto; /* Centrar el bloque */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 /* Botón "Volver al Inicio" */
 .back-button {
   background-color: #607d8b; /* Gris azulado */
