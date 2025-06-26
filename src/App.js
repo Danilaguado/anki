@@ -572,11 +572,11 @@ const App = () => {
     <>
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
 
-      {message && (
+      {/* {message && (
         <div className='message-box' role='alert'>
           <span className='message-text'>{message}</span>
         </div>
-      )}
+      )} */}
 
       {isLoading && (
         <div className='loading-box'>
@@ -637,7 +637,7 @@ const App = () => {
                           Guardar
                         </button>
                         <button
-                          onClick={navigateToHome}
+                          onClick={cancelEditCategory}
                           className='button cancel-button'
                           disabled={isLoading}
                         >
@@ -753,11 +753,11 @@ const App = () => {
   const renderPracticePage = () => {
     return (
       <>
-        {message && (
+        {/* {message && (
           <div className='message-box' role='alert'>
             <span className='message-text'>{message}</span>
           </div>
-        )}
+        )} */}
         {isLoading && (
           <div className='loading-box'>
             <span className='loading-text'>Cargando o procesando...</span>
