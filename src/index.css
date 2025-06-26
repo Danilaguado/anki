@@ -459,11 +459,6 @@ body {
   background-color: rgba(63, 81, 181, 0.1); /* Fondo ligero al pasar el ratón */
 }
 
-/* El texto de la respuesta ya no es clicable ni tiene subrayado por defecto */
-.card-text.question {
-  /* No hay estilos adicionales, ya definidos en .card-text */
-}
-
 .card-text.answer {
   color: #455a64; /* Un gris un poco más claro para la respuesta */
   font-weight: normal; /* La respuesta puede ser de peso normal */
