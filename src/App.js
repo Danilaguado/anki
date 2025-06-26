@@ -15,7 +15,6 @@ const App = () => {
   const [newCardAnswer, setNewCardAnswer] = useState(""); // Inicialización correcta
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const audioCache = useRef(new Map());
 
   // State para la edición de categorías
   const [isEditingCategory, setIsEditingCategory] = useState(null);
@@ -29,13 +28,16 @@ const App = () => {
   // Añadimos 'quizPage'
   const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage', 'quizPage'
 
-  // Nuevo estado para el texto grabado del STT (se usa para micrófono y texto escrito correcto en quiz)
-  const [recordedText, setRecordedText] = useState("");
+  // Nuevo estado para el texto grabado del STT (siempre muestra lo del micro)
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
   // Nuevo estado para la respuesta escrita por el usuario en el quiz
   const [userTypedAnswer, setUserTypedAnswer] = useState("");
 
   // Nuevo estado para el feedback de coincidencia de pronunciación/texto
   const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
+
+  // Nuevo estado para la respuesta correcta que se muestra en el quiz si acierta
+  const [quizCorrectAnswerDisplay, setQuizCorrectAnswerDisplay] = useState("");
 
   // Nuevo: Path al archivo de audio para aciertos
   // Asegúrate de que este path sea accesible públicamente, usualmente se coloca en la carpeta `public/`
@@ -43,6 +45,9 @@ const App = () => {
 
   // Nuevo: Set para guardar los IDs de las tarjetas acertadas en la sesión del quiz
   const masteredCardIds = useRef(new Set()); // Se inicializa con useRef para persistir a través de renders
+
+  // Caché para los URLs de audio (persistirá mientras App esté montada)
+  const audioCache = useRef(new Map());
 
   // --- Funciones de Navegación ---
   const navigateToHome = () => {
@@ -56,31 +61,35 @@ const App = () => {
     console.log("Tarjetas acertadas del quiz limpiadas.");
 
     setCurrentPage("home");
-    setRecordedText("");
-    setUserTypedAnswer(""); // Limpiar respuesta escrita
+    setRecordedMicrophoneText("");
+    setUserTypedAnswer("");
     setMatchFeedback(null);
+    setQuizCorrectAnswerDisplay(""); // Limpiar al volver a home
   };
   const navigateToAddCard = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("addCardPage");
-    setRecordedText("");
-    setUserTypedAnswer(""); // Limpiar respuesta escrita
+    setRecordedMicrophoneText("");
+    setUserTypedAnswer("");
     setMatchFeedback(null);
+    setQuizCorrectAnswerDisplay(""); // Limpiar al ir a añadir tarjeta
   };
   const navigateToPracticePage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("practicePage");
-    setRecordedText("");
-    setUserTypedAnswer(""); // Limpiar respuesta escrita
+    setRecordedMicrophoneText("");
+    setUserTypedAnswer("");
     setMatchFeedback(null);
+    setQuizCorrectAnswerDisplay(""); // Limpiar al ir a práctica
   };
   // Nuevo: Función para navegar a la página del quiz
   const navigateToQuizPage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("quizPage"); // Cambia a la nueva página de quiz
-    setRecordedText("");
-    setUserTypedAnswer(""); // Limpiar respuesta escrita
+    setRecordedMicrophoneText("");
+    setUserTypedAnswer("");
     setMatchFeedback(null);
+    setQuizCorrectAnswerDisplay(""); // Limpiar al ir a quiz
     // No limpiamos masteredCardIds aquí, solo al volver al inicio
   };
 
@@ -148,10 +157,10 @@ const App = () => {
   useEffect(() => {
     setCurrentCardIndex(0);
     setIsAnswerVisible(false);
-    setRecordedText("");
+    setRecordedMicrophoneText(""); // Limpiar al cambiar de tarjeta/categoría
     setUserTypedAnswer(""); // Limpiar al cambiar de tarjeta/categoría
     setMatchFeedback(null);
-    // Importante: al cambiar de categoría en el quiz, también reinicia las tarjetas acertadas
+    setQuizCorrectAnswerDisplay(""); // Limpiar al cambiar de tarjeta/categoría
     masteredCardIds.current.clear();
   }, [selectedCategoryId]);
 
@@ -183,16 +192,18 @@ const App = () => {
    * @param {string} transcript - El texto transcrito.
    */
   const handleSpeechResult = (transcript) => {
+    setRecordedMicrophoneText(transcript); // Siempre mostrar lo que el micrófono grabó
+
     if (currentCard && currentCard.question) {
       const normalizedTranscript = normalizeText(transcript);
       const normalizedQuestion = normalizeText(currentCard.question);
 
       if (normalizedTranscript === normalizedQuestion) {
         setMatchFeedback("correct");
-        setRecordedText(transcript); // Mostrar transcripción solo si es correcta
         if (currentPage === "quizPage") {
           // Solo añadir a acertadas en modo quiz
           masteredCardIds.current.add(currentCard.id);
+          setQuizCorrectAnswerDisplay(currentCard.question); // Mostrar la respuesta correcta en inglés
         }
         const audio = new Audio(CORRECT_SOUND_PATH);
         audio
@@ -202,11 +213,11 @@ const App = () => {
           );
       } else {
         setMatchFeedback("incorrect");
-        setRecordedText(""); // Limpiar si es incorrecto (para micro o texto escrito)
+        setQuizCorrectAnswerDisplay(""); // Si es incorrecto, no mostrar la respuesta correcta
       }
     } else {
       setMatchFeedback(null);
-      setRecordedText("");
+      setQuizCorrectAnswerDisplay("");
     }
   };
 
@@ -216,6 +227,8 @@ const App = () => {
   const checkTypedAnswer = () => {
     if (!userTypedAnswer.trim()) {
       setMessage("Por favor, escribe tu respuesta.");
+      setMatchFeedback(null); // Limpiar feedback si el campo está vacío
+      setQuizCorrectAnswerDisplay(""); // Limpiar si el campo está vacío
       return;
     }
 
@@ -225,8 +238,8 @@ const App = () => {
 
       if (normalizedTyped === normalizedQuestion) {
         setMatchFeedback("correct");
-        setRecordedText(userTypedAnswer); // Mostrar texto escrito solo si es correcto
-        masteredCardIds.current.add(currentCard.id); // Marcar como acertada
+        masteredCardIds.current.add(currentCard.id);
+        setQuizCorrectAnswerDisplay(currentCard.question); // Mostrar la respuesta correcta en inglés
         const audio = new Audio(CORRECT_SOUND_PATH);
         audio
           .play()
@@ -235,7 +248,7 @@ const App = () => {
           );
       } else {
         setMatchFeedback("incorrect");
-        setRecordedText(""); // Limpiar si es incorrecto
+        setQuizCorrectAnswerDisplay(""); // Si es incorrecto, no mostrar la respuesta correcta
       }
     }
   };
@@ -405,9 +418,10 @@ const App = () => {
     if (currentCards.length > 0) {
       setCurrentCardIndex((prevIndex) => (prevIndex + 1) % currentCards.length);
       setIsAnswerVisible(false);
-      setRecordedText("");
+      setRecordedMicrophoneText("");
       setUserTypedAnswer(""); // Limpiar respuesta escrita
       setMatchFeedback(null);
+      setQuizCorrectAnswerDisplay(""); // Limpiar si es incorrecto
     }
   };
 
@@ -421,9 +435,10 @@ const App = () => {
           (prevIndex - 1 + currentCards.length) % currentCards.length
       );
       setIsAnswerVisible(false);
-      setRecordedText("");
+      setRecordedMicrophoneText("");
       setUserTypedAnswer(""); // Limpiar respuesta escrita
       setMatchFeedback(null);
+      setQuizCorrectAnswerDisplay(""); // Limpiar si es incorrecto
     }
   };
 
@@ -854,8 +869,10 @@ const App = () => {
           {currentCard ? (
             <div className='card-container'>
               {/* Texto grabado del micrófono */}
-              {recordedText && (
-                <div className='recorded-text-display'>{recordedText}</div>
+              {recordedMicrophoneText && (
+                <div className='recorded-text-display'>
+                  {recordedMicrophoneText}
+                </div>
               )}
 
               {/* Área de contenido de la tarjeta con pregunta y respuesta */}
@@ -947,8 +964,7 @@ const App = () => {
               </div>
 
               <div className='card-counter'>
-                Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
-                {currentCards.length}
+                Tarjeta {currentCardIndex + 1} de {currentCards.length}
               </div>
             </div>
           ) : (
@@ -986,12 +1002,15 @@ const App = () => {
         <div className='main-content-wrapper'>
           {currentCard ? (
             <div className='card-container'>
-              {/* El texto grabado solo se muestra si el matchFeedback es correcto */}
-              {recordedText && matchFeedback === "correct" && (
-                <div className='recorded-text-display'>{recordedText}</div>
+              {/* Texto grabado del micrófono (siempre se muestra si hay) */}
+              {recordedMicrophoneText && (
+                <div className='recorded-text-display'>
+                  {recordedMicrophoneText}
+                </div>
               )}
 
               {/* Área de contenido de la tarjeta - INVERTIDA: muestra español */}
+              {/* Aplicar clase condicional para el feedback de coincidencia */}
               <div
                 className={`card-content-area ${
                   matchFeedback === "correct" ? "match-correct" : ""
@@ -1004,17 +1023,18 @@ const App = () => {
                   {" "}
                   {/* Clase para estilizar la pregunta del quiz */}
                   {/* Aquí se muestra la respuesta (frase en español) */}
-                  {/* No es clicable en el quiz */}
                   {renderClickableText(
                     currentCard.answer,
                     currentCard.langAnswer || "es-ES",
                     false
                   )}
                 </div>
-                {/* La respuesta en inglés no se muestra aquí en el modo quiz */}
-                {/* <div id="answer-text" className="card-text answer hidden">
-                     {renderClickableText(currentCard.question, currentCard.langQuestion || "en-US", false)} 
-                </div> */}
+                {/* Nueva sección para mostrar la respuesta correcta en inglés si se acierta */}
+                {quizCorrectAnswerDisplay && (
+                  <div className='card-text correct-answer-display'>
+                    {quizCorrectAnswerDisplay}
+                  </div>
+                )}
               </div>
 
               {/* Contenedor para el botón de micrófono y reproducir (inglés) */}
@@ -1052,7 +1072,7 @@ const App = () => {
                 </button>
               </div>
 
-              {/* Input para escribir la respuesta en inglés */}
+              {/* Input para escribir la respuesta en inglés y botón Verificar */}
               <div className='quiz-input-group'>
                 <input
                   type='text'
@@ -1060,15 +1080,25 @@ const App = () => {
                   placeholder='Escribe la frase en inglés aquí'
                   value={userTypedAnswer}
                   onChange={(e) => setUserTypedAnswer(e.target.value)}
-                  onKeyDown={handleQuizInputKeyDown} // Permite presionar Enter para verificar
+                  onKeyDown={handleQuizInputKeyDown}
                   disabled={isLoading}
                 />
                 <button
                   onClick={checkTypedAnswer}
                   className='button quiz-check-button'
                   disabled={isLoading}
+                  aria-label='Verificar respuesta'
                 >
-                  Verificar
+                  {/* SVG del checkmark */}
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    width='100%'
+                    height='100%'
+                    fill='currentColor'
+                    viewBox='0 0 16 16'
+                  >
+                    <path d='M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z' />
+                  </svg>
                 </button>
               </div>
 
@@ -1093,8 +1123,6 @@ const App = () => {
 
               <div className='card-counter'>
                 Tarjeta {currentCardIndex + 1} de {currentCards.length}
-                {/* Opcional: Mostrar progreso o tarjetas acertadas */}
-                {/* Se eliminó el indicador de "Acertada" */}
               </div>
             </div>
           ) : (
@@ -1141,7 +1169,7 @@ const App = () => {
                 Sí, Eliminar
               </button>
               <button
-                onClick={navigateToHome}
+                onClick={cancelEditCategory}
                 className='button modal-cancel-button'
                 disabled={isLoading}
               >
