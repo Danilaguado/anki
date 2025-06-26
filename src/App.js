@@ -10,9 +10,9 @@ const App = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCardQuestion, setNewCardQuestion] = useState("");
-  const [newCardAnswer, setNewCardAnswer] = useState("");
+  const [newCategoryName, setNewCategoryName] = "";
+  const [newCardQuestion, setNewCardQuestion] = "";
+  const [newCardAnswer, setNewCardAnswer] = "";
   const [message, setMessage] = useState(""); // Para feedback al usuario
   const [isLoading, setIsLoading] = useState(false); // Estado para indicar carga/procesamiento de cualquier operación
 
@@ -701,6 +701,27 @@ const App = () => {
                 <div className='recorded-text-display'>{recordedText}</div>
               )}
 
+              {/* Área de contenido de la tarjeta con pregunta y respuesta */}
+              <div className='card-content-area'>
+                <div id='question-text' className='card-text question'>
+                  {renderClickableText(
+                    currentCard.question,
+                    currentCard.langQuestion || "en-US"
+                  )}
+                </div>
+                <div
+                  id='answer-text'
+                  className={`card-text answer ${
+                    isAnswerVisible ? "" : "hidden"
+                  }`}
+                >
+                  {renderClickableText(
+                    currentCard.answer,
+                    currentCard.langAnswer || "es-ES"
+                  )}
+                </div>
+              </div>
+
               {/* Contenedor del botón de Speech-to-Text (Micrófono) */}
               <div className='speech-button-container speech-button-container-spacing'>
                 <SpeechToTextButton
@@ -734,27 +755,6 @@ const App = () => {
               >
                 {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
               </button>
-
-              {/* Área de contenido de la tarjeta con pregunta y respuesta */}
-              <div className='card-content-area'>
-                <div id='question-text' className='card-text question'>
-                  {renderClickableText(
-                    currentCard.question,
-                    currentCard.langQuestion || "en-US"
-                  )}
-                </div>
-                <div
-                  id='answer-text'
-                  className={`card-text answer ${
-                    isAnswerVisible ? "" : "hidden"
-                  }`}
-                >
-                  {renderClickableText(
-                    currentCard.answer,
-                    currentCard.langAnswer || "es-ES"
-                  )}
-                </div>
-              </div>
 
               <div className='navigation-buttons-group'>
                 <button
