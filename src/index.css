@@ -249,9 +249,9 @@ body {
 /* Ítem de categoría */
 .category-item {
   display: flex;
-  /* Flex-grow para que la categoría ocupe el espacio */
-  /* Los botones ahora se posicionan absolutamente para no afectar el flujo del texto */
-  align-items: flex-start; /* Alinea los elementos al inicio del cross-axis */
+  flex-direction: row; /* Elementos en la misma línea */
+  align-items: center; /* Centrar verticalmente el texto y los botones */
+  gap: 0.6rem; /* Espacio entre el texto y el grupo de botones */
   padding: 1rem;
   border-radius: 0.75rem;
   border: 2px solid #e0e0e0; /* Gris claro para el borde */
@@ -260,8 +260,9 @@ body {
   background-color: #fcfcfc;
   color: #424242;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  position: relative; /* Necesario para que .category-actions se posicione absolutamente */
+  position: relative;
   min-height: 4.5rem; /* Altura mínima para que los botones tengan espacio */
+  justify-content: space-between; /* Distribuye el espacio: texto a la izquierda, botones a la derecha */
 }
 
 .category-item.selected {
@@ -286,13 +287,16 @@ body {
   padding: 0;
   cursor: pointer;
   color: inherit;
-  flex-grow: 1; /* Permitir que el texto ocupe el espacio */
+  flex-grow: 1; /* Permitir que el texto ocupe el espacio restante */
   font-size: 1.05rem;
-  white-space: nowrap; /* Evita que el texto se rompa */
-  overflow: hidden; /* Oculta el desbordamiento */
-  text-overflow: ellipsis; /* Añade puntos suspensivos */
-  padding-right: 120px; /* Espacio para los botones de acción */
+  white-space: normal; /* Permitir que el texto se rompa en varias líneas si es largo */
+  word-break: break-word; /* Romper palabras largas para evitar desbordamiento */
+  overflow: hidden; /* Oculta el desbordamiento si el texto es muy largo */
+  text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es muy largo */
   box-sizing: border-box;
+  line-height: 1.3; /* Ajuste para texto multi-línea */
+  /* Reducir el padding-right si hay muchos botones o el texto es muy largo */
+  padding-right: 5px; /* Espacio mínimo para que los botones no se peguen al texto */
 }
 
 .category-button:disabled {
@@ -300,19 +304,14 @@ body {
   cursor: not-allowed;
 }
 
-/* Contenedor de acciones de categoría: ahora es flex row y posicionado absoluto */
+/* Contenedor de acciones de categoría: ahora es flex row */
 .category-actions {
   display: flex;
-  flex-direction: row; /* Cambiado a fila para botones uno al lado del otro */
-  gap: 0.4rem; /* Espacio más pequeño entre botones */
-  position: absolute; /* Posicionamiento absoluto */
-  top: 0.75rem; /* Alineado con el padding de .category-item */
-  right: 0.75rem; /* Alineado con el padding de .category-item */
+  flex-direction: row; /* Mantener en fila */
+  gap: 0.4rem; /* Espacio entre botones */
   align-items: center; /* Centrar verticalmente los iconos */
-  height: calc(
-    100% - 1.5rem
-  ); /* Ocupa la altura del padre menos el padding vertical */
-  justify-content: flex-end; /* Justificar a la derecha */
+  flex-shrink: 0; /* IMPEDIR que este grupo de botones se encoja */
+  /* Eliminado posicionamiento absoluto para que fluyan con el flex del padre */
 }
 
 /* Estilos para los botones de icono dentro de .category-actions */
@@ -344,7 +343,17 @@ body {
 .quiz-button {
   background-color: #ff9800; /* Naranja */
   color: #ffffff;
-  /* Ya están definidos por .category-actions .button */
+  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
+  padding: 0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 0.75rem; /* Texto más pequeño para caber */
+  line-height: 1; /* Ajustar línea para centrar texto */
+  display: flex; /* Para centrar el texto verticalmente */
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box; /* Incluir padding/border en tamaño */
 }
 .quiz-button:hover:not(:disabled) {
   background-color: #fb8c00;
@@ -354,7 +363,11 @@ body {
 .add-item-button {
   background-color: #2196f3; /* Azul más vibrante */
   color: #ffffff;
-  /* Ya están definidos por .category-actions .button */
+  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
+  padding: 0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
 }
 .add-item-button:hover:not(:disabled) {
   background-color: #1976d2; /* Azul más oscuro al hover */
@@ -364,7 +377,11 @@ body {
 .edit-button {
   background-color: #ffc107; /* Amarillo */
   color: #333; /* Texto oscuro para contraste */
-  /* Ya están definidos por .category-actions .button */
+  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
+  padding: 0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
 }
 .edit-button:hover:not(:disabled) {
   background-color: #ffb300;
@@ -373,7 +390,11 @@ body {
 .delete-button {
   background-color: #f44336; /* Rojo */
   color: #ffffff;
-  /* Ya están definidos por .category-actions .button */
+  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
+  padding: 0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
 }
 .delete-button:hover:not(:disabled) {
   background-color: #d32f2f;
@@ -726,7 +747,7 @@ body {
   color: #2e7d32; /* Verde oscuro */
   padding: 0.8rem 1.2rem;
   border-radius: 0.5rem;
-  margin-bottom: 1rem; /* Espacio debajo */
+  margin-top: 1rem; /* Espacio arriba del texto correcto */
   font-size: 1.2rem; /* Tamaño de fuente */
   font-weight: 600;
   text-align: center;
