@@ -986,7 +986,11 @@ const App = () => {
                 <SpeechToTextButton
                   onResult={handleSpeechResult} // La misma lógica, pero comparará con el inglés
                   disabled={isLoading}
-                  lang={currentCard.langQuestion || "en-US"} // El idioma a reconocer es el inglés de la pregunta
+                  lang={
+                    currentCard.question
+                      ? currentCard.langQuestion || "en-US"
+                      : "en-US"
+                  } // El idioma a reconocer es el inglés de la pregunta
                 />
 
                 <button
@@ -1012,6 +1016,26 @@ const App = () => {
                 </button>
               </div>
 
+              {/* Input para escribir la respuesta en inglés */}
+              <div className='quiz-input-group'>
+                <input
+                  type='text'
+                  className='input-field quiz-answer-input'
+                  placeholder='Escribe la frase en inglés aquí'
+                  value={userTypedAnswer}
+                  onChange={(e) => setUserTypedAnswer(e.target.value)}
+                  onKeyDown={handleQuizInputKeyDown} // Permite presionar Enter para verificar
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={checkTypedAnswer}
+                  className='button quiz-check-button'
+                  disabled={isLoading}
+                >
+                  Verificar
+                </button>
+              </div>
+
               {/* El botón de Mostrar/Ocultar Traducción NO VA en el modo quiz */}
 
               <div className='navigation-buttons-group'>
@@ -1034,9 +1058,7 @@ const App = () => {
               <div className='card-counter'>
                 Tarjeta {currentCardIndex + 1} de {currentCards.length}
                 {/* Opcional: Mostrar progreso o tarjetas acertadas */}
-                {masteredCardIds.current.has(currentCard.id) && (
-                  <span className='quiz-mastered-indicator'> (Acertada)</span>
-                )}
+                {/* Se eliminó el indicador de "Acertada" */}
               </div>
             </div>
           ) : (
