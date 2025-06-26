@@ -752,11 +752,14 @@ const App = () => {
                       </button>
                       <div className='category-actions'>
                         <button
-                          onClick={() => navigateToAddCard(cat.id)}
+                          onClick={() =>
+                            navigateToAddCard(cat.id)
+                          } /* Nuevo botón para añadir tarjetas */
                           className='button add-item-button'
                           disabled={isLoading}
                           aria-label='Agregar Tarjeta'
                         >
+                          {/* SVG de Agregar */}
                           <svg
                             xmlns='http://www.w3.org/2000/svg'
                             width='100%'
@@ -771,12 +774,21 @@ const App = () => {
                             />
                           </svg>
                         </button>
+                        {/* Botón Quiz con texto */}
+                        <button
+                          onClick={() => navigateToQuizPage(cat.id)}
+                          className='button quiz-button'
+                          disabled={isLoading}
+                        >
+                          Quiz
+                        </button>
                         <button
                           onClick={() => startEditCategory(cat)}
                           className='button edit-button'
                           disabled={isLoading}
                           aria-label='Editar Categoría'
                         >
+                          {/* SVG de Editar */}
                           <svg
                             xmlns='http://www.w3.org/2000/svg'
                             width='100%'
@@ -794,6 +806,7 @@ const App = () => {
                           disabled={isLoading}
                           aria-label='Eliminar Categoría'
                         >
+                          {/* SVG de Eliminar */}
                           <svg
                             xmlns='http://www.w3.org/2000/svg'
                             width='100%'
