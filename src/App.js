@@ -1,7 +1,7 @@
 // src/App.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./index.css";
-import SpeechToTextButton from "./components/SpeechToTextButton"; // Importar el nuevo componente STT
+import SpeechToTextButton from "./components/SpeechToTextButton";
 
 // Main App Component
 const App = () => {
@@ -12,46 +12,52 @@ const App = () => {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCardQuestion, setNewCardQuestion] = useState("");
-  // CORRECCIÓN: Inicialización correcta de useState
-  const [newCardAnswer, setNewCardAnswer] = useState("");
-  const [message, setMessage] = useState(""); // Para feedback al usuario
-  const [isLoading, setIsLoading] = useState(false); // Estado para indicar carga/procesamiento de cualquier operación
+  const [newCardAnswer, setNewCardAnswer] = useState(""); // Inicialización correcta
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // State para la edición de categorías
-  // CORRECCIÓN: Inicialización correcta de useState
   const [isEditingCategory, setIsEditingCategory] = useState(null);
-  const [editedCategoryName, setEditedCategoryName] = useState("");
+  const [editedCategoryName, setEditedCategoryName] = useState(""); // Inicialización correcta
 
   // State para el modal de confirmación de eliminación
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState(null);
 
   // Nuevo estado para la navegación de páginas
-  const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage'
+  const [currentPage, setCurrentPage] = useState("home");
 
   // Nuevo estado para el texto grabado del STT
   const [recordedText, setRecordedText] = useState("");
 
   // Nuevo estado para el feedback de coincidencia de pronunciación
-  const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
+  const [matchFeedback, setMatchFeedback] = useState(null);
+
+  // Caché para los URLs de audio (persistirá mientras App esté montada)
+  const audioCache = useRef(new Map());
 
   // --- Funciones de Navegación ---
   const navigateToHome = () => {
+    // Limpiar todos los Blob URLs del caché al volver al inicio
+    audioCache.current.forEach((url) => URL.revokeObjectURL(url));
+    audioCache.current.clear(); // Vaciar el mapa
+    console.log("Caché de audio limpiado al volver al inicio.");
+
     setCurrentPage("home");
-    setRecordedText(""); // Limpiar texto grabado al volver a la home
-    setMatchFeedback(null); // Limpiar feedback al cambiar de página
+    setRecordedText("");
+    setMatchFeedback(null);
   };
   const navigateToAddCard = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("addCardPage");
-    setRecordedText(""); // Limpiar texto grabado al ir a añadir tarjeta
-    setMatchFeedback(null); // Limpiar feedback al cambiar de página
+    setRecordedText("");
+    setMatchFeedback(null);
   };
   const navigateToPracticePage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("practicePage");
-    setRecordedText(""); // Limpiar texto grabado al ir a practicar
-    setMatchFeedback(null); // Limpiar feedback al cambiar de página
+    setRecordedText("");
+    setMatchFeedback(null);
   };
 
   // --- Función para cargar datos desde las API de Vercel ---
@@ -79,7 +85,7 @@ const App = () => {
       }
       if (!Array.isArray(data)) {
         console.error("La API no devolvió un array como se esperaba:", data);
-        data = []; // Tratar como array vacío si el formato no es el esperado
+        data = [];
         setMessage(
           "Advertencia: Formato de datos inesperado, mostrando categorías vacías."
         );
@@ -116,10 +122,10 @@ const App = () => {
 
   // Reinicia el índice de la tarjeta y la visibilidad de la respuesta cuando cambia la categoría seleccionada
   useEffect(() => {
-    setCurrentCardIndex(0); // Reiniciar el índice de la tarjeta
-    setIsAnswerVisible(false); // Ocultar la respuesta
-    setRecordedText(""); // Limpiar texto grabado al cambiar de categoría
-    setMatchFeedback(null); // Limpiar feedback al cambiar de categoría
+    setCurrentCardIndex(0);
+    setIsAnswerVisible(false);
+    setRecordedText("");
+    setMatchFeedback(null);
   }, [selectedCategoryId]);
 
   // Obtiene los datos de la categoría actual
@@ -136,20 +142,17 @@ const App = () => {
    * @param {string} transcript - El texto transcrito.
    */
   const handleSpeechResult = (transcript) => {
-    setRecordedText(transcript); // Actualiza el estado con el texto grabado
+    setRecordedText(transcript);
 
-    // Comparar la transcripción con el texto de la pregunta
     if (currentCard && currentCard.question) {
-      // Asegurarse de que currentCard exista
       const normalizedTranscript = transcript.toLowerCase().trim();
       const normalizedQuestion = currentCard.question.toLowerCase().trim();
 
-      // Simplificar comparación: quitar puntuación y múltiples espacios para una mejor coincidencia
       const cleanTranscript = normalizedTranscript
         .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
         .replace(/\s{2,}/g, " ");
       const cleanQuestion = normalizedQuestion
-        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ",")
+        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")
         .replace(/\s{2,}/g, " ");
 
       if (cleanTranscript === cleanQuestion) {
@@ -158,7 +161,7 @@ const App = () => {
         setMatchFeedback("incorrect");
       }
     } else {
-      setMatchFeedback(null); // No hay pregunta para comparar
+      setMatchFeedback(null);
     }
   };
 
@@ -173,6 +176,30 @@ const App = () => {
       return;
     }
 
+    const cacheKey = `${text}-${lang}`; // Clave única para el caché
+
+    // 1. Intentar obtener el audio del caché
+    if (audioCache.current.has(cacheKey)) {
+      const cachedAudioUrl = audioCache.current.get(cacheKey);
+      console.log("Reproduciendo desde caché:", text);
+      setMessage("Reproduciendo (desde caché)...");
+      setIsLoading(true); // Deshabilitar botones mientras se reproduce
+      const audio = new Audio(cachedAudioUrl);
+      audio.play();
+
+      audio.onended = () => {
+        setMessage("");
+        setIsLoading(false);
+      };
+      audio.onerror = (e) => {
+        console.error("Error al reproducir desde caché:", e);
+        setMessage("Error al reproducir audio desde caché.");
+        setIsLoading(false);
+      };
+      return; // Salir, ya hemos manejado la reproducción
+    }
+
+    // 2. Si no está en caché, hacer la petición a ElevenLabs
     setIsLoading(true);
     setMessage("Generando audio con ElevenLabs...");
 
@@ -199,11 +226,15 @@ const App = () => {
         const audioBlob = b64toBlob(audioContent, "audio/mpeg");
         const audioUrl = URL.createObjectURL(audioBlob);
 
+        // Guardar en caché antes de reproducir
+        audioCache.current.set(cacheKey, audioUrl);
+        console.log("Audio cacheado:", text);
+
         const audio = new Audio(audioUrl);
         audio.play();
 
         audio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
+          URL.revokeObjectURL(audioUrl); // Liberar el Blob URL cuando termine
           setMessage("");
           setIsLoading(false);
         };
@@ -218,7 +249,10 @@ const App = () => {
         throw new Error("No se recibió contenido de audio de ElevenLabs.");
       }
     } catch (error) {
-      console.error("Error al reproducir audio con ElevenLabs TTS:", error);
+      console.error(
+        "Error al generar o reproducir audio con ElevenLabs TTS:",
+        error
+      );
       setMessage(`No se pudo generar voz: ${error.message}.`);
       setIsLoading(false);
     }
@@ -252,7 +286,7 @@ const App = () => {
   const renderClickableText = (text, lang, isClickable = true) => {
     if (!text) return null;
     if (!isClickable) {
-      return <span>{text}</span>; // Si no es clicable, renderiza el texto plano
+      return <span>{text}</span>;
     }
     const parts = text.match(/(\w+|[^\w\s]+|\s+)/g) || [];
 
@@ -287,8 +321,8 @@ const App = () => {
     if (currentCards.length > 0) {
       setCurrentCardIndex((prevIndex) => (prevIndex + 1) % currentCards.length);
       setIsAnswerVisible(false);
-      setRecordedText(""); // Limpiar texto grabado al cambiar de tarjeta
-      setMatchFeedback(null); // Limpiar feedback de coincidencia
+      setRecordedText("");
+      setMatchFeedback(null);
     }
   };
 
@@ -302,8 +336,8 @@ const App = () => {
           (prevIndex - 1 + currentCards.length) % currentCards.length
       );
       setIsAnswerVisible(false);
-      setRecordedText(""); // Limpiar texto grabado al cambiar de tarjeta
-      setMatchFeedback(null); // Limpiar feedback de coincidencia
+      setRecordedText("");
+      setMatchFeedback(null);
     }
   };
 
@@ -470,8 +504,8 @@ const App = () => {
    * Cancela el proceso de edición de la categoría.
    */
   const cancelEditCategory = () => {
-    setIsEditingCategory(null);
-    setEditedCategoryName("");
+    setShowDeleteConfirm(false);
+    setCategoryToDeleteId(null);
   };
 
   /**
@@ -523,14 +557,6 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  /**
-   * Cancela la operación de eliminación.
-   */
-  const cancelDelete = () => {
-    setShowDeleteConfirm(false);
-    setCategoryToDeleteId(null);
   };
 
   // --- Renderización de Páginas ---
@@ -717,14 +743,8 @@ const App = () => {
   );
 
   const renderPracticePage = () => {
-    // Es importante que el componente devuelva un único elemento raíz.
-    // Si hay un `currentCard` se muestra la tarjeta, si no, solo el mensaje.
-    // Ambos casos deben estar envueltos si los mensajes de feedback están fuera.
-
     return (
       <>
-        {" "}
-        {/* Fragmento para envolver múltiples elementos si es necesario */}
         {message && (
           <div className='message-box' role='alert'>
             <span className='message-text'>{message}</span>
@@ -736,7 +756,7 @@ const App = () => {
           </div>
         )}
         <div className='main-content-wrapper'>
-          {currentCard /* Condición principal: hay tarjeta para mostrar */ ? (
+          {currentCard ? (
             <div className='card-container'>
               {/* Texto grabado del micrófono */}
               {recordedText && (
@@ -744,7 +764,6 @@ const App = () => {
               )}
 
               {/* Área de contenido de la tarjeta con pregunta y respuesta */}
-              {/* Aplicar clase condicional para el feedback de coincidencia */}
               <div
                 className={`card-content-area ${
                   matchFeedback === "correct" ? "match-correct" : ""
@@ -755,8 +774,7 @@ const App = () => {
                     currentCard.question,
                     currentCard.langQuestion || "en-US",
                     true
-                  )}{" "}
-                  {/* Pregunta es clicable */}
+                  )}
                 </div>
                 <div
                   id='answer-text'
@@ -764,7 +782,6 @@ const App = () => {
                     isAnswerVisible ? "" : "hidden"
                   }`}
                 >
-                  {/* Traducción no es clicable ni subrayada */}
                   {renderClickableText(
                     currentCard.answer,
                     currentCard.langAnswer || "es-ES",
@@ -775,16 +792,12 @@ const App = () => {
 
               {/* Contenedor para el botón de micrófono y reproducir tarjeta (flexbox) */}
               <div className='microphone-play-buttons-group'>
-                {/* Botón de Speech-to-Text (Micrófono) */}
                 <SpeechToTextButton
                   onResult={handleSpeechResult}
                   disabled={isLoading}
-                  lang={
-                    currentCard.langQuestion || "en-US"
-                  } /* Idioma del reconocimiento, basado en la pregunta */
+                  lang={currentCard.langQuestion || "en-US"}
                 />
 
-                {/* Botón único de Reproducir para toda la tarjeta (ahora con icono SVG) */}
                 <button
                   onClick={() =>
                     playAudio(
@@ -792,11 +805,10 @@ const App = () => {
                       currentCard.langQuestion || "en-US"
                     )
                   }
-                  className='button audio-button-round primary-button' /* Nueva clase para botón redondo */
+                  className='button audio-button-round primary-button'
                   disabled={isLoading}
                   aria-label='Reproducir Tarjeta Completa'
                 >
-                  {/* Icono SVG de Play */}
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     width='100%'
@@ -838,22 +850,20 @@ const App = () => {
               <div className='card-counter'>
                 Tarjeta {currentCardIndex + 1} de {currentCards.length}
               </div>
-              <button
-                onClick={navigateToHome}
-                className='button back-button'
-                disabled={isLoading}
-              >
-                Volver al Inicio
-              </button>
-            </div> /* Cierre de card-container */
+            </div>
           ) : (
-            /* Si no hay tarjetas */
             <p className='info-text'>
               No hay tarjetas en esta categoría. Puedes añadir algunas desde la
               sección "Gestionar Categorías".
             </p>
           )}
-          {/* Este botón debe estar fuera de la condición de currentCard para ser siempre visible */}
+          <button
+            onClick={navigateToHome}
+            className='button back-button'
+            disabled={isLoading}
+          >
+            Volver al Inicio
+          </button>
         </div>
       </>
     );
