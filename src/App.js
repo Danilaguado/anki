@@ -1214,25 +1214,44 @@ const App = () => {
       {currentPage === "practicePage" && renderPracticePage()}
       {currentPage === "quizPage" && renderQuizPage()}{" "}
       {/* Nuevo: Renderizar la página del quiz */}
+      {currentPage === "editCategoryPage" && (
+        <EditCategoryPage
+          currentCategory={currentCategory} // Pasa la categoría actual
+          onSaveCategoryName={saveEditedCategory} // Guarda el nombre de la categoría
+          onUpdateCard={handleUpdateCard} // Guarda una tarjeta específica
+          onAddCard={addCardManually} // Añade una tarjeta (reutiliza existente, pero necesitaría ajustes)
+          onDeleteCard={confirmDeleteCard} // Elimina una tarjeta (confirma y luego elimina)
+          onNavigateHome={navigateToHome}
+          isLoading={isLoading}
+          setMessage={setMessage}
+          confirmDeleteCard={confirmDeleteCard} // Pasar confirmDeleteCard al componente hijo
+          // Nueva prop para pasar la función que actualiza el estado de las tarjetas en App.js
+          // Esto es necesario para que EditCategoryPage pueda decir a App.js que ha cambiado una tarjeta
+          onFetchCategories={fetchCategories}
+        />
+      )}
       {showDeleteConfirm && (
         <div className='modal-overlay'>
           <div className='modal-content'>
             <p className='modal-title'>
-              ¿Estás seguro que quieres eliminar esta categoría?
+              {cardToDeleteId
+                ? "¿Estás seguro que quieres eliminar esta tarjeta?"
+                : "¿Estás seguro que quieres eliminar esta categoría?"}
             </p>
             <p className='modal-text'>
-              Esta acción no se puede deshacer y la categoría se perderá.
+              Esta acción no se puede deshacer y{" "}
+              {cardToDeleteId ? "la tarjeta" : "la categoría"} se perderá.
             </p>
             <div className='modal-buttons'>
               <button
-                onClick={deleteCategory}
+                onClick={deleteConfirmedItem} // <-- CORREGIDO: Llama a deleteConfirmedItem
                 className='button modal-delete-button'
                 disabled={isLoading}
               >
                 Sí, Eliminar
               </button>
               <button
-                onClick={cancelDelete}
+                onClick={cancelDeleteConfirmation} // <-- CORREGIDO: Llama a cancelDeleteConfirmation
                 className='button modal-cancel-button'
                 disabled={isLoading}
               >
