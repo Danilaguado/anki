@@ -508,9 +508,9 @@ const App = () => {
   };
 
   /**
-   * Cancela el proceso de edición de la categoría.
+   * Cancela la operación de eliminación.
    */
-  const cancelEditCategory = () => {
+  const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setCategoryToDeleteId(null);
   };
@@ -818,7 +818,7 @@ const App = () => {
                   aria-label='Reproducir Tarjeta Completa'
                 >
                   <svg
-                    xmlns='http://www.w3.org/2000/svg'
+                    xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)'
                     width='100%'
                     height='100%'
                     fill='currentColor'
