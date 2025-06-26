@@ -36,6 +36,9 @@ const App = () => {
   // Caché para los URLs de audio (persistirá mientras App esté montada)
   const audioCache = useRef(new Map());
 
+  // Nuevo: Path al archivo de audio para aciertos
+  const CORRECT_SOUND_PATH = "/correct-6033.mp3";
+
   // --- Funciones de Navegación ---
   const navigateToHome = () => {
     // Limpiar todos los Blob URLs del caché al volver al inicio
@@ -164,6 +167,17 @@ const App = () => {
 
       if (normalizedTranscript === normalizedQuestion) {
         setMatchFeedback("correct");
+        // Reproducir sonido de acierto
+        const audio = new Audio(CORRECT_SOUND_PATH);
+        audio
+          .play()
+          .catch((e) =>
+            console.error("Error al reproducir sonido de acierto:", e)
+          );
+        // Opcional: Podrías poner isLoading a true aquí si quieres que los botones se deshabiliten
+        // mientras suena el audio de acierto, y luego a false en audio.onended.
+        // Por la brevedad del sonido de acierto, usualmente no es necesario,
+        // pero lo menciono para que lo sepas.
       } else {
         setMatchFeedback("incorrect");
       }
@@ -695,7 +709,7 @@ const App = () => {
   const renderAddCardPage = () => (
     <>
       <h1 className='app-title'>Añadir Tarjetas</h1>
-      {/* {message && (
+      {message && (
         <div className='message-box' role='alert'>
           <span className='message-text'>{message}</span>
         </div>
@@ -705,7 +719,7 @@ const App = () => {
         <div className='loading-box'>
           <span className='loading-text'>Cargando o procesando...</span>
         </div>
-      )} */}
+      )}
       <div className='main-content-wrapper'>
         <div className='section-container'>
           <h2 className='section-title'>
