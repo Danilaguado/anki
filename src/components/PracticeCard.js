@@ -2,6 +2,7 @@
 import React from "react";
 import SpeechToTextButton from "./SpeechToTextButton"; // Asegúrate de que esta ruta sea correcta
 import { renderClickableText } from "../utils/textUtils"; // Importar la utilidad
+import "./PracticeCard.css";
 
 const PracticeCard = ({
   currentCard,

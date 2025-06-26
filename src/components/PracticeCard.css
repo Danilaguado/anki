@@ -1,0 +1,169 @@
+/* src/components/PracticeCard.css */
+
+/* Card-specific styles (shared by PracticeCard and QuizCard) */
+.card-container {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  margin: 20px auto;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+}
+
+.card-content-area {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  border: 1px dashed var(--border-color);
+  border-radius: 10px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.card-content-area.match-correct {
+  border-color: var(--success-color);
+  box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.3);
+}
+
+.card-content-area.match-incorrect {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.3);
+}
+
+.card-text {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--text-color-dark);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.card-text.question {
+  color: var(--primary-color);
+}
+
+.card-text.answer {
+  color: #666;
+  font-weight: 400;
+  font-size: 1.4em;
+}
+
+.card-text.answer.hidden {
+  filter: blur(4px);
+  user-select: none; /* Evita seleccionar el texto borroso */
+}
+
+.card-text .clickable-word {
+  cursor: pointer;
+  color: inherit; /* Hereda el color del padre */
+  text-decoration: underline;
+  text-decoration-color: rgba(74, 144, 226, 0.5);
+  text-underline-offset: 4px;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+  padding: 2px 0; /* Para aumentar el área de clic */
+}
+
+.card-text .clickable-word:hover {
+  color: var(--primary-color);
+  text-decoration-color: var(--primary-color);
+}
+
+.toggle-answer-button {
+  background-color: var(--accent-color);
+  color: var(--text-color-light);
+  width: 100%;
+}
+
+.toggle-answer-button:hover:not(:disabled) {
+  background-color: #d88f1c;
+}
+
+.navigation-buttons-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+}
+
+.nav-button {
+  flex: 1;
+  background-color: var(--primary-color);
+  color: var(--text-color-light);
+}
+
+.nav-button.prev {
+  background-color: #9b59b6; /* Púrpura */
+}
+.nav-button.prev:hover:not(:disabled) {
+  background-color: #8e44ad;
+}
+
+.nav-button.next {
+  background-color: #27ae60; /* Verde esmeralda */
+}
+.nav-button.next:hover:not(:disabled) {
+  background-color: #229954;
+}
+
+.card-counter {
+  font-size: 0.9em;
+  color: #777;
+  margin-top: 10px;
+}
+
+.microphone-play-buttons-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.audio-button-round {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.audio-button-round svg {
+  width: 24px;
+  height: 24px;
+}
+
+.recorded-text-display {
+  background-color: #ecf0f1; /* Gris claro */
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 1.1em;
+  color: var(--text-color-dark);
+  text-align: center;
+  word-break: break-word; /* Asegura que el texto largo se rompa */
+}
+
+@media (max-width: 768px) {
+  .card-text {
+    font-size: 1.5em;
+  }
+  .card-text.answer {
+    font-size: 1.2em;
+  }
+
+  .navigation-buttons-group {
+    flex-direction: column;
+  }
+}

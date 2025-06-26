@@ -1,5 +1,6 @@
 // src/components/CategoryList.js
 import React from "react";
+import "./CategoryList.css";
 
 const CategoryList = ({
   categories,

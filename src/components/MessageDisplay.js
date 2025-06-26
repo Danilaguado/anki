@@ -1,5 +1,6 @@
 // src/components/MessageDisplay.js
 import React from "react";
+import "./MessageDisplay.css";
 
 const MessageDisplay = ({ message, isLoading }) => {
   return (

@@ -1,6 +1,7 @@
 // src/components/SpeechToTextButton.js
 // Contenido original, asegúrate de que sea este mismo archivo.
 import React, { useState, useEffect } from "react";
+import "./SpeechToTextButton.css";
 
 // Web Speech API
 const SpeechRecognition =

@@ -1,0 +1,10 @@
+/* src/components/AddCardForm.css */
+
+.add-card-button {
+  background-color: var(--secondary-color);
+  color: var(--text-color-dark);
+}
+
+.add-card-button:hover:not(:disabled) {
+  background-color: #3ac7a7;
+}

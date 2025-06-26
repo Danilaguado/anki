@@ -1,5 +1,6 @@
 // src/components/AddCardForm.js
 import React from "react";
+import "./AddCardForm.css";
 
 const AddCardForm = ({
   currentCategory,
