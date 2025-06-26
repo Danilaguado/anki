@@ -407,7 +407,7 @@ const App = () => {
   /**
    * Alterna la visibilidad de la respuesta en la tarjeta actual.
    */
-  const toggleAnswerVisibility = () => {
+  const toggleAnswerVisible = () => {
     setIsAnswerVisible(!isAnswerVisible);
   };
 
@@ -939,7 +939,7 @@ const App = () => {
 
               {/* Botón de Mostrar/Ocultar Traducción */}
               <button
-                onClick={toggleAnswerVisibility}
+                onClick={toggleAnswerVisible}
                 className='button toggle-answer-button'
                 disabled={isLoading}
               >
@@ -1169,7 +1169,7 @@ const App = () => {
                 Sí, Eliminar
               </button>
               <button
-                onClick={cancelEditCategory}
+                onClick={cancelDelete}
                 className='button modal-cancel-button'
                 disabled={isLoading}
               >

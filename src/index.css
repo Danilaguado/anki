@@ -292,11 +292,26 @@ body {
   cursor: not-allowed;
 }
 
+/* Contenedor de acciones de categoría: ahora es flex column para justificado vertical */
 .category-actions {
   display: flex;
+  flex-direction: column; /* Cambiado a columna */
   gap: 0.6rem;
-  justify-content: flex-end;
-  margin-top: 0.5rem; /* Espacio superior para los botones de acción */
+  align-items: flex-end; /* Justifica a la derecha */
+  margin-top: 0.5rem;
+}
+
+/* Nuevo botón para iniciar Quiz */
+.quiz-button {
+  background-color: #ff9800; /* Naranja */
+  color: #ffffff;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.quiz-button:hover:not(:disabled) {
+  background-color: #fb8c00;
 }
 
 /* Nuevo botón "Agregar" dentro de las categorías */
@@ -457,6 +472,11 @@ body {
   color: #3f51b5; /* Azul índigo al pasar el ratón */
   text-decoration-color: #3f51b5; /* Subrayado del mismo color */
   background-color: rgba(63, 81, 181, 0.1); /* Fondo ligero al pasar el ratón */
+}
+
+/* El texto de la respuesta ya no es clicable ni tiene subrayado por defecto */
+.card-text.question {
+  /* No hay estilos adicionales, ya definidos en .card-text */
 }
 
 .card-text.answer {
@@ -631,6 +651,64 @@ body {
   color: #757575;
   text-align: center;
   font-style: italic;
+}
+
+/* Estilos específicos para el grupo de input y botón de verificar en el quiz */
+.quiz-input-group {
+  display: flex;
+  flex-direction: row; /* Input y botón en fila */
+  gap: 0.8rem; /* Espacio entre ellos */
+  margin-bottom: 1.5rem; /* Espacio debajo */
+  width: 100%; /* Ocupa todo el ancho */
+}
+
+.quiz-input-group .quiz-answer-input {
+  flex-grow: 1; /* El input crece para ocupar el espacio */
+  /* Hereda .input-field */
+}
+
+.quiz-input-group .quiz-check-button {
+  width: 60px; /* Tamaño fijo para el botón de verificar */
+  height: 60px;
+  border-radius: 50%; /* Redondo */
+  padding: 0; /* Eliminar padding para que el SVG se ajuste */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4caf50; /* Color verde */
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0; /* Evita que se encoja */
+}
+
+.quiz-input-group .quiz-check-button:hover:not(:disabled) {
+  background-color: #388e3c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.quiz-input-group .quiz-check-button svg {
+  width: 60%; /* Tamaño del icono SVG */
+  height: 60%;
+  fill: currentColor;
+}
+
+/* Estilos para mostrar la respuesta correcta en el modo quiz */
+.correct-answer-display {
+  background-color: #e8f5e9; /* Verde muy claro */
+  color: #2e7d32; /* Verde oscuro */
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem; /* Espacio debajo */
+  font-size: 1.2rem; /* Tamaño de fuente */
+  font-weight: 600;
+  text-align: center;
+  width: fit-content;
+  max-width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #a5d6a7; /* Borde sutil */
 }
 
 /* Botón "Volver al Inicio" */
