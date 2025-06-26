@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./index.css";
 import SpeechToTextButton from "./components/SpeechToTextButton";
-import EditCategoryPage from "./components/EditCategoryPage"; // Importar el nuevo componente de edición
 
 // Main App Component
 const App = () => {
@@ -23,13 +22,11 @@ const App = () => {
 
   // State para el modal de confirmación de eliminación
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [categoryToDeleteId, setCategoryToDeleteId] = useState(null); // Para eliminar categorías
-  const [cardToDeleteId, setCardToDeleteId] = useState(null); // Para eliminar tarjetas
-  const [cardToDeleteCategoryId, setCardToDeleteCategoryId] = useState(null); // Para la categoría de la tarjeta a eliminar
+  const [categoryToDeleteId, setCategoryToDeleteId] = useState(null);
 
   // Nuevo estado para la navegación de páginas
-  // Añadimos 'editCategoryPage'
-  const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage', 'quizPage', 'editCategoryPage'
+  // Añadimos 'quizPage'
+  const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage', 'quizPage'
 
   // Nuevo estado para el texto grabado del STT (siempre muestra lo del micro)
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
@@ -37,7 +34,7 @@ const App = () => {
   const [userTypedAnswer, setUserTypedAnswer] = useState("");
 
   // Nuevo estado para el feedback de coincidencia de pronunciación/texto
-  const [matchFeedback, setMatchFeedback] = useState(null);
+  const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
 
   // Nuevo estado para la respuesta correcta que se muestra en el quiz si acierta
   const [quizCorrectAnswerDisplay, setQuizCorrectAnswerDisplay] = useState("");
@@ -68,9 +65,6 @@ const App = () => {
     setUserTypedAnswer("");
     setMatchFeedback(null);
     setQuizCorrectAnswerDisplay(""); // Limpiar al volver a home
-    setCategoryToDeleteId(null); // Limpiar IDs de eliminación del modal
-    setCardToDeleteId(null);
-    setCardToDeleteCategoryId(null);
   };
   const navigateToAddCard = (categoryId) => {
     setSelectedCategoryId(categoryId);
@@ -96,11 +90,7 @@ const App = () => {
     setUserTypedAnswer("");
     setMatchFeedback(null);
     setQuizCorrectAnswerDisplay(""); // Limpiar al ir a quiz
-  };
-  // Nueva: Función para navegar a la página de edición de categoría
-  const navigateToEditCategory = (categoryId) => {
-    setSelectedCategoryId(categoryId);
-    setCurrentPage("editCategoryPage"); // Cambia a la nueva página de edición
+    // No limpiamos masteredCardIds aquí, solo al volver al inicio
   };
 
   // --- Función para cargar datos desde las API de Vercel ---
@@ -136,7 +126,6 @@ const App = () => {
 
       setCategories(data);
 
-      // Si volvemos a home o la categoría seleccionada ya no existe, ajusta la selección
       if (
         currentPage === "home" ||
         !data.some((cat) => cat.id === selectedCategoryId)
@@ -502,18 +491,30 @@ const App = () => {
 
   /**
    * Añade una nueva tarjeta a la categoría seleccionada llamando a la API de Vercel.
-   * @param {string} categoryId - El ID de la categoría.
-   * @param {object} cardData - Datos de la tarjeta (question, answer, langQuestion, langAnswer).
-   * @returns {Promise<object>} La tarjeta añadida si tiene éxito.
    */
-  const handleAddCard = async (categoryId, cardData) => {
+  const addCardManually = async () => {
+    if (!selectedCategoryId) {
+      setMessage("Por favor, selecciona una categoría primero.");
+      return;
+    }
+    if (!newCardQuestion.trim() || !newCardAnswer.trim()) {
+      setMessage("La pregunta y la respuesta no pueden estar vacías.");
+      return;
+    }
+    setIsLoading(true);
     setMessage("Añadiendo tarjeta...");
     try {
       const url = "/api/cards/add";
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ categoryId, ...cardData }),
+        body: JSON.stringify({
+          categoryId: selectedCategoryId,
+          question: newCardQuestion.trim(),
+          answer: newCardAnswer.trim(),
+          langQuestion: "en-US",
+          langAnswer: "es-ES",
+        }),
       });
 
       if (!response.ok) {
@@ -524,58 +525,21 @@ const App = () => {
           }. Respuesta: ${errorText.substring(0, 200)}...`
         );
       }
+
       const result = await response.json();
       if (result.success) {
-        setMessage("Tarjeta añadida.");
-        return result.data; // Devuelve la tarjeta añadida
+        setNewCardQuestion("");
+        setNewCardAnswer("");
+        setMessage("Tarjeta añadida manualmente.");
+        await fetchCategories();
       } else {
         throw new Error(result.error || "Error desconocido al añadir tarjeta.");
       }
     } catch (error) {
-      console.error("Error al añadir tarjeta:", error);
-      setMessage(`Error al añadir tarjeta: ${error.message}.`);
-      throw error; // Re-lanza el error para que el componente que llama lo maneje
-    }
-  };
-
-  /**
-   * Actualiza una tarjeta existente en la base de datos.
-   * @param {string} categoryId - El ID de la categoría a la que pertenece la tarjeta.
-   * @param {string} cardId - El ID de la tarjeta a actualizar.
-   * @param {object} updatedFields - Los campos a actualizar (ej. { question: 'new q', answer: 'new a' }).
-   * @returns {Promise<object>} La tarjeta actualizada si tiene éxito.
-   */
-  const handleUpdateCard = async (categoryId, cardId, updatedFields) => {
-    setMessage("Actualizando tarjeta...");
-    try {
-      const url = "/api/cards/update"; // Necesitarás un nuevo endpoint en tu backend para esto
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ categoryId, cardId, ...updatedFields }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Error HTTP: ${response.status} - ${
-            response.statusText
-          }. Respuesta: ${errorText.substring(0, 200)}...`
-        );
-      }
-      const result = await response.json();
-      if (result.success) {
-        setMessage("Tarjeta actualizada.");
-        return result.data; // Devuelve la tarjeta actualizada
-      } else {
-        throw new Error(
-          result.error || "Error desconocido al actualizar tarjeta."
-        );
-      }
-    } catch (error) {
-      console.error("Error al actualizar tarjeta:", error);
-      setMessage(`Error al actualizar tarjeta: ${error.message}.`);
-      throw error; // Re-lanza el error para que el componente que llama lo maneje
+      console.error("Error al añadir tarjeta manualmente:", error);
+      setMessage(`Error al añadir la tarjeta: ${error.message}.`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -591,16 +555,21 @@ const App = () => {
   /**
    * Guarda el nombre editado de la categoría llamando a la API de Vercel.
    */
-  const saveEditedCategory = async (categoryId, newName) => {
-    setMessage("Actualizando nombre de categoría...");
+  const saveEditedCategory = async () => {
+    if (!editedCategoryName.trim()) {
+      setMessage("El nombre de la categoría no puede estar vacío.");
+      return;
+    }
+    setIsLoading(true);
+    setMessage("Actualizando categoría...");
     try {
       const url = "/api/categories/update";
       const response = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: categoryId,
-          name: newName,
+          id: isEditingCategory,
+          name: editedCategoryName.trim(),
         }),
       });
 
@@ -615,8 +584,10 @@ const App = () => {
 
       const result = await response.json();
       if (result.success) {
-        setMessage(`Categoría "${newName}" actualizada.`);
-        return result.data;
+        setMessage(`Categoría "${editedCategoryName}" actualizada.`);
+        setIsEditingCategory(null);
+        setEditedCategoryName("");
+        await fetchCategories();
       } else {
         throw new Error(
           result.error || "Error desconocido al actualizar categoría."
@@ -625,7 +596,8 @@ const App = () => {
     } catch (error) {
       console.error("Error al guardar categoría editada:", error);
       setMessage(`Error al actualizar la categoría: ${error.message}.`);
-      throw error; // Re-lanza el error
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -633,9 +605,8 @@ const App = () => {
    * Cancela el proceso de edición de la categoría.
    */
   const cancelEditCategory = () => {
-    // Esta función maneja la cancelación del estado de edición en la página principal
-    setIsEditingCategory(null);
-    setEditedCategoryName("");
+    setShowDeleteConfirm(false);
+    setCategoryToDeleteId(null);
   };
 
   /**
@@ -644,52 +615,18 @@ const App = () => {
    */
   const confirmDeleteCategory = (categoryId) => {
     setCategoryToDeleteId(categoryId);
-    setCardToDeleteId(null); // Asegurarse de que no estamos eliminando una tarjeta
-    setCardToDeleteCategoryId(null);
     setShowDeleteConfirm(true);
   };
 
   /**
-   * Muestra el modal de confirmación de eliminación para una tarjeta.
-   * @param {string} categoryId - El ID de la categoría a la que pertenece la tarjeta.
-   * @param {string} cardId - El ID de la tarjeta a eliminar.
+   * Realiza la eliminación de una categoría llamando a la API de Vercel.
    */
-  const confirmDeleteCard = (categoryId, cardId) => {
-    setCategoryToDeleteId(categoryId); // Guardamos la categoría por si es necesaria
-    setCardToDeleteId(cardId); // Guardamos el ID de la tarjeta
-    setCardToDeleteCategoryId(categoryId); // Guardamos la categoría de la tarjeta
-    setShowDeleteConfirm(true); // Mostramos el modal de confirmación
-  };
-
-  /**
-   * Realiza la eliminación de una categoría o tarjeta llamando a la API de Vercel.
-   * Determina si es una categoría o tarjeta basándose en los IDs almacenados.
-   */
-  const deleteConfirmedItem = async () => {
+  const deleteCategory = async () => {
+    if (!categoryToDeleteId) return;
     setIsLoading(true);
-    let url;
-    let successMessage;
-    let errorMessage;
-
-    if (cardToDeleteId && cardToDeleteCategoryId) {
-      // Es una tarjeta
-      url = `/api/cards/delete?categoryId=${cardToDeleteCategoryId}&cardId=${cardToDeleteId}`;
-      successMessage = `Tarjeta ${cardToDeleteId} eliminada.`;
-      errorMessage = `Error al eliminar la tarjeta: `;
-    } else if (categoryToDeleteId) {
-      // Es una categoría
-      url = `/api/categories/delete?id=${categoryToDeleteId}`;
-      successMessage = `Categoría ${categoryToDeleteId} eliminada.`;
-      errorMessage = `Error al eliminar la categoría: `;
-    } else {
-      setMessage("No hay ítem seleccionado para eliminar.");
-      setIsLoading(false);
-      setShowDeleteConfirm(false);
-      return;
-    }
-
-    setMessage("Eliminando...");
+    setMessage("Eliminando categoría...");
     try {
+      const url = `/api/categories/delete?id=${categoryToDeleteId}`;
       const response = await fetch(url, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -706,30 +643,21 @@ const App = () => {
 
       const result = await response.json();
       if (result.success) {
-        setMessage(successMessage);
+        setMessage(`Categoría eliminada.`);
         setShowDeleteConfirm(false);
         setCategoryToDeleteId(null);
-        setCardToDeleteId(null);
-        setCardToDeleteCategoryId(null); // Limpiar después de usar
-        await fetchCategories(); // Refrescar datos
-        // Si eliminamos una tarjeta en la página de edición, forzar recarga de esa categoría
-        // La recarga de categorías en fetchCategories ya debería actualizar la categoría seleccionada
+        await fetchCategories();
       } else {
-        throw new Error(result.error || `Error desconocido al eliminar.`);
+        throw new Error(
+          result.error || "Error desconocido al eliminar categoría."
+        );
       }
     } catch (error) {
-      console.error("Error al eliminar item (catch principal):", error);
-      setMessage(`${errorMessage} ${error.message}.`);
+      console.error("Error al eliminar categoría:", error);
+      setMessage(`Error al eliminar la categoría: ${error.message}.`);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const cancelDeleteConfirmation = () => {
-    setShowDeleteConfirm(false);
-    setCategoryToDeleteId(null);
-    setCardToDeleteId(null);
-    setCardToDeleteCategoryId(null);
   };
 
   // --- Renderización de Páginas ---
@@ -785,87 +713,115 @@ const App = () => {
                     selectedCategoryId === cat.id ? "selected" : ""
                   }`}
                 >
-                  <button
-                    onClick={() =>
-                      navigateToPracticePage(cat.id)
-                    } /* Navega a la página de práctica */
-                    className='category-button'
-                    disabled={isLoading}
-                  >
-                    {cat.name} ({cat.cards ? cat.cards.length : 0} tarjetas)
-                  </button>
-                  <div className='category-actions'>
-                    <button
-                      onClick={() =>
-                        navigateToAddCard(cat.id)
-                      } /* Nuevo botón para añadir tarjetas */
-                      className='button add-item-button'
-                      disabled={isLoading}
-                      aria-label='Agregar Tarjeta'
-                    >
-                      {/* SVG de Agregar */}
-                      <svg
-                        xmlns='http://www.w3.org/2000/svg'
-                        width='100%'
-                        height='100%'
-                        fill='currentColor'
-                        viewBox='0 0 16 16'
+                  {isEditingCategory === cat.id ? (
+                    <div className='edit-category-form'>
+                      <input
+                        type='text'
+                        className='input-field edit-input'
+                        value={editedCategoryName}
+                        onChange={(e) => setEditedCategoryName(e.target.value)}
+                        disabled={isLoading}
+                      />
+                      <div className='edit-buttons'>
+                        <button
+                          onClick={saveEditedCategory}
+                          className='button save-button'
+                          disabled={isLoading}
+                        >
+                          Guardar
+                        </button>
+                        <button
+                          onClick={cancelEditCategory}
+                          className='button cancel-button'
+                          disabled={isLoading}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() =>
+                          navigateToPracticePage(cat.id)
+                        } /* Navega a la página de práctica */
+                        className='category-button'
+                        disabled={isLoading}
                       >
-                        {" "}
-                        <path
-                          fillRule='evenodd'
-                          d='M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2'
-                        />
-                      </svg>
-                    </button>
-                    {/* Botón Quiz con texto */}
-                    <button
-                      onClick={() => navigateToQuizPage(cat.id)}
-                      className='button quiz-button'
-                      disabled={isLoading}
-                    >
-                      Quiz
-                    </button>
-                    <button
-                      onClick={() =>
-                        navigateToEditCategory(cat.id)
-                      } /* Lleva a la página de edición */
-                      className='button edit-button'
-                      disabled={isLoading}
-                      aria-label='Editar Categoría'
-                    >
-                      {/* SVG de Editar */}
-                      <svg
-                        xmlns='http://www.w3.org/2000/svg'
-                        width='100%'
-                        height='100%'
-                        fill='currentColor'
-                        viewBox='0 0 16 16'
-                      >
-                        {" "}
-                        <path d='M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325' />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => confirmDeleteCategory(cat.id)}
-                      className='button delete-button'
-                      disabled={isLoading}
-                      aria-label='Eliminar Categoría'
-                    >
-                      {/* SVG de Eliminar */}
-                      <svg
-                        xmlns='http://www.w3.org/2000/svg'
-                        width='100%'
-                        height='100%'
-                        fill='currentColor'
-                        viewBox='0 0 16 16'
-                      >
-                        {" "}
-                        <path d='M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z' />{" "}
-                        <path d='M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z' />
-                      </svg>
-                    </button>
-                  </div>
+                        {cat.name} ({cat.cards ? cat.cards.length : 0} tarjetas)
+                      </button>
+                      <div className='category-actions'>
+                        <button
+                          onClick={() =>
+                            navigateToAddCard(cat.id)
+                          } /* Nuevo botón para añadir tarjetas */
+                          className='button add-item-button'
+                          disabled={isLoading}
+                          aria-label='Agregar Tarjeta'
+                        >
+                          {/* SVG de Agregar */}
+                          <svg
+                            xmlns='http://www.w3.org/2000/svg'
+                            width='100%'
+                            height='100%'
+                            fill='currentColor'
+                            viewBox='0 0 16 16'
+                          >
+                            {" "}
+                            <path
+                              fillRule='evenodd'
+                              d='M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2'
+                            />
+                          </svg>
+                        </button>
+                        {/* Botón Quiz con texto */}
+                        <button
+                          onClick={() => navigateToQuizPage(cat.id)}
+                          className='button quiz-button'
+                          disabled={isLoading}
+                        >
+                          Quiz
+                        </button>
+                        <button
+                          onClick={() => startEditCategory(cat)}
+                          className='button edit-button'
+                          disabled={isLoading}
+                          aria-label='Editar Categoría'
+                        >
+                          {/* SVG de Editar */}
+                          <svg
+                            xmlns='http://www.w3.org/2000/svg'
+                            width='100%'
+                            height='100%'
+                            fill='currentColor'
+                            viewBox='0 0 16 16'
+                          >
+                            {" "}
+                            <path d='M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325' />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => confirmDeleteCategory(cat.id)}
+                          className='button delete-button'
+                          disabled={isLoading}
+                          aria-label='Eliminar Categoría'
+                        >
+                          {/* SVG de Eliminar */}
+                          <svg
+                            xmlns='http://www.w3.org/2000/svg'
+                            width='100%'
+                            height='100%'
+                            fill='currentColor'
+                            viewBox='0 0 16 16'
+                          >
+                            {" "}
+                            <path d='M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z' />{" "}
+                            <path d='M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z' />
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -1045,9 +1001,15 @@ const App = () => {
               </div>
 
               <div className='card-counter'>
-                Tarjeta {currentCards.length > 0 ? currentCardIndex + 1 : 0} de{" "}
-                {currentCards.length}
+                Tarjeta {currentCardIndex + 1} de {currentCards.length}
               </div>
+              <button
+                onClick={navigateToHome}
+                className='button back-button'
+                disabled={isLoading}
+              >
+                Volver al Inicio
+              </button>
             </div>
           ) : (
             <p className='info-text'>
@@ -1055,13 +1017,6 @@ const App = () => {
               sección "Gestionar Categorías".
             </p>
           )}
-          <button
-            onClick={navigateToHome}
-            className='button back-button'
-            disabled={isLoading}
-          >
-            Volver al Inicio
-          </button>
         </div>
       </>
     );
@@ -1126,7 +1081,7 @@ const App = () => {
                   disabled={isLoading}
                   lang={
                     currentCard.question
-                      ? currentCard.question.lang || "en-US"
+                      ? currentCard.langQuestion || "en-US"
                       : "en-US"
                   } // El idioma a reconocer es el inglés de la pregunta
                 />
@@ -1135,7 +1090,7 @@ const App = () => {
                   onClick={() =>
                     playAudio(
                       currentCard.question,
-                      currentCard.question.lang || "en-US"
+                      currentCard.langQuestion || "en-US"
                     )
                   }
                   className='button audio-button-round primary-button'
@@ -1206,6 +1161,13 @@ const App = () => {
               <div className='card-counter'>
                 Tarjeta {currentCardIndex + 1} de {currentCards.length}
               </div>
+              <button
+                onClick={navigateToHome}
+                className='button back-button'
+                disabled={isLoading}
+              >
+                Volver al Inicio
+              </button>
             </div>
           ) : (
             <p className='info-text'>
@@ -1213,13 +1175,6 @@ const App = () => {
               algunas desde la sección "Gestionar Categorías".
             </p>
           )}
-          <button
-            onClick={navigateToHome}
-            className='button back-button'
-            disabled={isLoading}
-          >
-            Volver al Inicio
-          </button>
         </div>
       </>
     );
@@ -1233,43 +1188,25 @@ const App = () => {
       {currentPage === "practicePage" && renderPracticePage()}
       {currentPage === "quizPage" && renderQuizPage()}{" "}
       {/* Nuevo: Renderizar la página del quiz */}
-      {currentPage === "editCategoryPage" && (
-        <EditCategoryPage
-          currentCategory={currentCategory} // Pasa la categoría actual
-          onSaveCategoryName={saveEditedCategory} // Guarda el nombre de la categoría
-          onUpdateCard={handleUpdateCard} // Guarda una tarjeta específica
-          onAddCard={addCardManually} // Añade una tarjeta (reutiliza existente, pero necesitaría ajustes)
-          onDeleteCard={confirmDeleteCard} // Elimina una tarjeta (confirma y luego elimina)
-          onNavigateHome={navigateToHome}
-          isLoading={isLoading}
-          setMessage={setMessage}
-          confirmDeleteCard={confirmDeleteCard} // Pasar confirmDeleteCard al componente hijo
-          // Nueva prop para pasar la función que actualiza el estado de las tarjetas en App.js
-          // Esto es necesario para que EditCategoryPage pueda decir a App.js que ha cambiado una tarjeta
-          onFetchCategories={fetchCategories}
-        />
-      )}
       {showDeleteConfirm && (
         <div className='modal-overlay'>
           <div className='modal-content'>
             <p className='modal-title'>
-              ¿Estás seguro que quieres eliminar{" "}
-              {cardToDeleteId ? "esta tarjeta" : "esta categoría"}?
+              ¿Estás seguro que quieres eliminar esta categoría?
             </p>
             <p className='modal-text'>
-              Esta acción no se puede deshacer y{" "}
-              {cardToDeleteId ? "la tarjeta" : "la categoría"} se perderá.
+              Esta acción no se puede deshacer y la categoría se perderá.
             </p>
             <div className='modal-buttons'>
               <button
-                onClick={deleteConfirmedItem} // <-- CORREGIDO: Llama a deleteConfirmedItem
+                onClick={deleteCategory}
                 className='button modal-delete-button'
                 disabled={isLoading}
               >
                 Sí, Eliminar
               </button>
               <button
-                onClick={cancelDeleteConfirmation} // <-- CORREGIDO: Llama a cancelDeleteConfirmation
+                onClick={cancelEditCategory}
                 className='button modal-cancel-button'
                 disabled={isLoading}
               >
