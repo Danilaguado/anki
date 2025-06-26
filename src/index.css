@@ -249,8 +249,8 @@ body {
 /* Ítem de categoría */
 .category-item {
   display: flex;
-  flex-direction: row; /* Elementos en la misma línea */
-  align-items: center; /* Centrar verticalmente el texto y los botones */
+  flex-direction: column; /* Cambiado a columna para apilar texto y botones */
+  align-items: flex-start; /* Alinea el texto a la izquierda */
   gap: 0.6rem; /* Espacio entre el texto y el grupo de botones */
   padding: 1rem;
   border-radius: 0.75rem;
@@ -262,7 +262,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: relative;
   min-height: 4.5rem; /* Altura mínima para que los botones tengan espacio */
-  justify-content: space-between; /* Distribuye el espacio: texto a la izquierda, botones a la derecha */
+  /* Eliminado justify-content: space-between; ya que ahora es columna */
 }
 
 .category-item.selected {
@@ -287,7 +287,7 @@ body {
   padding: 0;
   cursor: pointer;
   color: inherit;
-  flex-grow: 1; /* Permitir que el texto ocupe el espacio restante */
+  width: 100%; /* El botón de texto de la categoría ocupa todo el ancho disponible */
   font-size: 1.05rem;
   white-space: normal; /* Permitir que el texto se rompa en varias líneas si es largo */
   word-break: break-word; /* Romper palabras largas para evitar desbordamiento */
@@ -295,8 +295,7 @@ body {
   text-overflow: ellipsis; /* Añade puntos suspensivos si el texto es muy largo */
   box-sizing: border-box;
   line-height: 1.3; /* Ajuste para texto multi-línea */
-  /* Reducir el padding-right si hay muchos botones o el texto es muy largo */
-  padding-right: 5px; /* Espacio mínimo para que los botones no se peguen al texto */
+  /* Eliminado padding-right fijo, ya no es necesario con la nueva disposición */
 }
 
 .category-button:disabled {
@@ -304,14 +303,16 @@ body {
   cursor: not-allowed;
 }
 
-/* Contenedor de acciones de categoría: ahora es flex row */
+/* Contenedor de acciones de categoría: ahora es flex row y posicionado absoluto */
 .category-actions {
   display: flex;
-  flex-direction: row; /* Mantener en fila */
+  flex-direction: row; /* Los botones de acción seguirán uno al lado del otro */
   gap: 0.4rem; /* Espacio entre botones */
   align-items: center; /* Centrar verticalmente los iconos */
   flex-shrink: 0; /* IMPEDIR que este grupo de botones se encoja */
-  /* Eliminado posicionamiento absoluto para que fluyan con el flex del padre */
+  /* Posicionar a la derecha dentro de la columna */
+  align-self: flex-end; /* Alinear este grupo a la derecha dentro del .category-item (que es columna) */
+  margin-top: 0.5rem; /* Espacio entre el nombre de la categoría y los botones */
 }
 
 /* Estilos para los botones de icono dentro de .category-actions */
@@ -343,17 +344,15 @@ body {
 .quiz-button {
   background-color: #ff9800; /* Naranja */
   color: #ffffff;
-  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
-  padding: 0;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 0.75rem; /* Texto más pequeño para caber */
+  /* Ya están definidos por .category-actions .button para tamaño/forma */
+  font-size: 0.75rem; /* Tamaño de fuente para el texto */
   line-height: 1; /* Ajustar línea para centrar texto */
-  display: flex; /* Para centrar el texto verticalmente */
+  /* Los siguientes son para asegurar que el texto se centre en el botón redondo */
+  display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box; /* Incluir padding/border en tamaño */
+  box-sizing: border-box;
+  padding: 0; /* Sobrescribir padding si se hereda uno diferente para texto */
 }
 .quiz-button:hover:not(:disabled) {
   background-color: #fb8c00;
@@ -363,11 +362,7 @@ body {
 .add-item-button {
   background-color: #2196f3; /* Azul más vibrante */
   color: #ffffff;
-  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
-  padding: 0;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  /* Ya están definidos por .category-actions .button */
 }
 .add-item-button:hover:not(:disabled) {
   background-color: #1976d2; /* Azul más oscuro al hover */
@@ -377,11 +372,7 @@ body {
 .edit-button {
   background-color: #ffc107; /* Amarillo */
   color: #333; /* Texto oscuro para contraste */
-  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
-  padding: 0;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  /* Ya están definidos por .category-actions .button */
 }
 .edit-button:hover:not(:disabled) {
   background-color: #ffb300;
@@ -390,11 +381,7 @@ body {
 .delete-button {
   background-color: #f44336; /* Rojo */
   color: #ffffff;
-  /* Eliminar padding y border-radius heredados para usar los de .icon-button */
-  padding: 0;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  /* Ya están definidos por .category-actions .button */
 }
 .delete-button:hover:not(:disabled) {
   background-color: #d32f2f;
