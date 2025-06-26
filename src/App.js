@@ -1169,7 +1169,7 @@ const App = () => {
                 Sí, Eliminar
               </button>
               <button
-                onClick={cancelDelete}
+                onClick={cancelEditCategory}
                 className='button modal-cancel-button'
                 disabled={isLoading}
               >
