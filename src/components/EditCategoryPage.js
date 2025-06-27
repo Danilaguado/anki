@@ -58,18 +58,19 @@ const EditCategoryPage = ({
     setIsLoading(true);
     setMessage("Eliminando tarjeta...");
     try {
-      const url = `/api/cards/delete?id=${cardToDeleteId}`; // <--- Esta es la URL que tu frontend intenta llamar
+      const url = `/api/cards/delete?id=${cardToDeleteId}`;
       const response = await fetch(url, {
-        method: "DELETE", // <--- Con este método HTTP
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorData = await response.json().catch(() => ({})); // Intenta parsear el error JSON
         throw new Error(
-          `Error HTTP: ${response.status} - ${
-            response.statusText
-          }. Respuesta: ${errorText.substring(0, 200)}...`
+          errorData.error ||
+            `Error HTTP: ${response.status} - ${
+              response.statusText || "Error desconocido"
+            }`
         );
       }
 
@@ -80,9 +81,6 @@ const EditCategoryPage = ({
         );
         setMessage("Tarjeta eliminada.");
         cancelCardDeletion(); // Cerrar el modal
-        // No llamamos a onSaveCategoryChanges aquí directamente, porque esta es solo una eliminación de tarjeta individual.
-        // Los cambios globales se guardarán con el botón "Guardar cambios".
-        // Sin embargo, podrías llamar a una función de `onCardDeleted` si App.js necesita actualizar su estado de categorías.
       } else {
         throw new Error(
           result.error || "Error desconocido al eliminar tarjeta."
@@ -120,9 +118,8 @@ const EditCategoryPage = ({
     setIsLoading(true);
     setMessage("Guardando todos los cambios...");
 
-    // Preparar datos para enviar a la API
-    const cardsToUpdate = editedCards.filter((card) => !card.isNew); // Solo las existentes para actualizar
-    const cardsToAdd = editedCards.filter((card) => card.isNew); // Las nuevas para añadir
+    const cardsToUpdate = editedCards.filter((card) => !card.isNew);
+    const cardsToAdd = editedCards.filter((card) => card.isNew);
 
     try {
       // 1. Actualizar nombre de categoría
@@ -136,14 +133,26 @@ const EditCategoryPage = ({
         }),
       });
       if (!categoryUpdateResponse.ok) {
+        const errorData = await categoryUpdateResponse.json().catch(() => ({}));
         throw new Error(
-          `Error al actualizar categoría: ${categoryUpdateResponse.statusText}`
+          errorData.error ||
+            `Error al actualizar categoría: ${
+              categoryUpdateResponse.statusText || "Error desconocido"
+            }`
         );
       }
 
       // 2. Actualizar tarjetas existentes
       for (const card of cardsToUpdate) {
-        const cardUpdateUrl = "/api/cards/update"; // Asume que tienes un endpoint para actualizar tarjetas
+        // Validación básica para evitar enviar tarjetas vacías si no se han editado
+        if (!card.question.trim() || !card.answer.trim()) {
+          setMessage(
+            `La pregunta o respuesta de la tarjeta ID ${card.id} no puede estar vacía.`
+          );
+          setIsLoading(false);
+          return;
+        }
+        const cardUpdateUrl = "/api/cards/update";
         const cardUpdateResponse = await fetch(cardUpdateUrl, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -157,8 +166,12 @@ const EditCategoryPage = ({
           }),
         });
         if (!cardUpdateResponse.ok) {
+          const errorData = await cardUpdateResponse.json().catch(() => ({}));
           throw new Error(
-            `Error al actualizar tarjeta ${card.id}: ${cardUpdateResponse.statusText}`
+            errorData.error ||
+              `Error al actualizar tarjeta ${card.id}: ${
+                cardUpdateResponse.statusText || "Error desconocido"
+              }`
           );
         }
       }
@@ -172,7 +185,7 @@ const EditCategoryPage = ({
           setIsLoading(false);
           return;
         }
-        const cardAddUrl = "/api/cards/add"; // Endpoint para añadir tarjetas
+        const cardAddUrl = "/api/cards/add";
         const cardAddResponse = await fetch(cardAddUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -185,8 +198,12 @@ const EditCategoryPage = ({
           }),
         });
         if (!cardAddResponse.ok) {
+          const errorData = await cardAddResponse.json().catch(() => ({}));
           throw new Error(
-            `Error al añadir tarjeta nueva: ${cardAddResponse.statusText}`
+            errorData.error ||
+              `Error al añadir tarjeta nueva: ${
+                cardAddResponse.statusText || "Error desconocido"
+              }`
           );
         }
       }
@@ -228,8 +245,9 @@ const EditCategoryPage = ({
       <h1 className='app-title'>Editar Categoría</h1>
 
       <MessageDisplay message={message} isLoading={isLoading} />
+      {/* El mensaje de carga de la app se muestra si la app está cargando y este componente no tiene un mensaje de carga local */}
       <MessageDisplay
-        message={appIsLoading ? "Procesando..." : ""}
+        message={appIsLoading && !isLoading ? "Procesando..." : ""}
         isLoading={appIsLoading && !isLoading}
       />
 
