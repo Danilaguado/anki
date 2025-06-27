@@ -7,8 +7,8 @@ import "./index.css"; // Importa los estilos globales para toda la aplicación
 
 // Importa tu sección principal del entrenador de vocabulario
 import MainVocabSection from "./MainVocabSection";
-// Importa el nuevo componente de Lecciones con la ruta en minúsculas
-import Lessons from "./lessons/lessons"; // Importación del componente Lessons con ruta en minúsculas
+// Importa el nuevo componente de Lecciones con la ruta y nombre de archivo actualizados
+import PrincipalPageLessons from "./lesson/PrincipalPageLessons"; // Ruta y nombre de archivo actualizados
 
 // Un componente de ejemplo para la pantalla principal o "Home"
 const HomeScreen = () => {
@@ -24,14 +24,11 @@ const HomeScreen = () => {
         <Link to='/vocab-trainer' className='button primary-button'>
           Ir al Entrenador de Vocabulario
         </Link>
-        {/* Nuevo botón para Lecciones */}
+        {/* Botón para Lecciones, ahora apunta a la nueva ruta */}
         <Link to='/lessons' className='button primary-button'>
-          {" "}
-          {/* Usamos la misma clase de botón para consistencia */}
           Lecciones
         </Link>
         {/* Aquí podrías añadir más enlaces a otras secciones de tu aplicación */}
-        {/* <Link to="/other-section" className="button secondary-button">Otra Sección</Link> */}
       </nav>
     </div>
   );
@@ -45,8 +42,8 @@ const App = () => {
         <Routes>
           <Route path='/' element={<HomeScreen />} />
           <Route path='/vocab-trainer' element={<MainVocabSection />} />
-          {/* Nueva ruta para las Lecciones */}
-          <Route path='/lessons' element={<Lessons />} />
+          {/* Nueva ruta para las Lecciones, usando el componente renombrado */}
+          <Route path='/lessons' element={<PrincipalPageLessons />} />
           {/* Define más rutas aquí si añades otras secciones */}
         </Routes>
       </div>
