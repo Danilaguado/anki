@@ -1,9 +1,8 @@
 // api/cards/add.js
-
 import { google } from "googleapis";
+import { v4 as uuidv4 } from "uuid"; // Importar uuid para generar IDs únicos
 
-const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M";
-const CATEGORIES_SHEET_NAME = "Categories";
+const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // ¡Asegúrate de que este ID sea correcto!
 const CARDS_SHEET_NAME = "Cards";
 
 export default async function handler(req, res) {
@@ -14,12 +13,14 @@ export default async function handler(req, res) {
     });
   }
 
+  // Se espera categoryId, question, answer, langQuestion, langAnswer en el cuerpo de la solicitud
   const { categoryId, question, answer, langQuestion, langAnswer } = req.body;
 
   if (!categoryId || !question || !answer || !langQuestion || !langAnswer) {
     return res.status(400).json({
       success: false,
-      error: "Todos los campos de la tarjeta son requeridos.",
+      error:
+        "Todos los campos de la tarjeta (categoryId, question, answer, langQuestion, langAnswer) son requeridos para añadir.",
     });
   }
 
@@ -34,82 +35,71 @@ export default async function handler(req, res) {
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Validar que la categoría existe
-    const categoriesResponse = await sheets.spreadsheets.values.get({
+    // Generar un ID único para la nueva tarjeta
+    const newCardId = uuidv4();
+
+    // Obtener los encabezados de la hoja 'Cards' para asegurar el orden correcto
+    const cardsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${CATEGORIES_SHEET_NAME}!A:A`, // Obtener solo los IDs de categoría
+      range: `${CARDS_SHEET_NAME}!1:1`, // Solo obtener la primera fila (encabezados)
     });
-    const existingCategoryIds = (categoriesResponse.data.values || [])
-      .map((row) => row[0])
-      .slice(1); // Ignorar encabezado
+    const headers = cardsResponse.data.values
+      ? cardsResponse.data.values[0]
+      : [];
 
-    if (!existingCategoryIds.includes(categoryId)) {
-      return res.status(404).json({
-        success: false,
-        error: `Categoría con ID ${categoryId} no encontrada. No se puede añadir la tarjeta.`,
-      });
-    }
-
-    const newId = `card-${Date.now()}`;
-
-    // Obtener encabezados de la hoja Cards para determinar el orden de las columnas
-    const headersResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${CARDS_SHEET_NAME}!1:1`, // Obtener solo la primera fila (encabezados)
-    });
-    const sheetHeaders = headersResponse.data.values[0];
-
-    if (!sheetHeaders || sheetHeaders.length === 0) {
+    if (headers.length === 0) {
       throw new Error(
-        `No se pudieron obtener los encabezados de la hoja "${CARDS_SHEET_NAME}".`
+        `No se encontraron encabezados en la hoja "${CARDS_SHEET_NAME}".`
       );
     }
 
-    const cardIdColIndex = sheetHeaders.indexOf("ID");
-    const catIdCardColIndex = sheetHeaders.indexOf("CategoryID");
-    const questionColIndex = sheetHeaders.indexOf("Question");
-    const answerColIndex = sheetHeaders.indexOf("Answer");
-    const langQuestionColIndex = sheetHeaders.indexOf("LangQuestion");
-    const langAnswerColIndex = sheetHeaders.indexOf("LangAnswer");
+    // Crear un array de valores en el orden de los encabezados
+    const newRow = new Array(headers.length).fill("");
 
-    if (
-      [
-        cardIdColIndex,
-        catIdCardColIndex,
-        questionColIndex,
-        answerColIndex,
-        langQuestionColIndex,
-        langAnswerColIndex,
-      ].some((idx) => idx === -1)
-    ) {
-      throw new Error(
-        `Uno o más encabezados requeridos no encontrados en la hoja "${CARDS_SHEET_NAME}" para añadir tarjeta. Asegúrate de tener: ID, CategoryID, Question, Answer, LangQuestion, LangAnswer.`
-      );
-    }
+    // Mapear los datos de la nueva tarjeta a sus columnas correspondientes
+    headers.forEach((header, index) => {
+      switch (header) {
+        case "ID":
+          newRow[index] = newCardId;
+          break;
+        case "CategoryID":
+          newRow[index] = categoryId;
+          break;
+        case "Question":
+          newRow[index] = question;
+          break;
+        case "Answer":
+          newRow[index] = answer;
+          break;
+        case "LangQuestion":
+          newRow[index] = langQuestion;
+          break;
+        case "LangAnswer":
+          newRow[index] = langAnswer;
+          break;
+        // Añade más casos si tienes otras columnas en tu hoja "Cards"
+        default:
+          // Si hay otras columnas no manejadas, puedes dejarles el valor vacío o un valor por defecto
+          break;
+      }
+    });
 
-    const newRow = Array(sheetHeaders.length).fill("");
-    newRow[cardIdColIndex] = newId;
-    newRow[catIdCardColIndex] = categoryId;
-    newRow[questionColIndex] = question;
-    newRow[answerColIndex] = answer;
-    newRow[langQuestionColIndex] = langQuestion;
-    newRow[langAnswerColIndex] = langAnswer;
-
+    // Añadir la nueva fila a la hoja de Google Sheets
     const appendResponse = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: CARDS_SHEET_NAME,
+      range: `${CARDS_SHEET_NAME}!A:F`, // Especifica el rango donde se añadirán los datos (ej. A:F si son 6 columnas)
       valueInputOption: "RAW",
-      insertDataOption: "INSERT_ROWS",
       resource: {
-        values: [newRow],
+        values: [newRow], // La nueva fila de datos
       },
     });
 
     if (appendResponse.status === 200) {
       return res.status(200).json({
         success: true,
+        message: `Tarjeta con ID ${newCardId} añadida exitosamente.`,
         data: {
-          id: newId,
+          id: newCardId,
           categoryId,
           question,
           answer,
@@ -128,7 +118,7 @@ export default async function handler(req, res) {
     );
     return res.status(500).json({
       success: false,
-      error: "Error en el servidor al añadir tarjeta: " + error.message,
+      error: "Error en el servidor al añadir la tarjeta: " + error.message,
     });
   }
 }
