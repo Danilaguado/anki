@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import "./EditCategoryPage.css"; // Importa los estilos de esta página
-import MessageDisplay from "./MessageDisplay"; // Para mostrar mensajes de carga/error
+import "./EditCategoryPage.css";
+import MessageDisplay from "./MessageDisplay";
 
 const EditCategoryPage = ({
-  category, // La categoría a editar (incluye sus tarjetas)
-  onSaveCategoryChanges, // Función para guardar los cambios (recibida de App.js)
-  onNavigateToHome, // Función para volver al inicio
-  isLoading: appIsLoading, // Estado de carga global de la app
-  setMessage: setAppMessage, // Función para establecer mensajes globales
+  category,
+  onSaveCategoryChanges,
+  onNavigateToHome,
+  isLoading: appIsLoading,
+  setMessage: setAppMessage,
 }) => {
   const [editedCategoryName, setEditedCategoryName] = useState(
     category?.name || ""
@@ -15,10 +15,9 @@ const EditCategoryPage = ({
   const [editedCards, setEditedCards] = useState([]);
   const [showCardDeleteConfirm, setShowCardDeleteConfirm] = useState(false);
   const [cardToDeleteId, setCardToDeleteId] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Estado de carga local
-  const [message, setMessage] = useState(""); // Mensajes locales de esta página
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  // Al cargar la categoría, asegurar que cada tarjeta tenga langQuestion/langAnswer
   useEffect(() => {
     if (category) {
       setEditedCategoryName(category.name);
@@ -32,59 +31,47 @@ const EditCategoryPage = ({
     }
   }, [category]);
 
-  // Manejadores de cambios
-  const handleCategoryNameChange = (e) => {
-    setEditedCategoryName(e.target.value);
-  };
+  const handleCategoryNameChange = (e) => setEditedCategoryName(e.target.value);
 
   const handleCardChange = (cardId, field, value) => {
-    setEditedCards((prevCards) =>
-      prevCards.map((card) =>
-        card.id === cardId ? { ...card, [field]: value } : card
-      )
+    setEditedCards((prev) =>
+      prev.map((c) => (c.id === cardId ? { ...c, [field]: value } : c))
     );
   };
 
-  // Lógica de eliminación de tarjeta...
-  const confirmDeleteCard = (cardId) => {
-    setCardToDeleteId(cardId);
+  const confirmDeleteCard = (id) => {
+    setCardToDeleteId(id);
     setShowCardDeleteConfirm(true);
   };
   const cancelCardDeletion = () => {
     setShowCardDeleteConfirm(false);
     setCardToDeleteId(null);
   };
+
   const deleteCard = async () => {
     if (!cardToDeleteId) return;
     setIsLoading(true);
     setMessage("Eliminando tarjeta...");
     try {
-      const url = `/api/cards/delete?id=${cardToDeleteId}`;
-      const response = await fetch(url, {
+      const res = await fetch(`/api/cards/delete?id=${cardToDeleteId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Error HTTP: ${response.status}`);
-      }
-      const result = await response.json();
-      if (result.success) {
+      const result = await res.json();
+      if (res.ok && result.success) {
         setEditedCards((prev) => prev.filter((c) => c.id !== cardToDeleteId));
         setMessage("Tarjeta eliminada.");
         cancelCardDeletion();
       } else {
-        throw new Error(result.error || "Error al eliminar tarjeta.");
+        throw new Error(result.error || `Error: ${res.status}`);
       }
-    } catch (error) {
-      console.error(error);
-      setMessage(`Error al eliminar la tarjeta: ${error.message}`);
+    } catch (err) {
+      console.error(err);
+      setMessage(`Error al eliminar la tarjeta: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Añadir tarjeta vacía
   const addNewEmptyCard = () => {
     setEditedCards((prev) => [
       ...prev,
@@ -99,7 +86,6 @@ const EditCategoryPage = ({
     ]);
   };
 
-  // Guardar todos los cambios
   const saveAllChanges = async () => {
     if (!editedCategoryName.trim()) {
       setMessage("El nombre de la categoría no puede estar vacío.");
@@ -135,14 +121,17 @@ const EditCategoryPage = ({
           setIsLoading(false);
           return;
         }
+        const lq = card.langQuestion?.trim();
+        const la = card.langAnswer?.trim();
         const payload = {
           id: card.id.trim(),
           categoryId: category.id.trim(),
           question: card.question.trim(),
           answer: card.answer.trim(),
-          langQuestion: (card.langQuestion || "en-US").trim(),
-          langAnswer: (card.langAnswer || "es-ES").trim(),
+          langQuestion: lq ? lq : "en-US",
+          langAnswer: la ? la : "es-ES",
         };
+        console.log("Updating card payload:", payload);
         const res = await fetch("/api/cards/update", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -165,16 +154,19 @@ const EditCategoryPage = ({
           setIsLoading(false);
           return;
         }
+        const lq = card.langQuestion?.trim();
+        const la = card.langAnswer?.trim();
+        const addPayload = {
+          categoryId: category.id.trim(),
+          question: card.question.trim(),
+          answer: card.answer.trim(),
+          langQuestion: lq ? lq : "en-US",
+          langAnswer: la ? la : "es-ES",
+        };
         const addRes = await fetch("/api/cards/add", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            categoryId: category.id.trim(),
-            question: card.question.trim(),
-            answer: card.answer.trim(),
-            langQuestion: (card.langQuestion || "en-US").trim(),
-            langAnswer: (card.langAnswer || "es-ES").trim(),
-          }),
+          body: JSON.stringify(addPayload),
         });
         if (!addRes.ok) {
           const err = await addRes.json().catch(() => ({}));
@@ -196,14 +188,11 @@ const EditCategoryPage = ({
   if (!category) {
     return (
       <div className='main-content-wrapper'>
-        <MessageDisplay
-          message='Cargando categoría para editar...'
-          isLoading={true}
-        />
+        <MessageDisplay message='Cargando categoría...' isLoading />
         <button
           onClick={onNavigateToHome}
           className='button back-button'
-          disabled={appIsLoading || isLoading}
+          disabled={appIsLoading}
         >
           Volver al Inicio
         </button>
@@ -219,7 +208,6 @@ const EditCategoryPage = ({
         message={appIsLoading && !isLoading ? "Procesando..." : ""}
         isLoading={appIsLoading && !isLoading}
       />
-
       <div className='section-container'>
         <h2 className='section-title'>Nombre de la Categoría</h2>
         <div className='input-group'>
@@ -228,20 +216,17 @@ const EditCategoryPage = ({
           </label>
           <input
             id='category-name-input'
-            type='text'
             className='input-field'
+            type='text'
             value={editedCategoryName}
             onChange={handleCategoryNameChange}
             disabled={isLoading || appIsLoading}
           />
         </div>
-
         <h2 className='section-title'>Tarjetas de la Categoría</h2>
         <div className='cards-edit-list'>
           {editedCards.length === 0 ? (
-            <p className='info-text'>
-              No hay tarjetas en esta categoría. Puedes añadir una nueva.
-            </p>
+            <p className='info-text'>No hay tarjetas. Añade una.</p>
           ) : (
             editedCards.map((card) => (
               <div key={card.id} className='card-edit-item'>
@@ -255,8 +240,8 @@ const EditCategoryPage = ({
                     </label>
                     <input
                       id={`question-${card.id}`}
-                      type='text'
                       className='input-field'
+                      type='text'
                       value={card.question}
                       onChange={(e) =>
                         handleCardChange(card.id, "question", e.target.value)
@@ -273,8 +258,8 @@ const EditCategoryPage = ({
                     </label>
                     <input
                       id={`answer-${card.id}`}
-                      type='text'
                       className='input-field'
+                      type='text'
                       value={card.answer}
                       onChange={(e) =>
                         handleCardChange(card.id, "answer", e.target.value)
@@ -285,11 +270,10 @@ const EditCategoryPage = ({
                 </div>
                 <button
                   onClick={() => confirmDeleteCard(card.id)}
-                  className='button delete-button delete-card-button'
+                  className='button delete-button'
                   disabled={isLoading || appIsLoading}
-                  aria-label='Eliminar Tarjeta'
                 >
-                  {/* ícono basura */}
+                  {/* Ícono basura */}
                 </button>
               </div>
             ))
@@ -297,13 +281,12 @@ const EditCategoryPage = ({
         </div>
         <button
           onClick={addNewEmptyCard}
-          className='button primary-button add-new-card-button'
+          className='button primary-button'
           disabled={isLoading || appIsLoading}
         >
-          Añadir Nueva Tarjeta Vacía
+          Añadir Tarjeta
         </button>
       </div>
-
       <div className='edit-actions-group'>
         <button
           onClick={saveAllChanges}
@@ -320,21 +303,18 @@ const EditCategoryPage = ({
           Regresar
         </button>
       </div>
-
       {showCardDeleteConfirm && (
         <div className='modal-overlay'>
           <div className='modal-content'>
-            <p className='modal-title'>
-              ¿Estás seguro que quieres eliminar esta tarjeta?
-            </p>
-            <p className='modal-text'>Esta acción no se puede deshacer.</p>
+            <p className='modal-title'>¿Eliminar tarjeta?</p>
+            <p className='modal-text'>No se puede deshacer.</p>
             <div className='modal-buttons'>
               <button
                 onClick={deleteCard}
                 className='button modal-delete-button'
                 disabled={isLoading || appIsLoading}
               >
-                Sí, Eliminar
+                Sí
               </button>
               <button
                 onClick={cancelCardDeletion}
