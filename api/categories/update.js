@@ -1,8 +1,9 @@
-// api/cards/update.js
+// api/categories/update.js
+
 import { google } from "googleapis";
 
 const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // ¡Asegúrate de que este ID sea correcto!
-const CARDS_SHEET_NAME = "Cards";
+const CATEGORIES_SHEET_NAME = "Categories";
 
 export default async function handler(req, res) {
   if (req.method !== "PUT") {
@@ -12,36 +13,38 @@ export default async function handler(req, res) {
     });
   }
 
-  // Se espera el ID de la tarjeta, CategoryID, question, answer, langQuestion, langAnswer en el cuerpo de la solicitud
-  let { id, categoryId, question, answer, langQuestion, langAnswer } = req.body; // Usamos 'let' para reasignar
+  let { id, name } = req.body; // id de la categoría a actualizar y el nuevo nombre
 
-  // **NUEVO:** Asegurar que los campos de idioma no sean falsy (incluyendo cadena vacía) y aplicarles un valor por defecto
-  langQuestion = langQuestion || "en-US";
-  langAnswer = langAnswer || "es-ES";
+  // Consola de depuración: muestra los valores recibidos
+  console.log("Valores recibidos en req.body para actualizar categoría:", {
+    id,
+    name,
+  });
 
-  // **NUEVO:** Recortar espacios en blanco y validar todos los campos requeridos DESPUÉS de asegurar los valores por defecto
-  if (
-    !id ||
-    !categoryId ||
-    !question ||
-    !answer ||
-    !langQuestion ||
-    !langAnswer
-  ) {
+  // Asegurarse de que id y name no sean undefined/null y aplicar trim
+  id = id ? String(id).trim() : "";
+  name = name ? String(name).trim() : "";
+
+  // Consola de depuración: muestra los valores después de aplicar trim
+  console.log(
+    "Valores procesados para actualizar categoría (después de trim):",
+    { id, name }
+  );
+
+  // Validar campos después de aplicar trim
+  if (!id) {
+    return res.status(400).json({
+      success: false,
+      error: "El ID de la categoría es requerido y no puede estar vacío.",
+    });
+  }
+  if (!name) {
     return res.status(400).json({
       success: false,
       error:
-        "Todos los campos de la tarjeta (id, categoryId, question, answer, langQuestion, langAnswer) son requeridos para actualizar. Verifica que no estén vacíos.",
+        "El nuevo nombre de la categoría es requerido y no puede estar vacío.",
     });
   }
-
-  // También aplicar trim a los campos string para evitar problemas con espacios en blanco
-  id = id.trim();
-  categoryId = categoryId.trim();
-  question = question.trim();
-  answer = answer.trim();
-  langQuestion = langQuestion.trim();
-  langAnswer = langAnswer.trim();
 
   try {
     const auth = new google.auth.GoogleAuth({
@@ -54,83 +57,58 @@ export default async function handler(req, res) {
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    // 1. Obtener todas las tarjetas para encontrar la fila a actualizar
-    const cardsResponse = await sheets.spreadsheets.values.get({
+    // Obtener todas las categorías para encontrar la fila y el índice de columna
+    const categoriesResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${CARDS_SHEET_NAME}!A:F`, // Ajusta el rango para incluir todas tus columnas de tarjetas
+      range: `${CATEGORIES_SHEET_NAME}!A:B`, // Obtener ID y Name
     });
-    const cardsData = cardsResponse.data.values || [];
+    const categoriesData = categoriesResponse.data.values || [];
 
-    if (cardsData.length < 1) {
-      throw new Error(`No hay datos en la hoja "${CARDS_SHEET_NAME}".`);
+    if (categoriesData.length < 1) {
+      // Podría indicar que la hoja está vacía o no existe
+      return res
+        .status(404)
+        .json({
+          success: false,
+          error: `No hay datos o la hoja "${CATEGORIES_SHEET_NAME}" está vacía.`,
+        });
     }
 
-    const headers = cardsData[0]; // Encabezados de la hoja Cards
+    const headers = categoriesData[0];
     const idColIndex = headers.indexOf("ID");
-    const categoryIdColIndex = headers.indexOf("CategoryID");
-    const questionColIndex = headers.indexOf("Question");
-    const answerColIndex = headers.indexOf("Answer");
-    const langQuestionColIndex = headers.indexOf("LangQuestion");
-    const langAnswerColIndex = headers.indexOf("LangAnswer");
+    const nameColIndex = headers.indexOf("Name");
 
-    // Verificar que todos los encabezados necesarios existan
-    if (
-      [
-        idColIndex,
-        categoryIdColIndex,
-        questionColIndex,
-        answerColIndex,
-        langQuestionColIndex,
-        langAnswerColIndex,
-      ].some((index) => index === -1)
-    ) {
-      throw new Error(
-        `Faltan encabezados requeridos (ID, CategoryID, Question, Answer, LangQuestion, LangAnswer) en la hoja "${CARDS_SHEET_NAME}".`
-      );
+    if (idColIndex === -1 || nameColIndex === -1) {
+      // Si faltan encabezados, devuelve un error claro
+      const missingHeaders = [];
+      if (idColIndex === -1) missingHeaders.push("ID");
+      if (nameColIndex === -1) missingHeaders.push("Name");
+      return res.status(500).json({
+        success: false,
+        error: `Faltan encabezados requeridos (${missingHeaders.join(
+          ", "
+        )}) en la hoja "${CATEGORIES_SHEET_NAME}". Por favor, asegúrate de que las columnas 'ID' y 'Name' existan.`,
+      });
     }
 
     let rowIndex = -1;
-    // Buscar la fila de la tarjeta por su ID (empezar desde la segunda fila para saltar encabezados)
-    for (let i = 1; i < cardsData.length; i++) {
-      if (cardsData[i][idColIndex] === id) {
-        rowIndex = i + 1; // +1 porque la API de Sheets es 1-indexada para filas
+    for (let i = 1; i < categoriesData.length; i++) {
+      if (categoriesData[i][idColIndex] === id) {
+        rowIndex = i + 1; // +1 porque la API de Sheets es 1-indexada para filas, y getValues es 0-indexado sin encabezado
         break;
       }
     }
 
     if (rowIndex === -1) {
-      // Si la tarjeta no se encuentra, devolver 404
       return res.status(404).json({
         success: false,
-        error: `Tarjeta con ID ${id} no encontrada para actualizar.`,
+        error: `Categoría con ID ${id} no encontrada para actualizar.`,
       });
     }
 
-    // Preparar los valores para actualizar la fila completa de la tarjeta
-    const valuesToUpdate = new Array(headers.length).fill(""); // Crear un array vacío del tamaño de los encabezados
-
-    // Rellenar con los valores existentes para las columnas que no se actualizan explícitamente
-    // Esto es importante para no borrar datos de columnas que no manejas en esta API
-    const existingRow = cardsData[rowIndex - 1]; // Obtener la fila existente (0-indexed)
-
-    headers.forEach((header, index) => {
-      if (existingRow && existingRow[index] !== undefined) {
-        valuesToUpdate[index] = existingRow[index];
-      }
-    });
-
-    // Actualizar solo las columnas que se están enviando
-    valuesToUpdate[categoryIdColIndex] = categoryId;
-    valuesToUpdate[questionColIndex] = question;
-    valuesToUpdate[answerColIndex] = answer;
-    valuesToUpdate[langQuestionColIndex] = langQuestion;
-    valuesToUpdate[langAnswerColIndex] = langAnswer;
-    // El ID no se actualiza, solo se usa para encontrar la fila
-
-    // Preparar el rango para actualizar toda la fila de la tarjeta (ej. A2:F2 si hay 6 columnas)
-    // Se calcula dinámicamente desde la columna A hasta la última columna de los encabezados
-    const rangeToUpdate = `${CARDS_SHEET_NAME}!A${rowIndex}:${String.fromCharCode(
-      65 + headers.length - 1
+    // Preparar el rango para actualizar (ej. B2 si el nombre está en la columna B y la categoría es la segunda fila)
+    const rangeToUpdate = `${CATEGORIES_SHEET_NAME}!${String.fromCharCode(
+      65 + nameColIndex
     )}${rowIndex}`;
 
     const updateResponse = await sheets.spreadsheets.values.update({
@@ -138,28 +116,31 @@ export default async function handler(req, res) {
       range: rangeToUpdate,
       valueInputOption: "RAW",
       resource: {
-        values: [valuesToUpdate], // Se espera un array de arrays, por eso [[valuesToUpdate]]
+        values: [[name]],
       },
     });
 
     if (updateResponse.status === 200) {
-      return res.status(200).json({
-        success: true,
-        message: `Tarjeta con ID ${id} actualizada exitosamente.`,
-        data: { id, categoryId, question, answer, langQuestion, langAnswer },
-      });
+      return res
+        .status(200)
+        .json({ success: true, data: { id: id, name: name } });
     } else {
-      throw new Error("Error al actualizar la tarjeta en Google Sheets.");
+      // Si la API de Sheets devuelve un error pero con status 200 (raro, pero posible)
+      // O si el status no es 200, lanzar un error más detallado
+      throw new Error(
+        `Error inesperado al actualizar la categoría en Google Sheets. Estado: ${updateResponse.status}`
+      );
     }
   } catch (error) {
     console.error(
-      "Error en la función Serverless (update-card):",
+      "Error en la función Serverless (update-category):",
       error.message,
       error.stack
     );
     return res.status(500).json({
       success: false,
-      error: "Error en el servidor al actualizar la tarjeta: " + error.message,
+      error:
+        "Error interno del servidor al actualizar categoría: " + error.message,
     });
   }
 }
