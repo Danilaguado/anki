@@ -1,10 +1,14 @@
 // src/App.js
+// Este es el archivo App.js principal que maneja el enrutamiento y la estructura general.
+
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import "./index.css"; // Importa los estilos globales para toda la aplicación
 
-// Importa tu nueva sección principal del entrenador de vocabulario
+// Importa tu sección principal del entrenador de vocabulario
 import MainVocabSection from "./MainVocabSection";
+// Importa el nuevo componente de Lecciones
+import Lessons from "./lessons/Lessons"; // Importación del nuevo componente Lessons
 
 // Un componente de ejemplo para la pantalla principal o "Home"
 const HomeScreen = () => {
@@ -19,6 +23,12 @@ const HomeScreen = () => {
       <nav className='home-nav-buttons'>
         <Link to='/vocab-trainer' className='button primary-button'>
           Ir al Entrenador de Vocabulario
+        </Link>
+        {/* Nuevo botón para Lecciones */}
+        <Link to='/lessons' className='button primary-button'>
+          {" "}
+          {/* Usamos la misma clase de botón para consistencia */}
+          Lecciones
         </Link>
         {/* Aquí podrías añadir más enlaces a otras secciones de tu aplicación */}
         {/* <Link to="/other-section" className="button secondary-button">Otra Sección</Link> */}
@@ -35,6 +45,8 @@ const App = () => {
         <Routes>
           <Route path='/' element={<HomeScreen />} />
           <Route path='/vocab-trainer' element={<MainVocabSection />} />
+          {/* Nueva ruta para las Lecciones */}
+          <Route path='/lessons' element={<Lessons />} />
           {/* Define más rutas aquí si añades otras secciones */}
         </Routes>
       </div>
