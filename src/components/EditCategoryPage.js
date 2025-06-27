@@ -161,8 +161,8 @@ const EditCategoryPage = ({
             categoryId: category.id,
             question: card.question.trim(),
             answer: card.answer.trim(),
-            langQuestion: card.langQuestion,
-            langAnswer: card.langAnswer,
+            langQuestion: card.langQuestion || "en-US", // PROPORCIONA VALOR POR DEFECTO
+            langAnswer: card.langAnswer || "es-ES", // PROPORCIONA VALOR POR DEFECTO
           }),
         });
         if (!cardUpdateResponse.ok) {
