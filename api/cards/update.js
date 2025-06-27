@@ -1,7 +1,8 @@
 // api/cards/update.js
 import { google } from "googleapis";
 
-const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // ¡Asegúrate de que este ID sea correcto!
+const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M";
+// ¡Asegúrate de que este ID sea correcto!
 const CARDS_SHEET_NAME = "Cards";
 
 export default async function handler(req, res) {
@@ -39,52 +40,40 @@ export default async function handler(req, res) {
   );
 
   if (!id) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error: "Card 'id' is required and cannot be empty.",
-      });
+    return res.status(400).json({
+      success: false,
+      error: "Card 'id' is required and cannot be empty.",
+    });
   }
   if (!categoryId) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error: "Card 'categoryId' is required and cannot be empty.",
-      });
+    return res.status(400).json({
+      success: false,
+      error: "Card 'categoryId' is required and cannot be empty.",
+    });
   }
   if (!question) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error: "Card 'question' is required and cannot be empty.",
-      });
+    return res.status(400).json({
+      success: false,
+      error: "Card 'question' is required and cannot be empty.",
+    });
   }
   if (!answer) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error: "Card 'answer' is required and cannot be empty.",
-      });
+    return res.status(400).json({
+      success: false,
+      error: "Card 'answer' is required and cannot be empty.",
+    });
   }
   if (!langQuestion) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error: "Card 'langQuestion' is required and cannot be empty.",
-      });
+    return res.status(400).json({
+      success: false,
+      error: "Card 'langQuestion' is required and cannot be empty.",
+    });
   }
   if (!langAnswer) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error: "Card 'langAnswer' is required and cannot be empty.",
-      });
+    return res.status(400).json({
+      success: false,
+      error: "Card 'langAnswer' is required and cannot be empty.",
+    });
   }
 
   try {
@@ -105,12 +94,10 @@ export default async function handler(req, res) {
     const cardsData = cardsResponse.data.values || [];
 
     if (cardsData.length < 1) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          error: `No data found in "${CARDS_SHEET_NAME}" sheet or sheet is empty.`,
-        });
+      return res.status(404).json({
+        success: false,
+        error: `No data found in "${CARDS_SHEET_NAME}" sheet or sheet is empty.`,
+      });
     }
 
     const headers = cardsData[0];
