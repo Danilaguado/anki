@@ -13,9 +13,13 @@ export default async function handler(req, res) {
   }
 
   // Se espera el ID de la tarjeta, CategoryID, question, answer, langQuestion, langAnswer en el cuerpo de la solicitud
-  const { id, categoryId, question, answer, langQuestion, langAnswer } =
-    req.body;
+  let { id, categoryId, question, answer, langQuestion, langAnswer } = req.body; // Usamos 'let' para reasignar
 
+  // **NUEVO:** Asegurar que los campos de idioma no sean falsy (incluyendo cadena vacía) y aplicarles un valor por defecto
+  langQuestion = langQuestion || "en-US";
+  langAnswer = langAnswer || "es-ES";
+
+  // **NUEVO:** Recortar espacios en blanco y validar todos los campos requeridos DESPUÉS de asegurar los valores por defecto
   if (
     !id ||
     !categoryId ||
@@ -27,9 +31,17 @@ export default async function handler(req, res) {
     return res.status(400).json({
       success: false,
       error:
-        "Todos los campos de la tarjeta (id, categoryId, question, answer, langQuestion, langAnswer) son requeridos para actualizar.",
+        "Todos los campos de la tarjeta (id, categoryId, question, answer, langQuestion, langAnswer) son requeridos para actualizar. Verifica que no estén vacíos.",
     });
   }
+
+  // También aplicar trim a los campos string para evitar problemas con espacios en blanco
+  id = id.trim();
+  categoryId = categoryId.trim();
+  question = question.trim();
+  answer = answer.trim();
+  langQuestion = langQuestion.trim();
+  langAnswer = langAnswer.trim();
 
   try {
     const auth = new google.auth.GoogleAuth({
