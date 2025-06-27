@@ -14,6 +14,7 @@ const PrincipalPageLessons = () => {
   // Estados para la carga, errores y la lección generada
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState(null); // <-- ¡Añadido! Estado para manejar errores
   const [generatedLesson, setGeneratedLesson] = useState(null); // Almacenará el objeto completo de la lección generada
 
   /**
@@ -70,13 +71,13 @@ const PrincipalPageLessons = () => {
         setGeneratedLesson(result.data); // Almacena el objeto completo de la lección
         setMessage(result.message);
       } else {
-        throw new Error(
-          result.error || "Error desconocido al generar la lección."
-        );
+        setError(result.error || "Error desconocido al generar la lección."); // Usar setError
+        setMessage(""); // Limpiar mensaje si hay error específico
       }
     } catch (error) {
       console.error("Error al generar lección:", error);
-      setMessage(`Error al generar lección: ${error.message}.`);
+      setError(`Error al generar lección: ${error.message}.`); // Usar setError
+      setMessage(""); // Limpiar mensaje si hay error específico
       setGeneratedLesson(null); // Asegurarse de que no se muestre una lección parcial
     } finally {
       setIsLoading(false);
@@ -98,10 +99,14 @@ const PrincipalPageLessons = () => {
       <p className='info-text'>
         Genera lecciones personalizadas con la ayuda de la IA.
       </p>
-
       {/* Mostrar mensajes de carga o error */}
       <MessageDisplay message={message} isLoading={isLoading} />
-
+      {error && (
+        <div className='message-box' role='alert'>
+          <span className='message-text'>{error}</span>
+        </div>
+      )}{" "}
+      {/* Mostrar el error */}
       <div className='section-container lesson-generator-form'>
         <h2 className='section-title'>Parámetros de la Lección</h2>
 
@@ -212,7 +217,6 @@ const PrincipalPageLessons = () => {
           {isLoading ? "Generando..." : "Generar Lección"}
         </button>
       </div>
-
       {/* Sección para mostrar la lección generada */}
       {generatedLesson && generatedLesson.lesson && (
         <div className='section-container generated-lesson-display'>
@@ -262,7 +266,6 @@ const PrincipalPageLessons = () => {
           </div>
         </div>
       )}
-
       <Link to='/' className='button back-button'>
         Volver a la pantalla principal
       </Link>
