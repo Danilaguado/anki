@@ -58,9 +58,9 @@ const EditCategoryPage = ({
     setIsLoading(true);
     setMessage("Eliminando tarjeta...");
     try {
-      const url = `/api/cards/delete?id=${cardToDeleteId}`;
+      const url = `/api/cards/delete?id=${cardToDeleteId}`; // <--- Esta es la URL que tu frontend intenta llamar
       const response = await fetch(url, {
-        method: "DELETE",
+        method: "DELETE", // <--- Con este método HTTP
         headers: { "Content-Type": "application/json" },
       });
 
