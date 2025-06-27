@@ -8,7 +8,7 @@ import "./index.css"; // Importa los estilos globales para toda la aplicación
 // Importa tu sección principal del entrenador de vocabulario
 import MainVocabSection from "./MainVocabSection";
 // Importa el nuevo componente de Lecciones
-import Lessons from "./lessons/Lessons"; // Importación del nuevo componente Lessons
+import Lessons from "./Lessons/Lessons"; // Importación del nuevo componente Lessons
 
 // Un componente de ejemplo para la pantalla principal o "Home"
 const HomeScreen = () => {
