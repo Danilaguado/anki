@@ -1,6 +1,4 @@
 // src/App.js
-// Este es el archivo App.js principal que maneja el enrutamiento y la estructura general.
-
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import "./index.css"; // Importa los estilos globales para toda la aplicación
