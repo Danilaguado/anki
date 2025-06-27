@@ -1,4 +1,3 @@
-// src/components/EditCategoryPage.js
 import React, { useState, useEffect } from "react";
 import "./EditCategoryPage.css"; // Importa los estilos de esta página
 import MessageDisplay from "./MessageDisplay"; // Para mostrar mensajes de carga/error
@@ -19,12 +18,16 @@ const EditCategoryPage = ({
   const [isLoading, setIsLoading] = useState(false); // Estado de carga local
   const [message, setMessage] = useState(""); // Mensajes locales de esta página
 
+  // Al cargar la categoría, asegurar que cada tarjeta tenga langQuestion/langAnswer
   useEffect(() => {
     if (category) {
       setEditedCategoryName(category.name);
-      // Asegúrate de hacer una copia profunda de las tarjetas
       setEditedCards(
-        category.cards ? JSON.parse(JSON.stringify(category.cards)) : []
+        (category.cards || []).map((card) => ({
+          ...card,
+          langQuestion: card.langQuestion || "en-US",
+          langAnswer: card.langAnswer || "es-ES",
+        }))
       );
     }
   }, [category]);
@@ -42,17 +45,15 @@ const EditCategoryPage = ({
     );
   };
 
-  // Lógica de eliminación de tarjeta
+  // Lógica de eliminación de tarjeta...
   const confirmDeleteCard = (cardId) => {
     setCardToDeleteId(cardId);
     setShowCardDeleteConfirm(true);
   };
-
   const cancelCardDeletion = () => {
     setShowCardDeleteConfirm(false);
     setCardToDeleteId(null);
   };
-
   const deleteCard = async () => {
     if (!cardToDeleteId) return;
     setIsLoading(true);
@@ -63,41 +64,30 @@ const EditCategoryPage = ({
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({})); // Intenta parsear el error JSON
-        throw new Error(
-          errorData.error ||
-            `Error HTTP: ${response.status} - ${
-              response.statusText || "Error desconocido"
-            }`
-        );
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error HTTP: ${response.status}`);
       }
-
       const result = await response.json();
       if (result.success) {
-        setEditedCards((prevCards) =>
-          prevCards.filter((card) => card.id !== cardToDeleteId)
-        );
+        setEditedCards((prev) => prev.filter((c) => c.id !== cardToDeleteId));
         setMessage("Tarjeta eliminada.");
-        cancelCardDeletion(); // Cerrar el modal
+        cancelCardDeletion();
       } else {
-        throw new Error(
-          result.error || "Error desconocido al eliminar tarjeta."
-        );
+        throw new Error(result.error || "Error al eliminar tarjeta.");
       }
     } catch (error) {
-      console.error("Error al eliminar tarjeta:", error);
-      setMessage(`Error al eliminar la tarjeta: ${error.message}.`);
+      console.error(error);
+      setMessage(`Error al eliminar la tarjeta: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Lógica para añadir una nueva tarjeta temporalmente para edición
+  // Añadir tarjeta vacía
   const addNewEmptyCard = () => {
-    setEditedCards((prevCards) => [
-      ...prevCards,
+    setEditedCards((prev) => [
+      ...prev,
       {
         id: `new-${Date.now()}`,
         question: "",
@@ -109,7 +99,7 @@ const EditCategoryPage = ({
     ]);
   };
 
-  // Función para guardar todos los cambios (nombre de categoría y tarjetas)
+  // Guardar todos los cambios
   const saveAllChanges = async () => {
     if (!editedCategoryName.trim()) {
       setMessage("El nombre de la categoría no puede estar vacío.");
@@ -118,33 +108,26 @@ const EditCategoryPage = ({
     setIsLoading(true);
     setMessage("Guardando todos los cambios...");
 
-    const cardsToUpdate = editedCards.filter((card) => !card.isNew);
-    const cardsToAdd = editedCards.filter((card) => card.isNew);
+    const cardsToUpdate = editedCards.filter((c) => !c.isNew);
+    const cardsToAdd = editedCards.filter((c) => c.isNew);
 
     try {
-      // 1. Actualizar nombre de categoría
-      const categoryUpdateUrl = "/api/categories/update";
-      const categoryUpdateResponse = await fetch(categoryUpdateUrl, {
+      // 1. Actualizar categoría
+      const catRes = await fetch("/api/categories/update", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: category.id,
+          id: category.id.trim(),
           name: editedCategoryName.trim(),
         }),
       });
-      if (!categoryUpdateResponse.ok) {
-        const errorData = await categoryUpdateResponse.json().catch(() => ({}));
-        throw new Error(
-          errorData.error ||
-            `Error al actualizar categoría: ${
-              categoryUpdateResponse.statusText || "Error desconocido"
-            }`
-        );
+      if (!catRes.ok) {
+        const err = await catRes.json().catch(() => ({}));
+        throw new Error(err.error || "Error al actualizar categoría.");
       }
 
       // 2. Actualizar tarjetas existentes
       for (const card of cardsToUpdate) {
-        // Validación básica para evitar enviar tarjetas vacías si no se han editado
         if (!card.question.trim() || !card.answer.trim()) {
           setMessage(
             `La pregunta o respuesta de la tarjeta ID ${card.id} no puede estar vacía.`
@@ -152,26 +135,23 @@ const EditCategoryPage = ({
           setIsLoading(false);
           return;
         }
-        const cardUpdateUrl = "/api/cards/update";
-        const cardUpdateResponse = await fetch(cardUpdateUrl, {
+        const payload = {
+          id: card.id.trim(),
+          categoryId: category.id.trim(),
+          question: card.question.trim(),
+          answer: card.answer.trim(),
+          langQuestion: (card.langQuestion || "en-US").trim(),
+          langAnswer: (card.langAnswer || "es-ES").trim(),
+        };
+        const res = await fetch("/api/cards/update", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: card.id,
-            categoryId: category.id,
-            question: card.question.trim(),
-            answer: card.answer.trim(),
-            langQuestion: card.langQuestion || "en-US", // PROPORCIONA VALOR POR DEFECTO
-            langAnswer: card.langAnswer || "es-ES", // PROPORCIONA VALOR POR DEFECTO
-          }),
+          body: JSON.stringify(payload),
         });
-        if (!cardUpdateResponse.ok) {
-          const errorData = await cardUpdateResponse.json().catch(() => ({}));
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
           throw new Error(
-            errorData.error ||
-              `Error al actualizar tarjeta ${card.id}: ${
-                cardUpdateResponse.statusText || "Error desconocido"
-              }`
+            err.error || `Error al actualizar tarjeta ${card.id}`
           );
         }
       }
@@ -185,43 +165,34 @@ const EditCategoryPage = ({
           setIsLoading(false);
           return;
         }
-        const cardAddUrl = "/api/cards/add";
-        const cardAddResponse = await fetch(cardAddUrl, {
+        const addRes = await fetch("/api/cards/add", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            categoryId: category.id,
+            categoryId: category.id.trim(),
             question: card.question.trim(),
             answer: card.answer.trim(),
-            langQuestion: card.langQuestion,
-            langAnswer: card.langAnswer,
+            langQuestion: (card.langQuestion || "en-US").trim(),
+            langAnswer: (card.langAnswer || "es-ES").trim(),
           }),
         });
-        if (!cardAddResponse.ok) {
-          const errorData = await cardAddResponse.json().catch(() => ({}));
-          throw new Error(
-            errorData.error ||
-              `Error al añadir tarjeta nueva: ${
-                cardAddResponse.statusText || "Error desconocido"
-              }`
-          );
+        if (!addRes.ok) {
+          const err = await addRes.json().catch(() => ({}));
+          throw new Error(err.error || "Error al añadir nueva tarjeta.");
         }
       }
 
       setMessage("Cambios guardados exitosamente.");
-      if (onSaveCategoryChanges) {
-        onSaveCategoryChanges(); // Notificar a App.js para recargar categorías
-      }
-      onNavigateToHome(); // Volver a la página principal después de guardar
+      if (onSaveCategoryChanges) onSaveCategoryChanges();
+      onNavigateToHome();
     } catch (error) {
-      console.error("Error al guardar cambios:", error);
-      setMessage(`Error al guardar cambios: ${error.message}.`);
+      console.error(error);
+      setMessage(`Error al guardar cambios: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Si la categoría no está cargada, mostrar un mensaje
   if (!category) {
     return (
       <div className='main-content-wrapper'>
@@ -243,9 +214,7 @@ const EditCategoryPage = ({
   return (
     <div className='edit-category-page'>
       <h1 className='app-title'>Editar Categoría</h1>
-
       <MessageDisplay message={message} isLoading={isLoading} />
-      {/* El mensaje de carga de la app se muestra si la app está cargando y este componente no tiene un mensaje de carga local */}
       <MessageDisplay
         message={appIsLoading && !isLoading ? "Procesando..." : ""}
         isLoading={appIsLoading && !isLoading}
@@ -320,16 +289,7 @@ const EditCategoryPage = ({
                   disabled={isLoading || appIsLoading}
                   aria-label='Eliminar Tarjeta'
                 >
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    width='100%'
-                    height='100%'
-                    fill='currentColor'
-                    viewBox='0 0 16 16'
-                  >
-                    <path d='M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z' />
-                    <path d='M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z' />
-                  </svg>
+                  {/* ícono basura */}
                 </button>
               </div>
             ))
