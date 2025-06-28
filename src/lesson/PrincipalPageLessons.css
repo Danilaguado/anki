@@ -1,0 +1,203 @@
+/* src/lesson/PrincipalPageLessons.css */
+
+.lessons-page-wrapper {
+  padding-top: 20px;
+  position: relative; /* Para posicionar el botón de regreso superior */
+}
+
+.top-back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  min-width: unset; /* Permite que el botón sea más pequeño */
+  padding: 8px 15px;
+  font-size: 0.9em;
+  z-index: 10;
+}
+
+.lesson-generator-form,
+.available-lessons-list,
+.generated-lesson-display,
+.lesson-detail-view {
+  margin-top: 25px; /* Espacio entre secciones */
+  padding: 25px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.lesson-generator-form .input-group-vertical {
+  margin-bottom: 15px;
+}
+
+.lesson-generator-form .input-label {
+  text-align: left;
+  margin-bottom: 5px;
+}
+
+.textarea-field {
+  resize: vertical; /* Permite redimensionar verticalmente */
+  min-height: 80px;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 10px;
+  justify-content: flex-start;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: normal;
+  color: var(--text-color-dark);
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  transform: scale(1.2); /* Aumenta un poco el tamaño del checkbox */
+  cursor: pointer;
+}
+
+.generate-lesson-button {
+  width: 100%;
+  margin-top: 20px;
+}
+
+/* Estilos para la lista de lecciones disponibles */
+.lessons-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.lesson-list-button {
+  background-color: var(--secondary-color);
+  color: var(--text-color-dark);
+  padding: 15px 10px;
+  font-size: 1.1em;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 10px;
+  transition: background-color 0.3s ease, transform 0.2s ease,
+    box-shadow 0.3s ease;
+  white-space: normal; /* Permite que el texto del botón se envuelva */
+  word-break: break-word; /* Rompe palabras largas */
+  height: auto; /* Ajusta la altura al contenido */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px; /* Altura mínima para los botones de lección */
+}
+
+.lesson-list-button:hover:not(:disabled) {
+  background-color: #3ac7a7;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Estilos para LessonCard (vista de detalle de la lección) */
+.lesson-detail-view {
+  text-align: left;
+}
+
+.lesson-detail-view .section-title {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.lesson-meta-info {
+  font-size: 0.95em;
+  color: #666;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.lesson-description {
+  margin-bottom: 25px;
+  line-height: 1.6;
+  color: #555;
+}
+
+.lesson-detail-view .subsection-title {
+  text-align: left;
+  margin-top: 20px;
+  margin-bottom: 15px;
+}
+
+.exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.exercise-item {
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.exercise-item p {
+  margin-bottom: 8px;
+  font-size: 1em;
+  line-height: 1.5;
+  color: var(--text-color-dark);
+}
+
+.exercise-item p:last-child {
+  margin-bottom: 0;
+}
+
+.exercise-question {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.exercise-answer {
+  color: #4a4a4a;
+}
+
+.exercise-options {
+  font-style: italic;
+  color: #777;
+}
+
+.exercise-notes {
+  font-size: 0.9em;
+  color: #888;
+  border-left: 3px solid var(--accent-color);
+  padding-left: 10px;
+  margin-top: 10px;
+}
+
+.return-to-list-button {
+  margin-top: 30px;
+  width: 100%;
+}
+
+/* Estilos de errores */
+.message-box.error-box {
+  background-color: var(--error-color);
+  color: var(--text-color-light);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .lessons-buttons-grid {
+    grid-template-columns: 1fr; /* Una columna en móviles */
+  }
+  .top-back-button {
+    position: static;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  .lessons-page-wrapper {
+    padding-top: 0;
+  }
+}
