@@ -13,12 +13,12 @@ import MessageDisplay from "./components/MessageDisplay";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
 import EditCategoryPage from "./components/EditCategoryPage";
 
-// Importar el componente PrincipalPageLessons
-import PrincipalPageLessons from "./lesson/PrincipalPageLessons"; // <-- ¡Importación añadida!
+// Importar el componente PrincipalPageLessons (Solo importamos, no renderizamos aquí)
+// import PrincipalPageLessons from './lesson/PrincipalPageLessons'; // <-- Esta importación ya no es necesaria aquí si no se usa directamente para renderizar.
 
 // Importar utilidades (las rutas relativas NO CAMBIAN desde src/MainVocabSection.js a src/utils/)
 import { playAudio, b64toBlob } from "./utils/audioUtils";
-import { normalizeText } from "./utils/textUtils"; // renderClickableText se pasa como prop
+import { normalizeText } from "./utils/textUtils"; // renderizableText se pasa como prop
 
 // Componente principal del entrenador de vocabulario
 const MainVocabSection = () => {
@@ -498,6 +498,7 @@ const MainVocabSection = () => {
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
       {/* MessageDisplay se encarga de mostrar mensajes y estado de carga */}
       <MessageDisplay message={message} isLoading={isLoading} />
+      {/* Renderizado condicional de las páginas internas de MainVocabSection */}
       {currentPage === "home" && (
         <CategoryList
           categories={categories}
@@ -572,12 +573,15 @@ const MainVocabSection = () => {
           setMessage={setMessage}
         />
       )}
-      {/* PrincipalPageLessons necesita estas props para audio y mensajes */}
+      {/* IMPORTANTE: PrincipalPageLessons no debe renderizarse aquí.
+          Se renderiza en App.js a través de React Router.
+          Esta línea se elimina para corregir el problema de que aparezca siempre.
       <PrincipalPageLessons
         onPlayAudio={wrappedPlayAudio}
         setAppMessage={setMessage}
         setAppIsLoading={setIsLoading}
       />
+      */}
       {showDeleteConfirm && (
         <DeleteConfirmationModal
           onDelete={deleteCategory}

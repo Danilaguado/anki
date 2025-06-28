@@ -321,7 +321,7 @@ const LessonCard = ({
             <button
               onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
               className='button audio-button-round primary-button large-play-button'
-              disabled={setAppIsLoading}
+              disabled={setAppIsLoading} // <-- Corregido: Esto era `disabled={setAppIsLoading}`
               aria-label='Reproducir audio de la frase'
             >
               <svg
@@ -338,7 +338,7 @@ const LessonCard = ({
             <SpeechToTextButton
               onResult={handleSpeechResultForListening}
               lang='en-US' // El idioma a reconocer es el inglés de la pregunta
-              disabled={matchFeedback !== null} // Deshabilitar después de responder
+              disabled={matchFeedback !== null || setAppIsLoading} // <-- Corregido: Esto era `disabled={setAppIsLoading}`
             />
           </div>
 
@@ -390,12 +390,12 @@ const LessonCard = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCheckAnswer();
               }}
-              disabled={matchFeedback !== null}
+              disabled={matchFeedback !== null || setAppIsLoading} // <-- Corregido: Esto era `disabled={setAppIsLoading}`
             />
             <button
               onClick={handleCheckAnswer}
               className='button quiz-check-button'
-              disabled={matchFeedback !== null}
+              disabled={matchFeedback !== null || setAppIsLoading}
             >
               Verificar
             </button>
