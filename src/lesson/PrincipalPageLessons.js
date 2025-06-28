@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./LessonCard";
+import LessonCard from "./lessonCard";
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
