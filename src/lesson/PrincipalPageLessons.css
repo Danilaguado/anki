@@ -181,16 +181,78 @@
   width: 100%;
 }
 
-/* Estilos de errores */
-.message-box.error-box {
-  background-color: var(--error-color);
-  color: var(--text-color-light);
+/* Estilos para la tarjeta de ejercicio individual (dentro de LessonCard) */
+.card-container.lesson-exercise-card {
+  margin-top: 20px;
+  max-width: 100%; /* Ocupa el ancho disponible dentro de lesson-detail-view */
+  border: 1px solid var(--border-color); /* Restablecer el borde aquí si es necesario */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff; /* Fondo blanco para la tarjeta individual */
 }
 
-/* Responsive adjustments */
+/* Reutilizar clases de feedback de acierto/error */
+.lesson-exercise-card.match-correct {
+  border-color: var(--success-color);
+  box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.3);
+}
+
+.lesson-exercise-card.match-incorrect {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.3);
+}
+
+/* Estilos para el input de completar espacios */
+.quiz-answer-input-inline {
+  display: inline-block;
+  width: auto; /* Se ajusta al contenido */
+  min-width: 80px; /* Ancho mínimo para el espacio */
+  padding: 5px 8px;
+  margin: 0 5px;
+  border: 1px dashed var(--primary-color);
+  border-radius: 5px;
+  font-size: 1em;
+  text-align: center;
+  background-color: #eef5ff; /* Fondo ligeramente azulado */
+}
+
+/* Estilos para opciones múltiples */
+.multiple-choice-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.multiple-choice-button {
+  background-color: var(--primary-color);
+  color: var(--text-color-light);
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 1em;
+  transition: background-color 0.2s ease;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.multiple-choice-button:hover:not(:disabled) {
+  background-color: #3a7bd2;
+}
+
+.multiple-choice-button.correct-option {
+  background-color: var(--success-color);
+  border: 2px solid #27ae60;
+}
+
+.multiple-choice-button.incorrect-selected-option {
+  background-color: var(--error-color);
+  border: 2px solid #c0392b;
+}
+
+/* Ajustes responsivos */
 @media (max-width: 768px) {
   .lessons-buttons-grid {
-    grid-template-columns: 1fr; /* Una columna en móviles */
+    grid-template-columns: 1fr;
   }
   .top-back-button {
     position: static;
@@ -199,5 +261,8 @@
   }
   .lessons-page-wrapper {
     padding-top: 0;
+  }
+  .multiple-choice-options {
+    grid-template-columns: 1fr; /* Apilar opciones en móviles */
   }
 }

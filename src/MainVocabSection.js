@@ -1,22 +1,24 @@
-// src/App.js
-import React, { useState, useEffect, useRef } from "react";
-import "./index.css"; // Estilos globales
+// src/MainVocabSection.js
+// Este archivo contiene toda la lógica y UI que antes estaba en App.js
 
-// Importar componentes modularizados
+import React, { useState, useEffect, useRef } from "react";
+import "./index.css"; // Estilos globales (ya que MainVocabSection.js ahora está en src/)
+
+// Importar componentes modularizados (las rutas relativas NO CAMBIAN desde src/MainVocabSection.js a src/components/)
 import CategoryList from "./components/CategoryList";
 import AddCardForm from "./components/AddCardForm";
 import PracticeCard from "./components/PracticeCard";
 import QuizCard from "./components/QuizCard";
 import MessageDisplay from "./components/MessageDisplay";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
-import EditCategoryPage from "./components/EditCategoryPage"; // ¡Nuevo componente!
+import EditCategoryPage from "./components/EditCategoryPage";
 
-// Importar utilidades
+// Importar utilidades (las rutas relativas NO CAMBIAN desde src/MainVocabSection.js a src/utils/)
 import { playAudio, b64toBlob } from "./utils/audioUtils";
-import { normalizeText, renderClickableText } from "./utils/textUtils";
+import { normalizeText } from "./utils/textUtils"; // renderClickableText se pasa como prop
 
-// Main App Component
-const App = () => {
+// Componente principal del entrenador de vocabulario
+const MainVocabSection = () => {
   // State para gestionar categorías y tarjetas
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
@@ -28,15 +30,11 @@ const App = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // State para la edición de categorías (ya no es inline, ahora es una página)
-  // const [isEditingCategory, setIsEditingCategory] = useState(null); // Esto ya no se usará para la edición directa
-  // const [editedCategoryName, setEditedCategoryName] = useState(""); // Esto ya no se usará para la edición directa
-
   // State para el modal de confirmación de eliminación de CATEGORÍA
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [categoryToDeleteId, setCategoryToDeleteId] = useState(null);
 
-  // Nuevo estado para la navegación de páginas
+  // Nuevo estado para la navegación de páginas dentro de esta sección
   const [currentPage, setCurrentPage] = useState("home"); // 'home', 'addCardPage', 'practicePage', 'quizPage', 'editCategoryPage'
 
   // Nuevo estado para el texto grabado del STT (siempre muestra lo del micro)
@@ -56,17 +54,28 @@ const App = () => {
   // Nuevo: Set para guardar los IDs de las tarjetas acertadas en la sesión del quiz
   const masteredCardIds = useRef(new Set()); // Se inicializa con useRef para persistir a través de renders
 
-  // Caché para los URLs de audio (persistirá mientras App esté montada)
+  // Caché para los URLs de audio (persistirá mientras MainVocabSection esté montada)
   const audioCache = useRef(new Map());
 
-  // --- Funciones de Navegación ---
+  // Función para envolver playAudio con sus dependencias
+  const wrappedPlayAudio = (text, lang) =>
+    playAudio(
+      text,
+      lang,
+      audioCache.current,
+      b64toBlob,
+      setMessage,
+      setIsLoading
+    );
+
+  // --- Funciones de Navegación (internas a esta sección) ---
   const navigateToHome = () => {
-    // Limpiar todos los Blob URLs del caché al volver al inicio
+    // Limpiar todos los Blob URLs del caché al volver al inicio de esta sección
     audioCache.current.forEach((url) => URL.revokeObjectURL(url));
     audioCache.current.clear(); // Vaciar el mapa
-    console.log("Caché de audio limpiado al volver al inicio.");
+    console.log("Caché de audio limpiado al volver al inicio de sección.");
 
-    // Limpiar también las tarjetas acertadas del quiz al volver al inicio
+    // Limpiar también las tarjetas acertadas del quiz al volver al inicio de esta sección
     masteredCardIds.current.clear();
     console.log("Tarjetas acertadas del quiz limpiadas.");
 
@@ -106,7 +115,7 @@ const App = () => {
     setQuizCorrectAnswerDisplay("");
     masteredCardIds.current.clear(); // Reiniciar tarjetas acertadas para el nuevo quiz
   };
-  // Nueva función de navegación para la página de edición de categoría
+  // Función de navegación para la página de edición de categoría
   const navigateToEditCategoryPage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("editCategoryPage");
@@ -175,7 +184,7 @@ const App = () => {
     fetchCategories();
   }, []);
 
-  // Reinicia el índice de la tarjeta y la visibilidad de la respuesta cuando cambia la categoría seleccionada
+  // Reinicia el índice de la tarjeta y la visibilidad de la respuesta cuando cambia la categoría seleccionada o la página
   useEffect(() => {
     setCurrentCardIndex(0);
     setIsAnswerVisible(false);
@@ -424,8 +433,6 @@ const App = () => {
    * Cancela la acción de edición o eliminación de categoría.
    */
   const cancelAction = () => {
-    // setIsEditingCategory(null); // Esto ya no se usa para la edición directa
-    // setEditedCategoryName(""); // Esto ya no se usa para la edición directa
     setShowDeleteConfirm(false);
     setCategoryToDeleteId(null);
   };
@@ -473,44 +480,37 @@ const App = () => {
     }
   };
 
-  // Función para pasar a EditCategoryPage para que recargue las categorías en App.js
+  // Función para pasar a EditCategoryPage para que recargue las categorías en MainVocabSection
   const handleSaveCategoryChanges = async () => {
     setMessage("Recargando datos después de la edición...");
     await fetchCategories(); // Recargar los datos después de guardar cambios en EditCategoryPage
     setMessage("Datos actualizados.");
   };
 
-  // --- Renderización Principal de App ---
+  // --- Renderizado Principal de MainVocabSection ---
   return (
     <div className='app-container'>
+      {" "}
+      {/* Mantén el app-container aquí para estilos */}
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
-
       {/* MessageDisplay se encarga de mostrar mensajes y estado de carga */}
       <MessageDisplay message={message} isLoading={isLoading} />
-
       {currentPage === "home" && (
         <CategoryList
           categories={categories}
           selectedCategoryId={selectedCategoryId}
-          // isEditingCategory={isEditingCategory} // Ya no se usa para edición inline
-          // editedCategoryName={editedCategoryName} // Ya no se usa para edición inline
           newCategoryName={newCategoryName}
           isLoading={isLoading}
           onSelectCategory={setSelectedCategoryId}
           onNavigateToAddCard={navigateToAddCard}
           onNavigateToPracticePage={navigateToPracticePage}
           onNavigateToQuizPage={navigateToQuizPage}
-          onNavigateToEditCategoryPage={navigateToEditCategoryPage} // ¡Nueva prop!
-          // onStartEditCategory={startEditCategory} // Ya no se usa para edición inline
-          // onSaveEditedCategory={saveEditedCategory} // Ya no se usa para edición inline
-          // onCancelEditCategory={cancelAction} // Esto solo es para el modal de delete category ahora
-          onConfirmDeleteCategory={confirmDeleteCategory} // Sigue siendo para el modal de delete category
+          onNavigateToEditCategoryPage={navigateToEditCategoryPage}
+          onConfirmDeleteCategory={confirmDeleteCategory}
           onNewCategoryNameChange={setNewCategoryName}
-          // onEditedCategoryNameChange={setEditedCategoryName} // Ya no se usa para edición inline
           onAddCategory={addCategory}
         />
       )}
-
       {currentPage === "addCardPage" && (
         <AddCardForm
           currentCategory={currentCategory}
@@ -523,7 +523,6 @@ const App = () => {
           onNavigateToHome={navigateToHome}
         />
       )}
-
       {currentPage === "practicePage" && (
         <PracticeCard
           currentCard={currentCard}
@@ -537,20 +536,10 @@ const App = () => {
           onNextCard={nextCard}
           onPrevCard={prevCard}
           onHandleSpeechResult={handleSpeechResult}
-          onPlayAudio={(text, lang) =>
-            playAudio(
-              text,
-              lang,
-              audioCache.current,
-              b64toBlob,
-              setMessage,
-              setIsLoading
-            )
-          }
+          onPlayAudio={wrappedPlayAudio}
           onNavigateToHome={navigateToHome}
         />
       )}
-
       {currentPage === "quizPage" && (
         <QuizCard
           currentCard={currentCard}
@@ -562,16 +551,7 @@ const App = () => {
           quizCorrectAnswerDisplay={quizCorrectAnswerDisplay}
           isLoading={isLoading}
           onHandleSpeechResult={handleSpeechResult}
-          onPlayAudio={(text, lang) =>
-            playAudio(
-              text,
-              lang,
-              audioCache.current,
-              b64toBlob,
-              setMessage,
-              setIsLoading
-            )
-          }
+          onPlayAudio={wrappedPlayAudio}
           onUserTypedAnswerChange={setUserTypedAnswer}
           onCheckTypedAnswer={checkTypedAnswer}
           onHandleQuizInputKeyDown={handleQuizInputKeyDown}
@@ -580,17 +560,15 @@ const App = () => {
           onNavigateToHome={navigateToHome}
         />
       )}
-
       {currentPage === "editCategoryPage" && (
         <EditCategoryPage
-          category={currentCategory} // Pasamos la categoría completa
-          onSaveCategoryChanges={handleSaveCategoryChanges} // Función para recargar categorías
+          category={currentCategory}
+          onSaveCategoryChanges={handleSaveCategoryChanges}
           onNavigateToHome={navigateToHome}
-          isLoading={isLoading} // Pasamos el isLoading general de App
-          setMessage={setMessage} // Pasamos la función setMessage de App
+          isLoading={isLoading}
+          setMessage={setMessage}
         />
       )}
-
       {showDeleteConfirm && (
         <DeleteConfirmationModal
           onDelete={deleteCategory}
@@ -602,4 +580,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default MainVocabSection;
