@@ -5,7 +5,7 @@ import { google } from "googleapis";
 import { v4 as uuidv4 } from "uuid"; // Para generar IDs únicos
 
 // Tu ID de Google Sheet. ¡IMPORTANTE! Reemplázalo.
-const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M";
+const SPREADSHEET_ID = "TU_ID_DE_HOJA_DE_CALCULO";
 const MODULES_SHEET_NAME = "Modules";
 const EXERCISES_SHEET_NAME = "Exercises";
 
@@ -39,17 +39,29 @@ export default async function handler(req, res) {
     geminiPrompt += `Include exercise types: ${exerciseTypes.join(", ")}. `;
   }
 
+  // Instrucciones para el formato JSON de salida de Gemini
   geminiPrompt += `Provide the output as a JSON array of exercise objects. Each exercise object should have:
   - 'type' (e.g., 'translation', 'multiple_choice', 'fill_in_the_blank')
   - 'questionEN' (the English question/phrase)
   - 'answerES' (the correct Spanish answer/translation)
   - 'optionsES' (an array of incorrect Spanish options for multiple_choice, or empty for others)
   - 'orderInLesson' (a number indicating its order, starting from 1)
-  - 'notes' (optional, any grammatical notes or context).`;
+  - 'notes' (optional, any grammatical notes or context).
+  Ensure the response is a valid, single JSON array. Do not include any text before or after the JSON.`; // Added instruction for clean JSON
 
   try {
     // 1. Llamar a la API de Gemini para generar la lección
-    const geminiApiKey = ""; // La API Key se gestionará en el entorno de Canvas. NO LA PONGAS AQUÍ.
+    const geminiApiKey = process.env.GEMINI_API_KEY; // <--- ¡CORRECCIÓN AQUÍ!
+
+    if (!geminiApiKey) {
+      console.error("GEMINI_API_KEY environment variable is not set.");
+      return res.status(500).json({
+        success: false,
+        error:
+          "Server configuration error: GEMINI_API_KEY is not set. Please configure it in Vercel environment variables.",
+      });
+    }
+
     const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
 
     console.log("Calling Gemini API with prompt:", geminiPrompt);
@@ -97,9 +109,10 @@ export default async function handler(req, res) {
     let generatedExercises;
     try {
       // Gemini devuelve un string JSON dentro de parts[0].text. Necesitamos parsearlo.
-      generatedExercises = JSON.parse(
-        geminiResult.candidates[0].content.parts[0].text
-      );
+      // Asegurarse de que el texto no tenga caracteres extra antes o después del JSON
+      const rawGeminiText = geminiResult.candidates[0].content.parts[0].text;
+      generatedExercises = JSON.parse(rawGeminiText);
+
       if (!Array.isArray(generatedExercises)) {
         throw new Error("Gemini did not return a JSON array as expected.");
       }
@@ -110,7 +123,8 @@ export default async function handler(req, res) {
         geminiResult.candidates[0].content.parts[0].text
       );
       throw new Error(
-        "Failed to parse Gemini's response: " + parseError.message
+        "Failed to parse Gemini's response. It might not be valid JSON: " +
+          parseError.message
       );
     }
     console.log("Generated exercises from Gemini:", generatedExercises);
@@ -179,6 +193,8 @@ export default async function handler(req, res) {
         case "PromptUsed":
           newModuleRow[index] = newLessonData.promptUsed || "";
           break;
+        default:
+          newModuleRow[index] = ""; // Ensure all other columns are explicitly filled, if any
       }
     });
 
@@ -232,6 +248,8 @@ export default async function handler(req, res) {
           case "Notes":
             newExerciseRow[index] = exercise.notes || "";
             break;
+          default:
+            newExerciseRow[index] = ""; // Ensure all other columns are explicitly filled
         }
       });
       return newExerciseRow;
@@ -255,15 +273,15 @@ export default async function handler(req, res) {
       message: "Lesson generated and saved successfully.",
       data: {
         lesson: {
-          lessonId,
-          title: lessonTitle,
-          description: lessonDescription,
-          difficulty,
-          topic,
-          generatedDate,
-          generatedBy,
-          promptUsed,
-        },
+          LessonID: lessonId,
+          Title: lessonTitle,
+          Description: lessonDescription,
+          Difficulty: difficulty,
+          Topic: topic,
+          GeneratedDate: generatedDate,
+          GeneratedBy: "Gemini",
+          PromptUsed: geminiPrompt,
+        }, // Include LessonID and use correct casing for returned object
         exercises: generatedExercises,
       },
     });
@@ -273,6 +291,17 @@ export default async function handler(req, res) {
       error.message,
       error.stack
     );
+    // Send a more specific error if it's related to API Key
+    if (
+      error.message.includes("403") &&
+      error.message.includes("unregistered callers")
+    ) {
+      return res.status(403).json({
+        success: false,
+        error:
+          "Authentication error with Gemini API. Please ensure your GEMINI_API_KEY is correct and has the necessary permissions.",
+      });
+    }
     return res.status(500).json({
       success: false,
       error:
