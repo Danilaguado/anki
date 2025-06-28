@@ -5,7 +5,7 @@ import { google } from "googleapis";
 import { v4 as uuidv4 } from "uuid"; // Para generar IDs únicos
 
 // Tu ID de Google Sheet. ¡IMPORTANTE! Reemplázalo.
-const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // <--- ¡AQUÍ DEBES REEMPLAZAR ESTO!
+const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M";
 const MODULES_SHEET_NAME = "Modules";
 const EXERCISES_SHEET_NAME = "Exercises";
 
@@ -50,6 +50,7 @@ export default async function handler(req, res) {
   Ensure the entire response is a valid JSON array of ${exerciseCount} exercise objects, nothing more, nothing less.`;
 
   try {
+    console.log("SPREADSHEET_ID actual en el backend:", SPREADSHEET_ID); // Nuevo log para depuración
     if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
@@ -241,7 +242,9 @@ export default async function handler(req, res) {
       );
     }
 
+    // Declarar exercisesRows aquí para asegurar que siempre esté inicializada
     const exercisesRows = generatedExercises.map((exercise) => {
+      // <-- CORRECCIÓN AQUÍ
       const newExerciseRow = new Array(exercisesHeaders.length).fill("");
       exercisesHeaders.forEach((header, index) => {
         switch (header) {
@@ -281,7 +284,7 @@ export default async function handler(req, res) {
             newExerciseRow[index] = "";
         }
       });
-      return exercisesRows;
+      return newExerciseRow;
     });
 
     if (exercisesRows.length > 0) {
