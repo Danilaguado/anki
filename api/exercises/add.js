@@ -2,13 +2,12 @@
 // Endpoint para añadir un nuevo ejercicio a la hoja "Exercises" en Google Sheets.
 
 import { google } from "googleapis";
-import { v4 as uuidv4 } from ("uuid"); // Para generar IDs únicos (CORREGIDO: usa = require para Node.js común en Vercel)
+import { v4 as uuidv4 } from "uuid";
 
 const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // ¡IMPORTANTE! Reemplaza con el ID de tu Google Sheet
 const EXERCISES_SHEET_NAME = "Exercises"; // El nombre exacto de tu hoja para ejercicios
 
 export default async function handler(req, res) {
-  // Asegúrate de que la solicitud sea POST
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -16,21 +15,36 @@ export default async function handler(req, res) {
     });
   }
 
-  // Desestructurar los datos esperados del cuerpo de la solicitud
-  // Los campos deberían coincidir con las columnas de tu hoja "Exercises"
-  let { lessonId, type, questionEN, answerES, optionsES, orderInLesson, notes } = req.body;
+  // Desestructurar los datos esperados del cuerpo de la solicitud (QuestionES y AnswerEN son nuevos)
+  let {
+    lessonId,
+    type,
+    questionEN,
+    questionES,
+    answerEN,
+    answerES,
+    optionsEN,
+    orderInLesson,
+    notes,
+  } = req.body;
 
-  // Validar que los campos esenciales no estén vacíos
-  if (!lessonId || !type || !questionEN || !answerES || orderInLesson === undefined) {
+  // Validar que los campos esenciales no estén vacíos. Ajustado para nuevos campos.
+  if (!lessonId || !type || !questionEN || orderInLesson === undefined) {
     return res.status(400).json({
       success: false,
       error:
-        "Missing required fields: lessonId, type, questionEN, answerES, and orderInLesson are required.",
+        "Missing required fields: lessonId, type, questionEN, and orderInLesson are required.",
+    });
+  }
+  // Validación adicional para asegurar que al menos una de las respuestas esté presente
+  if (!answerEN && !answerES) {
+    return res.status(400).json({
+      success: false,
+      error: "At least one answer field (answerEN or answerES) is required.",
     });
   }
 
   try {
-    // Configurar la autenticación con Google Sheets API
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -41,13 +55,11 @@ export default async function handler(req, res) {
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Generar un ID único para el nuevo ejercicio
     const exerciseId = uuidv4();
 
-    // Obtener los encabezados de la hoja 'Exercises' para asegurar el orden correcto
     const headersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${EXERCISES_SHEET_NAME}!1:1`, // Obtener solo la primera fila (encabezados)
+      range: `${EXERCISES_SHEET_NAME}!1:1`,
     });
     const headers = headersResponse.data.values
       ? headersResponse.data.values[0]
@@ -57,7 +69,6 @@ export default async function handler(req, res) {
       throw new Error(`No headers found in "${EXERCISES_SHEET_NAME}" sheet.`);
     }
 
-    // Crear un array de valores en el orden de los encabezados de la hoja
     const newRow = new Array(headers.length).fill("");
 
     headers.forEach((header, index) => {
@@ -74,32 +85,35 @@ export default async function handler(req, res) {
         case "QuestionEN":
           newRow[index] = questionEN;
           break;
+        case "QuestionES":
+          newRow[index] = questionES || "";
+          break; // Mapear QuestionES
+        case "AnswerEN":
+          newRow[index] = answerEN || "";
+          break; // Mapear AnswerEN
         case "AnswerES":
-          newRow[index] = answerES;
-          break;
-        case "OptionsES":
-          // Si optionsES es un array, conviértelo a JSON string para guardarlo
-          newRow[index] = optionsES ? JSON.stringify(optionsES) : "";
-          break;
+          newRow[index] = answerES || "";
+          break; // Mapear AnswerES
+        case "OptionsEN":
+          newRow[index] = optionsEN ? JSON.stringify(optionsEN) : "";
+          break; // Usar OptionsEN
         case "OrderInLesson":
           newRow[index] = orderInLesson;
           break;
         case "Notes":
-          newRow[index] = notes || ""; // Si no se proporciona, dejar vacío
+          newRow[index] = notes || "";
           break;
         default:
-          // Para cualquier otra columna no manejada
           break;
       }
     });
 
-    // Añadir la nueva fila a la hoja de Google Sheets
     const appendResponse = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${EXERCISES_SHEET_NAME}!A:Z`, // Asegúrate de que el rango cubra todas tus columnas
-      valueInputOption: "RAW", // Los datos se escriben tal cual
+      range: `${EXERCISES_SHEET_NAME}!A:Z`,
+      valueInputOption: "RAW",
       resource: {
-        values: [newRow], // La nueva fila de datos
+        values: [newRow],
       },
     });
 
@@ -112,8 +126,10 @@ export default async function handler(req, res) {
           lessonId,
           type,
           questionEN,
+          questionES, // Devolver QuestionES
+          answerEN, // Devolver AnswerEN
           answerES,
-          optionsES,
+          optionsEN, // Devolver OptionsEN
           orderInLesson,
           notes,
         },

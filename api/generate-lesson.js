@@ -17,11 +17,9 @@ export default async function handler(req, res) {
     });
   }
 
-  // Los parámetros que el frontend enviaría a este endpoint para guiar la generación
   const { topic, difficulty, exerciseCount, exerciseTypes, customPrompt } =
     req.body;
 
-  // Validación básica de los parámetros de entrada
   if (!topic || !difficulty || !exerciseCount) {
     return res.status(400).json({
       success: false,
@@ -30,7 +28,6 @@ export default async function handler(req, res) {
     });
   }
 
-  // Construir el prompt para Gemini
   let geminiPrompt =
     customPrompt ||
     `Generate ${exerciseCount} ${difficulty} level exercises on the topic of "${topic}". `;
@@ -39,18 +36,21 @@ export default async function handler(req, res) {
     geminiPrompt += `Include exercise types: ${exerciseTypes.join(", ")}. `;
   }
 
-  // Instrucciones para el formato JSON de salida de Gemini
+  // INSTRUCCIONES ACTUALIZADAS para Gemini sobre el formato y contenido de los campos
   geminiPrompt += `Provide the output as a JSON array of exercise objects. Each exercise object should have:
   - 'type' (e.g., 'translation', 'multiple_choice', 'fill_in_the_blank', 'listening')
-  - 'questionEN' (the English question/phrase, or the phrase to listen to for listening exercises)
-  - 'answerES' (the correct Spanish answer/translation, or the English word for fill_in_the_blank if it's the missing word)
-  - 'optionsES' (an array of incorrect Spanish options for multiple_choice, or empty for others)
+  - 'questionEN' (the English question/phrase)
+  - 'questionES' (the Spanish translation of questionEN)
+  - 'answerEN' (the correct English word/phrase for 'fill_in_the_blank', 'multiple_choice' types, or for listening transcription. Can be empty for 'translation' type if not applicable for direct English answer.)
+  - 'answerES' (the correct Spanish translation for 'translation', 'listening' types. Can be empty for 'fill_in_the_blank'/'multiple_choice' if not applicable for Spanish answer.)
+  - 'optionsEN' (an array of incorrect ENGLISH options for 'multiple_choice' type, or empty for others)
   - 'orderInLesson' (a number indicating its order, starting from 1)
   - 'notes' (optional, any grammatical notes or context).
-  Ensure the response is a valid, single JSON array. Do not include any text before or after the JSON.`; // Added instruction for clean JSON
+  Ensure the response is a valid, single JSON array. Do not include any text before or after the JSON.
+  For 'fill_in_the_blank', questionEN should have '_______' placeholder and answerEN should be the word for the blank.
+  For 'listening', questionEN is the phrase to listen to, and answerES is its Spanish translation.`;
 
   try {
-    // Verificar si SPREADSHEET_ID es el valor de marcador de posición
     if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
@@ -62,7 +62,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // 1. Llamar a la API de Gemini para generar la lección
     const geminiApiKey = process.env.GEMINI_API_KEY;
 
     if (!geminiApiKey) {
@@ -86,21 +85,25 @@ export default async function handler(req, res) {
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
+            // ACTUALIZADO el esquema para incluir QuestionES y AnswerEN
             type: "ARRAY",
             items: {
               type: "OBJECT",
               properties: {
                 type: { type: "STRING" },
                 questionEN: { type: "STRING" },
+                questionES: { type: "STRING" }, // NUEVO
+                answerEN: { type: "STRING" }, // NUEVO
                 answerES: { type: "STRING" },
-                optionsES: {
+                optionsEN: {
+                  // Cambiado a optionsEN
                   type: "ARRAY",
                   items: { type: "STRING" },
                 },
                 orderInLesson: { type: "NUMBER" },
                 notes: { type: "STRING" },
               },
-              required: ["type", "questionEN", "answerES", "orderInLesson"],
+              required: ["type", "questionEN", "answerES", "orderInLesson"], // Mantener AnswerES como requerido para traducción/listening
             },
           },
         },
@@ -120,8 +123,6 @@ export default async function handler(req, res) {
     const geminiResult = await geminiResponse.json();
     let generatedExercises;
     try {
-      // Gemini devuelve un string JSON dentro de parts[0].text. Necesitamos parsearlo.
-      // Asegurarse de que el texto no tenga caracteres extra antes o después del JSON
       const rawGeminiText = geminiResult.candidates[0].content.parts[0].text;
       generatedExercises = JSON.parse(rawGeminiText);
 
@@ -141,13 +142,11 @@ export default async function handler(req, res) {
     }
     console.log("Generated exercises from Gemini:", generatedExercises);
 
-    // 2. Guardar la nueva lección (módulo) en Google Sheets
     const lessonId = uuidv4();
     const generatedDate = new Date().toISOString();
-    const lessonTitle = `${topic} - ${difficulty} Lección`; // Puedes hacer el título más dinámico
+    const lessonTitle = `${topic} - ${difficulty} Lección`;
     const lessonDescription = `Lección generada sobre ${topic} (${difficulty} level) con ${exerciseCount} ejercicios.`;
 
-    // Usar la lógica de autenticación para Sheets
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -157,10 +156,6 @@ export default async function handler(req, res) {
     });
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Lógica para añadir la lección a la hoja Modules
-    console.log(
-      `Attempting to get headers from sheet: ${MODULES_SHEET_NAME} in spreadsheet: ${SPREADSHEET_ID}`
-    );
     const modulesHeadersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${MODULES_SHEET_NAME}!1:1`,
@@ -184,10 +179,10 @@ export default async function handler(req, res) {
           break;
         case "Title":
           newModuleRow[index] = lessonTitle;
-          break; // Usar lessonTitle
+          break;
         case "Description":
           newModuleRow[index] = lessonDescription;
-          break; // Usar lessonDescription
+          break;
         case "Difficulty":
           newModuleRow[index] = difficulty;
           break;
@@ -204,7 +199,7 @@ export default async function handler(req, res) {
           newModuleRow[index] = geminiPrompt || "";
           break;
         default:
-          newModuleRow[index] = ""; // Ensure all other columns are explicitly filled, if any
+          newModuleRow[index] = "";
       }
     });
     console.log("Prepared new module row:", newModuleRow);
@@ -217,10 +212,6 @@ export default async function handler(req, res) {
     });
     console.log(`Lesson ${lessonId} added to Modules sheet.`);
 
-    // 3. Guardar cada ejercicio en la hoja "Exercises"
-    console.log(
-      `Attempting to get headers from sheet: ${EXERCISES_SHEET_NAME} in spreadsheet: ${SPREADSHEET_ID}`
-    );
     const exercisesHeadersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${EXERCISES_SHEET_NAME}!1:1`,
@@ -252,14 +243,20 @@ export default async function handler(req, res) {
           case "QuestionEN":
             newExerciseRow[index] = exercise.questionEN;
             break;
+          case "QuestionES":
+            newExerciseRow[index] = exercise.questionES || "";
+            break; // Mapear QuestionES
+          case "AnswerEN":
+            newExerciseRow[index] = exercise.answerEN || "";
+            break; // Mapear AnswerEN
           case "AnswerES":
-            newExerciseRow[index] = exercise.answerES;
-            break;
-          case "OptionsES":
-            newExerciseRow[index] = exercise.optionsES
-              ? JSON.stringify(exercise.optionsES)
+            newExerciseRow[index] = exercise.answerES || "";
+            break; // Mapear AnswerES (para traducción/listening)
+          case "OptionsEN":
+            newExerciseRow[index] = exercise.optionsEN
+              ? JSON.stringify(exercise.optionsEN)
               : "";
-            break;
+            break; // Usar OptionsEN
           case "OrderInLesson":
             newExerciseRow[index] = exercise.orderInLesson;
             break;
@@ -288,7 +285,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 4. Devolver la lección generada y guardada al frontend
     return res.status(200).json({
       success: true,
       message: "Lesson generated and saved successfully.",
@@ -303,7 +299,7 @@ export default async function handler(req, res) {
           GeneratedBy: "Gemini",
           PromptUsed: geminiPrompt,
         },
-        exercises: generatedExercises,
+        exercises: generatedExercises, // Devolver los ejercicios generados por Gemini
       },
     });
   } catch (error) {
@@ -312,7 +308,6 @@ export default async function handler(req, res) {
       error.message,
       error.stack
     );
-    // Send a more specific error if it's related to API Key
     if (
       error.message.includes("403") &&
       error.message.includes("unregistered callers")
@@ -323,7 +318,6 @@ export default async function handler(req, res) {
           "Authentication error with Gemini API. Please ensure your GEMINI_API_KEY is correct and has the necessary permissions.",
       });
     }
-    // Specific check for Google Sheets "Not Found" error
     if (error.message.includes("Requested entity was not found")) {
       return res.status(404).json({
         success: false,
