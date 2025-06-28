@@ -40,8 +40,8 @@ export default async function handler(req, res) {
   geminiPrompt += `
   **Learning Strategy: Reinforcement and Contextual Introduction**
   
-  1.  **Identify 3 core English phrases/sentences** directly related to "${topic}" at a ${difficulty} level. These will be the foundational learning points. Let's call them PHRASE_1, PHRASE_2, and PHRASE_3.
-  2.  Exercises will heavily reuse and adapt these 3 core phrases (PHRASE_1, PHRASE_2, PHRASE_3) for reinforcement across different exercise types.
+  1.  **Identify 3 core English phrases/sentences** directly related to "${topic}" at a ${difficulty} level. These will be the foundational learning points. You must use these as CORE_PHRASE_1, CORE_PHRASE_2, and CORE_PHRASE_3 for consistent reuse.
+  2.  Exercises will heavily reuse and adapt these 3 core phrases (CORE_PHRASE_1, CORE_PHRASE_2, CORE_PHRASE_3) for reinforcement across different exercise types.
   3.  **Vocabulary Introduction:** Any English word required as an 'answerEN' in 'multiple_choice' or 'fill_in_the_blank' exercises MUST either be:
       a.  Introduced and explained in the 'notes' of the very first exercise (Exercise 1).
       b.  Appeared as a clear translation (questionEN/questionES pair) in an earlier 'translation' exercise.
@@ -57,32 +57,36 @@ export default async function handler(req, res) {
   -   'type': Matches the ordered type.
   -   'questionEN': The English sentence or phrase for the exercise.
   -   'questionES': The Spanish translation of 'questionEN'.
-  -   'answerEN': The correct ENGLISH word or phrase for the exercise.
-  -   'answerES': The correct SPANISH translation for 'answerEN'.
-  -   'optionsEN': An array of 3 distinct, incorrect ENGLISH options. Empty array for other types.
+  -   'answerEN': The correct ENGLISH answer/word.
+    - For 'fill_in_the_blank': This is the specific English word that fills the '_______' blank in 'questionEN'.
+    - For 'multiple_choice': This is the correct English option among the choices.
+    - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
+    - For 'translation': This is the English phrase from 'questionEN'.
+  -   'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
+  -   'optionsEN': An array of 3 distinct, incorrect ENGLISH options. Empty array for other types. The correct answer will be managed by the frontend.
   -   'orderInLesson': Sequential number from 1 to ${exerciseCount}.
   -   'notes': (CRITICAL FOR LEARNING) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
   
   **Specific Requirements by Exercise Type (Reinforced Coherence):**
   
   -   **'multiple_choice' (Exercises 1, 2, 3)**:
-      -   'questionEN': A practical English sentence *missing* the 'answerEN' (which is one of PHRASE_1, PHRASE_2, PHRASE_3).
-      -   'questionES': A Spanish question that directly relates to 'questionEN', guiding the user to select the English word. Avoid complex, theoretical grammar questions.
-      -   'answerEN': PHRASE_1 (Ex.1), PHRASE_2 (Ex.2), PHRASE_3 (Ex.3) as correct options.
-      -   'notes': For Ex. 1, explain PHRASE_1 with 2 examples. For Ex. 2 and 3, explain any new vocabulary or reinforce the meaning of the core phrase (PHRASE_2 or PHRASE_3).
+      -   'questionEN': A practical English sentence *missing* the 'answerEN' (which is one of CORE_PHRASE_1, CORE_PHRASE_2, CORE_PHRASE_3).
+      -   'questionES': A simple, direct question in **Spanish** that relates to 'questionEN' and guides the user to select the correct English word. Avoid complex grammar terminology or abstract definitions here. Example: "¿Qué palabra completa mejor la frase?" or "¿Cuál es la traducción de 'obtener' en este contexto?".
+      -   'answerEN': CORE_PHRASE_1 (Ex.1), CORE_PHRASE_2 (Ex.2), CORE_PHRASE_3 (Ex.3) as correct options.
+      -   'notes': For Ex. 1, explain CORE_PHRASE_1 thoroughly with 2 examples. For Ex. 2 and 3, explain any new vocabulary or reinforce the meaning of the core phrase (CORE_PHRASE_2 or CORE_PHRASE_3) if applicable.
   
   -   **'fill_in_the_blank' (Exercises 4, 5, 6)**:
-      -   'questionEN': A sentence in English with one '_______' placeholder. This sentence MUST be PHRASE_1 (Ex.4), PHRASE_2 (Ex.5), PHRASE_3 (Ex.6) or a sentence clearly using them.
-      -   'questionES': **The complete Spanish translation of 'questionEN' *with the blank correctly filled in Spanish*. This is the direct hint.**
+      -   'questionEN': A sentence in English with exactly one '_______' placeholder. This sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
+      -   'questionES': **The complete Spanish translation of 'questionEN' *with the blank correctly filled in Spanish*. This is the direct hint/guide.**
       -   'answerEN': The English word/phrase that fills the blank. (Must correspond to the core phrase from Ex. 1, 2, or 3).
   
   -   **'translation' (Exercises 7, 8, 9)**:
-      -   'questionEN': An English sentence/phrase for translation. This sentence MUST be PHRASE_1 (Ex.7), PHRASE_2 (Ex.8), PHRASE_3 (Ex.9) or a new sentence that clearly uses them.
+      -   'questionEN': An English sentence/phrase for translation. This sentence MUST be CORE_PHRASE_1 (Ex.7), CORE_PHRASE_2 (Ex.8), CORE_PHRASE_3 (Ex.9) or a new sentence that clearly uses them.
       -   'questionES': The correct Spanish translation of 'questionEN'.
       -   'answerEN': The original 'questionEN' text itself (for validation).
   
   -   **'listening' (Exercises 10, 11, 12)**:
-      -   'questionEN': An English sentence/phrase to listen to. This sentence MUST be PHRASE_1 (Ex.10), PHRASE_2 (Ex.11), PHRASE_3 (Ex.12) or a new sentence that clearly uses them.
+      -   'questionEN': An English sentence/phrase to listen to. This sentence MUST be CORE_PHRASE_1 (Ex.10), CORE_PHRASE_2 (Ex.11), CORE_PHRASE_3 (Ex.12) or a new sentence that clearly uses them.
       -   'questionES': The correct Spanish translation of 'questionEN'.
       -   'answerEN': The original 'questionEN' text itself (for validation).
   
