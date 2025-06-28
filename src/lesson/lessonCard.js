@@ -19,6 +19,23 @@ const LessonCard = ({
   const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // Para mostrar la respuesta correcta si falla
 
+  // Restablecer estados al cambiar de ejercicio
+  // Este useEffect debe estar al inicio, antes de cualquier return condicional.
+  React.useEffect(() => {
+    setIsAnswerVisible(false);
+    setUserTypedAnswer("");
+    setMatchFeedback(null);
+    setShowCorrectAnswer(false);
+    // Asegurarse de que el índice del ejercicio actual no exceda el límite si la lección cambia dinámicamente
+    if (
+      lesson &&
+      lesson.exercises &&
+      currentExerciseIndex >= lesson.exercises.length
+    ) {
+      setCurrentExerciseIndex(0);
+    }
+  }, [currentExerciseIndex, lesson]); // Dependencia 'lesson' para resetear al cambiar la lección
+
   // Si no hay lección o ejercicios, mostrar mensaje
   if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
     return (
@@ -35,14 +52,6 @@ const LessonCard = ({
   }
 
   const currentExercise = lesson.exercises[currentExerciseIndex];
-
-  // Restablecer estados al cambiar de ejercicio
-  React.useEffect(() => {
-    setIsAnswerVisible(false);
-    setUserTypedAnswer("");
-    setMatchFeedback(null);
-    setShowCorrectAnswer(false);
-  }, [currentExerciseIndex, currentExercise]); // Dependencias para resetear
 
   const handleNextExercise = () => {
     if (currentExerciseIndex < lesson.exercises.length - 1) {
