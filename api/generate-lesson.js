@@ -29,11 +29,11 @@ export default async function handler(req, res) {
   }
 
   // --- Construcción del Prompt para Gemini (¡Lógica clave para la coherencia!) ---
-  // Refuerza el tema y el objetivo de aprendizaje como un "maestro", no un "quiz".
-  let geminiPrompt = `You are a friendly and patient English teacher generating a personalized lesson for a ${difficulty} level Spanish speaker on the topic: "${topic}". The goal is deep learning and reinforcement, not just testing.`;
+  // Se presenta a Gemini como un "maestro" y se refuerza el foco en el tema.
+  let geminiPrompt = `You are an experienced and friendly English teacher, specializing in creating coherent and reinforcing lessons for ${difficulty} level Spanish speakers. The goal of this lesson is deep learning and practical application, not just testing. All exercises MUST revolve strictly around the topic/verb: "${topic}".`;
 
   if (customPrompt) {
-    geminiPrompt += ` Specific additional instruction: ${customPrompt}.`;
+    geminiPrompt += ` Special instruction for lesson content: ${customPrompt}.`;
   }
 
   // Instrucciones detalladas para Gemini sobre el formato, el contenido, la COHERENCIA y las NOTAS
@@ -41,29 +41,32 @@ export default async function handler(req, res) {
     .map((type, index) => `${index + 1}. ${type}`)
     .join(", ")}.
   
-  For each exercise, please provide the following JSON structure. All fields must be present and correctly formatted:
+  For each exercise, please provide the following JSON structure. All fields must be present and correctly formatted. Crucially, ensure that vocabulary is taught before it is tested. The exercises should build upon each other.
+  
   - 'type': Must be one of ${exerciseTypes.map((t) => `'${t}'`).join(", ")}.
   - 'questionEN': The English phrase/sentence for the exercise.
   - 'questionES': The Spanish translation of 'questionEN'.
-  - 'answerEN': The correct ENGLISH answer/word for the exercise.
+  - 'answerEN': The correct ENGLISH answer/word.
     - For 'fill_in_the_blank': This is the specific English word that fills the '_______' blank in 'questionEN'.
     - For 'multiple_choice': This is the correct English option among the choices.
     - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
     - For 'translation': This is the English phrase from 'questionEN'.
-  - 'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
-  - 'optionsEN': An array of 3 distinct, incorrect ENGLISH options. Must be an empty array for other types.
+  - 'answerES': The correct SPANISH translation.
+    - For 'translation' and 'listening': This is the Spanish translation of 'questionEN'.
+    - For 'fill_in_the_blank' and 'multiple_choice': This is the Spanish translation of 'answerEN'.
+  - 'optionsEN': An array of 3 *distinct, incorrect* ENGLISH options. This must be an empty array for other types. The correct answer will be added by the frontend.
   - 'orderInLesson': A number indicating its sequential order (1 to ${exerciseCount}).
-  - 'notes': (EXTREMELY IMPORTANT) This is your teaching voice. Provide a brief, friendly, and insightful explanation of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English and Spanish translation for each example) related to the lesson's topic.
-    - FOR 'multiple_choice' exercises (especially the first one): The 'notes' MUST introduce and explain the vocabulary word that will be the 'answerEN' for this exercise and subsequent interactive exercises (fill-in-the-blank, multiple-choice, listening). The 'questionES' should be a Spanish question asking to choose the correct English word.
-    - FOR 'fill_in_the_blank' exercises: 'questionEN' should contain exactly one '_______' placeholder. 'questionES' must be the full Spanish translation of 'questionEN' *with the blank filled correctly in Spanish*, serving as a clear guide. Ensure the word for the blank ('answerEN') was already explained in 'notes' of a previous exercise or used in a 'translation' exercise.
-    - FOR 'translation' exercises: These should introduce new, relevant vocabulary or phrases that might be used in later interactive exercises.
-    - FOR 'listening' exercises: These should reinforce phrases or vocabulary introduced earlier.
-    - Maintain a coherent and logical progression. Vocabulary used as an 'answerEN' in interactive exercises must be taught or presented BEFORE it is required.
-
+  - 'notes': (EXTREMELY IMPORTANT) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
+    - **Coherence Rule 1 (for 'multiple_choice' exercises, especially order 1, 2, 3):** The 'questionES' should be a Spanish question asking to choose the correct English word/phrase. The 'notes' MUST introduce and explain the vocabulary word that will be the 'answerEN' for this exercise and its associated concepts. These are key teaching moments.
+    - **Coherence Rule 2 (for 'fill_in_the_blank' exercises, especially order 4, 5, 6):** The 'questionEN' should contain exactly one '_______' placeholder. The 'answerEN' for the blank MUST be a word/phrase that was introduced or explained in the 'notes' of an earlier 'multiple_choice' exercise (order 1-3) or appeared in a 'translation' exercise (order 7-9) before this exercise. 'questionES' must be the full Spanish translation of 'questionEN' *with the blank filled correctly in Spanish*, serving as a clear guide.
+    - **Coherence Rule 3 (for 'translation' exercises, especially order 7, 8, 9):** These exercises should reuse and reinforce sentences or vocabulary introduced in prior 'multiple_choice' or 'fill_in_the_blank' exercises.
+    - **Coherence Rule 4 (for 'listening' exercises, especially order 10, 11, 12):** These exercises should reuse and reinforce sentences or vocabulary introduced in prior 'translation' or interactive exercises.
+    - Avoid introducing completely new vocabulary as 'answerEN' in interactive exercises without prior context or explanation in 'notes'. Ensure a smooth and logical progression of learning.
+    
   Ensure the entire response is a valid JSON array of exactly ${exerciseCount} exercise objects, nothing more, nothing less.`;
 
   try {
-    console.log("SPREADSHEET_ID actual en el backend:", SPREADSHEET_ID); // Nuevo log para depuración
+    console.log("SPREADSHEET_ID actual en el backend:", SPREADSHEET_ID);
     if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
@@ -161,10 +164,10 @@ export default async function handler(req, res) {
         "Raw Gemini response:",
         geminiResult.candidates[0].content.parts[0].text
       );
-      throw new Error(
+      throw new new Error(
         "Failed to parse Gemini's response. It might not be valid JSON: " +
           parseError.message
-      );
+      )(); // Fix: remove 'new' here
     }
     console.log("Generated exercises from Gemini:", generatedExercises);
 
