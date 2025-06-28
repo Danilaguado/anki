@@ -15,9 +15,9 @@ const ExerciseDisplay = ({
   matchFeedback,
   showCorrectAnswer,
   recordedMicrophoneText,
-  handleCheckAnswer,
+  handleCheckAnswer, // Esta función ahora se adapta en LessonCard
   handleOptionClick,
-  handleSpeechResultForListening,
+  handleSpeechResultForListening, // Esta función ahora se adapta en LessonCard
 }) => {
   // Consumir valores del contexto directamente
   const { onPlayAudio, setAppMessage, appIsLoading } = useContext(AppContext);

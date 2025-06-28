@@ -2,9 +2,9 @@
 import React, { useState, useEffect, useContext } from "react"; // Importar useContext y useEffect
 import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto
-import SpeechToTextButton from "../components/SpeechToTextButton"; // Para el ejercicio de escucha
-import ExerciseDisplay from "./components/ExerciseDisplay"; // Importar nuevo componente
-import ExerciseNavigation from "./components/ExerciseNavigation"; // Importar nuevo componente
+// SpeechToTextButton, ExerciseDisplay, ExerciseNavigation se importan dentro de ExerciseDisplay o aquí si es necesario
+import ExerciseDisplay from "./components/ExerciseDisplay";
+import ExerciseNavigation from "./components/ExerciseNavigation";
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
@@ -27,7 +27,6 @@ const LessonCard = ({ lesson, onBack }) => {
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
   // Restablecer estados al cambiar de ejercicio
-  // Este useEffect debe estar al inicio, antes de cualquier return condicional.
   useEffect(() => {
     // Usar useEffect en lugar de React.useEffect
     setIsAnswerVisible(false);
@@ -101,32 +100,37 @@ const LessonCard = ({ lesson, onBack }) => {
     }
 
     const normalizedUserAnswer = normalizeText(userTypedAnswer);
-    // Para fill_in_the_blank, AnswerES debería ser la palabra en inglés del espacio
-    const normalizedCorrectAnswer = normalizeText(
-      currentExercise.AnswerES || ""
-    );
+    let normalizedCorrectAnswer;
+
+    // Lógica de verificación basada en el tipo de ejercicio
+    if (
+      currentExercise.Type === "fill_in_the_blank" ||
+      currentExercise.Type === "multiple_choice"
+    ) {
+      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || ""); // <-- Usa AnswerEN y normaliza
+    } else if (currentExercise.Type === "listening") {
+      normalizedCorrectAnswer = normalizeText(currentExercise.QuestionEN || ""); // <-- Usa QuestionEN y normaliza para escucha
+    } else {
+      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerES || ""); // Fallback para otros tipos
+    }
 
     if (normalizedUserAnswer === normalizedCorrectAnswer) {
       setMatchFeedback("correct");
       setShowCorrectAnswer(true);
       setAppMessage("¡Correcto!");
-      // Opcional: Emitir un sonido de acierto
     } else {
       setMatchFeedback("incorrect");
       setShowCorrectAnswer(true);
-      setAppMessage("Incorrecto. Intenta de nuevo."); // O dar más info
-      // Opcional: Emitir un sonido de error
+      setAppMessage("Incorrecto. Intenta de nuevo.");
     }
   };
 
   const handleOptionClick = (selectedOption) => {
-    // Si ya se respondió, no hacer nada
     if (matchFeedback !== null) return;
-
-    setUserTypedAnswer(selectedOption); // Almacenar la opción seleccionada para la comprobación
+    setUserTypedAnswer(selectedOption); // Almacenar la opción seleccionada
 
     const normalizedSelected = normalizeText(selectedOption);
-    const normalizedCorrect = normalizeText(currentExercise.AnswerES || "");
+    const normalizedCorrect = normalizeText(currentExercise.AnswerEN || ""); // <-- Compara con AnswerEN y normaliza
 
     if (normalizedSelected === normalizedCorrect) {
       setMatchFeedback("correct");
@@ -150,15 +154,15 @@ const LessonCard = ({ lesson, onBack }) => {
     const normalizedTranscript = normalizeText(transcript);
     const normalizedQuestionEN = normalizeText(
       currentExercise.QuestionEN || ""
-    );
+    ); // <-- Usa QuestionEN y normaliza
 
     if (normalizedTranscript === normalizedQuestionEN) {
       setMatchFeedback("correct");
-      setShowCorrectAnswer(true); // Mostrar la frase original en inglés y su traducción
+      setShowCorrectAnswer(true);
       setAppMessage("¡Excelente! Transcripción correcta.");
     } else {
       setMatchFeedback("incorrect");
-      setShowCorrectAnswer(true); // Mostrar la frase original para que el usuario compare
+      setShowCorrectAnswer(true);
       setAppMessage("Incorrecto. Escucha de nuevo.");
     }
   };
@@ -191,6 +195,7 @@ const LessonCard = ({ lesson, onBack }) => {
           matchFeedback={matchFeedback}
           showCorrectAnswer={showCorrectAnswer}
           recordedMicrophoneText={recordedMicrophoneText}
+          // Pasar las funciones handle que se adaptan al tipo de ejercicio
           handleCheckAnswer={handleCheckAnswer}
           handleOptionClick={handleOptionClick}
           handleSpeechResultForListening={handleSpeechResultForListening}
