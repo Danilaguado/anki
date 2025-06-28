@@ -146,7 +146,6 @@ const ExerciseDisplay = ({
       );
 
     case "multiple_choice":
-      // Las opciones ahora se esperan en inglés en currentExercise.OptionsEN
       const options = [
         ...(currentExercise.OptionsEN || []),
         currentExercise.AnswerEN,
@@ -159,7 +158,8 @@ const ExerciseDisplay = ({
             {microphoneButton}
           </div>
           <div id='question-text' className='card-text question'>
-            {currentExercise.QuestionEN}
+            {currentExercise.QuestionES}{" "}
+            {/* MOSTRAR QuestionES para la pregunta */}
           </div>
           <div className='multiple-choice-options'>
             {options.map((option, idx) => (
@@ -172,7 +172,7 @@ const ExerciseDisplay = ({
                       normalizeText(currentExercise.AnswerEN)
                       ? "correct-option"
                       : ""
-                  } {/* Compara con AnswerEN */}
+                  }
                   ${
                     matchFeedback &&
                     normalizeText(option) === normalizeText(userTypedAnswer) &&
@@ -184,7 +184,7 @@ const ExerciseDisplay = ({
                 onClick={() => {
                   if (matchFeedback === null) {
                     setAppMessage("");
-                    setUserTypedAnswer(option); // Guarda la opción seleccionada para el feedback visual
+                    setUserTypedAnswer(option);
                     handleOptionClick(option);
                   }
                 }}
@@ -202,8 +202,7 @@ const ExerciseDisplay = ({
               La respuesta correcta era:{" "}
               <span className='correct-answer-text'>
                 {currentExercise.AnswerEN}
-              </span>{" "}
-              {/* Muestra AnswerEN */}
+              </span>
             </p>
           )}
           {recordedMicrophoneText && (
@@ -243,8 +242,7 @@ const ExerciseDisplay = ({
                 )}
               </div>
               <div className='card-text answer'>
-                {currentExercise.QuestionES}{" "}
-                {/* Muestra la traducción en español de QuestionEN */}
+                {currentExercise.QuestionES}
               </div>
             </div>
           )}
