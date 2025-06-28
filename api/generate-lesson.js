@@ -63,21 +63,21 @@ export default async function handler(req, res) {
     - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
     - For 'translation': This is the English phrase from 'questionEN'.
   -   'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
-  -   'optionsEN': An array of 3 distinct, incorrect ENGLISH options. Empty array for other types. The correct answer will be managed by the frontend.
+  -   'optionsEN': An array of 3 distinct, *plausible, but incorrect* ENGLISH options. These options should be similar in type or context to 'answerEN' but clearly wrong. Must be an empty array for other types. The correct answer will be managed by the frontend.
   -   'orderInLesson': Sequential number from 1 to ${exerciseCount}.
   -   'notes': (CRITICAL FOR LEARNING) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
   
   **Specific Requirements by Exercise Type (Reinforced Coherence):**
   
   -   **'multiple_choice' (Exercises 1, 2, 3)**:
-      -   'questionEN': A practical English sentence *missing* the 'answerEN' (which is one of CORE_PHRASE_1, CORE_PHRASE_2, CORE_PHRASE_3).
-      -   'questionES': A simple, direct question in **Spanish** that relates to 'questionEN' and guides the user to select the correct English word. Avoid complex grammar terminology or abstract definitions here. Example: "¿Qué palabra completa mejor la frase?" or "¿Cuál es la traducción de 'obtener' en este contexto?".
+      -   'questionEN': A practical English sentence where the 'answerEN' is the key missing word, or a phrase that sets context for the 'answerEN'.
+      -   'questionES': A simple, direct question in **Spanish** that relates to 'questionEN' and guides the user to select the correct English word. Example: "¿Qué palabra completa mejor la frase?" or "¿Cuál de estas palabras significa [traducción de answerEN]?". Avoid complex grammar terminology or abstract definitions.
       -   'answerEN': CORE_PHRASE_1 (Ex.1), CORE_PHRASE_2 (Ex.2), CORE_PHRASE_3 (Ex.3) as correct options.
       -   'notes': For Ex. 1, explain CORE_PHRASE_1 thoroughly with 2 examples. For Ex. 2 and 3, explain any new vocabulary or reinforce the meaning of the core phrase (CORE_PHRASE_2 or CORE_PHRASE_3) if applicable.
   
   -   **'fill_in_the_blank' (Exercises 4, 5, 6)**:
-      -   'questionEN': A sentence in English with exactly one '_______' placeholder. This sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
-      -   'questionES': **The complete Spanish translation of 'questionEN' *with the blank correctly filled in Spanish*. This is the direct hint/guide.**
+      -   'questionEN': A sentence in English with exactly one '_______' placeholder. The word that fills this blank **MUST be 'answerEN'**. This sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
+      -   'questionES': **The complete Spanish translation of 'questionEN' *with the blank correctly filled in Spanish*. This is the direct hint/guide for the user.**
       -   'answerEN': The English word/phrase that fills the blank. (Must correspond to the core phrase from Ex. 1, 2, or 3).
   
   -   **'translation' (Exercises 7, 8, 9)**:
