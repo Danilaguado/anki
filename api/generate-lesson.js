@@ -29,35 +29,36 @@ export default async function handler(req, res) {
   }
 
   // --- Construcción del Prompt para Gemini (¡Lógica clave para la coherencia!) ---
-  let geminiPrompt =
-    customPrompt ||
-    `Generate a lesson with ${exerciseCount} exercises on the topic of "${topic}" at a ${difficulty} level. `;
+  // Refuerza el tema y el objetivo de aprendizaje como un "maestro", no un "quiz".
+  let geminiPrompt = `You are a friendly and patient English teacher generating a personalized lesson for a ${difficulty} level Spanish speaker on the topic: "${topic}". The goal is deep learning and reinforcement, not just testing.`;
 
-  // Instrucciones detalladas para Gemini sobre el formato, el contenido y la coherencia
-  geminiPrompt += `The exercises MUST follow this exact order and type for the ${exerciseCount} exercises: ${exerciseTypes
+  if (customPrompt) {
+    geminiPrompt += ` Specific additional instruction: ${customPrompt}.`;
+  }
+
+  // Instrucciones detalladas para Gemini sobre el formato, el contenido, la COHERENCIA y las NOTAS
+  geminiPrompt += ` The lesson will consist of exactly ${exerciseCount} exercises. The exercises MUST follow this exact order and type: ${exerciseTypes
     .map((type, index) => `${index + 1}. ${type}`)
     .join(", ")}.
   
-  For each exercise, ensure:
+  For each exercise, please provide the following JSON structure. All fields must be present and correctly formatted:
   - 'type': Must be one of ${exerciseTypes.map((t) => `'${t}'`).join(", ")}.
-  - 'questionEN': The English question/phrase.
+  - 'questionEN': The English phrase/sentence for the exercise.
   - 'questionES': The Spanish translation of 'questionEN'.
-  - 'answerEN': The correct ENGLISH answer/word.
+  - 'answerEN': The correct ENGLISH answer/word for the exercise.
     - For 'fill_in_the_blank': This is the specific English word that fills the '_______' blank in 'questionEN'.
     - For 'multiple_choice': This is the correct English option among the choices.
-    - For 'listening': This is the complete English phrase to be transcribed.
+    - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
     - For 'translation': This is the English phrase from 'questionEN'.
-  - 'answerES': The correct SPANISH translation.
-    - For 'translation' and 'listening': This is the Spanish translation of 'questionEN'.
-    - For 'fill_in_the_blank' and 'multiple_choice': This is the Spanish translation of 'answerEN'.
-  - 'optionsEN': An array of 3 distinct, incorrect ENGLISH options for 'multiple_choice' exercises. Must be an empty array for other types.
+  - 'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
+  - 'optionsEN': An array of 3 distinct, incorrect ENGLISH options. Must be an empty array for other types.
   - 'orderInLesson': A number indicating its sequential order (1 to ${exerciseCount}).
-  - 'notes': (IMPORTANT)
-    - For the first 'multiple_choice' exercise (order 1): Include a brief, friendly explanation of the main vocabulary concept/word being introduced (this will be the 'answerEN' of this exercise). Provide 2 clear examples of its usage (English and Spanish translation for each).
-    - For 'fill_in_the_blank' and 'multiple_choice' exercises: Any English vocabulary word ('answerEN') required as a direct answer MUST have been introduced or explained in the 'notes' of an earlier exercise (especially the first 'multiple_choice') or appeared in a 'translation' exercise before it is required as an answer. This ensures vocabulary is introduced contextually and coherently throughout the lesson. Avoid using completely new words as answers without prior introduction.
-    - For 'fill_in_the_blank': 'questionEN' should contain exactly one '_______' placeholder. 'questionES' should be the full Spanish translation of 'questionEN' *with the blank filled correctly in Spanish*.
-    - For 'translation' exercises: 'questionEN' should be a full English sentence/phrase.
-    - For 'listening' exercises: 'questionEN' should be a full English sentence/phrase for listening.
+  - 'notes': (EXTREMELY IMPORTANT) This is your teaching voice. Provide a brief, friendly, and insightful explanation of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English and Spanish translation for each example) related to the lesson's topic.
+    - FOR 'multiple_choice' exercises (especially the first one): The 'notes' MUST introduce and explain the vocabulary word that will be the 'answerEN' for this exercise and subsequent interactive exercises (fill-in-the-blank, multiple-choice, listening). The 'questionES' should be a Spanish question asking to choose the correct English word.
+    - FOR 'fill_in_the_blank' exercises: 'questionEN' should contain exactly one '_______' placeholder. 'questionES' must be the full Spanish translation of 'questionEN' *with the blank filled correctly in Spanish*, serving as a clear guide. Ensure the word for the blank ('answerEN') was already explained in 'notes' of a previous exercise or used in a 'translation' exercise.
+    - FOR 'translation' exercises: These should introduce new, relevant vocabulary or phrases that might be used in later interactive exercises.
+    - FOR 'listening' exercises: These should reinforce phrases or vocabulary introduced earlier.
+    - Maintain a coherent and logical progression. Vocabulary used as an 'answerEN' in interactive exercises must be taught or presented BEFORE it is required.
 
   Ensure the entire response is a valid JSON array of exactly ${exerciseCount} exercise objects, nothing more, nothing less.`;
 
@@ -104,18 +105,16 @@ export default async function handler(req, res) {
               properties: {
                 type: { type: "STRING" },
                 questionEN: { type: "STRING" },
-                questionES: { type: "STRING" }, // Nueva columna
-                answerEN: { type: "STRING" }, // Nueva columna
+                questionES: { type: "STRING" },
+                answerEN: { type: "STRING" },
                 answerES: { type: "STRING" },
                 optionsEN: {
-                  // Nueva columna
                   type: "ARRAY",
                   items: { type: "STRING" },
                 },
                 orderInLesson: { type: "NUMBER" },
                 notes: { type: "STRING" },
               },
-              // Asegurarse de que Gemini siempre incluya los campos necesarios
               required: [
                 "type",
                 "questionEN",
@@ -151,12 +150,10 @@ export default async function handler(req, res) {
       if (!Array.isArray(generatedExercises)) {
         throw new Error("Gemini did not return a JSON array as expected.");
       }
-      // Opcional: Revalidar el número de ejercicios generados si es crítico
       if (generatedExercises.length !== exerciseCount) {
         console.warn(
           `Gemini generated ${generatedExercises.length} exercises, but ${exerciseCount} were requested. Attempting to use generated exercises.`
         );
-        // Puedes optar por lanzar un error aquí o usar los que se generaron
       }
     } catch (parseError) {
       console.error("Error parsing Gemini response:", parseError);
@@ -272,18 +269,18 @@ export default async function handler(req, res) {
             break;
           case "QuestionES":
             newExerciseRow[index] = exercise.questionES || "";
-            break; // Mapear QuestionES
+            break;
           case "AnswerEN":
             newExerciseRow[index] = exercise.answerEN || "";
-            break; // Mapear AnswerEN
+            break;
           case "AnswerES":
             newExerciseRow[index] = exercise.answerES || "";
-            break; // Mapear AnswerES (para traducción/listening)
+            break;
           case "OptionsEN":
             newExerciseRow[index] = exercise.optionsEN
               ? JSON.stringify(exercise.optionsEN)
               : "";
-            break; // Usar OptionsEN
+            break;
           case "OrderInLesson":
             newExerciseRow[index] = exercise.orderInLesson;
             break;
@@ -326,7 +323,7 @@ export default async function handler(req, res) {
           GeneratedBy: "Gemini",
           PromptUsed: geminiPrompt,
         },
-        exercises: generatedExercises, // Devolver los ejercicios generados por Gemini
+        exercises: generatedExercises,
       },
     });
   } catch (error) {

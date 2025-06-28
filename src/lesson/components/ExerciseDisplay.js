@@ -1,5 +1,5 @@
 // src/lesson/components/ExerciseDisplay.js
-import React, { useContext } from "react"; // Importa useContext
+import React, { useContext } from "react";
 import { normalizeText, renderClickableText } from "../../utils/textUtils";
 import SpeechToTextButton from "../../components/SpeechToTextButton";
 
@@ -14,7 +14,7 @@ const ExerciseDisplay = ({
   setUserTypedAnswer,
   matchFeedback,
   showCorrectAnswer,
-  recordedMicrophoneText, // Asegúrate de que el nombre de la prop sea consistente
+  recordedMicrophoneText,
   handleCheckAnswer,
   handleOptionClick,
   handleSpeechResultForListening,
@@ -27,7 +27,7 @@ const ExerciseDisplay = ({
     <button
       onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
       className='button audio-button-round primary-button'
-      disabled={appIsLoading} // Utiliza el booleano appIsLoading del contexto
+      disabled={appIsLoading}
       aria-label='Reproducir frase en inglés'
     >
       <svg
@@ -47,64 +47,63 @@ const ExerciseDisplay = ({
     <SpeechToTextButton
       onResult={handleSpeechResultForListening}
       lang='en-US' // El idioma a reconocer es el inglés de la pregunta (QuestionEN)
-      disabled={matchFeedback !== null || appIsLoading} // Utiliza el booleano appIsLoading del contexto
+      disabled={matchFeedback !== null || appIsLoading}
     />
   );
 
-  switch (currentExercise.Type) {
-    case "translation":
-      return (
-        <>
-          <div className='microphone-play-buttons-group'>
-            {playAudioButton}
-            {microphoneButton}
-          </div>
-          <div id='question-text' className='card-text question'>
-            {renderClickableText(
-              currentExercise.QuestionEN,
-              "en-US",
-              true,
-              onPlayAudio
-            )}
-          </div>
-          <div
-            id='answer-text'
-            className={`card-text answer ${isAnswerVisible ? "" : "hidden"}`}
-          >
-            {currentExercise.QuestionES}{" "}
-            {/* Mostrar QuestionES como traducción */}
-          </div>
-          <button
-            onClick={() => setIsAnswerVisible(!isAnswerVisible)}
-            className='button toggle-answer-button'
-          >
-            {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
-          </button>
-          {recordedMicrophoneText && (
-            <div className='recorded-text-display'>
-              {recordedMicrophoneText}
+  return (
+    <>
+      {/* Mostrar las notas del ejercicio si existen */}
+      {currentExercise.Notes && (
+        <div className='exercise-notes-display'>
+          <p>{currentExercise.Notes}</p>
+        </div>
+      )}
+      {/* Botones de audio y micrófono siempre en todos los ejercicios */}
+      <div className='microphone-play-buttons-group'>
+        {playAudioButton}
+        {microphoneButton}
+      </div>
+      {/* Mostrar lo que se grabó del micrófono (estilo flashcard) */}
+      {recordedMicrophoneText && (
+        <div className='recorded-text-display'>{recordedMicrophoneText}</div>
+      )}
+      {/* Contenido del ejercicio según su tipo */}
+      <div
+        className={`card-content-area quiz-content-area ${
+          matchFeedback ? `match-${matchFeedback}` : ""
+        }`}
+      >
+        {currentExercise.Type === "translation" && (
+          <>
+            <div id='question-text' className='card-text question'>
+              {renderClickableText(
+                currentExercise.QuestionEN,
+                "en-US",
+                true,
+                onPlayAudio
+              )}
             </div>
-          )}
-        </>
-      );
+            <div
+              id='answer-text'
+              className={`card-text answer ${isAnswerVisible ? "" : "hidden"}`}
+            >
+              {currentExercise.QuestionES}
+            </div>
+            <button
+              onClick={() => setIsAnswerVisible(!isAnswerVisible)}
+              className='button toggle-answer-button'
+            >
+              {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
+            </button>
+          </>
+        )}
 
-    case "fill_in_the_blank":
-      const blankPlaceholder = "_______";
-      const parts = currentExercise.QuestionEN.split(blankPlaceholder);
-
-      return (
-        <>
-          <div className='microphone-play-buttons-group'>
-            {playAudioButton}
-            {microphoneButton}
-          </div>
-          <div
-            className={`card-content-area quiz-content-area ${
-              matchFeedback ? `match-${matchFeedback}` : ""
-            }`}
-          >
+        {currentExercise.Type === "fill_in_the_blank" && (
+          <>
             <div className='card-text quiz-question'>
-              {parts[0]}
+              {/* Aquí mostramos la pregunta en inglés con el placeholder */}
+              {currentExercise.QuestionEN.split("_______")[0]}
               <input
                 type='text'
                 className='input-field quiz-answer-input-inline'
@@ -115,160 +114,24 @@ const ExerciseDisplay = ({
                 }}
                 disabled={matchFeedback !== null || appIsLoading}
               />
-              {parts[1]}
+              {currentExercise.QuestionEN.split("_______")[1]}
             </div>
+            {/* La traducción para la guía */}
+            <p className='fill-in-the-blank-translation'>
+              {currentExercise.QuestionES}
+            </p>
+
             {showCorrectAnswer && matchFeedback !== "correct" && (
               <p className='correct-answer-display'>
                 La respuesta correcta era:{" "}
                 <span className='correct-answer-text'>
                   {currentExercise.AnswerEN}
-                </span>{" "}
-                {/* Usa AnswerEN aquí */}
+                </span>
               </p>
             )}
             {showCorrectAnswer && matchFeedback === "correct" && (
               <p className='correct-answer-display success-text'>¡Correcto!</p>
             )}
-          </div>
-          <button
-            onClick={handleCheckAnswer}
-            className='button quiz-check-button'
-            disabled={matchFeedback !== null || appIsLoading}
-          >
-            Verificar
-          </button>
-          {recordedMicrophoneText && (
-            <div className='recorded-text-display'>
-              {recordedMicrophoneText}
-            </div>
-          )}
-        </>
-      );
-
-    case "multiple_choice":
-      const options = [
-        ...(currentExercise.OptionsEN || []),
-        currentExercise.AnswerEN,
-      ].sort(() => Math.random() - 0.5);
-
-      return (
-        <>
-          <div className='microphone-play-buttons-group'>
-            {playAudioButton}
-            {microphoneButton}
-          </div>
-          <div id='question-text' className='card-text question'>
-            {currentExercise.QuestionES}{" "}
-            {/* MOSTRAR QuestionES para la pregunta */}
-          </div>
-          <div className='multiple-choice-options'>
-            {options.map((option, idx) => (
-              <button
-                key={idx}
-                className={`button multiple-choice-button 
-                  ${
-                    matchFeedback &&
-                    normalizeText(option) ===
-                      normalizeText(currentExercise.AnswerEN)
-                      ? "correct-option"
-                      : ""
-                  }
-                  ${
-                    matchFeedback &&
-                    normalizeText(option) === normalizeText(userTypedAnswer) &&
-                    matchFeedback === "incorrect"
-                      ? "incorrect-selected-option"
-                      : ""
-                  }
-                `}
-                onClick={() => {
-                  if (matchFeedback === null) {
-                    setAppMessage("");
-                    setUserTypedAnswer(option);
-                    handleOptionClick(option);
-                  }
-                }}
-                disabled={matchFeedback !== null || appIsLoading}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          {showCorrectAnswer && matchFeedback === "correct" && (
-            <p className='correct-answer-display success-text'>¡Correcto!</p>
-          )}
-          {showCorrectAnswer && matchFeedback !== "correct" && (
-            <p className='correct-answer-display'>
-              La respuesta correcta era:{" "}
-              <span className='correct-answer-text'>
-                {currentExercise.AnswerEN}
-              </span>
-            </p>
-          )}
-          {recordedMicrophoneText && (
-            <div className='recorded-text-display'>
-              {recordedMicrophoneText}
-            </div>
-          )}
-        </>
-      );
-
-    case "listening":
-      return (
-        <>
-          <div className='microphone-play-buttons-group'>
-            {playAudioButton}
-            {microphoneButton}
-          </div>
-
-          {recordedMicrophoneText && (
-            <div className='recorded-text-display'>
-              {recordedMicrophoneText}
-            </div>
-          )}
-
-          {showCorrectAnswer && (
-            <div
-              className={`card-content-area quiz-content-area ${
-                matchFeedback ? `match-${matchFeedback}` : ""
-              }`}
-            >
-              <div id='question-text' className='card-text question'>
-                {renderClickableText(
-                  currentExercise.QuestionEN,
-                  "en-US",
-                  true,
-                  onPlayAudio
-                )}
-              </div>
-              <div className='card-text answer'>
-                {currentExercise.QuestionES}
-              </div>
-            </div>
-          )}
-          {showCorrectAnswer && matchFeedback !== "correct" && (
-            <p className='correct-answer-display'>
-              La frase correcta era:{" "}
-              <span className='correct-answer-text'>
-                {currentExercise.QuestionEN}
-              </span>
-            </p>
-          )}
-          {showCorrectAnswer && matchFeedback === "correct" && (
-            <p className='correct-answer-display success-text'>¡Correcto!</p>
-          )}
-          <div className='quiz-input-group'>
-            <input
-              type='text'
-              className='input-field quiz-answer-input'
-              placeholder='Escribe lo que escuchaste aquí'
-              value={userTypedAnswer}
-              onChange={(e) => setUserTypedAnswer(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCheckAnswer();
-              }}
-              disabled={matchFeedback !== null || appIsLoading}
-            />
             <button
               onClick={handleCheckAnswer}
               className='button quiz-check-button'
@@ -276,17 +139,127 @@ const ExerciseDisplay = ({
             >
               Verificar
             </button>
-          </div>
-        </>
-      );
+          </>
+        )}
 
-    default:
-      return (
-        <p className='info-text'>
-          Tipo de ejercicio no soportado: {currentExercise.Type}
-        </p>
-      );
-  }
+        {currentExercise.Type === "multiple_choice" && (
+          <>
+            <div id='question-text' className='card-text question'>
+              {currentExercise.QuestionES}{" "}
+              {/* MOSTRAR QuestionES para la pregunta */}
+            </div>
+            <div className='multiple-choice-options'>
+              {currentExercise.OptionsEN.map(
+                (
+                  option,
+                  idx // Iterar sobre OptionsEN
+                ) => (
+                  <button
+                    key={idx}
+                    className={`button multiple-choice-button 
+                    ${
+                      matchFeedback &&
+                      normalizeText(option) ===
+                        normalizeText(currentExercise.AnswerEN)
+                        ? "correct-option"
+                        : ""
+                    }
+                    ${
+                      matchFeedback &&
+                      normalizeText(option) ===
+                        normalizeText(userTypedAnswer) &&
+                      matchFeedback === "incorrect"
+                        ? "incorrect-selected-option"
+                        : ""
+                    }
+                  `}
+                    onClick={() => {
+                      if (matchFeedback === null) {
+                        setAppMessage("");
+                        setUserTypedAnswer(option);
+                        handleOptionClick(option);
+                      }
+                    }}
+                    disabled={matchFeedback !== null || appIsLoading}
+                  >
+                    {option}
+                  </button>
+                )
+              )}
+            </div>
+            {showCorrectAnswer && matchFeedback === "correct" && (
+              <p className='correct-answer-display success-text'>¡Correcto!</p>
+            )}
+            {showCorrectAnswer && matchFeedback !== "correct" && (
+              <p className='correct-answer-display'>
+                La respuesta correcta era:{" "}
+                <span className='correct-answer-text'>
+                  {currentExercise.AnswerEN}
+                </span>
+              </p>
+            )}
+          </>
+        )}
+
+        {currentExercise.Type === "listening" && (
+          <>
+            {/* Para Listening, la pregunta inicial no se muestra, solo el audio */}
+            {/* El contenido de la pregunta y respuesta se muestra después de intentar responder (showCorrectAnswer) */}
+            {showCorrectAnswer && (
+              <div className='card-text question'>
+                {renderClickableText(
+                  currentExercise.QuestionEN,
+                  "en-US",
+                  true,
+                  onPlayAudio
+                )}
+              </div>
+            )}
+            <p className='listening-instruction'>
+              Escucha y escribe lo que oigas:
+            </p>
+            <p className='listening-translation-hint'>
+              {currentExercise.QuestionES}
+            </p>{" "}
+            {/* Pista de traducción */}
+            {showCorrectAnswer && matchFeedback !== "correct" && (
+              <p className='correct-answer-display'>
+                La frase correcta era:{" "}
+                <span className='correct-answer-text'>
+                  {currentExercise.QuestionEN}
+                </span>
+              </p>
+            )}
+            {showCorrectAnswer && matchFeedback === "correct" && (
+              <p className='correct-answer-display success-text'>¡Correcto!</p>
+            )}
+            {/* Input de texto para el ejercicio de escucha */}
+            <div className='quiz-input-group'>
+              <input
+                type='text'
+                className='input-field quiz-answer-input'
+                placeholder='Escribe lo que escuchaste aquí'
+                value={userTypedAnswer}
+                onChange={(e) => setUserTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCheckAnswer();
+                }}
+                disabled={matchFeedback !== null || appIsLoading}
+              />
+              <button
+                onClick={handleCheckAnswer}
+                className='button quiz-check-button'
+                disabled={matchFeedback !== null || appIsLoading}
+              >
+                Verificar
+              </button>
+            </div>
+          </>
+        )}
+      </div>{" "}
+      {/* Fin de card-content-area */}
+    </>
+  );
 };
 
 export default ExerciseDisplay;
