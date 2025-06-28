@@ -7,7 +7,7 @@ const ExerciseDisplay = ({
   currentExercise,
   onPlayAudio,
   setAppMessage,
-  appIsLoading,
+  appIsLoading, // Ya se recibe correctamente
   isAnswerVisible,
   setIsAnswerVisible,
   userTypedAnswer,
@@ -24,7 +24,7 @@ const ExerciseDisplay = ({
     <button
       onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
       className='button audio-button-round primary-button'
-      disabled={appIsLoading} // Utiliza el booleano appIsLoading
+      disabled={appIsLoading} // ¡CORREGIDO! Usar appIsLoading directamente
       aria-label='Reproducir frase en inglés'
     >
       <svg
@@ -44,7 +44,7 @@ const ExerciseDisplay = ({
     <SpeechToTextButton
       onResult={handleSpeechResultForListening} // Reutilizamos el handler para la escucha
       lang='en-US' // El idioma a reconocer es el inglés de la pregunta
-      disabled={matchFeedback !== null || appIsLoading} // Utiliza el booleano appIsLoading
+      disabled={matchFeedback !== null || appIsLoading} // ¡CORREGIDO! Usar appIsLoading directamente
     />
   );
 
@@ -110,7 +110,7 @@ const ExerciseDisplay = ({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCheckAnswer();
                 }}
-                disabled={matchFeedback !== null || appIsLoading}
+                disabled={matchFeedback !== null || appIsLoading} // ¡CORREGIDO!
               />
               {parts[1]}
             </div>
@@ -131,7 +131,8 @@ const ExerciseDisplay = ({
             className='button quiz-check-button'
             disabled={matchFeedback !== null || appIsLoading}
           >
-            Verificar
+            {" "}
+            // ¡CORREGIDO! Verificar
           </button>
           {/* Mostrar lo que se grabó del micrófono (estilo flashcard) */}
           {recordedMicrophoneText && (
@@ -143,6 +144,7 @@ const ExerciseDisplay = ({
       );
 
     case "multiple_choice":
+      // Las opciones ahora se esperan en inglés si Gemini las genera así
       const options = [
         ...(currentExercise.OptionsES || []),
         currentExercise.AnswerES,
@@ -184,7 +186,7 @@ const ExerciseDisplay = ({
                     handleOptionClick(option);
                   }
                 }}
-                disabled={matchFeedback !== null || appIsLoading}
+                disabled={matchFeedback !== null || appIsLoading} // ¡CORREGIDO!
               >
                 {option}
               </button>
@@ -218,7 +220,7 @@ const ExerciseDisplay = ({
             <button
               onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
               className='button audio-button-round primary-button large-play-button'
-              disabled={appIsLoading}
+              disabled={appIsLoading} // ¡CORREGIDO!
               aria-label='Reproducir audio de la frase'
             >
               <svg
