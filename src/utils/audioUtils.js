@@ -50,27 +50,29 @@ export const playAudio = async (
   // 1. Intentar obtener el audio del caché
   if (audioCache.has(cacheKey)) {
     const cachedAudioUrl = audioCache.get(cacheKey);
-    console.log("Reproduciendo desde caché:", text);
+    console.log("PlayAudio: Reproduciendo desde caché:", text);
     setMessageFunction("Reproduciendo (desde caché)...");
-    setIsLoadingFunction(true); // Deshabilitar botones mientras se reproduce
+    setIsLoadingFunction(true); // Activa la carga
     const audio = new Audio(cachedAudioUrl);
     audio.play();
 
     audio.onended = () => {
+      console.log("PlayAudio: Reproducción desde caché finalizada.");
       setMessageFunction("");
-      setIsLoadingFunction(false);
+      setIsLoadingFunction(false); // Desactiva la carga
     };
     audio.onerror = (e) => {
-      console.error("Error al reproducir desde caché:", e);
+      console.error("PlayAudio: Error al reproducir desde caché:", e);
       setMessageFunction("Error al reproducir audio desde caché.");
-      setIsLoadingFunction(false);
+      setIsLoadingFunction(false); // Desactiva la carga
     };
     return; // Salir, ya hemos manejado la reproducción
   }
 
   // 2. Si no está en caché, hacer la petición a ElevenLabs
-  setIsLoadingFunction(true);
+  setIsLoadingFunction(true); // Activa la carga
   setMessageFunction("Generando audio con ElevenLabs...");
+  console.log("PlayAudio: Llamando a ElevenLabs para:", text);
 
   try {
     const response = await fetch("/api/speech/synthesize", {
@@ -84,6 +86,11 @@ export const playAudio = async (
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(
+        "PlayAudio: Error en la respuesta de ElevenLabs API:",
+        response.status,
+        errorData
+      );
       throw new Error(
         errorData.error ||
           `Error HTTP: ${response.status} - ${response.statusText}`
@@ -97,19 +104,20 @@ export const playAudio = async (
 
       // Guardar en caché antes de reproducir
       audioCache.set(cacheKey, audioUrl);
-      console.log("Audio cacheado:", text);
+      console.log("PlayAudio: Audio cacheado y listo para reproducir.");
 
       const audio = new Audio(audioUrl);
       audio.play();
 
       audio.onended = () => {
+        console.log("PlayAudio: Reproducción desde ElevenLabs finalizada.");
         setMessageFunction("");
-        setIsLoadingFunction(false);
+        setIsLoadingFunction(false); // Desactiva la carga
       };
       audio.onerror = (e) => {
-        console.error("Error al reproducir audio:", e);
+        console.error("PlayAudio: Error al reproducir audio de ElevenLabs:", e);
         setMessageFunction("Error al reproducir el audio.");
-        setIsLoadingFunction(false);
+        setIsLoadingFunction(false); // Desactiva la carga
       };
       setMessageFunction("Reproduciendo...");
     } else {
@@ -117,10 +125,10 @@ export const playAudio = async (
     }
   } catch (error) {
     console.error(
-      "Error al generar o reproducir audio con ElevenLabs TTS:",
+      "PlayAudio: Error al generar o reproducir audio con ElevenLabs TTS:",
       error
     );
     setMessageFunction(`No se pudo generar voz: ${error.message}.`);
-    setIsLoadingFunction(false);
+    setIsLoadingFunction(false); // Desactiva la carga en caso de error
   }
 };

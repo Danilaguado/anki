@@ -7,9 +7,11 @@ const ExerciseDisplay = ({
   currentExercise,
   onPlayAudio,
   setAppMessage,
-  appIsLoading, // Recibido como booleano
+  appIsLoading,
   isAnswerVisible,
+  setIsAnswerVisible, // <-- Añadido como prop
   userTypedAnswer,
+  setUserTypedAnswer, // <-- Añadido como prop
   matchFeedback,
   showCorrectAnswer,
   recordedMicrophoneText,
@@ -245,7 +247,7 @@ const ExerciseDisplay = ({
               className='input-field quiz-answer-input'
               placeholder='Escribe lo que escuchaste aquí'
               value={userTypedAnswer}
-              onChange={(e) => setUserTypedAnswer(e.target.value)}
+              onChange={(e) => setUserTypedAnswer(e.target.value)} // <-- Utiliza setUserTypedAnswer
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCheckAnswer();
               }}
