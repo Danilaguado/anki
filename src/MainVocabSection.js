@@ -1,10 +1,10 @@
 // src/MainVocabSection.js
-// Este archivo contiene toda la lógica y UI que antes estaba en App.js
+// Este archivo contiene toda la lógica y UI del entrenador de vocabulario.
 
 import React, { useState, useEffect, useRef } from "react";
-import "./index.css"; // Estilos globales (ya que MainVocabSection.js ahora está en src/)
+import "./index.css"; // Estilos globales
 
-// Importar componentes modularizados (las rutas relativas NO CAMBIAN desde src/MainVocabSection.js a src/components/)
+// Importar componentes modularizados
 import CategoryList from "./components/CategoryList";
 import AddCardForm from "./components/AddCardForm";
 import PracticeCard from "./components/PracticeCard";
@@ -13,16 +13,18 @@ import MessageDisplay from "./components/MessageDisplay";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
 import EditCategoryPage from "./components/EditCategoryPage";
 
-// Importar el componente PrincipalPageLessons (Solo importamos, no renderizamos aquí)
-import PrincipalPageLessons from "./lesson/PrincipalPageLessons"; // Asegúrate de que esta importación esté presente si usas PrincipalPageLessons
-
-// Importar utilidades (las rutas relativas NO CAMBIAN desde src/MainVocabSection.js a src/utils/)
-import { playAudio, b64toBlob } from "./utils/audioUtils";
+// Importar utilidades (ya no necesitan acceder a audioCache directamente, lo reciben por onPlayAudio)
 import { normalizeText } from "./utils/textUtils"; // renderizableText se pasa como prop
 
-// Componente principal del entrenador de vocabulario
-const MainVocabSection = () => {
-  // State para gestionar categorías y tarjetas
+// Recibir las props globales de App.js
+const MainVocabSection = ({
+  onPlayAudio,
+  setAppMessage,
+  setAppIsLoading,
+  appIsLoading,
+}) => {
+  // <-- Recibir props
+  // State para gestionar categorías y tarjetas (específicos de esta sección)
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -30,8 +32,9 @@ const MainVocabSection = () => {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCardQuestion, setNewCardQuestion] = useState("");
   const [newCardAnswer, setNewCardAnswer] = useState("");
-  const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // isLoading global
+  // message e isLoading ahora son gestionados globalmente por App.js
+  // const [message, setMessage] = useState("");
+  // const [isLoading, setIsLoading] = useState(false);
 
   // State para el modal de confirmación de eliminación de CATEGORÍA
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -51,34 +54,23 @@ const MainVocabSection = () => {
   // Nuevo estado para la respuesta correcta que se muestra en el quiz si acierta
   const [quizCorrectAnswerDisplay, setQuizCorrectAnswerDisplay] = useState("");
 
-  // Nuevo: Path al archivo de audio para aciertos
-  const CORRECT_SOUND_PATH = "/correct-6033.mp3"; // Asume que está en la carpeta public/
+  // Path al archivo de audio para aciertos (global, puede permanecer aquí o moverse a utils)
+  const CORRECT_SOUND_PATH = "/correct-6033.mp3";
 
-  // Nuevo: Set para guardar los IDs de las tarjetas acertadas en la sesión del quiz
-  const masteredCardIds = useRef(new Set()); // Se inicializa con useRef para persistir a través de renders
+  // Set para guardar los IDs de las tarjetas acertadas en la sesión del quiz (específico de esta sección)
+  const masteredCardIds = useRef(new Set());
 
-  // Caché para los URLs de audio (persistirá mientras MainVocabSection esté montada)
-  const audioCache = useRef(new Map());
-
-  // Función para envolver playAudio con sus dependencias
-  const wrappedPlayAudio = (text, lang) =>
-    playAudio(
-      text,
-      lang,
-      audioCache.current,
-      b64toBlob,
-      setMessage,
-      setIsLoading
-    );
+  // audioCache y wrappedPlayAudio ahora están en App.js y se pasan como prop.
+  // const audioCache = useRef(new Map());
+  // const wrappedPlayAudio = (text, lang) => playAudio(text, lang, audioCache.current, b64toBlob, setAppMessage, setAppIsLoading);
 
   // --- Funciones de Navegación (internas a esta sección) ---
   const navigateToHome = () => {
-    // Limpiar todos los Blob URLs del caché al volver al inicio de esta sección
-    audioCache.current.forEach((url) => URL.revokeObjectURL(url));
-    audioCache.current.clear(); // Vaciar el mapa
-    console.log("Caché de audio limpiado al volver al inicio de sección.");
+    // La limpieza del caché de audio ahora es responsabilidad de App.js (o un useEffect en App.js)
+    // audioCache.current.forEach((url) => URL.revokeObjectURL(url));
+    // audioCache.current.clear();
+    // console.log("Caché de audio limpiado al volver al inicio de sección.");
 
-    // Limpiar también las tarjetas acertadas del quiz al volver al inicio de esta sección
     masteredCardIds.current.clear();
     console.log("Tarjetas acertadas del quiz limpiadas.");
 
@@ -86,13 +78,13 @@ const MainVocabSection = () => {
     setRecordedMicrophoneText("");
     setUserTypedAnswer("");
     setMatchFeedback(null);
-    setQuizCorrectAnswerDisplay(""); // Limpiar al volver a home
+    setQuizCorrectAnswerDisplay("");
   };
   const navigateToAddCard = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("addCardPage");
-    setNewCardQuestion(""); // Limpiar campos al navegar
-    setNewCardAnswer(""); // Limpiar campos al navegar
+    setNewCardQuestion("");
+    setNewCardAnswer("");
     setRecordedMicrophoneText("");
     setUserTypedAnswer("");
     setMatchFeedback(null);
@@ -100,8 +92,8 @@ const MainVocabSection = () => {
   };
   const navigateToPracticePage = (categoryId) => {
     setSelectedCategoryId(categoryId);
-    setCurrentCardIndex(0); // Reinicia el índice al entrar a la práctica
-    setIsAnswerVisible(false); // Oculta la respuesta al inicio
+    setCurrentCardIndex(0);
+    setIsAnswerVisible(false);
     setCurrentPage("practicePage");
     setRecordedMicrophoneText("");
     setUserTypedAnswer("");
@@ -110,26 +102,25 @@ const MainVocabSection = () => {
   };
   const navigateToQuizPage = (categoryId) => {
     setSelectedCategoryId(categoryId);
-    setCurrentCardIndex(0); // Reinicia el índice al entrar al quiz
-    setCurrentPage("quizPage"); // Cambia a la nueva página de quiz
+    setCurrentCardIndex(0);
+    setCurrentPage("quizPage");
     setRecordedMicrophoneText("");
     setUserTypedAnswer("");
     setMatchFeedback(null);
     setQuizCorrectAnswerDisplay("");
-    masteredCardIds.current.clear(); // Reiniciar tarjetas acertadas para el nuevo quiz
+    masteredCardIds.current.clear();
   };
-  // Función de navegación para la página de edición de categoría
   const navigateToEditCategoryPage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("editCategoryPage");
-    setMessage(""); // Limpiar mensajes al navegar a la página de edición
-    setIsLoading(false); // Limpiar estado de carga
+    setAppMessage(""); // Usar setAppMessage
+    setAppIsLoading(false); // Usar setAppIsLoading
   };
 
   // --- Función para cargar datos desde las API de Vercel ---
   const fetchCategories = async () => {
-    setIsLoading(true);
-    setMessage("Cargando datos...");
+    setAppIsLoading(true); // Usar setAppIsLoading
+    setAppMessage("Cargando datos..."); // Usar setAppMessage
     try {
       const url = "/api/categories/get-all";
       console.log("Intentando fetch GET de:", url);
@@ -152,17 +143,16 @@ const MainVocabSection = () => {
       if (!Array.isArray(data)) {
         console.error("La API no devolvió un array como se esperaba:", data);
         data = [];
-        setMessage(
+        setAppMessage(
           "Advertencia: Formato de datos inesperado, mostrando categorías vacías."
         );
       }
 
       setCategories(data);
 
-      // Si la categoría seleccionada ya no existe o estamos en home, seleccionar la primera o ninguna
       if (
-        currentPage === "home" || // Si estamos en home, seleccionamos la primera
-        !data.some((cat) => cat.id === selectedCategoryId) // Si la categoría actual no está en los datos, reseteamos
+        currentPage === "home" ||
+        !data.some((cat) => cat.id === selectedCategoryId)
       ) {
         if (data.length > 0) {
           setSelectedCategoryId(data[0].id);
@@ -171,14 +161,14 @@ const MainVocabSection = () => {
         }
       }
 
-      setMessage("Datos cargados exitosamente.");
+      setAppMessage("Datos cargados exitosamente.");
     } catch (error) {
       console.error("Error al cargar categorías:", error);
-      setMessage(`Error al cargar datos: ${error.message}.`);
+      setAppMessage(`Error al cargar datos: ${error.message}.`);
       setCategories([]);
       setSelectedCategoryId(null);
     } finally {
-      setIsLoading(false);
+      setAppIsLoading(false); // Usar setAppIsLoading
     }
   };
 
@@ -191,19 +181,18 @@ const MainVocabSection = () => {
   useEffect(() => {
     setCurrentCardIndex(0);
     setIsAnswerVisible(false);
-    setRecordedMicrophoneText(""); // Limpiar al cambiar de tarjeta/categoría
-    setUserTypedAnswer(""); // Limpiar al cambiar de tarjeta/categoría
+    setRecordedMicrophoneText("");
+    setUserTypedAnswer("");
     setMatchFeedback(null);
-    setQuizCorrectAnswerDisplay(""); // Limpiar al cambiar de tarjeta/categoría
+    setQuizCorrectAnswerDisplay("");
     masteredCardIds.current.clear();
-  }, [selectedCategoryId, currentPage]); // Añadir currentPage como dependencia para resetear al cambiar de página
+  }, [selectedCategoryId, currentPage]);
 
   // Obtiene los datos de la categoría actual
   const currentCategory = Array.isArray(categories)
     ? categories.find((cat) => cat.id === selectedCategoryId)
     : undefined;
   const currentCards = currentCategory ? currentCategory.cards || [] : [];
-  // Asegurarse de que currentCard no sea undefined si currentCards está vacío
   const currentCard =
     currentCards.length > 0 ? currentCards[currentCardIndex] : null;
 
@@ -212,15 +201,14 @@ const MainVocabSection = () => {
    * @param {string} transcript - El texto transcrito.
    */
   const handleSpeechResult = (transcript) => {
-    setRecordedMicrophoneText(transcript); // Siempre mostrar lo que el micrófono grabó
+    setRecordedMicrophoneText(transcript);
 
-    // La lógica de comparación debe ser la misma tanto para práctica como para quiz
     if (currentCard && currentCard.question) {
       const normalizedTranscript = normalizeText(transcript);
       const normalizedTargetText =
         currentPage === "quizPage"
-          ? normalizeText(currentCard.question) // En quiz, se compara con la pregunta (inglés)
-          : normalizeText(currentCard.question); // En práctica, también se compara con la pregunta (inglés)
+          ? normalizeText(currentCard.question)
+          : normalizeText(currentCard.question);
 
       if (normalizedTranscript === normalizedTargetText) {
         setMatchFeedback("correct");
@@ -249,9 +237,9 @@ const MainVocabSection = () => {
    */
   const checkTypedAnswer = () => {
     if (!userTypedAnswer.trim()) {
-      setMessage("Por favor, escribe tu respuesta.");
-      setMatchFeedback(null); // Limpiar feedback si el campo está vacío
-      setQuizCorrectAnswerDisplay(""); // Limpiar si el campo está vacío
+      setAppMessage("Por favor, escribe tu respuesta.");
+      setMatchFeedback(null);
+      setQuizCorrectAnswerDisplay("");
       return;
     }
 
@@ -262,7 +250,7 @@ const MainVocabSection = () => {
       if (normalizedTyped === normalizedQuestion) {
         setMatchFeedback("correct");
         masteredCardIds.current.add(currentCard.id);
-        setQuizCorrectAnswerDisplay(currentCard.question); // Mostrar la respuesta correcta en inglés
+        setQuizCorrectAnswerDisplay(currentCard.question);
         const audio = new Audio(CORRECT_SOUND_PATH);
         audio
           .play()
@@ -271,7 +259,7 @@ const MainVocabSection = () => {
           );
       } else {
         setMatchFeedback("incorrect");
-        setQuizCorrectAnswerDisplay(""); // Si es incorrecto, no mostrar la respuesta correcta
+        setQuizCorrectAnswerDisplay("");
       }
     }
   };
@@ -300,9 +288,9 @@ const MainVocabSection = () => {
       setCurrentCardIndex((prevIndex) => (prevIndex + 1) % currentCards.length);
       setIsAnswerVisible(false);
       setRecordedMicrophoneText("");
-      setUserTypedAnswer(""); // Limpiar respuesta escrita
+      setUserTypedAnswer("");
       setMatchFeedback(null);
-      setQuizCorrectAnswerDisplay(""); // Limpiar si es incorrecto
+      setQuizCorrectAnswerDisplay("");
     }
   };
 
@@ -317,9 +305,9 @@ const MainVocabSection = () => {
       );
       setIsAnswerVisible(false);
       setRecordedMicrophoneText("");
-      setUserTypedAnswer(""); // Limpiar respuesta escrita
+      setUserTypedAnswer("");
       setMatchFeedback(null);
-      setQuizCorrectAnswerDisplay(""); // Limpiar si es incorrecto
+      setQuizCorrectAnswerDisplay("");
     }
   };
 
@@ -328,11 +316,11 @@ const MainVocabSection = () => {
    */
   const addCategory = async () => {
     if (!newCategoryName.trim()) {
-      setMessage("El nombre de la categoría no puede estar vacío.");
+      setAppMessage("El nombre de la categoría no puede estar vacío.");
       return;
     }
-    setIsLoading(true);
-    setMessage("Creando categoría...");
+    setAppIsLoading(true);
+    setAppMessage("Creando categoría...");
     try {
       const url = "/api/categories/add";
       const response = await fetch(url, {
@@ -355,7 +343,7 @@ const MainVocabSection = () => {
       const result = await response.json();
       if (result.success) {
         setNewCategoryName("");
-        setMessage(`Categoría "${newCategoryName}" creada.`);
+        setAppMessage(`Categoría "${newCategoryName}" creada.`);
         await fetchCategories();
       } else {
         throw new Error(
@@ -364,9 +352,9 @@ const MainVocabSection = () => {
       }
     } catch (error) {
       console.error("Error al añadir categoría:", error);
-      setMessage(`Error al crear la categoría: ${error.message}.`);
+      setAppMessage(`Error al crear la categoría: ${error.message}.`);
     } finally {
-      setIsLoading(false);
+      setAppIsLoading(false);
     }
   };
 
@@ -375,15 +363,15 @@ const MainVocabSection = () => {
    */
   const addCardManually = async () => {
     if (!selectedCategoryId) {
-      setMessage("Por favor, selecciona una categoría primero.");
+      setAppMessage("Por favor, selecciona una categoría primero.");
       return;
     }
     if (!newCardQuestion.trim() || !newCardAnswer.trim()) {
-      setMessage("La pregunta y la respuesta no pueden estar vacías.");
+      setAppMessage("La pregunta y la respuesta no pueden estar vacías.");
       return;
     }
-    setIsLoading(true);
-    setMessage("Añadiendo tarjeta...");
+    setAppIsLoading(true);
+    setAppMessage("Añadiendo tarjeta...");
     try {
       const url = "/api/cards/add";
       const response = await fetch(url, {
@@ -411,16 +399,16 @@ const MainVocabSection = () => {
       if (result.success) {
         setNewCardQuestion("");
         setNewCardAnswer("");
-        setMessage("Tarjeta añadida manualmente.");
+        setAppMessage("Tarjeta añadida manualmente.");
         await fetchCategories();
       } else {
         throw new Error(result.error || "Error desconocido al añadir tarjeta.");
       }
     } catch (error) {
       console.error("Error al añadir tarjeta manualmente:", error);
-      setMessage(`Error al añadir la tarjeta: ${error.message}.`);
+      setAppMessage(`Error al añadir la tarjeta: ${error.message}.`);
     } finally {
-      setIsLoading(false);
+      setAppIsLoading(false);
     }
   };
 
@@ -445,8 +433,8 @@ const MainVocabSection = () => {
    */
   const deleteCategory = async () => {
     if (!categoryToDeleteId) return;
-    setIsLoading(true);
-    setMessage("Eliminando categoría...");
+    setAppIsLoading(true);
+    setAppMessage("Eliminando categoría...");
     try {
       const url = `/api/categories/delete?id=${categoryToDeleteId}`;
       const response = await fetch(url, {
@@ -465,11 +453,11 @@ const MainVocabSection = () => {
 
       const result = await response.json();
       if (result.success) {
-        setMessage(`Categoría eliminada.`);
+        setAppMessage(`Categoría eliminada.`);
         setShowDeleteConfirm(false);
         setCategoryToDeleteId(null);
-        await fetchCategories(); // Recargar categorías para reflejar el cambio
-        navigateToHome(); // Asegurarse de volver a la vista principal
+        await fetchCategories();
+        navigateToHome();
       } else {
         throw new Error(
           result.error || "Error desconocido al eliminar categoría."
@@ -477,17 +465,17 @@ const MainVocabSection = () => {
       }
     } catch (error) {
       console.error("Error al eliminar categoría:", error);
-      setMessage(`Error al eliminar la categoría: ${error.message}.`);
+      setAppMessage(`Error al eliminar la categoría: ${error.message}.`);
     } finally {
-      setIsLoading(false);
+      setAppIsLoading(false);
     }
   };
 
   // Función para pasar a EditCategoryPage para que recargue las categorías en MainVocabSection
   const handleSaveCategoryChanges = async () => {
-    setMessage("Recargando datos después de la edición...");
-    await fetchCategories(); // Recargar los datos después de guardar cambios en EditCategoryPage
-    setMessage("Datos actualizados.");
+    setAppMessage("Recargando datos después de la edición...");
+    await fetchCategories();
+    setAppMessage("Datos actualizados.");
   };
 
   // --- Renderizado Principal de MainVocabSection ---
@@ -497,14 +485,15 @@ const MainVocabSection = () => {
       {/* Mantén el app-container aquí para estilos */}
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
       {/* MessageDisplay se encarga de mostrar mensajes y estado de carga */}
-      <MessageDisplay message={message} isLoading={isLoading} />
+      <MessageDisplay message={message} isLoading={appIsLoading} />{" "}
+      {/* Usar appIsLoading */}
       {/* Renderizado condicional de las páginas internas de MainVocabSection */}
       {currentPage === "home" && (
         <CategoryList
           categories={categories}
           selectedCategoryId={selectedCategoryId}
           newCategoryName={newCategoryName}
-          isLoading={isLoading}
+          isLoading={appIsLoading}
           onSelectCategory={setSelectedCategoryId}
           onNavigateToAddCard={navigateToAddCard}
           onNavigateToPracticePage={navigateToPracticePage}
@@ -520,7 +509,7 @@ const MainVocabSection = () => {
           currentCategory={currentCategory}
           newCardQuestion={newCardQuestion}
           newCardAnswer={newCardAnswer}
-          isLoading={isLoading}
+          isLoading={appIsLoading}
           onNewCardQuestionChange={setNewCardQuestion}
           onNewCardAnswerChange={setNewCardAnswer}
           onAddCardManually={addCardManually}
@@ -535,12 +524,12 @@ const MainVocabSection = () => {
           isAnswerVisible={isAnswerVisible}
           recordedMicrophoneText={recordedMicrophoneText}
           matchFeedback={matchFeedback}
-          isLoading={isLoading}
+          isLoading={appIsLoading}
           onToggleAnswerVisible={toggleAnswerVisible}
           onNextCard={nextCard}
           onPrevCard={prevCard}
           onHandleSpeechResult={handleSpeechResult}
-          onPlayAudio={wrappedPlayAudio}
+          onPlayAudio={onPlayAudio}
           onNavigateToHome={navigateToHome}
         />
       )}
@@ -553,9 +542,9 @@ const MainVocabSection = () => {
           userTypedAnswer={userTypedAnswer}
           matchFeedback={matchFeedback}
           quizCorrectAnswerDisplay={quizCorrectAnswerDisplay}
-          isLoading={isLoading}
+          isLoading={appIsLoading}
           onHandleSpeechResult={handleSpeechResult}
-          onPlayAudio={wrappedPlayAudio}
+          onPlayAudio={onPlayAudio}
           onUserTypedAnswerChange={setUserTypedAnswer}
           onCheckTypedAnswer={checkTypedAnswer}
           onHandleQuizInputKeyDown={handleQuizInputKeyDown}
@@ -569,8 +558,8 @@ const MainVocabSection = () => {
           category={currentCategory}
           onSaveCategoryChanges={handleSaveCategoryChanges}
           onNavigateToHome={navigateToHome}
-          isLoading={isLoading}
-          setMessage={setMessage}
+          isLoading={appIsLoading}
+          setMessage={setAppMessage}
         />
       )}
       {/* El componente PrincipalPageLessons no debe renderizarse aquí,
@@ -582,7 +571,7 @@ const MainVocabSection = () => {
         <DeleteConfirmationModal
           onDelete={deleteCategory}
           onCancel={cancelAction}
-          isLoading={isLoading}
+          isLoading={appIsLoading}
         />
       )}
     </div>

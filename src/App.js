@@ -1,21 +1,23 @@
 // src/App.js
-// Este es el archivo App.js principal que maneja el enrutamiento y la estructura general.
+// Este es el archivo App.js principal que maneja el enrutamiento y la estructura general,
+// y ahora también los estados globales de carga, mensajes y audio.
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react"; // Necesario para los estados globales
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import "./index.css"; // Importa los estilos globales para toda la aplicación
 
-// Importa tu sección principal del entrenador de vocabulario
+// Importa tus secciones principales
 import MainVocabSection from "./MainVocabSection";
-// Importa el nuevo componente de Lecciones con la ruta y nombre de archivo actualizados
-import PrincipalPageLessons from "./lesson/PrincipalPageLessons"; // Ruta y nombre de archivo actualizados
+import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
 
-// Un componente de ejemplo para la pantalla principal o "Home"
+// Importar utilidades de audio y texto para uso global
+import { playAudio, b64toBlob } from "./utils/audioUtils";
+import { normalizeText, renderClickableText } from "./utils/textUtils"; // También se pasarán si es necesario
+
+// Componente de ejemplo para la pantalla principal o "Home"
 const HomeScreen = () => {
   return (
     <div className='home-screen-wrapper'>
-      {" "}
-      {/* Un nuevo contenedor para esta pantalla */}
       <h1 className='app-title'>Bienvenido a Mi Aplicación de Idiomas</h1>
       <p className='info-text'>
         Esta es la pantalla principal. ¿Qué te gustaría hacer?
@@ -24,27 +26,72 @@ const HomeScreen = () => {
         <Link to='/vocab-trainer' className='button primary-button'>
           Ir al Entrenador de Vocabulario
         </Link>
-        {/* Botón para Lecciones, ahora apunta a la nueva ruta */}
         <Link to='/lessons' className='button primary-button'>
           Lecciones
         </Link>
-        {/* Aquí podrías añadir más enlaces a otras secciones de tu aplicación */}
       </nav>
     </div>
   );
 };
 
 const App = () => {
+  // Estados globales movidos de MainVocabSection a App.js
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Estado de carga global
+  const audioCache = useRef(new Map()); // Caché de audio global
+
+  // Función para envolver playAudio con sus dependencias globales
+  const wrappedPlayAudio = (text, lang) =>
+    playAudio(
+      text,
+      lang,
+      audioCache.current,
+      b64toBlob,
+      setMessage,
+      setIsLoading
+    );
+
+  // Asegurarse de limpiar los URLs de Blob del caché cuando el componente App se desmonte
+  // (Aunque App generalmente no se desmonta en una SPA, es buena práctica si tuvieras lógica para ello)
+  useEffect(() => {
+    return () => {
+      audioCache.current.forEach((url) => URL.revokeObjectURL(url));
+      audioCache.current.clear();
+    };
+  }, []);
+
   return (
     <Router>
-      {/* El div 'app-container' ahora envuelve todo el contenido renderizado por las rutas */}
       <div className='app-container'>
+        {/* Aquí puedes mostrar un MessageDisplay global si lo deseas, para mensajes que persistan entre rutas */}
+        {/* <MessageDisplay message={message} isLoading={isLoading} /> */}
+
         <Routes>
           <Route path='/' element={<HomeScreen />} />
-          <Route path='/vocab-trainer' element={<MainVocabSection />} />
-          {/* Nueva ruta para las Lecciones, usando el componente renombrado */}
-          <Route path='/lessons' element={<PrincipalPageLessons />} />
-          {/* Define más rutas aquí si añades otras secciones */}
+          {/* Pasar las props globales a MainVocabSection */}
+          <Route
+            path='/vocab-trainer'
+            element={
+              <MainVocabSection
+                onPlayAudio={wrappedPlayAudio}
+                setAppMessage={setMessage}
+                setAppIsLoading={setIsLoading}
+                appIsLoading={isLoading} // Pasar el estado booleano de carga
+              />
+            }
+          />
+          {/* Pasar las props globales a PrincipalPageLessons */}
+          <Route
+            path='/lessons'
+            element={
+              <PrincipalPageLessons
+                onPlayAudio={wrappedPlayAudio}
+                setAppMessage={setMessage}
+                setAppIsLoading={setIsLoading}
+                appIsLoading={isLoading} // Pasar el estado booleano de carga
+              />
+            }
+          />
         </Routes>
       </div>
     </Router>
