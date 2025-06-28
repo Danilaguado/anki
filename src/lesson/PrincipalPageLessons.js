@@ -1,10 +1,23 @@
 // src/lesson/PrincipalPageLessons.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react"; // Importa useContext
 import { Link } from "react-router-dom";
 import MessageDisplay from "../components/MessageDisplay";
 import LessonCard from "./lessonCard"; // Importar el nuevo componente LessonCard
 
+// Importar el contexto
+import AppContext from "../context/AppContext";
+
 const PrincipalPageLessons = () => {
+  // Ya no recibe props directamente aquí
+  // Consumir valores del contexto
+  const {
+    onPlayAudio,
+    setAppMessage,
+    setAppIsLoading,
+    appIsLoading,
+    appGlobalMessage,
+  } = useContext(AppContext); // <-- Consumir del contexto
+
   // Estados para los parámetros de generación de la lección
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState("Principiante");
@@ -12,18 +25,18 @@ const PrincipalPageLessons = () => {
   const [exerciseTypes, setExerciseTypes] = useState(["translation"]);
   const [customPrompt, setCustomPrompt] = useState("");
 
-  // Estados para la carga, errores y las lecciones disponibles
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  // Estados para la carga, errores y las lecciones disponibles (locales a este componente)
+  const [isLoading, setIsLoading] = useState(false); // Estado de carga local del componente
+  const [message, setMessage] = useState(""); // Mensajes locales de este componente
   const [error, setError] = useState(null);
   const [availableLessons, setAvailableLessons] = useState([]); // Todas las lecciones cargadas/generadas
   const [selectedLesson, setSelectedLesson] = useState(null); // La lección actualmente seleccionada para ver en detalle
-  const [generatedLesson, setGeneratedLesson] = useState(null); // <-- ¡Añadido! Estado para la lección recién generada
 
   // Efecto para cargar las lecciones existentes al montar el componente
   useEffect(() => {
     const fetchExistingLessons = async () => {
-      setIsLoading(true);
+      setIsLoading(true); // Usar isLoading local
+      setAppIsLoading(true); // Indicar a la App principal que hay carga global
       setMessage("Cargando lecciones existentes...");
       setError(null);
       try {
@@ -48,7 +61,8 @@ const PrincipalPageLessons = () => {
         console.error("Error al cargar lecciones existentes:", err);
         setError(`Error al cargar lecciones: ${err.message}.`);
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Usar isLoading local
+        setAppIsLoading(false); // Finalizar carga global
       }
     };
 
@@ -61,23 +75,26 @@ const PrincipalPageLessons = () => {
   const handleGenerateLesson = async () => {
     setMessage("");
     setError(null);
-    setIsLoading(true);
-    setGeneratedLesson(null); // Limpiar la lección anterior si ya existe
+    setIsLoading(true); // Usar isLoading local
+    setAppIsLoading(true); // Indicar a la App principal que hay carga
 
     try {
       if (!topic.trim()) {
         setMessage("Por favor, ingresa un tema para la lección.");
         setIsLoading(false);
+        setAppIsLoading(false);
         return;
       }
       if (exerciseCount < 1) {
         setMessage("El número de ejercicios debe ser al menos 1.");
         setIsLoading(false);
+        setAppIsLoading(false);
         return;
       }
       if (exerciseTypes.length === 0) {
         setMessage("Debes seleccionar al menos un tipo de ejercicio.");
         setIsLoading(false);
+        setAppIsLoading(false);
         return;
       }
 
@@ -122,7 +139,8 @@ const PrincipalPageLessons = () => {
       setMessage("");
       setSelectedLesson(null);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Usar isLoading local
+      setAppIsLoading(false); // Finalizar carga en la App principal
     }
   };
 
@@ -161,6 +179,9 @@ const PrincipalPageLessons = () => {
       </p>
 
       {/* Mostrar mensajes de carga o error */}
+      {/* PrincipalPageLessons usa sus propios estados de mensaje y carga para el formulario,
+          pero setAppMessage y setAppIsLoading se usan para la carga/mensajes globales.
+      */}
       <MessageDisplay message={message} isLoading={isLoading} />
       {error && (
         <div className='message-box error-box' role='alert'>
@@ -170,7 +191,14 @@ const PrincipalPageLessons = () => {
 
       {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
       {selectedLesson ? (
-        <LessonCard lesson={selectedLesson} onBack={handleBackToLessonList} />
+        <LessonCard
+          lesson={selectedLesson}
+          onBack={handleBackToLessonList}
+          onPlayAudio={onPlayAudio} // Se pasa del contexto
+          setAppMessage={setAppMessage} // Se pasa del contexto
+          setAppIsLoading={setAppIsLoading} // Se pasa del contexto
+          appIsLoading={appIsLoading} // Se pasa del contexto
+        />
       ) : (
         // Si no hay lección seleccionada, mostrar el formulario de generación y la lista de lecciones
         <>
@@ -258,6 +286,18 @@ const PrincipalPageLessons = () => {
                     disabled={isLoading}
                   />{" "}
                   Completar Espacios
+                </label>
+                <label>
+                  {" "}
+                  {/* Nuevo tipo de ejercicio: Listening */}
+                  <input
+                    type='checkbox'
+                    value='listening'
+                    checked={exerciseTypes.includes("listening")}
+                    onChange={handleExerciseTypeChange}
+                    disabled={isLoading}
+                  />{" "}
+                  Escucha
                 </label>
               </div>
             </div>

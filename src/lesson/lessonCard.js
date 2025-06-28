@@ -1,19 +1,20 @@
 // src/lesson/LessonCard.js
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react"; // Importar useContext y useEffect
 import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto
 import SpeechToTextButton from "../components/SpeechToTextButton"; // Para el ejercicio de escucha
-import ExerciseDisplay from "./components/ExerciseDisplay"; // Importar el nuevo componente
-import ExerciseNavigation from "./components/ExerciseNavigation"; // Importar el nuevo componente
+import ExerciseDisplay from "./components/ExerciseDisplay"; // Importar nuevo componente
+import ExerciseNavigation from "./components/ExerciseNavigation"; // Importar nuevo componente
 
-const LessonCard = ({
-  lesson,
-  onBack,
-  onPlayAudio,
-  setAppMessage,
-  setAppIsLoading,
-  appIsLoading,
-}) => {
+// Importar el contexto
+import AppContext from "../context/AppContext";
+
+const LessonCard = ({ lesson, onBack }) => {
+  // Ya no recibe props de contexto directamente
+  // Consumir valores del contexto
+  const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
+    useContext(AppContext);
+
   // Estado para el índice del ejercicio actual dentro de la lección
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   // Estado para la visibilidad de la respuesta (para ejercicios de traducción)
@@ -27,7 +28,8 @@ const LessonCard = ({
 
   // Restablecer estados al cambiar de ejercicio
   // Este useEffect debe estar al inicio, antes de cualquier return condicional.
-  React.useEffect(() => {
+  useEffect(() => {
+    // Usar useEffect en lugar de React.useEffect
     setIsAnswerVisible(false);
     setUserTypedAnswer("");
     setMatchFeedback(null);
@@ -60,8 +62,37 @@ const LessonCard = ({
 
   const currentExercise = lesson.exercises[currentExerciseIndex];
 
-  // Las funciones handleCheckAnswer, handleOptionClick, handleSpeechResultForListening
-  // ahora son gestionadas y pasadas a ExerciseDisplay
+  const handleNextExercise = () => {
+    // Solo permitir avanzar si el ejercicio actual ha sido respondido o si no requiere respuesta.
+    // Para los que requieren respuesta (fill_in_the_blank, multiple_choice, listening), matchFeedback no debe ser null.
+    const requiresAnswer = [
+      "fill_in_the_blank",
+      "multiple_choice",
+      "listening",
+    ].includes(currentExercise.Type);
+    if (requiresAnswer && matchFeedback === null) {
+      setAppMessage(
+        "Por favor, completa el ejercicio actual antes de avanzar."
+      );
+      return;
+    }
+
+    if (currentExerciseIndex < lesson.exercises.length - 1) {
+      setCurrentExerciseIndex((prev) => prev + 1);
+      setAppMessage(""); // Limpiar mensaje al avanzar
+    } else {
+      setAppMessage("¡Has completado esta lección!");
+      // Aquí podrías volver a la lista de lecciones o mostrar un resumen
+    }
+  };
+
+  const handlePrevExercise = () => {
+    if (currentExerciseIndex > 0) {
+      setCurrentExerciseIndex((prev) => prev - 1);
+      setAppMessage(""); // Limpiar mensaje al retroceder
+    }
+  };
+
   const handleCheckAnswer = () => {
     if (!userTypedAnswer.trim()) {
       setAppMessage("Por favor, escribe tu respuesta.");
@@ -70,6 +101,7 @@ const LessonCard = ({
     }
 
     const normalizedUserAnswer = normalizeText(userTypedAnswer);
+    // Para fill_in_the_blank, AnswerES debería ser la palabra en inglés del espacio
     const normalizedCorrectAnswer = normalizeText(
       currentExercise.AnswerES || ""
     );
@@ -78,16 +110,20 @@ const LessonCard = ({
       setMatchFeedback("correct");
       setShowCorrectAnswer(true);
       setAppMessage("¡Correcto!");
+      // Opcional: Emitir un sonido de acierto
     } else {
       setMatchFeedback("incorrect");
       setShowCorrectAnswer(true);
-      setAppMessage("Incorrecto. Intenta de nuevo.");
+      setAppMessage("Incorrecto. Intenta de nuevo."); // O dar más info
+      // Opcional: Emitir un sonido de error
     }
   };
 
   const handleOptionClick = (selectedOption) => {
+    // Si ya se respondió, no hacer nada
     if (matchFeedback !== null) return;
-    setUserTypedAnswer(selectedOption); // Almacenar la opción seleccionada
+
+    setUserTypedAnswer(selectedOption); // Almacenar la opción seleccionada para la comprobación
 
     const normalizedSelected = normalizeText(selectedOption);
     const normalizedCorrect = normalizeText(currentExercise.AnswerES || "");
@@ -103,6 +139,10 @@ const LessonCard = ({
     }
   };
 
+  /**
+   * Maneja el resultado del reconocimiento de voz para el ejercicio de escucha.
+   * Compara lo que el usuario dijo con QuestionEN.
+   */
   const handleSpeechResultForListening = (transcript) => {
     setRecordedMicrophoneText(transcript);
     if (matchFeedback !== null) return;
@@ -114,31 +154,12 @@ const LessonCard = ({
 
     if (normalizedTranscript === normalizedQuestionEN) {
       setMatchFeedback("correct");
-      setShowCorrectAnswer(true);
+      setShowCorrectAnswer(true); // Mostrar la frase original en inglés y su traducción
       setAppMessage("¡Excelente! Transcripción correcta.");
     } else {
       setMatchFeedback("incorrect");
-      setShowCorrectAnswer(true);
+      setShowCorrectAnswer(true); // Mostrar la frase original para que el usuario compare
       setAppMessage("Incorrecto. Escucha de nuevo.");
-    }
-  };
-
-  const handleNextExercise = () => {
-    // La lógica de validación de avance ahora está también en ExerciseNavigation.js
-    // Esta función solo avanza el índice.
-    if (currentExerciseIndex < lesson.exercises.length - 1) {
-      setCurrentExerciseIndex((prev) => prev + 1);
-      setAppMessage(""); // Limpiar mensaje al avanzar
-    } else {
-      setAppMessage("¡Has completado esta lección!");
-      // Aquí podrías volver a la lista de lecciones o mostrar un resumen
-    }
-  };
-
-  const handlePrevExercise = () => {
-    if (currentExerciseIndex > 0) {
-      setCurrentExerciseIndex((prev) => prev - 1);
-      setAppMessage(""); // Limpiar mensaje al retroceder
     }
   };
 
@@ -162,9 +183,9 @@ const LessonCard = ({
           currentExercise={currentExercise}
           onPlayAudio={onPlayAudio}
           setAppMessage={setAppMessage}
-          appIsLoading={appIsLoading} // Pasar el estado booleano
+          appIsLoading={appIsLoading}
           isAnswerVisible={isAnswerVisible}
-          setIsAnswerVisible={setIsAnswerVisible} // Permitir que ExerciseDisplay alterne su visibilidad
+          setIsAnswerVisible={setIsAnswerVisible}
           userTypedAnswer={userTypedAnswer}
           setUserTypedAnswer={setUserTypedAnswer}
           matchFeedback={matchFeedback}

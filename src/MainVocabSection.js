@@ -1,8 +1,11 @@
 // src/MainVocabSection.js
 // Este archivo contiene toda la lógica y UI del entrenador de vocabulario.
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react"; // Importa useContext
 import "./index.css"; // Estilos globales
+
+// Importa el contexto
+import AppContext from "./context/AppContext";
 
 // Importar componentes modularizados
 import CategoryList from "./components/CategoryList";
@@ -13,18 +16,19 @@ import MessageDisplay from "./components/MessageDisplay";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
 import EditCategoryPage from "./components/EditCategoryPage";
 
-// Importar utilidades (ya no necesitan acceder a audioCache directamente, lo reciben por onPlayAudio)
+// Importar utilidades
 import { normalizeText } from "./utils/textUtils"; // renderizableText se pasa como prop
 
-// Recibir las props globales de App.js
-const MainVocabSection = ({
-  onPlayAudio,
-  setAppMessage,
-  setAppIsLoading,
-  appIsLoading,
-  appGlobalMessage,
-}) => {
-  // <-- Recibir appGlobalMessage
+const MainVocabSection = () => {
+  // Consumir valores del contexto
+  const {
+    onPlayAudio,
+    setAppMessage,
+    setAppIsLoading,
+    appIsLoading,
+    appGlobalMessage,
+  } = useContext(AppContext); // <-- Consumir del contexto
+
   // State para gestionar categorías y tarjetas (específicos de esta sección)
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
@@ -33,9 +37,10 @@ const MainVocabSection = ({
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCardQuestion, setNewCardQuestion] = useState("");
   const [newCardAnswer, setNewCardAnswer] = useState("");
-  // message e isLoading ahora son gestionados globalmente por App.js
-  // const [message, setMessage] = useState(""); // Esta línea se comenta/elimina
-  // const [isLoading, setIsLoading] = useState(false); // Esta línea se comenta/elimina
+
+  // States de mensaje y carga locales se eliminan ya que se usan los globales del contexto
+  // const [message, setMessage] = useState("");
+  // const [isLoading, setIsLoading] = useState(false);
 
   // State para el modal de confirmación de eliminación de CATEGORÍA
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -61,17 +66,8 @@ const MainVocabSection = ({
   // Set para guardar los IDs de las tarjetas acertadas en la sesión del quiz (específico de esta sección)
   const masteredCardIds = useRef(new Set());
 
-  // audioCache y wrappedPlayAudio ahora están en App.js y se pasan como prop.
-  // const audioCache = useRef(new Map());
-  // const wrappedPlayAudio = (text, lang) => playAudio(text, lang, audioCache.current, b64toBlob, setAppMessage, setAppIsLoading);
-
   // --- Funciones de Navegación (internas a esta sección) ---
   const navigateToHome = () => {
-    // La limpieza del caché de audio ahora es responsabilidad de App.js (o un useEffect en App.js)
-    // audioCache.current.forEach((url) => URL.revokeObjectURL(url));
-    // audioCache.current.clear();
-    // console.log("Caché de audio limpiado al volver al inicio de sección.");
-
     masteredCardIds.current.clear();
     console.log("Tarjetas acertadas del quiz limpiadas.");
 
@@ -114,14 +110,14 @@ const MainVocabSection = ({
   const navigateToEditCategoryPage = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage("editCategoryPage");
-    setAppMessage(""); // Usar setAppMessage
-    setAppIsLoading(false); // Usar setAppIsLoading
+    setAppMessage("");
+    setAppIsLoading(false);
   };
 
   // --- Función para cargar datos desde las API de Vercel ---
   const fetchCategories = async () => {
-    setAppIsLoading(true); // Usar setAppIsLoading
-    setAppMessage("Cargando datos..."); // Usar setAppMessage
+    setAppIsLoading(true);
+    setAppMessage("Cargando datos...");
     try {
       const url = "/api/categories/get-all";
       console.log("Intentando fetch GET de:", url);
@@ -169,7 +165,7 @@ const MainVocabSection = ({
       setCategories([]);
       setSelectedCategoryId(null);
     } finally {
-      setAppIsLoading(false); // Usar setAppIsLoading
+      setAppIsLoading(false);
     }
   };
 
@@ -486,11 +482,8 @@ const MainVocabSection = ({
       {/* Mantén el app-container aquí para estilos */}
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
       {/* MessageDisplay se encarga de mostrar mensajes y estado de carga */}
-      <MessageDisplay
-        message={appGlobalMessage}
-        isLoading={appIsLoading}
-      />{" "}
-      {/* <--- CORRECCIÓN AQUÍ */}
+      {/* Usamos appGlobalMessage que viene de props en lugar de una variable 'message' local */}
+      <MessageDisplay message={appGlobalMessage} isLoading={appIsLoading} />
       {/* Renderizado condicional de las páginas internas de MainVocabSection */}
       {currentPage === "home" && (
         <CategoryList
