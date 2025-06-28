@@ -77,6 +77,7 @@ const App = () => {
                 setAppMessage={setMessage}
                 setAppIsLoading={setIsLoading}
                 appIsLoading={isLoading} // Pasar el estado booleano de carga
+                appGlobalMessage={message} // <-- NUEVO: Pasar el valor del mensaje global
               />
             }
           />
@@ -89,6 +90,7 @@ const App = () => {
                 setAppMessage={setMessage}
                 setAppIsLoading={setIsLoading}
                 appIsLoading={isLoading} // Pasar el estado booleano de carga
+                appGlobalMessage={message} // <-- NUEVO: Pasar el valor del mensaje global
               />
             }
           />
