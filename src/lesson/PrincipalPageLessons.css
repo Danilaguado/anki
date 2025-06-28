@@ -188,6 +188,10 @@
   border: 1px solid var(--border-color); /* Restablecer el borde aquí si es necesario */
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   background-color: #ffffff; /* Fondo blanco para la tarjeta individual */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Espacio entre los elementos de la card */
+  padding: 30px; /* Padding similar a la card original */
 }
 
 /* Reutilizar clases de feedback de acierto/error */
@@ -199,6 +203,78 @@
 .lesson-exercise-card.match-incorrect {
   border-color: var(--error-color);
   box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.3);
+}
+
+/* Contenido de la tarjeta interna (pregunta/respuesta/input) */
+.lesson-exercise-card .card-text {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--text-color-dark);
+  margin: 0;
+  line-height: 1.4;
+  text-align: center; /* Centrar el texto de la pregunta/respuesta */
+}
+.lesson-exercise-card .card-text.question {
+  color: var(--primary-color);
+}
+.lesson-exercise-card .card-text.answer {
+  color: #666;
+  font-weight: 400;
+  font-size: 1.4em;
+}
+.lesson-exercise-card .card-text.answer.hidden {
+  filter: blur(4px);
+  user-select: none;
+}
+.lesson-exercise-card .card-text .clickable-word {
+  cursor: pointer;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(74, 144, 226, 0.5);
+  text-underline-offset: 4px;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+  padding: 2px 0;
+}
+.lesson-exercise-card .card-text .clickable-word:hover {
+  color: var(--primary-color);
+  text-decoration-color: var(--primary-color);
+}
+
+/* Grupo de botones de micrófono y audio (similar al de flashcards) */
+.microphone-play-buttons-group {
+  display: flex;
+  justify-content: center; /* Centrar los botones */
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+  width: 100%; /* Ocupar todo el ancho para centrar los elementos internos */
+}
+
+.audio-button-round {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  background-color: var(--primary-color); /* Color por defecto */
+  color: var(--text-color-light);
+}
+.audio-button-round.large-play-button {
+  /* Para el botón grande de escucha */
+  width: 70px;
+  height: 70px;
+}
+.audio-button-round svg {
+  width: 24px;
+  height: 24px;
+}
+.audio-button-round.large-play-button svg {
+  width: 32px;
+  height: 32px;
 }
 
 /* Estilos para el input de completar espacios */
@@ -249,7 +325,84 @@
   border: 2px solid #c0392b;
 }
 
-/* Ajustes responsivos */
+/* Estilos para el input de texto en el quiz y el botón de verificar */
+.quiz-input-group {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.quiz-answer-input {
+  flex-grow: 1;
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1em;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.quiz-answer-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+  outline: none;
+}
+
+.quiz-check-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  padding: 0;
+  flex-shrink: 0;
+  background-color: var(--secondary-color);
+  color: var(--text-color-dark);
+}
+.quiz-check-button:hover:not(:disabled) {
+  background-color: #3ac7a7;
+}
+
+.quiz-check-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Estilo para el feedback de respuesta correcta/incorrecta y el texto de la respuesta */
+.correct-answer-display {
+  background-color: #ecf0f1; /* Gris claro */
+  color: var(--text-color-dark);
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 1.1em;
+  font-weight: 500;
+  margin-top: 15px;
+  animation: fadeInScale 0.3s ease-out;
+  text-align: center;
+}
+.correct-answer-display.success-text {
+  background-color: var(--success-color);
+  color: var(--text-color-light);
+}
+
+.correct-answer-text {
+  font-weight: 700;
+  color: var(--primary-color); /* Color para la respuesta correcta resaltada */
+}
+
+/* Texto grabado del micrófono (estilo flashcard) */
+.recorded-text-display {
+  background-color: #000000; /* Fondo negro */
+  color: #ffffff; /* Letras blancas */
+  padding: 10px 15px; /* Añadí padding para que el texto no esté pegado al borde */
+  border-radius: 8px;
+  margin: 10px auto; /* Centrar */
+  font-size: 1.1em;
+  text-align: center;
+  word-break: break-word;
+  display: block; /* Asegura que ocupe su propia línea para el margin auto */
+  width: fit-content; /* El ancho se ajusta al contenido */
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .lessons-buttons-grid {
     grid-template-columns: 1fr;
@@ -264,5 +417,11 @@
   }
   .multiple-choice-options {
     grid-template-columns: 1fr; /* Apilar opciones en móviles */
+  }
+  .lesson-exercise-card .card-text {
+    font-size: 1.5em; /* Ajustar tamaño de fuente en móviles */
+  }
+  .lesson-exercise-card .card-text.answer {
+    font-size: 1.2em;
   }
 }

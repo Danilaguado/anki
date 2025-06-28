@@ -569,6 +569,12 @@ const MainVocabSection = () => {
           setMessage={setMessage}
         />
       )}
+      {/* PrincipalPageLessons necesita estas props para audio y mensajes */}
+      <PrincipalPageLessons
+        onPlayAudio={wrappedPlayAudio}
+        setAppMessage={setMessage}
+        setAppIsLoading={setIsLoading}
+      />
       {showDeleteConfirm && (
         <DeleteConfirmationModal
           onDelete={deleteCategory}

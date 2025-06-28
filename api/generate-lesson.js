@@ -41,17 +41,29 @@ export default async function handler(req, res) {
 
   // Instrucciones para el formato JSON de salida de Gemini
   geminiPrompt += `Provide the output as a JSON array of exercise objects. Each exercise object should have:
-  - 'type' (e.g., 'translation', 'multiple_choice', 'fill_in_the_blank')
-  - 'questionEN' (the English question/phrase)
-  - 'answerES' (the correct Spanish answer/translation)
+  - 'type' (e.g., 'translation', 'multiple_choice', 'fill_in_the_blank', 'listening')
+  - 'questionEN' (the English question/phrase, or the phrase to listen to for listening exercises)
+  - 'answerES' (the correct Spanish answer/translation, or the English word for fill_in_the_blank if it's the missing word)
   - 'optionsES' (an array of incorrect Spanish options for multiple_choice, or empty for others)
   - 'orderInLesson' (a number indicating its order, starting from 1)
   - 'notes' (optional, any grammatical notes or context).
   Ensure the response is a valid, single JSON array. Do not include any text before or after the JSON.`; // Added instruction for clean JSON
 
   try {
+    // Verificar si SPREADSHEET_ID es el valor de marcador de posición
+    if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
+      console.error(
+        "SPREADSHEET_ID is not configured in api/generate-lesson.js"
+      );
+      return res.status(500).json({
+        success: false,
+        error:
+          "Server configuration error: SPREADSHEET_ID is not set in the backend API. Please update it.",
+      });
+    }
+
     // 1. Llamar a la API de Gemini para generar la lección
-    const geminiApiKey = process.env.GEMINI_API_KEY; // <--- ¡CORRECCIÓN AQUÍ!
+    const geminiApiKey = process.env.GEMINI_API_KEY;
 
     if (!geminiApiKey) {
       console.error("GEMINI_API_KEY environment variable is not set.");
@@ -135,16 +147,7 @@ export default async function handler(req, res) {
     const lessonTitle = `${topic} - ${difficulty} Lección`; // Puedes hacer el título más dinámico
     const lessonDescription = `Lección generada sobre ${topic} (${difficulty} level) con ${exerciseCount} ejercicios.`;
 
-    // Preparar datos para api/lessons/add.js (directamente, no como una nueva llamada fetch)
-    const newLessonData = {
-      title: lessonTitle,
-      description: lessonDescription,
-      difficulty: difficulty,
-      topic: topic,
-      promptUsed: geminiPrompt,
-    };
-
-    // Usar la lógica de autenticación para Sheets nuevamente
+    // Usar la lógica de autenticación para Sheets
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -154,7 +157,10 @@ export default async function handler(req, res) {
     });
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Lógica para añadir la lección a la hoja Modules (similar a api/lessons/add.js)
+    // Lógica para añadir la lección a la hoja Modules
+    console.log(
+      `Attempting to get headers from sheet: ${MODULES_SHEET_NAME} in spreadsheet: ${SPREADSHEET_ID}`
+    );
     const modulesHeadersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${MODULES_SHEET_NAME}!1:1`,
@@ -162,8 +168,12 @@ export default async function handler(req, res) {
     const modulesHeaders = modulesHeadersResponse.data.values
       ? modulesHeadersResponse.data.values[0]
       : [];
+    console.log("Modules sheet headers obtained:", modulesHeaders);
+
     if (modulesHeaders.length === 0) {
-      throw new Error(`No headers found in "${MODULES_SHEET_NAME}" sheet.`);
+      throw new Error(
+        `No headers found in "${MODULES_SHEET_NAME}" sheet. Please ensure the first row has headers.`
+      );
     }
 
     const newModuleRow = new Array(modulesHeaders.length).fill("");
@@ -173,16 +183,16 @@ export default async function handler(req, res) {
           newModuleRow[index] = lessonId;
           break;
         case "Title":
-          newModuleRow[index] = newLessonData.title;
-          break;
+          newModuleRow[index] = lessonTitle;
+          break; // Usar lessonTitle
         case "Description":
-          newModuleRow[index] = newLessonData.description;
-          break;
+          newModuleRow[index] = lessonDescription;
+          break; // Usar lessonDescription
         case "Difficulty":
-          newModuleRow[index] = newLessonData.difficulty;
+          newModuleRow[index] = difficulty;
           break;
         case "Topic":
-          newModuleRow[index] = newLessonData.topic;
+          newModuleRow[index] = topic;
           break;
         case "GeneratedDate":
           newModuleRow[index] = generatedDate;
@@ -191,12 +201,13 @@ export default async function handler(req, res) {
           newModuleRow[index] = "Gemini";
           break;
         case "PromptUsed":
-          newModuleRow[index] = newLessonData.promptUsed || "";
+          newModuleRow[index] = geminiPrompt || "";
           break;
         default:
           newModuleRow[index] = ""; // Ensure all other columns are explicitly filled, if any
       }
     });
+    console.log("Prepared new module row:", newModuleRow);
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
@@ -207,6 +218,9 @@ export default async function handler(req, res) {
     console.log(`Lesson ${lessonId} added to Modules sheet.`);
 
     // 3. Guardar cada ejercicio en la hoja "Exercises"
+    console.log(
+      `Attempting to get headers from sheet: ${EXERCISES_SHEET_NAME} in spreadsheet: ${SPREADSHEET_ID}`
+    );
     const exercisesHeadersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${EXERCISES_SHEET_NAME}!1:1`,
@@ -214,8 +228,12 @@ export default async function handler(req, res) {
     const exercisesHeaders = exercisesHeadersResponse.data.values
       ? exercisesHeadersResponse.data.values[0]
       : [];
+    console.log("Exercises sheet headers obtained:", exercisesHeaders);
+
     if (exercisesHeaders.length === 0) {
-      throw new Error(`No headers found in "${EXERCISES_SHEET_NAME}" sheet.`);
+      throw new Error(
+        `No headers found in "${EXERCISES_SHEET_NAME}" sheet. Please ensure the first row has headers.`
+      );
     }
 
     const exercisesRows = generatedExercises.map((exercise) => {
@@ -224,7 +242,7 @@ export default async function handler(req, res) {
         switch (header) {
           case "ExerciseID":
             newExerciseRow[index] = uuidv4();
-            break; // Nuevo ID para cada ejercicio
+            break;
           case "LessonID":
             newExerciseRow[index] = lessonId;
             break;
@@ -249,13 +267,16 @@ export default async function handler(req, res) {
             newExerciseRow[index] = exercise.notes || "";
             break;
           default:
-            newExerciseRow[index] = ""; // Ensure all other columns are explicitly filled
+            newExerciseRow[index] = "";
         }
       });
       return newExerciseRow;
     });
 
     if (exercisesRows.length > 0) {
+      console.log(
+        `Preparing to add ${exercisesRows.length} exercises to Exercises sheet.`
+      );
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
         range: `${EXERCISES_SHEET_NAME}!A:Z`,
@@ -281,7 +302,7 @@ export default async function handler(req, res) {
           GeneratedDate: generatedDate,
           GeneratedBy: "Gemini",
           PromptUsed: geminiPrompt,
-        }, // Include LessonID and use correct casing for returned object
+        },
         exercises: generatedExercises,
       },
     });
@@ -300,6 +321,14 @@ export default async function handler(req, res) {
         success: false,
         error:
           "Authentication error with Gemini API. Please ensure your GEMINI_API_KEY is correct and has the necessary permissions.",
+      });
+    }
+    // Specific check for Google Sheets "Not Found" error
+    if (error.message.includes("Requested entity was not found")) {
+      return res.status(404).json({
+        success: false,
+        error:
+          "Google Sheets Error: The requested spreadsheet ID or sheet name was not found. Please double-check your SPREADSHEET_ID and sheet names (Modules, Exercises) for exact matches.",
       });
     }
     return res.status(500).json({
