@@ -18,6 +18,7 @@ const PrincipalPageLessons = () => {
   const [error, setError] = useState(null);
   const [availableLessons, setAvailableLessons] = useState([]); // Todas las lecciones cargadas/generadas
   const [selectedLesson, setSelectedLesson] = useState(null); // La lección actualmente seleccionada para ver en detalle
+  const [generatedLesson, setGeneratedLesson] = useState(null); // <-- ¡Añadido! Estado para la lección recién generada
 
   // Efecto para cargar las lecciones existentes al montar el componente
   useEffect(() => {
