@@ -13,9 +13,6 @@ import MessageDisplay from "./components/MessageDisplay";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
 import EditCategoryPage from "./components/EditCategoryPage";
 
-// Importar el componente PrincipalPageLessons (Solo importamos, no renderizamos aquí)
-// import PrincipalPageLessons from './lesson/PrincipalPageLessons'; // <-- Esta importación ya no es necesaria aquí si no se usa directamente para renderizar.
-
 // Importar utilidades (las rutas relativas NO CAMBIAN desde src/MainVocabSection.js a src/utils/)
 import { playAudio, b64toBlob } from "./utils/audioUtils";
 import { normalizeText } from "./utils/textUtils"; // renderizableText se pasa como prop
@@ -31,7 +28,7 @@ const MainVocabSection = () => {
   const [newCardQuestion, setNewCardQuestion] = useState("");
   const [newCardAnswer, setNewCardAnswer] = useState("");
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // isLoading global
 
   // State para el modal de confirmación de eliminación de CATEGORÍA
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -573,14 +570,10 @@ const MainVocabSection = () => {
           setMessage={setMessage}
         />
       )}
-      {/* IMPORTANTE: PrincipalPageLessons no debe renderizarse aquí.
-          Se renderiza en App.js a través de React Router.
-          Esta línea se elimina para corregir el problema de que aparezca siempre.
-      <PrincipalPageLessons
-        onPlayAudio={wrappedPlayAudio}
-        setAppMessage={setMessage}
-        setAppIsLoading={setIsLoading}
-      />
+      {/* El componente PrincipalPageLessons no debe renderizarse aquí,
+          ya que es una ruta separada manejada por App.js.
+          Se pasa como prop a App.js y se renderiza condicionalmente allí.
+          Esta línea se elimina si la habías añadido.
       */}
       {showDeleteConfirm && (
         <DeleteConfirmationModal

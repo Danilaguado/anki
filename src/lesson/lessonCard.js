@@ -10,7 +10,9 @@ const LessonCard = ({
   onPlayAudio,
   setAppMessage,
   setAppIsLoading,
+  appIsLoading,
 }) => {
+  // <-- Recibir appIsLoading
   // Estado para el índice del ejercicio actual dentro de la lección
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   // Estado para la visibilidad de la respuesta (para ejercicios de traducción)
@@ -163,7 +165,7 @@ const LessonCard = ({
     <button
       onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
       className='button audio-button-round primary-button'
-      disabled={setAppIsLoading} // Deshabilitar si la app principal está cargando (ej. generando audio)
+      disabled={appIsLoading} // <-- CORREGIDO: Usar appIsLoading directamente
       aria-label='Reproducir frase en inglés'
     >
       <svg
@@ -228,7 +230,7 @@ const LessonCard = ({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCheckAnswer();
                 }}
-                disabled={matchFeedback !== null} // Deshabilitar después de responder
+                disabled={matchFeedback !== null || appIsLoading} // <-- CORREGIDO
               />
               {parts[1]}
             </div>
@@ -247,9 +249,10 @@ const LessonCard = ({
           <button
             onClick={handleCheckAnswer}
             className='button quiz-check-button'
-            disabled={matchFeedback !== null}
+            disabled={matchFeedback !== null || appIsLoading}
           >
-            Verificar
+            {" "}
+            // Verificar
           </button>
         </>
       );
@@ -293,7 +296,7 @@ const LessonCard = ({
                     handleOptionClick(option);
                   }
                 }}
-                disabled={matchFeedback !== null}
+                disabled={matchFeedback !== null || appIsLoading} // <-- CORREGIDO
               >
                 {option}
               </button>
@@ -321,7 +324,7 @@ const LessonCard = ({
             <button
               onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
               className='button audio-button-round primary-button large-play-button'
-              disabled={setAppIsLoading} // <-- Corregido: Esto era `disabled={setAppIsLoading}`
+              disabled={appIsLoading} // <-- CORREGIDO: Usar appIsLoading directamente
               aria-label='Reproducir audio de la frase'
             >
               <svg
@@ -338,7 +341,7 @@ const LessonCard = ({
             <SpeechToTextButton
               onResult={handleSpeechResultForListening}
               lang='en-US' // El idioma a reconocer es el inglés de la pregunta
-              disabled={matchFeedback !== null || setAppIsLoading} // <-- Corregido: Esto era `disabled={setAppIsLoading}`
+              disabled={matchFeedback !== null || appIsLoading} // <-- CORREGIDO
             />
           </div>
 
@@ -378,7 +381,6 @@ const LessonCard = ({
           {showCorrectAnswer && matchFeedback === "correct" && (
             <p className='correct-answer-display success-text'>¡Correcto!</p>
           )}
-          {/* En el modo escucha, el usuario no escribe, solo habla. Si se quiere un input de texto, se añadiría aquí. */}
           {/* Si quieres un input de texto además del micrófono: */}
           <div className='quiz-input-group'>
             <input
@@ -390,12 +392,12 @@ const LessonCard = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCheckAnswer();
               }}
-              disabled={matchFeedback !== null || setAppIsLoading} // <-- Corregido: Esto era `disabled={setAppIsLoading}`
+              disabled={matchFeedback !== null || appIsLoading} // <-- CORREGIDO
             />
             <button
               onClick={handleCheckAnswer}
               className='button quiz-check-button'
-              disabled={matchFeedback !== null || setAppIsLoading}
+              disabled={matchFeedback !== null || appIsLoading}
             >
               Verificar
             </button>
