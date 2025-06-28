@@ -22,8 +22,9 @@ const MainVocabSection = ({
   setAppMessage,
   setAppIsLoading,
   appIsLoading,
+  appGlobalMessage,
 }) => {
-  // <-- Recibir props
+  // <-- Recibir appGlobalMessage
   // State para gestionar categorías y tarjetas (específicos de esta sección)
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
@@ -33,8 +34,8 @@ const MainVocabSection = ({
   const [newCardQuestion, setNewCardQuestion] = useState("");
   const [newCardAnswer, setNewCardAnswer] = useState("");
   // message e isLoading ahora son gestionados globalmente por App.js
-  // const [message, setMessage] = useState("");
-  // const [isLoading, setIsLoading] = useState(false);
+  // const [message, setMessage] = useState(""); // Esta línea se comenta/elimina
+  // const [isLoading, setIsLoading] = useState(false); // Esta línea se comenta/elimina
 
   // State para el modal de confirmación de eliminación de CATEGORÍA
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -485,8 +486,11 @@ const MainVocabSection = ({
       {/* Mantén el app-container aquí para estilos */}
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
       {/* MessageDisplay se encarga de mostrar mensajes y estado de carga */}
-      <MessageDisplay message={message} isLoading={appIsLoading} />{" "}
-      {/* Usar appIsLoading */}
+      <MessageDisplay
+        message={appGlobalMessage}
+        isLoading={appIsLoading}
+      />{" "}
+      {/* <--- CORRECCIÓN AQUÍ */}
       {/* Renderizado condicional de las páginas internas de MainVocabSection */}
       {currentPage === "home" && (
         <CategoryList
@@ -562,11 +566,6 @@ const MainVocabSection = ({
           setMessage={setAppMessage}
         />
       )}
-      {/* El componente PrincipalPageLessons no debe renderizarse aquí,
-          ya que es una ruta separada manejada por App.js.
-          Se pasa como prop a App.js y se renderiza condicionalmente allí.
-          Esta línea se elimina si la habías añadido.
-      */}
       {showDeleteConfirm && (
         <DeleteConfirmationModal
           onDelete={deleteCategory}
