@@ -9,9 +9,9 @@ const ExerciseDisplay = ({
   setAppMessage,
   appIsLoading,
   isAnswerVisible,
-  setIsAnswerVisible, // <-- Añadido como prop
+  setIsAnswerVisible,
   userTypedAnswer,
-  setUserTypedAnswer, // <-- Añadido como prop
+  setUserTypedAnswer,
   matchFeedback,
   showCorrectAnswer,
   recordedMicrophoneText,
@@ -39,11 +39,23 @@ const ExerciseDisplay = ({
     </button>
   );
 
+  // Función para renderizar el botón de micrófono
+  const microphoneButton = (
+    <SpeechToTextButton
+      onResult={handleSpeechResultForListening} // Reutilizamos el handler para la escucha
+      lang='en-US' // El idioma a reconocer es el inglés de la pregunta
+      disabled={matchFeedback !== null || appIsLoading} // Utiliza el booleano appIsLoading
+    />
+  );
+
   switch (currentExercise.Type) {
     case "translation":
       return (
         <>
-          <div className='microphone-play-buttons-group'>{playAudioButton}</div>
+          <div className='microphone-play-buttons-group'>
+            {playAudioButton}
+            {microphoneButton} {/* Añadido a traducción */}
+          </div>
           <div id='question-text' className='card-text question'>
             {renderClickableText(
               currentExercise.QuestionEN,
@@ -64,6 +76,12 @@ const ExerciseDisplay = ({
           >
             {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
           </button>
+          {/* Mostrar lo que se grabó del micrófono (estilo flashcard) */}
+          {recordedMicrophoneText && (
+            <div className='recorded-text-display'>
+              {recordedMicrophoneText}
+            </div>
+          )}
         </>
       );
 
@@ -73,7 +91,10 @@ const ExerciseDisplay = ({
 
       return (
         <>
-          <div className='microphone-play-buttons-group'>{playAudioButton}</div>
+          <div className='microphone-play-buttons-group'>
+            {playAudioButton}
+            {microphoneButton} {/* Añadido a completar espacios */}
+          </div>
           <div
             className={`card-content-area quiz-content-area ${
               matchFeedback ? `match-${matchFeedback}` : ""
@@ -89,7 +110,7 @@ const ExerciseDisplay = ({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCheckAnswer();
                 }}
-                disabled={matchFeedback !== null || appIsLoading} // Utiliza el booleano appIsLoading
+                disabled={matchFeedback !== null || appIsLoading}
               />
               {parts[1]}
             </div>
@@ -110,9 +131,14 @@ const ExerciseDisplay = ({
             className='button quiz-check-button'
             disabled={matchFeedback !== null || appIsLoading}
           >
-            {" "}
-            // Utiliza el booleano appIsLoading Verificar
+            Verificar
           </button>
+          {/* Mostrar lo que se grabó del micrófono (estilo flashcard) */}
+          {recordedMicrophoneText && (
+            <div className='recorded-text-display'>
+              {recordedMicrophoneText}
+            </div>
+          )}
         </>
       );
 
@@ -124,7 +150,10 @@ const ExerciseDisplay = ({
 
       return (
         <>
-          <div className='microphone-play-buttons-group'>{playAudioButton}</div>
+          <div className='microphone-play-buttons-group'>
+            {playAudioButton}
+            {microphoneButton} {/* Añadido a opción múltiple */}
+          </div>
           <div id='question-text' className='card-text question'>
             {currentExercise.QuestionEN}
           </div>
@@ -155,12 +184,15 @@ const ExerciseDisplay = ({
                     handleOptionClick(option);
                   }
                 }}
-                disabled={matchFeedback !== null || appIsLoading} // Utiliza el booleano appIsLoading
+                disabled={matchFeedback !== null || appIsLoading}
               >
                 {option}
               </button>
             ))}
           </div>
+          {showCorrectAnswer && matchFeedback === "correct" && (
+            <p className='correct-answer-display success-text'>¡Correcto!</p>
+          )}
           {showCorrectAnswer && matchFeedback !== "correct" && (
             <p className='correct-answer-display'>
               La respuesta correcta era:{" "}
@@ -169,8 +201,11 @@ const ExerciseDisplay = ({
               </span>
             </p>
           )}
-          {showCorrectAnswer && matchFeedback === "correct" && (
-            <p className='correct-answer-display success-text'>¡Correcto!</p>
+          {/* Mostrar lo que se grabó del micrófono (estilo flashcard) */}
+          {recordedMicrophoneText && (
+            <div className='recorded-text-display'>
+              {recordedMicrophoneText}
+            </div>
           )}
         </>
       );
@@ -179,11 +214,11 @@ const ExerciseDisplay = ({
       return (
         <>
           <div className='microphone-play-buttons-group'>
-            {/* Botón de reproducción de audio para la escucha */}
+            {/* Botón de reproducción de audio para la escucha (más grande) */}
             <button
               onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
               className='button audio-button-round primary-button large-play-button'
-              disabled={appIsLoading} // Utiliza el booleano appIsLoading
+              disabled={appIsLoading}
               aria-label='Reproducir audio de la frase'
             >
               <svg
@@ -196,11 +231,11 @@ const ExerciseDisplay = ({
                 <path d='M10.804 8 5 4.633v6.734zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696z' />
               </svg>
             </button>
-            {/* Botón de micrófono */}
+            {/* Botón de micrófono para la escucha */}
             <SpeechToTextButton
               onResult={handleSpeechResultForListening}
-              lang='en-US' // El idioma a reconocer es el inglés de la pregunta
-              disabled={matchFeedback !== null || appIsLoading} // Utiliza el booleano appIsLoading
+              lang='en-US'
+              disabled={matchFeedback !== null || appIsLoading}
             />
           </div>
 
@@ -247,19 +282,18 @@ const ExerciseDisplay = ({
               className='input-field quiz-answer-input'
               placeholder='Escribe lo que escuchaste aquí'
               value={userTypedAnswer}
-              onChange={(e) => setUserTypedAnswer(e.target.value)} // <-- Utiliza setUserTypedAnswer
+              onChange={(e) => setUserTypedAnswer(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCheckAnswer();
               }}
-              disabled={matchFeedback !== null || appIsLoading} // Utiliza el booleano appIsLoading
+              disabled={matchFeedback !== null || appIsLoading}
             />
             <button
               onClick={handleCheckAnswer}
               className='button quiz-check-button'
               disabled={matchFeedback !== null || appIsLoading}
             >
-              {" "}
-              // Utiliza el booleano appIsLoading Verificar
+              Verificar
             </button>
           </div>
         </>
