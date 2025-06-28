@@ -50,7 +50,7 @@ export default async function handler(req, res) {
   Ensure the entire response is a valid JSON array of ${exerciseCount} exercise objects, nothing more, nothing less.`;
 
   try {
-    if (SPREADSHEET_ID === "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M") {
+    if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
       );
