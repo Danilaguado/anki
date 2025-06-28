@@ -5,7 +5,7 @@ import { google } from "googleapis";
 import { v4 as uuidv4 } from "uuid"; // Para generar IDs únicos
 
 // Tu ID de Google Sheet. ¡IMPORTANTE! Reemplázalo.
-const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M";
+const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // <--- ¡AQUÍ DEBES REEMPLAZAR ESTO con el ID REAL de tu Google Sheet!
 const MODULES_SHEET_NAME = "Modules";
 const EXERCISES_SHEET_NAME = "Exercises";
 
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   const { topic, difficulty, exerciseCount, exerciseTypes, customPrompt } =
-    req.body; // exerciseTypes ahora es el esquema de orden
+    req.body; // exerciseTypes es el esquema de orden
 
   if (!topic || !difficulty || !exerciseCount) {
     return res.status(400).json({
@@ -34,20 +34,32 @@ export default async function handler(req, res) {
     `Generate a lesson with ${exerciseCount} exercises on the topic of "${topic}" at a ${difficulty} level. `;
 
   // Instrucciones detalladas para Gemini sobre el formato, el contenido y la coherencia
-  geminiPrompt += `The exercises MUST follow this exact order and type for the ${exerciseCount} exercises: ${exerciseTypes.join(
-    ", "
-  )}.
-  For each exercise:
+  geminiPrompt += `The exercises MUST follow this exact order and type for the ${exerciseCount} exercises: ${exerciseTypes
+    .map((type, index) => `${index + 1}. ${type}`)
+    .join(", ")}.
+  
+  For each exercise, ensure:
   - 'type': Must be one of ${exerciseTypes.map((t) => `'${t}'`).join(", ")}.
   - 'questionEN': The English question/phrase.
   - 'questionES': The Spanish translation of 'questionEN'.
-  - 'answerEN': The correct ENGLISH answer/word for 'fill_in_the_blank', 'multiple_choice', or 'listening' exercises. This should be the specific word for the blank or the correct option.
-  - 'answerES': The correct SPANISH translation for 'translation' or 'listening' exercises. For other types, this can be empty or a simple translation if 'answerEN' is a single word.
-  - 'optionsEN': An array of 3 incorrect ENGLISH options for 'multiple_choice' exercises, or an empty array for other types.
+  - 'answerEN': The correct ENGLISH answer/word.
+    - For 'fill_in_the_blank': This is the specific English word that fills the '_______' blank in 'questionEN'.
+    - For 'multiple_choice': This is the correct English option among the choices.
+    - For 'listening': This is the complete English phrase to be transcribed.
+    - For 'translation': This is the English phrase from 'questionEN'.
+  - 'answerES': The correct SPANISH translation.
+    - For 'translation' and 'listening': This is the Spanish translation of 'questionEN'.
+    - For 'fill_in_the_blank' and 'multiple_choice': This is the Spanish translation of 'answerEN'.
+  - 'optionsEN': An array of 3 distinct, incorrect ENGLISH options for 'multiple_choice' exercises. Must be an empty array for other types.
   - 'orderInLesson': A number indicating its sequential order (1 to ${exerciseCount}).
-  - 'notes': (IMPORTANT) For the first 'multiple_choice' exercise (order 1), include a brief, friendly explanation of the main concept/word being introduced (especially if it's the target 'answerEN' for later exercises). Also, include 2 examples of its usage with English and Spanish translations. For 'fill_in_the_blank' and 'multiple_choice' exercises, ensure that any vocabulary word required as an 'answerEN' was either explained in the 'notes' of an earlier exercise or appeared in a 'translation' exercise before it is required as an answer. This ensures vocabulary is introduced contextually.
+  - 'notes': (IMPORTANT)
+    - For the first 'multiple_choice' exercise (order 1): Include a brief, friendly explanation of the main vocabulary concept/word being introduced (this will be the 'answerEN' of this exercise). Provide 2 clear examples of its usage (English and Spanish translation for each).
+    - For 'fill_in_the_blank' and 'multiple_choice' exercises: Any English vocabulary word ('answerEN') required as a direct answer MUST have been introduced or explained in the 'notes' of an earlier exercise (especially the first 'multiple_choice') or appeared in a 'translation' exercise before it is required as an answer. This ensures vocabulary is introduced contextually and coherently throughout the lesson. Avoid using completely new words as answers without prior introduction.
+    - For 'fill_in_the_blank': 'questionEN' should contain exactly one '_______' placeholder. 'questionES' should be the full Spanish translation of 'questionEN' *with the blank filled correctly in Spanish*.
+    - For 'translation' exercises: 'questionEN' should be a full English sentence/phrase.
+    - For 'listening' exercises: 'questionEN' should be a full English sentence/phrase for listening.
 
-  Ensure the entire response is a valid JSON array of ${exerciseCount} exercise objects, nothing more, nothing less.`;
+  Ensure the entire response is a valid JSON array of exactly ${exerciseCount} exercise objects, nothing more, nothing less.`;
 
   try {
     console.log("SPREADSHEET_ID actual en el backend:", SPREADSHEET_ID); // Nuevo log para depuración
@@ -142,7 +154,7 @@ export default async function handler(req, res) {
       // Opcional: Revalidar el número de ejercicios generados si es crítico
       if (generatedExercises.length !== exerciseCount) {
         console.warn(
-          `Gemini generated ${generatedExercises.length} exercises, but ${exerciseCount} were requested.`
+          `Gemini generated ${generatedExercises.length} exercises, but ${exerciseCount} were requested. Attempting to use generated exercises.`
         );
         // Puedes optar por lanzar un error aquí o usar los que se generaron
       }
@@ -242,9 +254,7 @@ export default async function handler(req, res) {
       );
     }
 
-    // Declarar exercisesRows aquí para asegurar que siempre esté inicializada
     const exercisesRows = generatedExercises.map((exercise) => {
-      // <-- CORRECCIÓN AQUÍ
       const newExerciseRow = new Array(exercisesHeaders.length).fill("");
       exercisesHeaders.forEach((header, index) => {
         switch (header) {

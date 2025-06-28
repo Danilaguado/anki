@@ -1,5 +1,5 @@
 // src/lesson/components/ExerciseDisplay.js
-import React, { useContext } from "react";
+import React, { useContext } from "react"; // Importa useContext
 import { normalizeText, renderClickableText } from "../../utils/textUtils";
 import SpeechToTextButton from "../../components/SpeechToTextButton";
 
@@ -14,10 +14,10 @@ const ExerciseDisplay = ({
   setUserTypedAnswer,
   matchFeedback,
   showCorrectAnswer,
-  recordedMicrophoneText,
-  handleCheckAnswer, // Esta función ahora se adapta en LessonCard
+  recordedMicrophoneText, // Asegúrate de que el nombre de la prop sea consistente
+  handleCheckAnswer,
   handleOptionClick,
-  handleSpeechResultForListening, // Esta función ahora se adapta en LessonCard
+  handleSpeechResultForListening,
 }) => {
   // Consumir valores del contexto directamente
   const { onPlayAudio, setAppMessage, appIsLoading } = useContext(AppContext);
@@ -27,7 +27,7 @@ const ExerciseDisplay = ({
     <button
       onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
       className='button audio-button-round primary-button'
-      disabled={appIsLoading}
+      disabled={appIsLoading} // Utiliza el booleano appIsLoading del contexto
       aria-label='Reproducir frase en inglés'
     >
       <svg
@@ -47,7 +47,7 @@ const ExerciseDisplay = ({
     <SpeechToTextButton
       onResult={handleSpeechResultForListening}
       lang='en-US' // El idioma a reconocer es el inglés de la pregunta (QuestionEN)
-      disabled={matchFeedback !== null || appIsLoading}
+      disabled={matchFeedback !== null || appIsLoading} // Utiliza el booleano appIsLoading del contexto
     />
   );
 
@@ -150,7 +150,7 @@ const ExerciseDisplay = ({
       const options = [
         ...(currentExercise.OptionsEN || []),
         currentExercise.AnswerEN,
-      ].sort(() => Math.random() - 0.5); // Mezclar optionsEN y AnswerEN
+      ].sort(() => Math.random() - 0.5);
 
       return (
         <>
@@ -228,7 +228,6 @@ const ExerciseDisplay = ({
             </div>
           )}
 
-          {/* El contenido de la pregunta y respuesta se muestra después de intentar responder (showCorrectAnswer) */}
           {showCorrectAnswer && (
             <div
               className={`card-content-area quiz-content-area ${

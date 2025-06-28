@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./lessonCard";
+import LessonCard from "./LessonCard";
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
@@ -15,7 +15,7 @@ const PrincipalPageLessons = () => {
   // Estados para los parámetros de generación de la lección
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState("Principiante");
-  const [exerciseCount, setExerciseCount] = useState(10); // Valor por defecto: 10 ejercicios
+  const [exerciseCount, setExerciseCount] = useState(12); // Valor por defecto: 12 ejercicios
   const [exerciseTypes, setExerciseTypes] = useState([
     "translation",
     "multiple_choice",
@@ -31,18 +31,23 @@ const PrincipalPageLessons = () => {
   const [availableLessons, setAvailableLessons] = useState([]); // Todas las lecciones cargadas/generadas
   const [selectedLesson, setSelectedLesson] = useState(null); // La lección actualmente seleccionada para ver en detalle
 
-  // Define el orden de los ejercicios
+  // --- Bandera temporal para generar solo un módulo ---
+  const GENERATE_SINGLE_MODULE_TEMPORARILY = true; // CÁMBIALO A 'false' CUANDO QUIERAS GENERAR MÚLTIPLES MÓDULOS POR VERBO
+
+  // Define el orden y tipos exactos de los 12 ejercicios
   const EXERCISE_ORDER_SCHEMA = [
-    "multiple_choice", // 1. Selección simple (junto con la explicación de Notes)
-    "fill_in_the_blank", // 2. Autocompletar
-    "translation", // 3. Traducción
-    "translation", // 4. Traducción
-    "listening", // 5. Escucha
+    "multiple_choice", // 1. Selección simple (con Notes explicativas para la palabra clave)
+    "multiple_choice", // 2. Selección simple
+    "multiple_choice", // 3. Selección simple
+    "fill_in_the_blank", // 4. Autocompletar
+    "fill_in_the_blank", // 5. Autocompletar
     "fill_in_the_blank", // 6. Autocompletar
-    "fill_in_the_blank", // 7. Autocompletar
-    "listening", // 8. Escucha
+    "translation", // 7. Traducción
+    "translation", // 8. Traducción
     "translation", // 9. Traducción
-    "multiple_choice", // 10. Selección simple
+    "listening", // 10. Escucha
+    "listening", // 11. Escucha
+    "listening", // 12. Escucha
   ];
 
   // Define los tiempos verbales si el usuario introduce un verbo
@@ -152,21 +157,28 @@ const PrincipalPageLessons = () => {
         return;
       }
 
-      // Determinar si es un verbo y configurar la generación
-      if (isVerb(baseTopic)) {
-        // Si es un verbo, creamos una lección por cada tiempo verbal
-        for (const tense of VERB_TENSES) {
-          topicsToGenerate.push({
-            topic: `${baseTopic} (${tense.name})`,
-            customPromptSuffix: `Focus on the verb "${baseTopic}" ${tense.promptSuffix}. Ensure exercises introduce vocabulary before requiring it as an answer.`,
-          });
-        }
-      } else {
-        // Si es un tema general, generamos solo una lección
+      // --- Lógica de generación según si es verbo o tema general ---
+      if (GENERATE_SINGLE_MODULE_TEMPORARILY) {
+        // Siempre genera 1 lección si la bandera está activa
         topicsToGenerate.push({
           topic: baseTopic,
           customPromptSuffix:
-            "Ensure exercises introduce vocabulary before requiring it as an answer.",
+            "Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.",
+        });
+      } else if (isVerb(baseTopic)) {
+        // Lógica original para verbos
+        for (const tense of VERB_TENSES) {
+          topicsToGenerate.push({
+            topic: `${baseTopic} (${tense.name})`,
+            customPromptSuffix: `Focus on the verb "${baseTopic}" ${tense.promptSuffix}. Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.`,
+          });
+        }
+      } else {
+        // Lógica original para temas generales
+        topicsToGenerate.push({
+          topic: baseTopic,
+          customPromptSuffix:
+            "Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.",
         });
       }
 
@@ -174,7 +186,7 @@ const PrincipalPageLessons = () => {
       for (const genConfig of topicsToGenerate) {
         const currentTopic = genConfig.topic;
         const currentCustomPrompt = genConfig.customPromptSuffix;
-        const exercisesGeneratedCount = EXERCISE_ORDER_SCHEMA.length; // Siempre 10 ejercicios según el esquema
+        const exercisesGeneratedCount = EXERCISE_ORDER_SCHEMA.length; // Siempre 12 ejercicios según el esquema
 
         setMessage(`Generando lección para: ${currentTopic}...`);
 
@@ -203,21 +215,17 @@ const PrincipalPageLessons = () => {
         const result = await response.json();
         if (result.success) {
           generatedLessons.push(result.data.lesson); // Solo guardar la lección, no los ejercicios aquí
-          // setAvailableLessons(prevLessons => [result.data.lesson, ...prevLessons]); // Actualizar la lista al instante
-          // setSelectedLesson(result.data.lesson); // Opcional: mostrar la primera generada
         } else {
           setError(
             result.error ||
               `Error desconocido al generar la lección para ${currentTopic}.`
           );
           setMessage("");
-          // No lanzar error aquí para permitir que otras lecciones se generen
         }
       }
 
       // Una vez que todas las lecciones se hayan intentado generar:
       if (generatedLessons.length > 0) {
-        // Refrescar la lista completa de lecciones desde el backend para incluir todas las nuevas
         const refreshResponse = await fetch("/api/lessons/get-all");
         const refreshResult = await refreshResponse.json();
         if (refreshResult.success) {
@@ -225,11 +233,9 @@ const PrincipalPageLessons = () => {
           setMessage(
             `Se han generado ${generatedLessons.length} lección(es) y se han añadido a la lista.`
           );
-          // Opcional: seleccionar la primera lección generada para mostrar
           if (generatedLessons.length === 1) {
             setSelectedLesson(generatedLessons[0]);
           } else if (generatedLessons.length > 1) {
-            // Si se generaron múltiples, no se selecciona ninguna automáticamente, se muestra la lista.
             setSelectedLesson(null);
           }
         } else {
@@ -267,18 +273,16 @@ const PrincipalPageLessons = () => {
     }
   };
 
-  // Función para manejar la selección de una lección del listado
   const handleSelectLesson = (lessonId) => {
     const lessonToView = availableLessons.find((l) => l.LessonID === lessonId);
     setSelectedLesson(lessonToView);
-    setMessage(""); // Limpiar mensajes al cambiar de vista
+    setMessage("");
     setError(null);
   };
 
-  // Función para volver a la lista de lecciones (desde LessonCard)
   const handleBackToLessonList = () => {
     setSelectedLesson(null);
-    setMessage(""); // Limpiar mensajes al volver
+    setMessage("");
     setError(null);
   };
 
