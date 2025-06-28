@@ -36,14 +36,13 @@ export default async function handler(req, res) {
     geminiPrompt += ` Special instruction for lesson content: ${customPrompt}.`;
   }
 
-  // INSTRUCCIONES REFORZADAS PARA COHERENCIA Y REUTILIZACIÓN DE FRASES CLAVE
   geminiPrompt += `
   **Learning Strategy: Reinforcement and Contextual Introduction**
   
   1.  **Identify 3 core English phrases/sentences** directly related to "${topic}" at a ${difficulty} level. These will be the foundational learning points. You must use these as CORE_PHRASE_1, CORE_PHRASE_2, and CORE_PHRASE_3 for consistent reuse.
   2.  Exercises will heavily reuse and adapt these 3 core phrases (CORE_PHRASE_1, CORE_PHRASE_2, CORE_PHRASE_3) for reinforcement across different exercise types.
   3.  **Vocabulary Introduction:** Any English word required as an 'answerEN' in 'multiple_choice' or 'fill_in_the_blank' exercises MUST either be:
-      a.  Introduced and explained in the 'notes' of the very first exercise (Exercise 1).
+      a.  Introduced and explained in the 'notes' of an earlier exercise (especially the first one).
       b.  Appeared as a clear translation (questionEN/questionES pair) in an earlier 'translation' exercise.
       This ensures a teaching-first approach. Avoid completely new words as answers without prior explanation.
   
@@ -63,7 +62,7 @@ export default async function handler(req, res) {
     - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
     - For 'translation': This is the English phrase from 'questionEN'.
   -   'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
-  -   'optionsEN': An array of 3 distinct, *plausible, but incorrect* ENGLISH options. These options should be similar in type or context to 'answerEN' but clearly wrong. **Crucially, ensure that 'answerEN' is a distinct value from all options in 'optionsEN'.** This array must be empty for other types. The correct answer will be managed by the frontend.
+  -   **'optionsEN': For 'multiple_choice' exercises, this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN' as one of them.** The options should be plausible and related to the context. For other exercise types, this array must be empty. The order within this array does not matter as the frontend will randomize it.
   -   'orderInLesson': Sequential number from 1 to ${exerciseCount}.
   -   'notes': (CRITICAL FOR LEARNING) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
   
@@ -76,8 +75,8 @@ export default async function handler(req, res) {
       -   'notes': For Ex. 1, explain CORE_PHRASE_1 thoroughly with 2 examples. For Ex. 2 and 3, explain any new vocabulary or reinforce the meaning of the core phrase (CORE_PHRASE_2 or CORE_PHRASE_3) if applicable.
   
   -   **'fill_in_the_blank' (Exercises 4, 5, 6)**:
-      -   'questionEN': A sentence in English with exactly one '_______' placeholder. The word that fills this blank **MUST be 'answerEN'**. This sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
-      -   'questionES': **The complete Spanish translation of 'questionEN' *with the blank correctly filled in Spanish*. This is the direct hint/guide for the user.**
+      -   'questionEN': A sentence in English with exactly one '_______' placeholder. The word that fills this blank **MUST be the 'answerEN'** (e.g., if 'answerEN' is "get", then 'questionEN' could be "I need to _______ a new job."). This sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
+      -   'questionES': **The complete Spanish translation of 'questionEN' *with the blank correctly filled in Spanish*. This is the direct hint/guide for the user.** For example, if 'questionEN' is "I need to _______ a new job." and 'answerEN' is "get", then 'questionES' should be "Necesito conseguir un nuevo trabajo.".
       -   'answerEN': The English word/phrase that fills the blank. (Must correspond to the core phrase from Ex. 1, 2, or 3).
   
   -   **'translation' (Exercises 7, 8, 9)**:
