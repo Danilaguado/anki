@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   const { topic, difficulty, exerciseCount, exerciseTypes, customPrompt } =
-    req.body;
+    req.body; // exerciseTypes ahora es el esquema de orden
 
   if (!topic || !difficulty || !exerciseCount) {
     return res.status(400).json({
@@ -28,30 +28,29 @@ export default async function handler(req, res) {
     });
   }
 
+  // --- Construcción del Prompt para Gemini (¡Lógica clave para la coherencia!) ---
   let geminiPrompt =
     customPrompt ||
-    `Generate ${exerciseCount} ${difficulty} level exercises on the topic of "${topic}". `;
+    `Generate a lesson with ${exerciseCount} exercises on the topic of "${topic}" at a ${difficulty} level. `;
 
-  if (exerciseTypes && exerciseTypes.length > 0) {
-    geminiPrompt += `Include exercise types: ${exerciseTypes.join(", ")}. `;
-  }
+  // Instrucciones detalladas para Gemini sobre el formato, el contenido y la coherencia
+  geminiPrompt += `The exercises MUST follow this exact order and type for the ${exerciseCount} exercises: ${exerciseTypes.join(
+    ", "
+  )}.
+  For each exercise:
+  - 'type': Must be one of ${exerciseTypes.map((t) => `'${t}'`).join(", ")}.
+  - 'questionEN': The English question/phrase.
+  - 'questionES': The Spanish translation of 'questionEN'.
+  - 'answerEN': The correct ENGLISH answer/word for 'fill_in_the_blank', 'multiple_choice', or 'listening' exercises. This should be the specific word for the blank or the correct option.
+  - 'answerES': The correct SPANISH translation for 'translation' or 'listening' exercises. For other types, this can be empty or a simple translation if 'answerEN' is a single word.
+  - 'optionsEN': An array of 3 incorrect ENGLISH options for 'multiple_choice' exercises, or an empty array for other types.
+  - 'orderInLesson': A number indicating its sequential order (1 to ${exerciseCount}).
+  - 'notes': (IMPORTANT) For the first 'multiple_choice' exercise (order 1), include a brief, friendly explanation of the main concept/word being introduced (especially if it's the target 'answerEN' for later exercises). Also, include 2 examples of its usage with English and Spanish translations. For 'fill_in_the_blank' and 'multiple_choice' exercises, ensure that any vocabulary word required as an 'answerEN' was either explained in the 'notes' of an earlier exercise or appeared in a 'translation' exercise before it is required as an answer. This ensures vocabulary is introduced contextually.
 
-  // INSTRUCCIONES ACTUALIZADAS para Gemini sobre el formato y contenido de los campos
-  geminiPrompt += `Provide the output as a JSON array of exercise objects. Each exercise object should have:
-  - 'type' (e.g., 'translation', 'multiple_choice', 'fill_in_the_blank', 'listening')
-  - 'questionEN' (the English question/phrase)
-  - 'questionES' (the Spanish translation of questionEN)
-  - 'answerEN' (the correct English word/phrase for 'fill_in_the_blank', 'multiple_choice' types, or for listening transcription. Can be empty for 'translation' type if not applicable for direct English answer.)
-  - 'answerES' (the correct Spanish translation for 'translation', 'listening' types. Can be empty for 'fill_in_the_blank'/'multiple_choice' if not applicable for Spanish answer.)
-  - 'optionsEN' (an array of incorrect ENGLISH options for 'multiple_choice' type, or empty for others)
-  - 'orderInLesson' (a number indicating its order, starting from 1)
-  - 'notes' (optional, any grammatical notes or context).
-  Ensure the response is a valid, single JSON array. Do not include any text before or after the JSON.
-  For 'fill_in_the_blank', questionEN should have '_______' placeholder and answerEN should be the word for the blank.
-  For 'listening', questionEN is the phrase to listen to, and answerES is its Spanish translation.`;
+  Ensure the entire response is a valid JSON array of ${exerciseCount} exercise objects, nothing more, nothing less.`;
 
   try {
-    if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
+    if (SPREADSHEET_ID === "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M") {
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
       );
@@ -85,25 +84,35 @@ export default async function handler(req, res) {
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
-            // ACTUALIZADO el esquema para incluir QuestionES y AnswerEN
+            // Esquema de respuesta para Gemini
             type: "ARRAY",
             items: {
               type: "OBJECT",
               properties: {
                 type: { type: "STRING" },
                 questionEN: { type: "STRING" },
-                questionES: { type: "STRING" }, // NUEVO
-                answerEN: { type: "STRING" }, // NUEVO
+                questionES: { type: "STRING" }, // Nueva columna
+                answerEN: { type: "STRING" }, // Nueva columna
                 answerES: { type: "STRING" },
                 optionsEN: {
-                  // Cambiado a optionsEN
+                  // Nueva columna
                   type: "ARRAY",
                   items: { type: "STRING" },
                 },
                 orderInLesson: { type: "NUMBER" },
                 notes: { type: "STRING" },
               },
-              required: ["type", "questionEN", "answerES", "orderInLesson"], // Mantener AnswerES como requerido para traducción/listening
+              // Asegurarse de que Gemini siempre incluya los campos necesarios
+              required: [
+                "type",
+                "questionEN",
+                "questionES",
+                "answerEN",
+                "answerES",
+                "optionsEN",
+                "orderInLesson",
+                "notes",
+              ],
             },
           },
         },
@@ -128,6 +137,13 @@ export default async function handler(req, res) {
 
       if (!Array.isArray(generatedExercises)) {
         throw new Error("Gemini did not return a JSON array as expected.");
+      }
+      // Opcional: Revalidar el número de ejercicios generados si es crítico
+      if (generatedExercises.length !== exerciseCount) {
+        console.warn(
+          `Gemini generated ${generatedExercises.length} exercises, but ${exerciseCount} were requested.`
+        );
+        // Puedes optar por lanzar un error aquí o usar los que se generaron
       }
     } catch (parseError) {
       console.error("Error parsing Gemini response:", parseError);
@@ -163,8 +179,6 @@ export default async function handler(req, res) {
     const modulesHeaders = modulesHeadersResponse.data.values
       ? modulesHeadersResponse.data.values[0]
       : [];
-    console.log("Modules sheet headers obtained:", modulesHeaders);
-
     if (modulesHeaders.length === 0) {
       throw new Error(
         `No headers found in "${MODULES_SHEET_NAME}" sheet. Please ensure the first row has headers.`

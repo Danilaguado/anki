@@ -65,13 +65,14 @@ export default async function handler(req, res) {
       exercises = rawExercises.map((row) => {
         const exercise = {};
         exercisesHeaders.forEach((header, index) => {
-          // Intentar parsear OptionsES si es un string JSON
-          if (header === "OptionsES" && row[index]) {
+          // Intentar parsear OptionsEN si es un string JSON
+          if (header === "OptionsEN" && row[index]) {
+            // Leer de OptionsEN
             try {
               exercise[header] = JSON.parse(row[index]);
             } catch (e) {
               console.warn(
-                `Could not parse OptionsES for exercise. Value: ${row[index]}`,
+                `Could not parse OptionsEN for exercise. Value: ${row[index]}`,
                 e
               );
               exercise[header] = row[index]; // Mantener como string si falla el parseo
