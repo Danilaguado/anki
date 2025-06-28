@@ -13,6 +13,9 @@ import MessageDisplay from "./components/MessageDisplay";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
 import EditCategoryPage from "./components/EditCategoryPage";
 
+// Importar el componente PrincipalPageLessons
+import PrincipalPageLessons from "./lesson/PrincipalPageLessons"; // <-- ¡Importación añadida!
+
 // Importar utilidades (las rutas relativas NO CAMBIAN desde src/MainVocabSection.js a src/utils/)
 import { playAudio, b64toBlob } from "./utils/audioUtils";
 import { normalizeText } from "./utils/textUtils"; // renderClickableText se pasa como prop
