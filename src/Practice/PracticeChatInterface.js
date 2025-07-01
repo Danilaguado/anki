@@ -22,7 +22,7 @@ const PracticeChatInterface = ({
   const [chatMessages, setChatMessages] = useState([]);
   // Estado para el feedback de la última respuesta del usuario (local al chat)
   const [lastFeedback, setLastFeedback] = useState(null);
-  const [localExpectedAnswer, setLocalExpectedAnswer] = useState(""); // <-- ¡CORREGIDO! Declarado
+  const [localExpectedAnswer, setLocalExpectedAnswer] = useState("");
   // Estado local para el texto grabado por el micrófono
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
   // Estado local para mostrar la respuesta correcta
@@ -36,16 +36,16 @@ const PracticeChatInterface = ({
     setChatMessages([]);
     setCurrentDialogueStep(0); // Reinicia el paso del diálogo
     setLastFeedback(null);
-    setLocalExpectedAnswer(initialExpectedAnswerEN); // <-- ¡CORREGIDO! Inicializar con la prop
+    setLocalExpectedAnswer(initialExpectedAnswerEN || ""); // <-- ¡CORREGIDO! Asegurar inicialización con fallback
     setUserTypedAnswer("");
     setRecordedMicrophoneText(""); // Limpiar texto del micrófono local
     setShowCorrectAnswer(false); // Limpiar showCorrectAnswer local
     setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
 
+    // Iniciar el chat con el primer mensaje de la IA si existe y es su turno
     if (dialogueSequence && dialogueSequence.length > 0) {
       const firstStep = dialogueSequence[0];
       if (firstStep && firstStep.speaker === "ai") {
-        // Si el primer paso es de la IA, lo añadimos y avanzamos el currentDialogueStep
         setChatMessages([
           {
             id: `ai-${Date.now()}-0`,
@@ -56,11 +56,19 @@ const PracticeChatInterface = ({
         ]);
         setCurrentDialogueStep(1); // Avanzar al siguiente paso (que debería ser el turno del usuario)
       } else if (firstStep && firstStep.speaker === "user") {
-        // Si el primer paso es del usuario, no añadimos nada, esperamos su input
-        setCurrentDialogueStep(0);
+        setCurrentDialogueStep(0); // El primer paso es del usuario, esperamos su input
       }
     }
-  }, [dialogueSequence, initialExpectedAnswerEN]); // Dependencia para reinicializar si el ejercicio cambia
+  }, [dialogueSequence, initialExpectedAnswerEN, setAppMessage]); // Dependencia para reinicializar si el ejercicio cambia
+
+  // Determinar si el diálogo ha terminado (no hay más pasos)
+  const dialogueCompleted =
+    dialogueSequence && currentDialogueStep >= dialogueSequence.length;
+  // Determinar si el turno actual es del usuario
+  const isUserTurnCurrent =
+    dialogueSequence &&
+    currentDialogueStep < dialogueSequence.length &&
+    dialogueSequence[currentDialogueStep]?.speaker === "user";
 
   // Efecto para hacer scroll al final del chat y manejar las respuestas automáticas de la IA
   useEffect(() => {
@@ -102,7 +110,11 @@ const PracticeChatInterface = ({
     dialogueSequence,
     dialogueCompleted,
     onDialogueComplete,
-  ]); // Dependencias para re-scroll y lógica de IA
+    setAppMessage,
+    setShowCorrectAnswer,
+    setLastFeedback,
+    setLocalExpectedAnswer,
+  ]); // <-- ¡CORREGIDO! Añadidas dependencias de set estados
 
   // Manejar el envío de la respuesta del usuario en el chat
   const handleChatSubmit = () => {
@@ -186,15 +198,6 @@ const PracticeChatInterface = ({
     />
   );
 
-  // Determinar si el diálogo ha terminado (no hay más pasos)
-  const dialogueCompleted =
-    dialogueSequence && currentDialogueStep >= dialogueSequence.length;
-  // Determinar si el turno actual es del usuario
-  const isUserTurnCurrent =
-    dialogueSequence &&
-    currentDialogueStep < dialogueSequence.length &&
-    dialogueSequence[currentDialogueStep]?.speaker === "user";
-
   return (
     <div className='chat-lesson-container'>
       <div className='chat-container' ref={chatMessagesRef}>
@@ -212,7 +215,7 @@ const PracticeChatInterface = ({
                 {msg.speaker === "user" &&
                   msg.id === chatMessages[chatMessages.length - 1]?.id &&
                   lastFeedback === "incorrect" &&
-                  showCorrectAnswer && ( // <-- Usar showCorrectAnswer
+                  showCorrectAnswer && (
                     <p className='chat-translation incorrect-answer-hint'>
                       Esperado: {msg.expectedEN}
                     </p>
