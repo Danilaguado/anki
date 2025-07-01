@@ -5,18 +5,11 @@ import { google } from "googleapis";
 import { v4 as uuidv4 } from "uuid"; // Para generar IDs únicos
 
 // Tu ID de Google Sheet. ¡IMPORTANTE! Reemplázalo.
-const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // <--- ¡AQUÍ DEBE ESTAR TU ID REAL, YA NO EL MARCADOR!
+const SPREADSHEET_ID = "TU_ID_DE_HOJA_DE_CALCULO"; // <--- ¡AQUÍ DEBES REEMPLAZAR ESTO con el ID REAL de tu Google Sheet!
 const MODULES_SHEET_NAME = "Modules";
 const EXERCISES_SHEET_NAME = "Exercises"; // Ojo: si creaste una hoja separada para prácticas, este nombre debe cambiar aquí y en get-all/add-exercise
 
 export default async function handler(req, res) {
-  // --- LOG DE DEPURACIÓN CRÍTICO ---
-  console.log(
-    "DEBUG: SPREADSHEET_ID visto en el backend al inicio del handler:",
-    SPREADSHEET_ID
-  );
-  // --- FIN LOG DE DEPURACIÓN ---
-
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -31,7 +24,7 @@ export default async function handler(req, res) {
     exerciseTypes,
     customPrompt,
     moduleType,
-  } = req.body; // exerciseTypes es el esquema de orden
+  } = req.body; // <-- Añadido moduleType
 
   if (!topic || !difficulty || !exerciseCount || !moduleType) {
     return res.status(400).json({
@@ -41,13 +34,12 @@ export default async function handler(req, res) {
     });
   }
 
-  // --- Construcción del Prompt para Gemini (¡Lógica clave para la coherencia!) ---
-  // Se presenta a Gemini como un "maestro" y se refuerza el foco en el tema.
   let geminiPrompt = "";
-  let exercisesSchemaForGemini = [];
+  let exercisesSchemaForGemini = []; // El esquema de ejercicios que Gemini debe seguir
 
+  // --- Construcción del Prompt para Gemini (Condicional por moduleType) ---
   if (moduleType === "standard_lesson") {
-    exercisesSchemaForGemini = exerciseTypes;
+    exercisesSchemaForGemini = exerciseTypes; // Para lección estándar, exerciseTypes es el esquema de orden
     geminiPrompt =
       customPrompt ||
       `You are an experienced and friendly English teacher, specializing in creating coherent and reinforcing lessons for ${difficulty} level Spanish speakers. The goal of this lesson is deep learning and practical application, not just testing. All exercises MUST revolve strictly around the topic/verb: "${topic}".`;
@@ -166,9 +158,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    // console.log("SPREADSHEET_ID actual en el backend:", SPREADSHEET_ID); // Este log ya está en la parte superior del handler
+    console.log(
+      "DEBUG: SPREADSHEET_ID visto en el backend al inicio del handler:",
+      SPREADSHEET_ID
+    );
     if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
-      // <-- ¡ESTA ES LA LÍNEA PROBLEMÁTICA!
+      // <-- ¡ESTA ES LA LÍNEA QUE SE CORRIGIÓ!
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
       );
@@ -179,7 +174,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const geminiApiKey = process.env.GEMINI_API_KEY; // Using GOOGLE_API_KEY as per the image
+    const geminiApiKey = process.env.GEMINI_API_KEY;
 
     if (!geminiApiKey) {
       console.error("GEMINI_API_KEY environment variable is not set.");
@@ -219,7 +214,7 @@ export default async function handler(req, res) {
                 orderInLesson: { type: "NUMBER" },
                 notes: { type: "STRING" },
                 dialogueSequence: {
-                  // Nuevo campo para practice_chat
+                  // Campo opcional para practice_chat
                   type: "ARRAY",
                   items: {
                     type: "OBJECT",
@@ -415,7 +410,7 @@ export default async function handler(req, res) {
             newExerciseRow[index] = exercise.dialogueSequence
               ? JSON.stringify(exercise.dialogueSequence)
               : "";
-            break; // Mapear DialogueSequence
+            break;
           default:
             newExerciseRow[index] = "";
         }

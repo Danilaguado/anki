@@ -1,13 +1,15 @@
-// src/Practice/components/PracticeExerciseDisplay.js
-import React from "react";
+// src/lesson/components/ExerciseDisplay.js
+import React, { useContext } from "react";
 import { normalizeText, renderClickableText } from "../../utils/textUtils";
 import SpeechToTextButton from "../../components/SpeechToTextButton";
 
-const PracticeExerciseDisplay = ({
+// Importa el contexto
+import AppContext from "../../context/AppContext";
+
+const ExerciseDisplay = ({
   currentExercise,
-  onPlayAudio,
-  setAppMessage,
-  appIsLoading,
+  isAnswerVisible,
+  setIsAnswerVisible,
   userTypedAnswer,
   setUserTypedAnswer,
   matchFeedback,
@@ -16,9 +18,11 @@ const PracticeExerciseDisplay = ({
   handleCheckAnswer,
   handleOptionClick,
   handleSpeechResultForListening,
-  isAnswerVisible,
-  setIsAnswerVisible,
 }) => {
+  // Consumir valores del contexto directamente
+  const { onPlayAudio, setAppMessage, appIsLoading } = useContext(AppContext);
+
+  // Función para renderizar el botón de reproducción de audio
   const playAudioButton = (
     <button
       onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
@@ -38,37 +42,39 @@ const PracticeExerciseDisplay = ({
     </button>
   );
 
+  // Función para renderizar el botón de micrófono
   const microphoneButton = (
     <SpeechToTextButton
       onResult={handleSpeechResultForListening}
-      lang='en-US'
+      lang='en-US' // El idioma a reconocer es el inglés de la pregunta (QuestionEN)
       disabled={matchFeedback !== null || appIsLoading}
     />
   );
 
   return (
     <>
+      {/* Mostrar las notas del ejercicio si existen - FUERA DEL SWITCH PARA TODOS LOS EJERCICIOS */}
       {currentExercise.Notes && (
         <div className='exercise-notes-display'>
           <p>{currentExercise.Notes}</p>
         </div>
       )}
-
+      {/* Botones de audio y micrófono siempre en todos los ejercicios */}
       <div className='microphone-play-buttons-group'>
         {playAudioButton}
         {microphoneButton}
       </div>
-
+      {/* Mostrar lo que se grabó del micrófono (estilo flashcard) */}
       {recordedMicrophoneText && (
         <div className='recorded-text-display'>{recordedMicrophoneText}</div>
       )}
-
+      {/* Contenido del ejercicio según su tipo */}
       <div
         className={`card-content-area quiz-content-area ${
           matchFeedback ? `match-${matchFeedback}` : ""
         }`}
       >
-        {currentExercise.Type === "practice_translation" && (
+        {currentExercise.Type === "translation" && (
           <>
             <div id='question-text' className='card-text question'>
               {renderClickableText(
@@ -93,7 +99,7 @@ const PracticeExerciseDisplay = ({
           </>
         )}
 
-        {currentExercise.Type === "practice_fill_in_the_blank" && (
+        {currentExercise.Type === "fill_in_the_blank" && (
           <>
             <div className='card-text quiz-question'>
               {currentExercise.QuestionEN.split("_______")[0]}
@@ -134,16 +140,20 @@ const PracticeExerciseDisplay = ({
           </>
         )}
 
-        {currentExercise.Type === "practice_multiple_choice" && (
+        {currentExercise.Type === "multiple_choice" && (
           <>
             <div id='question-text' className='card-text question'>
               {currentExercise.QuestionES}
             </div>
             <div className='multiple-choice-options'>
-              {currentExercise.OptionsEN.map((option, idx) => (
-                <button
-                  key={idx}
-                  className={`button multiple-choice-button 
+              {currentExercise.OptionsEN.map(
+                (
+                  option,
+                  idx // Iterar sobre OptionsEN
+                ) => (
+                  <button
+                    key={idx}
+                    className={`button multiple-choice-button 
                     ${
                       matchFeedback &&
                       normalizeText(option) ===
@@ -160,18 +170,19 @@ const PracticeExerciseDisplay = ({
                         : ""
                     }
                   `}
-                  onClick={() => {
-                    if (matchFeedback === null) {
-                      setAppMessage("");
-                      setUserTypedAnswer(option);
-                      handleOptionClick(option);
-                    }
-                  }}
-                  disabled={matchFeedback !== null || appIsLoading}
-                >
-                  {option}
-                </button>
-              ))}
+                    onClick={() => {
+                      if (matchFeedback === null) {
+                        setAppMessage("");
+                        setUserTypedAnswer(option);
+                        handleOptionClick(option);
+                      }
+                    }}
+                    disabled={matchFeedback !== null || appIsLoading}
+                  >
+                    {option}
+                  </button>
+                )
+              )}
             </div>
             {showCorrectAnswer && matchFeedback === "correct" && (
               <p className='correct-answer-display success-text'>¡Correcto!</p>
@@ -187,7 +198,7 @@ const PracticeExerciseDisplay = ({
           </>
         )}
 
-        {currentExercise.Type === "practice_listening" && (
+        {currentExercise.Type === "listening" && (
           <>
             {showCorrectAnswer && (
               <div className='card-text question'>
@@ -262,19 +273,20 @@ const PracticeExerciseDisplay = ({
 
         {/* Mensaje si el tipo de ejercicio no es reconocido */}
         {![
-          "practice_translation",
-          "practice_multiple_choice",
-          "practice_fill_in_the_blank",
-          "practice_listening",
+          "translation",
+          "fill_in_the_blank",
+          "multiple_choice",
+          "listening",
           "practice_chat",
         ].includes(currentExercise.Type) && (
           <p className='info-text'>
             Tipo de ejercicio no soportado: {currentExercise.Type}
           </p>
         )}
-      </div>
+      </div>{" "}
+      {/* Fin de card-content-area */}
     </>
   );
 };
 
-export default PracticeExerciseDisplay;
+export default ExerciseDisplay;
