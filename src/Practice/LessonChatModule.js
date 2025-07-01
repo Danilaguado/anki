@@ -31,9 +31,10 @@ const LessonChatModule = ({
 
   const chatMessagesRef = useRef(null); // Para hacer scroll automático
 
-  // Variables derivadas del estado (declaradas al inicio para evitar errores de referencia)
+  // Determinar si toda la lección de chat ha terminado (todos los ejercicios)
   const dialogueCompleted =
     lessonExercises && currentLessonExerciseIndex >= lessonExercises.length;
+  // Determinar si el turno actual es del usuario
   const isUserTurnCurrent =
     lessonExercises &&
     currentLessonExerciseIndex < lessonExercises.length &&
@@ -45,6 +46,7 @@ const LessonChatModule = ({
       currentChatDialogueStep
     ]?.speaker === "user";
 
+  // Determinar si el ejercicio actual requiere input del usuario (para habilitar/deshabilitar input)
   const currentExerciseRequiresInput =
     lessonExercises &&
     currentLessonExerciseIndex < lessonExercises.length &&
@@ -59,14 +61,14 @@ const LessonChatModule = ({
   useEffect(() => {
     // Resetear todos los estados relevantes al cargar un nuevo diálogo
     setChatMessages([]);
-    // currentLessonExerciseIndex y setCurrentLessonExerciseIndex ya se gestionan desde el padre
+    setCurrentLessonExerciseIndex(0); // Reinicia el progreso de la lección
     setCurrentChatDialogueStep(0); // Reinicia el paso del diálogo interno
     setLastFeedback(null);
     setLocalExpectedAnswer("");
     setUserTypedAnswer("");
     setRecordedMicrophoneText("");
     setShowCorrectAnswer(false);
-    setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
+    setAppMessage(""); // Limpiar mensaje global al iniciar nueva lección
 
     if (lessonExercises && lessonExercises.length > 0) {
       const firstExercise = lessonExercises[currentLessonExerciseIndex];
@@ -137,7 +139,7 @@ const LessonChatModule = ({
     setLocalExpectedAnswer,
     setCurrentLessonExerciseIndex,
     setCurrentChatDialogueStep,
-  ]);
+  ]); // Dependencias completas y correctas
 
   // Efecto para hacer scroll al final del chat y manejar el avance automático
   useEffect(() => {
