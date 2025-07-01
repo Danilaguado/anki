@@ -499,6 +499,13 @@ const LessonChatModule = ({
       <div className='chat-container' ref={chatMessagesRef}>
         {chatMessages.map((msg) => (
           <div key={msg.id} className={`chat-message ${msg.speaker}`}>
+            {/* Mostrar notas del ejercicio si existen */}
+            {msg.notes && (
+              <div className='exercise-notes-display'>
+                <p>{msg.notes}</p>
+              </div>
+            )}
+
             {msg.speaker === "ai" ? (
               <div className='chat-text-with-audio'>
                 <span>{msg.phraseEN || msg.QuestionEN}</span>
@@ -513,7 +520,7 @@ const LessonChatModule = ({
               </p>
             )}
 
-            {/* Renderizar el contenido del ejercicio de refuerzo si es el turno de la IA y no es un chat interno */}
+            {/* Contenido interactivo del ejercicio de refuerzo si es el turno de la IA y no es un chat interno */}
             {msg.speaker === "ai" &&
               msg.type &&
               msg.type !== "practice_chat" &&
