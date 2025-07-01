@@ -7,16 +7,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import "./index.css"; // Importa los estilos globales para toda la aplicación
 
-// Importa el contexto (Ruta absoluta desde src/)
-import AppContext from "context/AppContext";
+// Importa el contexto (Ruta relativa corregida)
+import AppContext from "./context/AppContext";
 
-// Importa tus secciones principales (Ruta absoluta desde src/)
-import MainVocabSection from "MainVocabSection";
-import PrincipalPageLessons from "lesson/PrincipalPageLessons";
-import PracticePage from "Practice/PracticePage"; // Importación de la página de práctica
+// Importa tus secciones principales (Rutas relativas corregidas)
+import MainVocabSection from "./MainVocabSection";
+import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
+import PracticePage from "./Practice/PracticePage"; // Importación de la página de práctica
 
-// Importar utilidades de audio (Ruta absoluta desde src/)
-import { playAudio, b64toBlob } from "utils/audioUtils";
+// Importar utilidades de audio (Ruta relativa corregida)
+import { playAudio, b64toBlob } from "./utils/audioUtils";
 
 // Componente de ejemplo para la pantalla principal o "Home"
 const HomeScreen = () => {
