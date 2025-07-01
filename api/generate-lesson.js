@@ -70,7 +70,7 @@ export default async function handler(req, res) {
     - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
     - For 'translation': This is the English phrase from 'questionEN'.
   -   'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
-  -   **'optionsEN': For 'multiple_choice' exercises, this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN' as one of them.** The options should be plausible and related to the context. For other exercise types, this array must be empty. The order within this array does not matter as the frontend will randomize it.
+  -   **'optionsEN': For 'multiple_choice' exercises, this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN' as one of them.** The options should be plausible and related to the context. For other exercise types, this array must be empty. The order within this array does not matters as the frontend will randomize it.
   -   'orderInLesson': Sequential number from 1 to ${exerciseCount}.
   -   'notes': (CRITICAL FOR LEARNING) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
   
