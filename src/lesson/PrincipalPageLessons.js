@@ -16,13 +16,10 @@ const PrincipalPageLessons = () => {
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState("Principiante");
   const [exerciseCount, setExerciseCount] = useState(12); // Valor por defecto: 12 ejercicios
-  const [exerciseTypes, setExerciseTypes] = useState([
-    "translation",
-    "multiple_choice",
-    "fill_in_the_blank",
-    "listening",
-  ]); // Por defecto todos los tipos
   const [customPrompt, setCustomPrompt] = useState("");
+  // NUEVO: Estado para el tipo de módulo seleccionado
+  const [selectedModuleType, setSelectedModuleType] =
+    useState("standard_lesson"); // 'standard_lesson' o 'chatbot_lesson'
 
   // Estados para la carga, errores y las lecciones disponibles (locales a este componente)
   const [isLoading, setIsLoading] = useState(false); // Estado de carga local del componente
@@ -31,12 +28,11 @@ const PrincipalPageLessons = () => {
   const [availableLessons, setAvailableLessons] = useState([]); // Todas las lecciones cargadas/generadas
   const [selectedLesson, setSelectedLesson] = useState(null); // La lección actualmente seleccionada para ver en detalle
 
-  // --- Bandera temporal para generar solo un módulo ---
-  // CÁMBIALA A 'false' CUANDO QUIERAS GENERAR MÚLTIPLES MÓDULOS POR VERBO (para verbos)
+  // --- Bandera temporal para generar solo un módulo (se mantiene para tu uso) ---
   const GENERATE_SINGLE_MODULE_TEMPORARILY = true;
 
-  // Define el orden y tipos exactos de los 12 ejercicios
-  const EXERCISE_ORDER_SCHEMA = [
+  // Define el orden y tipos exactos de los 12 ejercicios para LECCIONES ESTÁNDAR
+  const EXERCISE_ORDER_SCHEMA_STANDARD = [
     "multiple_choice", // 1. Selección simple (con Notes explicativas para la palabra clave)
     "multiple_choice", // 2. Selección simple
     "multiple_choice", // 3. Selección simple
@@ -104,7 +100,6 @@ const PrincipalPageLessons = () => {
    */
   const isVerb = (input) => {
     input = input.trim().toLowerCase();
-    // Revisa si es una sola palabra y termina en algo que suene a verbo común
     return (
       input.split(" ").length === 1 &&
       (input.endsWith("e") ||
@@ -158,28 +153,28 @@ const PrincipalPageLessons = () => {
         return;
       }
 
-      // --- Lógica de generación según si es verbo o tema general ---
-      if (GENERATE_SINGLE_MODULE_TEMPORARILY) {
-        // Siempre genera 1 lección si la bandera está activa
-        topicsToGenerate.push({
-          topic: baseTopic,
-          customPromptSuffix:
-            "Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.",
-        });
-      } else if (isVerb(baseTopic)) {
-        // Lógica original para verbos
-        for (const tense of VERB_TENSES) {
+      // --- Lógica de generación según el tipo de módulo seleccionado ---
+      if (selectedModuleType === "standard_lesson") {
+        if (GENERATE_SINGLE_MODULE_TEMPORARILY || !isVerb(baseTopic)) {
           topicsToGenerate.push({
-            topic: `${baseTopic} (${tense.name})`,
-            customPromptSuffix: `Focus on the verb "${baseTopic}" ${tense.promptSuffix}. Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.`,
+            topic: baseTopic,
+            customPromptSuffix:
+              "Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.",
           });
+        } else {
+          // Es un verbo y GENERATE_SINGLE_MODULE_TEMPORARILY es false
+          for (const tense of VERB_TENSES) {
+            topicsToGenerate.push({
+              topic: `${baseTopic} (${tense.name})`,
+              customPromptSuffix: `Focus on the verb "${baseTopic}" ${tense.promptSuffix}. Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.`,
+            });
+          }
         }
-      } else {
-        // Lógica original para temas generales
+      } else if (selectedModuleType === "chatbot_lesson") {
         topicsToGenerate.push({
           topic: baseTopic,
           customPromptSuffix:
-            "Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.",
+            "Generate a conversational scenario. Ensure vocabulary is introduced before use, provide learning-oriented questions, and follow the specified exercise order strictly.",
         });
       }
 
@@ -187,7 +182,7 @@ const PrincipalPageLessons = () => {
       for (const genConfig of topicsToGenerate) {
         const currentTopic = genConfig.topic;
         const currentCustomPrompt = genConfig.customPromptSuffix;
-        const exercisesGeneratedCount = EXERCISE_ORDER_SCHEMA.length; // Siempre 12 ejercicios según el esquema
+        const exercisesGeneratedCount = 12; // Siempre 12 ejercicios
 
         setMessage(`Generando lección para: ${currentTopic}...`);
 
@@ -198,8 +193,12 @@ const PrincipalPageLessons = () => {
             topic: currentTopic,
             difficulty,
             exerciseCount: exercisesGeneratedCount,
-            exerciseTypes: EXERCISE_ORDER_SCHEMA, // Pasamos el esquema de orden directamente
+            exerciseTypes:
+              selectedModuleType === "standard_lesson"
+                ? EXERCISE_ORDER_SCHEMA_STANDARD
+                : [], // Pasa el esquema solo para estándar, el chatbot lo define el backend
             customPrompt: currentCustomPrompt,
+            moduleType: selectedModuleType, // ¡NUEVO! Pasa el tipo de módulo
           }),
         });
 
@@ -215,7 +214,7 @@ const PrincipalPageLessons = () => {
 
         const result = await response.json();
         if (result.success) {
-          generatedLessons.push(result.data.lesson); // Solo guardar la lección, no los ejercicios aquí
+          generatedLessons.push(result.data.lesson);
         } else {
           setError(
             result.error ||
@@ -262,13 +261,12 @@ const PrincipalPageLessons = () => {
     }
   };
 
-  const handleExerciseTypeChange = (e) => {
-    const { value, checked } = e.target;
-    if (checked) {
-      setExerciseTypes((prev) => [...prev, value]);
-    } else {
-      setExerciseTypes((prev) => prev.filter((type) => type !== value));
-    }
+  // Manejador para el cambio de tipo de módulo
+  const handleModuleTypeChange = (e) => {
+    setSelectedModuleType(e.target.value);
+    // Reiniciar topic y customPrompt al cambiar el tipo de módulo si es necesario
+    setTopic("");
+    setCustomPrompt("");
   };
 
   const handleSelectLesson = (lessonId) => {
@@ -289,11 +287,11 @@ const PrincipalPageLessons = () => {
       <Link to='/' className='button back-button top-back-button'>
         Volver a la pantalla principal
       </Link>
-      <h1 className='app-title'>Generador de Lecciones</h1>{" "}
-      {/* Título ajustado para indicar generación */}
+      <h1 className='app-title'>Generador de Lecciones</h1>
       <p className='info-text'>
         Genera lecciones personalizadas con la ayuda de la IA.
       </p>
+
       {/* Mostrar mensajes de carga o error */}
       <MessageDisplay message={message} isLoading={isLoading} />
       {error && (
@@ -301,6 +299,7 @@ const PrincipalPageLessons = () => {
           <span className='message-text'>{error}</span>
         </div>
       )}
+
       {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
       {selectedLesson ? (
         <LessonCard lesson={selectedLesson} onBack={handleBackToLessonList} />
@@ -309,6 +308,23 @@ const PrincipalPageLessons = () => {
         <>
           <div className='section-container lesson-generator-form'>
             <h2 className='section-title'>Parámetros de la Lección</h2>
+
+            {/* NUEVO: Selección del tipo de módulo */}
+            <div className='input-group-vertical'>
+              <label htmlFor='module-type-select' className='input-label'>
+                Tipo de Módulo:
+              </label>
+              <select
+                id='module-type-select'
+                className='input-field'
+                value={selectedModuleType}
+                onChange={handleModuleTypeChange}
+                disabled={isLoading}
+              >
+                <option value='standard_lesson'>Lección Estándar</option>
+                <option value='chatbot_lesson'>Lección Chatbot</option>
+              </select>
+            </div>
 
             <div className='input-group-vertical'>
               <label htmlFor='topic-input' className='input-label'>
@@ -342,28 +358,33 @@ const PrincipalPageLessons = () => {
               </select>
             </div>
 
-            {/* La cantidad de ejercicios y los tipos ya no se eligen, se fijan por el esquema */}
-            <div className='input-group-vertical'>
-              <span className='input-label'>
-                Tipos de Ejercicio (Orden Fijo):
-              </span>
-              <div className='checkbox-group'>
-                {EXERCISE_ORDER_SCHEMA.map((type, index) => (
-                  <span key={index} className='exercise-type-tag'>
-                    {index + 1}.{" "}
-                    {type
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
-                    {/* Formatear para mostrar */}
-                  </span>
-                ))}
+            {/* Mostrar el esquema de ejercicios solo para lección estándar */}
+            {selectedModuleType === "standard_lesson" && (
+              <div className='input-group-vertical'>
+                <span className='input-label'>
+                  Tipos de Ejercicio (Orden Fijo):
+                </span>
+                <div className='checkbox-group'>
+                  {EXERCISE_ORDER_SCHEMA_STANDARD.map((type, index) => (
+                    <span key={index} className='exercise-type-tag'>
+                      {index + 1}.{" "}
+                      {type
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (l) => l.toUpperCase())}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
             {/* Mensaje adicional para el usuario sobre el número de ejercicios */}
             <p className='info-text small-text'>
-              Se generarán {EXERCISE_ORDER_SCHEMA.length} ejercicios siguiendo
-              el orden predefinido. Si ingresas un verbo, se generará una
-              lección separada para cada tiempo verbal.
+              {selectedModuleType === "standard_lesson"
+                ? `Se generarán ${EXERCISE_ORDER_SCHEMA_STANDARD.length} ejercicios siguiendo el orden predefinido.`
+                : `Se generarán ${exerciseCount} ejercicios para el chatbot, con el primer ejercicio siendo el diálogo.`}
+              <br />
+              {selectedModuleType === "standard_lesson" &&
+                `Si ingresas un verbo, se generará una lección separada para cada tiempo verbal.`}
               <br />
               **Nota**: La generación de una única lección por tema/verbo está
               actualmente activa para facilitar ajustes. Desactiva
