@@ -1,6 +1,6 @@
 // src/lesson/components/lessonCard.js
 import React, { useState, useEffect, useContext } from "react";
-import "../PrincipalPageLessons.css"; // ¡CORREGIDO! Subir un nivel para encontrar PrincipalPageLessons.css
+import "./PrincipalPageLessons.css"; // ¡CORREGIDO! Subir un nivel para encontrar PrincipalPageLessons.css
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Subir dos niveles para utils
 import ExerciseDisplay from "./components/ExerciseDisplay"; // Correcto: en la misma carpeta
 import ExerciseNavigation from "./components/ExerciseNavigation"; // Correcto: en la misma carpeta
