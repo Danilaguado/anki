@@ -167,10 +167,7 @@ export default async function handler(req, res) {
 
   try {
     // console.log("SPREADSHEET_ID actual en el backend:", SPREADSHEET_ID); // Este log ya está en la parte superior del handler
-    if (
-      SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO" ||
-      SPREADSHEET_ID === "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"
-    ) {
+    if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
       // <-- ¡ESTA ES LA LÍNEA PROBLEMÁTICA!
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
