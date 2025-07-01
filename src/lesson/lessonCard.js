@@ -1,10 +1,10 @@
 // src/lesson/components/lessonCard.js
 import React, { useState, useEffect, useContext } from "react";
 import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones
-import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Subir dos niveles para utils
+import { normalizeText, renderClickableText } from "../utils/textUtils"; // Subir dos niveles para utils
 import ExerciseDisplay from "./ExerciseDisplay"; // ¡CORREGIDO! Ahora en la misma carpeta
 import ExerciseNavigation from "./ExerciseNavigation"; // ¡CORREGIDO! Ahora en la misma carpeta
-import PracticeChatInterface from "../../Practice/components/PracticeChatInterface"; // ¡CORREGIDO! Subir dos niveles para Practice
+import PracticeChatInterface from "../Practice/components/PracticeChatInterface"; // ¡CORREGIDO! Subir dos niveles para Practice
 
 // Importar el contexto
 import AppContext from "../../context/AppContext"; // Subir dos niveles para context
