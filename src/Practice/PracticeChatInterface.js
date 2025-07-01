@@ -4,57 +4,59 @@ import { normalizeText } from "../../utils/textUtils";
 import SpeechToTextButton from "../../components/SpeechToTextButton";
 
 const PracticeChatInterface = ({
-  dialogueSequence,
+  dialogueSequence, // Secuencia completa del diálogo
   onPlayAudio,
   appIsLoading,
   userTypedAnswer,
   setUserTypedAnswer,
-  matchFeedback, // Mantener para feedback visual del último intento
-  setMatchFeedback,
-  setAppMessage,
-  setShowCorrectAnswer, // Mantener para feedback visual del último intento
-  showCorrectAnswer, // Mantener para feedback visual del último intento
+  // matchFeedback, // Ya no se pasa directamente para controlar la UI principal
+  // setMatchFeedback, // Ya no se pasa directamente para controlar la UI principal
+  setAppMessage, // Para mensajes globales de la app
+  // setShowCorrectAnswer, // Ya no se usa para controlar la visibilidad principal
+  // showCorrectAnswer, // Ya no se usa para controlar la visibilidad principal
   recordedMicrophoneText,
   handleSpeechResultForListening,
-  expectedAnswerEN, // La respuesta EN esperada para la línea actual del usuario
+  expectedAnswerEN: initialExpectedAnswerEN, // La respuesta esperada para el primer turno del usuario
 }) => {
-  // Estado local para el progreso del diálogo
-  const [currentDialogueStep, setCurrentDialogueStep] = useState(0);
-  // Nuevo estado para almacenar todos los mensajes renderizados en el chat
+  // Estado local para el progreso del diálogo (índice actual en dialogueSequence)
+  const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
+  // Estado para almacenar todos los mensajes que ya se han mostrado en el chat
   const [chatMessages, setChatMessages] = useState([]);
+  // Estado para el feedback de la última respuesta del usuario (local al chat)
+  const [lastFeedback, setLastFeedback] = useState(null); // 'correct', 'incorrect'
+  const [lastExpectedAnswer, setLastExpectedAnswer] = useState(""); // Para mostrar la respuesta si falla
+
   const chatMessagesRef = useRef(null); // Para hacer scroll automático
 
   // Efecto para inicializar el chat y avanzar automáticamente los mensajes de la IA
   useEffect(() => {
-    // Si el diálogo no ha comenzado o se ha reiniciado
-    if (
-      chatMessages.length === 0 &&
-      dialogueSequence &&
-      dialogueSequence.length > 0
-    ) {
-      // Encontrar el primer mensaje de la IA para iniciar el chat
-      const firstAiMessage = dialogueSequence.find(
-        (step) => step.speaker === "ai"
-      );
-      if (firstAiMessage) {
+    // Resetear el chat cuando cambie el dialogueSequence (nuevo ejercicio)
+    setChatMessages([]);
+    setCurrentDialogueStep(0);
+    setLastFeedback(null);
+    setLastExpectedAnswer("");
+    setUserTypedAnswer("");
+    setAppMessage("");
+
+    if (dialogueSequence && dialogueSequence.length > 0) {
+      // Iniciar el chat con el primer mensaje de la IA si es su turno
+      const firstStep = dialogueSequence[0];
+      if (firstStep && firstStep.speaker === "ai") {
         setChatMessages([
           {
             id: `ai-${Date.now()}-0`,
             speaker: "ai",
-            phraseEN: firstAiMessage.phraseEN,
-            phraseES: firstAiMessage.phraseES,
+            phraseEN: firstStep.phraseEN,
+            phraseES: firstStep.phraseES,
           },
         ]);
-        // Establecer el currentDialogueStep al índice del primer mensaje del usuario
-        const firstUserStepIndex = dialogueSequence.findIndex(
-          (step) => step.speaker === "user"
-        );
-        setCurrentDialogueStep(
-          firstUserStepIndex !== -1 ? firstUserStepIndex : 0
-        );
+        setCurrentDialogueStep(1); // Avanzar al siguiente paso (que debería ser el turno del usuario)
+      } else if (firstStep && firstStep.speaker === "user") {
+        // Si el primer paso es del usuario, no añadimos nada, esperamos su input
+        setCurrentDialogueStep(0);
       }
     }
-  }, [dialogueSequence]); // Se ejecuta al cargar el ejercicio de chat
+  }, [dialogueSequence]); // Se ejecuta al cargar un nuevo ejercicio de chat
 
   // Efecto para hacer scroll al final del chat y manejar las respuestas automáticas de la IA
   useEffect(() => {
@@ -63,30 +65,30 @@ const PracticeChatInterface = ({
     }
 
     // Lógica para que la IA responda automáticamente después de que el usuario acierte
-    if (
-      matchFeedback === "correct" &&
-      currentDialogueStep < dialogueSequence.length
-    ) {
-      const nextStep = dialogueSequence[currentDialogueStep];
-      if (nextStep && nextStep.speaker === "ai") {
+    // y para que el chat avance si el siguiente paso es de la IA.
+    if (dialogueSequence && currentDialogueStep < dialogueSequence.length) {
+      const currentStepData = dialogueSequence[currentDialogueStep];
+
+      if (currentStepData.speaker === "ai") {
+        // Si es el turno de la IA, añadimos su mensaje y avanzamos
         setTimeout(() => {
           setChatMessages((prev) => [
             ...prev,
             {
               id: `ai-${Date.now()}-${currentDialogueStep}`,
               speaker: "ai",
-              phraseEN: nextStep.phraseEN,
-              phraseES: nextStep.phraseES,
+              phraseEN: currentStepData.phraseEN,
+              phraseES: currentStepData.phraseES,
             },
           ]);
-          setCurrentDialogueStep((prev) => prev + 1); // Avanza al siguiente paso (que debería ser el turno del usuario o fin)
-          setMatchFeedback(null); // Reinicia feedback para la siguiente interacción del usuario
-          setShowCorrectAnswer(false);
+          setCurrentDialogueStep((prev) => prev + 1); // Avanza al siguiente paso
+          setLastFeedback(null); // Reinicia feedback visual
+          setLastExpectedAnswer(""); // Limpia la respuesta esperada anterior
           setAppMessage("");
         }, 1000); // Pequeño retraso para la respuesta de la IA
       }
     }
-  }, [chatMessages, currentDialogueStep, matchFeedback, dialogueSequence]); // Dependencias para re-scroll y lógica de IA
+  }, [chatMessages, currentDialogueStep, dialogueSequence]); // Dependencias para re-scroll y lógica de IA
 
   // Manejar el envío de la respuesta del usuario en el chat
   const handleChatSubmit = () => {
@@ -97,32 +99,39 @@ const PracticeChatInterface = ({
       return;
     }
 
-    // Añadir el mensaje del usuario al array de chatMessages
+    const currentExpectedStep = dialogueSequence[currentDialogueStep];
+    if (!currentExpectedStep || currentExpectedStep.speaker !== "user") {
+      setAppMessage("No es tu turno de responder o el diálogo ha terminado.");
+      return;
+    }
+
+    const normalizedUserAnswer = normalizeText(userTypedAnswer);
+    const normalizedExpectedAnswer = normalizeText(
+      currentExpectedStep.expectedEN || ""
+    );
+
+    // Añadir el mensaje del usuario al array de chatMessages ANTES de la verificación
     setChatMessages((prev) => [
       ...prev,
       {
         id: `user-${Date.now()}-${currentDialogueStep}`,
         speaker: "user",
         phraseEN: userTypedAnswer, // La frase del usuario es lo que escribió
-        expectedEN: dialogueSequence[currentDialogueStep]?.expectedEN, // Guarda la respuesta esperada para referencia
+        expectedEN: currentExpectedStep.expectedEN, // Guarda la respuesta esperada para referencia
       },
     ]);
 
-    const normalizedUserAnswer = normalizeText(userTypedAnswer);
-    const normalizedExpectedAnswer = normalizeText(
-      dialogueSequence[currentDialogueStep]?.expectedEN || ""
-    ); // Usa la respuesta esperada del paso actual
-
     if (normalizedUserAnswer === normalizedExpectedAnswer) {
-      setMatchFeedback("correct");
+      setLastFeedback("correct");
       setAppMessage("¡Correcto!");
-      setShowCorrectAnswer(true);
-      setUserTypedAnswer(""); // Limpia el input inmediatamente
-      // La lógica de avance de la IA está en el useEffect de arriba
+      setLastExpectedAnswer(""); // Limpiar si fue correcto
+      setUserTypedAnswer(""); // Limpia el input
+      setCurrentDialogueStep((prev) => prev + 1); // Avanza al siguiente paso (IA o fin)
     } else {
-      setMatchFeedback("incorrect");
-      setShowCorrectAnswer(true);
+      setLastFeedback("incorrect");
+      setLastExpectedAnswer(currentExpectedStep.expectedEN); // Guarda la respuesta correcta para mostrar
       setAppMessage("Incorrecto. Intenta de nuevo.");
+      // No avanzamos el currentDialogueStep si es incorrecto, para que el usuario pueda reintentar
     }
   };
 
@@ -154,15 +163,15 @@ const PracticeChatInterface = ({
         setUserTypedAnswer(transcript); // Rellenar el input con la transcripción
       }}
       lang='en-US'
-      disabled={appIsLoading || matchFeedback === "correct"}
+      disabled={appIsLoading || (lastFeedback === "correct" && isUserTurn)} // Deshabilitar si se está procesando o si ya acertó y es su turno
     />
   );
 
-  // Determinar si el diálogo ha terminado
+  // Determinar si el diálogo ha terminado (no hay más pasos)
   const dialogueCompleted =
     dialogueSequence && currentDialogueStep >= dialogueSequence.length;
-  // Determinar si es el turno del usuario para escribir
-  const isUserTurn =
+  // Determinar si el turno actual es del usuario
+  const isUserTurnCurrent =
     dialogueSequence &&
     dialogueSequence[currentDialogueStep]?.speaker === "user";
 
@@ -177,58 +186,61 @@ const PracticeChatInterface = ({
                 {playAudioButton(msg.phraseEN)}
               </div>
             ) : (
-              <span>{msg.phraseEN}</span> // User's spoken/typed phrase
+              // Mensaje del usuario: mostrar lo que escribió. Si falló, mostrar el esperado.
+              <span>
+                {msg.phraseEN}
+                {msg.speaker === "user" &&
+                  msg.id === chatMessages[chatMessages.length - 1]?.id &&
+                  lastFeedback === "incorrect" && (
+                    <p className='chat-translation incorrect-answer-hint'>
+                      Esperado: {msg.expectedEN}
+                    </p>
+                  )}
+              </span>
             )}
             {msg.speaker === "ai" && (
               <p className='chat-translation'>{msg.phraseES}</p>
             )}
-            {msg.speaker === "user" &&
-              showCorrectAnswer &&
-              matchFeedback === "incorrect" && (
-                <p className='chat-translation incorrect-answer-hint'>
-                  Esperado:{" "}
-                  {dialogueSequence[chatMessages.indexOf(msg)]?.expectedEN ||
-                    expectedAnswerEN}
-                </p>
-              )}
           </div>
         ))}
-
-        {/* Mostrar el input del usuario solo si es su turno y el diálogo no ha terminado */}
-        {isUserTurn && !dialogueCompleted && (
-          <div className='chat-input-area current-user-input'>
-            <input
-              type='text'
-              className='input-field chat-input'
-              placeholder='Tu respuesta en inglés...'
-              value={userTypedAnswer}
-              onChange={(e) => setUserTypedAnswer(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleChatSubmit();
-              }}
-              disabled={appIsLoading || matchFeedback === "correct"}
-            />
-            {microphoneButton}
-            <button
-              onClick={handleChatSubmit}
-              className='button primary-button chat-send-button'
-              disabled={appIsLoading || matchFeedback === "correct"}
-            >
-              Enviar
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Mostrar feedback de acierto/error para la última interacción */}
-      {matchFeedback && (
-        <p className={`chat-feedback-message ${matchFeedback}`}>
-          {matchFeedback === "correct"
-            ? "¡Correcto!"
-            : `Incorrecto. La respuesta esperada era: ${
-                dialogueSequence[currentDialogueStep]?.expectedEN ||
-                expectedAnswerEN
-              }`}
+      {/* Mostrar el input del usuario solo si es su turno y el diálogo no ha terminado */}
+      {isUserTurnCurrent && !dialogueCompleted && (
+        <div className='chat-input-area current-user-input'>
+          <input
+            type='text'
+            className='input-field chat-input'
+            placeholder='Tu respuesta en inglés...'
+            value={userTypedAnswer}
+            onChange={(e) => setUserTypedAnswer(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleChatSubmit();
+            }}
+            disabled={
+              appIsLoading || (lastFeedback === "correct" && isUserTurnCurrent)
+            } // Deshabilitar si se está procesando o ya acertó
+          />
+          {microphoneButton}
+          <button
+            onClick={handleChatSubmit}
+            className='button primary-button chat-send-button'
+            disabled={
+              appIsLoading || (lastFeedback === "correct" && isUserTurnCurrent)
+            }
+          >
+            Enviar
+          </button>
+        </div>
+      )}
+
+      {/* Mostrar feedback de acierto/error para la última interacción (debajo del input) */}
+      {lastFeedback && lastFeedback === "correct" && (
+        <p className='chat-feedback-message correct'>¡Correcto!</p>
+      )}
+      {lastFeedback && lastFeedback === "incorrect" && (
+        <p className='chat-feedback-message incorrect'>
+          Incorrecto. La respuesta esperada era: {lastExpectedAnswer}
         </p>
       )}
 
