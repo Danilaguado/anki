@@ -1,16 +1,12 @@
 // src/Practice/PracticePage.js
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-import MessageDisplay from "../components/MessageDisplay"; // Sube a src/, baja a components/
-// Rutas de importación directas en Practice/
-import PracticeExerciseDisplay from "./PracticeExerciseDisplay";
-import PracticeChatInterface from "./PracticeChatInterface";
+import MessageDisplay from "../components/MessageDisplay";
+import PracticeExerciseDisplay from "./PracticeExerciseDisplay"; // Ahora está en el mismo nivel
+import PracticeChatInterface from "./PracticeChatInterface"; // Ahora está en el mismo nivel
 
 // Importa el contexto
-import AppContext from "../context/AppContext"; // Sube a src/, baja a context/
-
-// Importar utilidades (¡CORREGIDO! Ruta relativa)
-import { normalizeText } from "../utils/textUtils"; // Sube a src/, baja a utils/
+import AppContext from "../context/AppContext";
 
 const PracticePage = () => {
   // Consumir valores del contexto
@@ -23,9 +19,10 @@ const PracticePage = () => {
 
   // Estados para la interacción del ejercicio (similar a LessonCard)
   const [userTypedAnswer, setUserTypedAnswer] = useState("");
-  const [matchFeedback, setMatchFeedback] = useState(null);
-  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
-  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
+  // matchFeedback, showCorrectAnswer, recordedMicrophoneText ahora son locales de PracticeChatInterface
+  const [matchFeedback, setMatchFeedback] = useState(null); // <-- Mantenemos aquí para PracticeExerciseDisplay
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // <-- Mantenemos aquí para PracticeExerciseDisplay
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState(""); // <-- Mantenemos aquí para PracticeExerciseDisplay
   const [isAnswerVisible, setIsAnswerVisible] = useState(false); // Para traducción
 
   // Estado para el diálogo de chat (si el tipo es practice_chat)
@@ -44,9 +41,9 @@ const PracticePage = () => {
 
     // Resetear estados de interacción
     setUserTypedAnswer("");
-    setMatchFeedback(null);
-    setShowCorrectAnswer(false);
-    setRecordedMicrophoneText("");
+    setMatchFeedback(null); // Resetear
+    setShowCorrectAnswer(false); // Resetear
+    setRecordedMicrophoneText(""); // Resetear
     setIsAnswerVisible(false);
     setCurrentDialogueIndex(0); // Resetear diálogo
 
@@ -94,8 +91,7 @@ const PracticePage = () => {
 
     if (
       currentExercise.Type === "practice_fill_in_the_blank" ||
-      currentExercise.Type === "practice_multiple_choice" ||
-      currentExercise.Type === "practice_chat"
+      currentExercise.Type === "practice_multiple_choice"
     ) {
       normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || "");
     } else if (currentExercise.Type === "practice_listening") {
@@ -108,22 +104,7 @@ const PracticePage = () => {
       setMatchFeedback("correct");
       setShowCorrectAnswer(true);
       setAppMessage("¡Correcto!");
-      // Lógica específica para chat al acertar
-      if (currentExercise.Type === "practice_chat") {
-        const nextDialogueStep = currentDialogueIndex + 1;
-        if (
-          currentExercise.DialogueSequence &&
-          currentExercise.DialogueSequence[nextDialogueStep]
-        ) {
-          setCurrentDialogueIndex(nextDialogueStep); // Avanza al siguiente paso del diálogo
-          setUserTypedAnswer(""); // Limpia el input para la siguiente respuesta del usuario
-          setMatchFeedback(null); // Reinicia feedback para el siguiente paso
-          setShowCorrectAnswer(false);
-        } else {
-          setAppMessage("¡Diálogo completado!");
-          // Opcional: Cargar el siguiente ejercicio de práctica
-        }
-      }
+      // Lógica específica para chat al acertar (gestionada por PracticeChatInterface)
     } else {
       setMatchFeedback("incorrect");
       setShowCorrectAnswer(true);
@@ -151,8 +132,9 @@ const PracticePage = () => {
   };
 
   const handleSpeechResultForListening = (transcript) => {
-    setRecordedMicrophoneText(transcript);
-    if (matchFeedback !== null) return;
+    setRecordedMicrophoneText(transcript); // Actualiza el estado del texto grabado
+    // Lógica de verificación para listening (si no es chat)
+    if (matchFeedback !== null) return; // No re-evaluar si ya se dio feedback
 
     const normalizedTranscript = normalizeText(transcript);
     const normalizedQuestionEN = normalizeText(
@@ -208,16 +190,14 @@ const PracticePage = () => {
               appIsLoading={appIsLoading}
               userTypedAnswer={userTypedAnswer}
               setUserTypedAnswer={setUserTypedAnswer}
-              matchFeedback={matchFeedback}
-              setMatchFeedback={setMatchFeedback}
-              handleCheckAnswer={handleCheckAnswer}
+              // matchFeedback={matchFeedback} // NO PASAR: gestionado internamente por PracticeChatInterface
+              // setMatchFeedback={setMatchFeedback} // NO PASAR: gestionado internamente por PracticeChatInterface
               setAppMessage={setAppMessage}
-              setShowCorrectAnswer={setShowCorrectAnswer}
-              showCorrectAnswer={showCorrectAnswer}
-              recordedMicrophoneText={recordedMicrophoneText}
-              handleSpeechResultForListening={handleSpeechResultForListening}
-              // Pasar AnswerEN para la verificación
-              expectedAnswerEN={currentExercise.AnswerEN}
+              // setShowCorrectAnswer={setShowCorrectAnswer} // NO PASAR: gestionado internamente
+              // showCorrectAnswer={showCorrectAnswer} // NO PASAR: gestionado internamente
+              // recordedMicrophoneText={recordedMicrophoneText} // NO PASAR: gestionado internamente
+              // handleSpeechResultForListening={handleSpeechResultForListening} // NO PASAR: gestionado internamente
+              expectedAnswerEN={currentExercise.AnswerEN} // Pasar la respuesta esperada para el chat
             />
           ) : (
             <PracticeExerciseDisplay
@@ -227,12 +207,12 @@ const PracticePage = () => {
               appIsLoading={appIsLoading}
               userTypedAnswer={userTypedAnswer}
               setUserTypedAnswer={setUserTypedAnswer}
-              matchFeedback={matchFeedback}
-              showCorrectAnswer={showCorrectAnswer}
-              recordedMicrophoneText={recordedMicrophoneText}
-              handleCheckAnswer={handleCheckAnswer}
-              handleOptionClick={handleOptionClick}
-              handleSpeechResultForListening={handleSpeechResultForListening}
+              matchFeedback={matchFeedback} // <-- Pasar matchFeedback
+              showCorrectAnswer={showCorrectAnswer} // <-- Pasar showCorrectAnswer
+              recordedMicrophoneText={recordedMicrophoneText} // <-- Pasar recordedMicrophoneText
+              handleCheckAnswer={handleCheckAnswer} // <-- Pasar handleCheckAnswer
+              handleOptionClick={handleOptionClick} // <-- Pasar handleOptionClick
+              handleSpeechResultForListening={handleSpeechResultForListening} // <-- Pasar handleSpeechResultForListening
               isAnswerVisible={isAnswerVisible}
               setIsAnswerVisible={setIsAnswerVisible}
             />
