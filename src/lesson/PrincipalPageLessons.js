@@ -32,7 +32,8 @@ const PrincipalPageLessons = () => {
   const [selectedLesson, setSelectedLesson] = useState(null); // La lección actualmente seleccionada para ver en detalle
 
   // --- Bandera temporal para generar solo un módulo ---
-  const GENERATE_SINGLE_MODULE_TEMPORARILY = true; // CÁMBIALO A 'false' CUANDO QUIERAS GENERAR MÚLTIPLES MÓDULOS POR VERBO
+  // CÁMBIALA A 'false' CUANDO QUIERAS GENERAR MÚLTIPLES MÓDULOS POR VERBO (para verbos)
+  const GENERATE_SINGLE_MODULE_TEMPORARILY = true;
 
   // Define el orden y tipos exactos de los 12 ejercicios
   const EXERCISE_ORDER_SCHEMA = [
@@ -233,11 +234,8 @@ const PrincipalPageLessons = () => {
           setMessage(
             `Se han generado ${generatedLessons.length} lección(es) y se han añadido a la lista.`
           );
-          if (generatedLessons.length === 1) {
-            setSelectedLesson(generatedLessons[0]);
-          } else if (generatedLessons.length > 1) {
-            setSelectedLesson(null);
-          }
+          // NO SELECCIONAR AUTOMÁTICAMENTE: solo recargar la lista
+          setSelectedLesson(null); // Asegura que la vista vuelva a la lista
         } else {
           setMessage(
             "Lecciones generadas, pero hubo un error al recargar la lista."
@@ -291,11 +289,10 @@ const PrincipalPageLessons = () => {
       <Link to='/' className='button back-button top-back-button'>
         Volver a la pantalla principal
       </Link>
-      <h1 className='app-title'>Generador de Lecciones</h1>
+      <h1 className='app-title'>Generador de Lecciones</h1>{" "}
       <p className='info-text'>
         Genera lecciones personalizadas con la ayuda de la IA.
       </p>
-
       {/* Mostrar mensajes de carga o error */}
       <MessageDisplay message={message} isLoading={isLoading} />
       {error && (
@@ -303,8 +300,6 @@ const PrincipalPageLessons = () => {
           <span className='message-text'>{error}</span>
         </div>
       )}
-
-      {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
       {selectedLesson ? (
         <LessonCard lesson={selectedLesson} onBack={handleBackToLessonList} />
       ) : (
@@ -345,20 +340,6 @@ const PrincipalPageLessons = () => {
               </select>
             </div>
 
-            {/* La cantidad de ejercicios y los tipos ya no se eligen, se fijan por el esquema */}
-            {/* <div className='input-group-vertical'>
-              <label htmlFor='exercise-count-input' className='input-label'>Cantidad de Ejercicios:</label>
-              <input
-                id='exercise-count-input'
-                type='number'
-                className='input-field'
-                min='1'
-                value={exerciseCount}
-                onChange={(e) => setExerciseCount(parseInt(e.target.value) || 0)}
-                disabled={isLoading}
-              />
-            </div> */}
-
             <div className='input-group-vertical'>
               <span className='input-label'>
                 Tipos de Ejercicio (Orden Fijo):
@@ -380,6 +361,11 @@ const PrincipalPageLessons = () => {
               Se generarán {EXERCISE_ORDER_SCHEMA.length} ejercicios siguiendo
               el orden predefinido. Si ingresas un verbo, se generará una
               lección separada para cada tiempo verbal.
+              <br />
+              **Nota**: La generación de una única lección por tema/verbo está
+              actualmente activa para facilitar ajustes. Desactiva
+              `GENERATE_SINGLE_MODULE_TEMPORARILY` en el código para la
+              generación de múltiples lecciones de verbos.
             </p>
 
             <div className='input-group-vertical'>
@@ -412,7 +398,8 @@ const PrincipalPageLessons = () => {
               <p className='info-text'>Cargando lecciones...</p>
             ) : availableLessons.length === 0 ? (
               <p className='info-text'>
-                No hay lecciones guardadas. ¡Genera una para empezar!
+                No hay lecciones guardadas. Por favor, genera algunas desde el
+                backend.
               </p>
             ) : (
               <div className='lessons-buttons-grid'>

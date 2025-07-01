@@ -1,8 +1,7 @@
 // src/lesson/LessonCard.js
 import React, { useState, useEffect, useContext } from "react"; // Importar useContext y useEffect
 import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones
-import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto
-// SpeechToTextButton, ExerciseDisplay, ExerciseNavigation se importan dentro de ExerciseDisplay o aquí si es necesario
+import { normalizeText, renderClickableText } from "../utils/textUtils";
 import ExerciseDisplay from "./components/ExerciseDisplay";
 import ExerciseNavigation from "./components/ExerciseNavigation";
 
@@ -21,8 +20,8 @@ const LessonCard = ({ lesson, onBack }) => {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
   // Estados para la entrada del usuario y el feedback en ejercicios interactivos
   const [userTypedAnswer, setUserTypedAnswer] = useState("");
-  const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
-  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // Para mostrar la respuesta correcta si falla
+  const [matchFeedback, setMatchFeedback] = useState(null);
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   // Nuevo estado para el texto grabado por el micrófono en el ejercicio de escucha
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
@@ -33,7 +32,7 @@ const LessonCard = ({ lesson, onBack }) => {
     setUserTypedAnswer("");
     setMatchFeedback(null);
     setShowCorrectAnswer(false);
-    setRecordedMicrophoneText(""); // Limpiar texto del micrófono
+    setRecordedMicrophoneText("");
     // Asegurarse de que el índice del ejercicio actual no exceda el límite si la lección cambia dinámicamente
     if (
       lesson &&
@@ -62,8 +61,6 @@ const LessonCard = ({ lesson, onBack }) => {
   const currentExercise = lesson.exercises[currentExerciseIndex];
 
   const handleNextExercise = () => {
-    // Solo permitir avanzar si el ejercicio actual ha sido respondido o si no requiere respuesta.
-    // Para los que requieren respuesta (fill_in_the_blank, multiple_choice, listening), matchFeedback no debe ser null.
     const requiresAnswer = [
       "fill_in_the_blank",
       "multiple_choice",
@@ -78,17 +75,16 @@ const LessonCard = ({ lesson, onBack }) => {
 
     if (currentExerciseIndex < lesson.exercises.length - 1) {
       setCurrentExerciseIndex((prev) => prev + 1);
-      setAppMessage(""); // Limpiar mensaje al avanzar
+      setAppMessage("");
     } else {
       setAppMessage("¡Has completado esta lección!");
-      // Aquí podrías volver a la lista de lecciones o mostrar un resumen
     }
   };
 
   const handlePrevExercise = () => {
     if (currentExerciseIndex > 0) {
       setCurrentExerciseIndex((prev) => prev - 1);
-      setAppMessage(""); // Limpiar mensaje al retroceder
+      setAppMessage("");
     }
   };
 
@@ -102,16 +98,15 @@ const LessonCard = ({ lesson, onBack }) => {
     const normalizedUserAnswer = normalizeText(userTypedAnswer);
     let normalizedCorrectAnswer;
 
-    // Lógica de verificación basada en el tipo de ejercicio
     if (
       currentExercise.Type === "fill_in_the_blank" ||
       currentExercise.Type === "multiple_choice"
     ) {
-      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || ""); // <-- Usa AnswerEN y normaliza
+      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || "");
     } else if (currentExercise.Type === "listening") {
-      normalizedCorrectAnswer = normalizeText(currentExercise.QuestionEN || ""); // <-- Usa QuestionEN y normaliza para escucha
+      normalizedCorrectAnswer = normalizeText(currentExercise.QuestionEN || "");
     } else {
-      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerES || ""); // Fallback para otros tipos
+      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerES || "");
     }
 
     if (normalizedUserAnswer === normalizedCorrectAnswer) {
@@ -127,10 +122,10 @@ const LessonCard = ({ lesson, onBack }) => {
 
   const handleOptionClick = (selectedOption) => {
     if (matchFeedback !== null) return;
-    setUserTypedAnswer(selectedOption); // Almacenar la opción seleccionada
+    setUserTypedAnswer(selectedOption);
 
     const normalizedSelected = normalizeText(selectedOption);
-    const normalizedCorrect = normalizeText(currentExercise.AnswerEN || ""); // <-- Compara con AnswerEN y normaliza
+    const normalizedCorrect = normalizeText(currentExercise.AnswerEN || "");
 
     if (normalizedSelected === normalizedCorrect) {
       setMatchFeedback("correct");
@@ -143,10 +138,6 @@ const LessonCard = ({ lesson, onBack }) => {
     }
   };
 
-  /**
-   * Maneja el resultado del reconocimiento de voz para el ejercicio de escucha.
-   * Compara lo que el usuario dijo con QuestionEN.
-   */
   const handleSpeechResultForListening = (transcript) => {
     setRecordedMicrophoneText(transcript);
     if (matchFeedback !== null) return;
@@ -154,7 +145,7 @@ const LessonCard = ({ lesson, onBack }) => {
     const normalizedTranscript = normalizeText(transcript);
     const normalizedQuestionEN = normalizeText(
       currentExercise.QuestionEN || ""
-    ); // <-- Usa QuestionEN y normaliza
+    );
 
     if (normalizedTranscript === normalizedQuestionEN) {
       setMatchFeedback("correct");
@@ -177,6 +168,29 @@ const LessonCard = ({ lesson, onBack }) => {
       </p>
       <p className='lesson-description'>{lesson.Description}</p>
 
+      {/* Mostrar notas de la lección (si existen) */}
+      {currentExercise.Notes && (
+        <div className='section-container lesson-notes'>
+          <h3 className='subsection-title'>Notas:</h3>
+          <p>{currentExercise.Notes}</p>
+        </div>
+      )}
+
+      {/* NUEVO: Mostrar la imagen del ejercicio si existe */}
+      {currentExercise.Image && (
+        <div className='exercise-image-container'>
+          <img
+            src={currentExercise.Image}
+            alt={`Imagen para ${currentExercise.Type} ejercicio`}
+            className='exercise-image'
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = `https://placehold.co/300x200/cccccc/ffffff?text=No+Image`;
+            }} // Fallback
+          />
+        </div>
+      )}
+
       <div
         className={`card-container lesson-exercise-card ${
           matchFeedback ? `match-${matchFeedback}` : ""
@@ -195,7 +209,6 @@ const LessonCard = ({ lesson, onBack }) => {
           matchFeedback={matchFeedback}
           showCorrectAnswer={showCorrectAnswer}
           recordedMicrophoneText={recordedMicrophoneText}
-          // Pasar las funciones handle que se adaptan al tipo de ejercicio
           handleCheckAnswer={handleCheckAnswer}
           handleOptionClick={handleOptionClick}
           handleSpeechResultForListening={handleSpeechResultForListening}

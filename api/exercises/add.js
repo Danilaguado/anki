@@ -1,5 +1,5 @@
 // api/exercises/add.js
-// Endpoint para añadir un nuevo ejercicio a la hoja "Exercises" en Google Sheets.
+// Endpoint para añadir un nuevo ejercicio a la hoja "Exercises".
 
 import { google } from "googleapis";
 import { v4 as uuidv4 } from "uuid";
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // Desestructurar los datos esperados del cuerpo de la solicitud (QuestionES y AnswerEN son nuevos)
+  // Desestructurar los datos esperados del cuerpo de la solicitud
   let {
     lessonId,
     type,
@@ -26,9 +26,10 @@ export default async function handler(req, res) {
     optionsEN,
     orderInLesson,
     notes,
+    image,
   } = req.body;
 
-  // Validar que los campos esenciales no estén vacíos. Ajustado para nuevos campos.
+  // Validar que los campos esenciales no estén vacíos.
   if (!lessonId || !type || !questionEN || orderInLesson === undefined) {
     return res.status(400).json({
       success: false,
@@ -87,22 +88,25 @@ export default async function handler(req, res) {
           break;
         case "QuestionES":
           newRow[index] = questionES || "";
-          break; // Mapear QuestionES
+          break;
         case "AnswerEN":
           newRow[index] = answerEN || "";
-          break; // Mapear AnswerEN
+          break;
         case "AnswerES":
           newRow[index] = answerES || "";
-          break; // Mapear AnswerES
+          break;
         case "OptionsEN":
           newRow[index] = optionsEN ? JSON.stringify(optionsEN) : "";
-          break; // Usar OptionsEN
+          break;
         case "OrderInLesson":
           newRow[index] = orderInLesson;
           break;
         case "Notes":
           newRow[index] = notes || "";
           break;
+        case "Image":
+          newRow[index] = image || "";
+          break; // Mapear Image
         default:
           break;
       }
@@ -126,12 +130,13 @@ export default async function handler(req, res) {
           lessonId,
           type,
           questionEN,
-          questionES, // Devolver QuestionES
-          answerEN, // Devolver AnswerEN
+          questionES,
+          answerEN,
           answerES,
-          optionsEN, // Devolver OptionsEN
+          optionsEN,
           orderInLesson,
           notes,
+          image,
         },
       });
     } else {

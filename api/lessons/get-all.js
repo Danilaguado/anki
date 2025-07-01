@@ -3,8 +3,7 @@
 
 import { google } from "googleapis";
 
-// Tu ID de Google Sheet. ¡IMPORTANTE! Reemplázalo.
-const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M";
+const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // ¡IMPORTANTE! Reemplaza con el ID de tu Google Sheet
 const MODULES_SHEET_NAME = "Modules";
 const EXERCISES_SHEET_NAME = "Exercises";
 
@@ -41,12 +40,26 @@ export default async function handler(req, res) {
     const modulesHeaders = modulesData[0];
     const rawLessons = modulesData.slice(1); // Excluir encabezados
 
-    const lessons = rawLessons.map((row) => {
+    let lessons = rawLessons.map((row) => {
       const lesson = {};
       modulesHeaders.forEach((header, index) => {
         lesson[header] = row[index];
       });
       return lesson;
+    });
+
+    // NUEVO: Ordenar las lecciones por OrderInPage
+    lessons.sort((a, b) => {
+      // Intenta parsear OrderInPage como número. Si es nulo o no es un número, lo trata como un valor muy alto para que vaya al final.
+      const orderA = parseInt(a.OrderInPage, 10);
+      const orderB = parseInt(b.OrderInPage, 10);
+
+      // Manejar casos donde OrderInPage no es un número o está vacío
+      if (isNaN(orderA) && isNaN(orderB)) return 0; // Ambos no son números, mantener orden original
+      if (isNaN(orderA)) return 1; // A no es número, B es número, B va primero
+      if (isNaN(orderB)) return -1; // B no es número, A es número, A va primero
+
+      return orderA - orderB;
     });
 
     // 2. Obtener todos los ejercicios
@@ -67,7 +80,6 @@ export default async function handler(req, res) {
         exercisesHeaders.forEach((header, index) => {
           // Intentar parsear OptionsEN si es un string JSON
           if (header === "OptionsEN" && row[index]) {
-            // Leer de OptionsEN
             try {
               exercise[header] = JSON.parse(row[index]);
             } catch (e) {

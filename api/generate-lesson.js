@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid"; // Para generar IDs únicos
 // Tu ID de Google Sheet. ¡IMPORTANTE! Reemplázalo.
 const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // ¡IMPORTANTE! Reemplaza con el ID de tu Google Sheet
 const MODULES_SHEET_NAME = "Modules";
-const EXERCISES_SHEET_NAME = "Exercises";
+const EXERCISES_SHEET_NAME = "Exercises"; // Ojo: si creaste una hoja separada para prácticas, este nombre debe cambiar aquí y en get-all/add-exercise
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     });
   }
 
-  // --- Construcción del Prompt para Gemini (¡Lógica clave para la coherencia y el refuerzo!) ---
+  // --- Construcción del Prompt para Gemini (¡Lógica clave para la coherencia!) ---
   // Se presenta a Gemini como un "maestro" y se refuerza el foco en el tema.
   let geminiPrompt = `You are an experienced and friendly English teacher, specializing in creating coherent and reinforcing lessons for ${difficulty} level Spanish speakers. The goal of this lesson is deep learning and practical application, not just testing. All exercises MUST revolve strictly around the topic/verb: "${topic}".`;
 
@@ -36,6 +36,7 @@ export default async function handler(req, res) {
     geminiPrompt += ` Special instruction for lesson content: ${customPrompt}.`;
   }
 
+  // INSTRUCCIONES REFORZADAS PARA COHERENCIA Y REUTILIZACIÓN DE FRASES CLAVE
   geminiPrompt += `
   **Learning Strategy: Reinforcement and Contextual Introduction**
   
@@ -61,10 +62,12 @@ export default async function handler(req, res) {
     - For 'multiple_choice': This is the correct English option among the choices.
     - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
     - For 'translation': This is the English phrase from 'questionEN'.
+    - For 'practice_chat': This is the English phrase spoken by the AI for the current step of the dialogue.
   -   'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
   -   **'optionsEN': For 'multiple_choice' exercises, this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN' as one of them.** The options should be plausible and related to the context. For other exercise types, this array must be empty. The order within this array does not matter as the frontend will randomize it.
   -   'orderInLesson': Sequential number from 1 to ${exerciseCount}.
   -   'notes': (CRITICAL FOR LEARNING) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
+  -   **'dialogueSequence'**: (NEW for 'practice_chat' type) This must be a JSON array of objects defining the chat flow. Each object has 'speaker' ('ai' or 'user') and either 'phraseEN'/'phraseES' (for AI) or 'expectedEN' (for user's expected input). Example: [{"speaker": "ai", "phraseEN": "Hi there!", "phraseES": "¡Hola!"}, {"speaker": "user", "expectedEN": "How are you?"}, {"speaker": "ai", "phraseEN": "I'm good, thanks!", "phraseES": "Estoy bien, ¡gracias!"}]. This array must be empty for other types.
   
   **Specific Requirements by Exercise Type (Reinforced Coherence):**
   
@@ -75,7 +78,7 @@ export default async function handler(req, res) {
       -   'notes': For Ex. 1, explain CORE_PHRASE_1 thoroughly with 2 examples. For Ex. 2 and 3, explain any new vocabulary or reinforce the meaning of the core phrase (CORE_PHRASE_2 or CORE_PHRASE_3) if applicable.
   
   -   **'fill_in_the_blank' (Exercises 4, 5, 6)**:
-      -   'questionEN': A sentence in English with exactly one '_______' placeholder. The word that fills this blank **MUST be the 'answerEN'** (e.g., if 'answerEN' is "get", then 'questionEN' could be "I need to _______ a new job."). The sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6).
+      -   'questionEN': A sentence in English with exactly one '_______' placeholder. The word that fills this blank **MUST be the 'answerEN'** (e.g., if 'answerEN' is "get", then 'questionEN' could be "I need to _______ a new job."). The sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
       -   'questionES': **The complete Spanish translation of 'questionEN' *with the blank correctly filled in Spanish*. This is the direct hint/guide for the user.** For example, if 'questionEN' is "I need to _______ a new job." and 'answerEN' is "get", then 'questionES' should be "Necesito conseguir un nuevo trabajo.".
       -   'answerEN': The English word/phrase that fills the blank. (Must correspond to the core phrase from Ex. 1, 2, or 3).
   
@@ -88,6 +91,12 @@ export default async function handler(req, res) {
       -   'questionEN': An English sentence/phrase to listen to. This sentence **MUST be CORE_PHRASE_1 (Ex.10), CORE_PHRASE_2 (Ex.11), CORE_PHRASE_3 (Ex.12).**
       -   'questionES': The correct Spanish translation of 'questionEN'.
       -   'answerEN': The original 'questionEN' text itself (for validation).
+  
+  -   **'practice_chat' (Example for future use, not part of current 12-exercise schema):**
+      -   'questionEN': An introductory English phrase for the chat.
+      -   'questionES': Spanish translation of the intro phrase.
+      -   'answerEN': The expected *first* English response from the user in the dialogue.
+      -   'dialogueSequence': A JSON array defining the full chat flow. This will be the main content.
   
   Ensure the entire response is a valid JSON array of EXACTLY ${exerciseCount} exercise objects, nothing more, nothing less.`;
 
@@ -143,6 +152,20 @@ export default async function handler(req, res) {
                 },
                 orderInLesson: { type: "NUMBER" },
                 notes: { type: "STRING" },
+                dialogueSequence: {
+                  // Nuevo campo para practice_chat
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      speaker: { type: "STRING" },
+                      phraseEN: { type: "STRING" },
+                      phraseES: { type: "STRING" },
+                      expectedEN: { type: "STRING" },
+                    },
+                    required: ["speaker"],
+                  },
+                },
               },
               required: [
                 "type",
@@ -251,6 +274,9 @@ export default async function handler(req, res) {
         case "PromptUsed":
           newModuleRow[index] = geminiPrompt || "";
           break;
+        case "OrderInPage":
+          newModuleRow[index] = "";
+          break; // Se deja vacío para edición manual
         default:
           newModuleRow[index] = "";
       }
@@ -270,7 +296,7 @@ export default async function handler(req, res) {
       range: `${EXERCISES_SHEET_NAME}!1:1`,
     });
     const exercisesHeaders = exercisesHeadersResponse.data.values
-      ? exercisesHeadersResponse.data.values[0]
+      ? exercisesExercisesHeaders.data.values[0]
       : [];
     console.log("Exercises sheet headers obtained:", exercisesHeaders);
 
@@ -316,6 +342,14 @@ export default async function handler(req, res) {
           case "Notes":
             newExerciseRow[index] = exercise.notes || "";
             break;
+          case "Image":
+            newExerciseRow[index] = exercise.image || "";
+            break; // Mapear Image (si Gemini la genera)
+          case "DialogueSequence":
+            newExerciseRow[index] = exercise.dialogueSequence
+              ? JSON.stringify(exercise.dialogueSequence)
+              : "";
+            break; // Mapear DialogueSequence
           default:
             newExerciseRow[index] = "";
         }
