@@ -1,13 +1,13 @@
 // src/lesson/components/lessonCard.js
 import React, { useState, useEffect, useContext } from "react";
-import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones
-import { normalizeText, renderClickableText } from "../utils/textUtils"; // Subir dos niveles para utils
-import ExerciseDisplay from "./components/ExerciseDisplay"; // ¡CORREGIDO! Ahora en la misma carpeta
-import ExerciseNavigation from "./components/ExerciseNavigation"; // ¡CORREGIDO! Ahora en la misma carpeta
-import PracticeChatInterface from "../practice/PracticeChatInterface"; // ¡CORREGIDO! Subir dos niveles para Practice
+import "../PrincipalPageLessons.css"; // ¡CORREGIDO! Subir un nivel para encontrar PrincipalPageLessons.css
+import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Subir dos niveles para utils
+import ExerciseDisplay from "./ExerciseDisplay"; // Correcto: en la misma carpeta
+import ExerciseNavigation from "./ExerciseNavigation"; // Correcto: en la misma carpeta
+import PracticeChatInterface from "../../Practice/components/PracticeChatInterface"; // Correcto: Subir dos niveles para Practice
 
 // Importar el contexto
-import AppContext from "../context/AppContext"; // Subir dos niveles para context
+import AppContext from "../../context/AppContext"; // Correcto: Subir dos niveles para context
 
 const LessonCard = ({ lesson, onBack }) => {
   // Consumir valores del contexto
