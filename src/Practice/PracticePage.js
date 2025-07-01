@@ -5,7 +5,7 @@ import MessageDisplay from "../components/MessageDisplay";
 // ¡CORREGIDO! Rutas de importación directas
 import PracticeExerciseDisplay from "./PracticeExerciseDisplay"; // Ahora está en el mismo nivel
 import PracticeChatInterface from "./PracticeChatInterface"; // Ahora está en el mismo nivel
-
+import { normalizeText } from "../utils/textUtils";
 // Importa el contexto
 import AppContext from "../context/AppContext";
 
