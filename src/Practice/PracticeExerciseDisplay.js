@@ -1,6 +1,6 @@
 // src/lesson/components/ExerciseDisplay.js
 import React, { useContext } from "react";
-import { normalizeText, renderClickableText } from "../../utils/textUtils";
+import { normalizeText, renderClickableText } from "../utils/textUtils";
 import SpeechToTextButton from "../../components/SpeechToTextButton";
 
 // Importa el contexto

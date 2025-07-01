@@ -1,6 +1,6 @@
 // src/Practice/components/PracticeChatInterface.js
 import React, { useState, useEffect, useRef } from "react";
-import { normalizeText } from "../../utils/textUtils";
+import { normalizeText } from "../utils/textUtils";
 import SpeechToTextButton from "../../components/SpeechToTextButton";
 
 const PracticeChatInterface = ({
