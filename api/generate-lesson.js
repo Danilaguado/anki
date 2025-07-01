@@ -7,9 +7,16 @@ import { v4 as uuidv4 } from "uuid"; // Para generar IDs únicos
 // Tu ID de Google Sheet. ¡IMPORTANTE! Reemplázalo.
 const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // ¡IMPORTANTE! Reemplaza con el ID de tu Google Sheet
 const MODULES_SHEET_NAME = "Modules";
-const EXERCISES_SHEET_NAME = "Exercises"; // Ojo: si creaste una hoja separada para prácticas, este nombre debe cambiar aquí y en get-all/add-exercise
+const EXERCISES_SHEET_NAME = "Exercises";
 
 export default async function handler(req, res) {
+  // --- LOG DE DEPURACIÓN CRÍTICO ---
+  console.log(
+    "DEBUG: SPREADSHEET_ID visto en el backend al inicio del handler:",
+    SPREADSHEET_ID
+  );
+  // --- FIN LOG DE DEPURACIÓN ---
+
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -24,7 +31,7 @@ export default async function handler(req, res) {
     exerciseTypes,
     customPrompt,
     moduleType,
-  } = req.body; // <-- Añadido moduleType
+  } = req.body; // <-- moduleType recibido
 
   if (!topic || !difficulty || !exerciseCount || !moduleType) {
     return res.status(400).json({
@@ -35,11 +42,10 @@ export default async function handler(req, res) {
   }
 
   let geminiPrompt = "";
-  let exercisesSchemaForGemini = []; // El esquema de ejercicios que Gemini debe seguir
+  let exercisesSchemaForGemini = [];
 
-  // --- Construcción del Prompt para Gemini (Condicional por moduleType) ---
   if (moduleType === "standard_lesson") {
-    exercisesSchemaForGemini = exerciseTypes; // Para lección estándar, exerciseTypes es el esquema de orden
+    exercisesSchemaForGemini = exerciseTypes;
     geminiPrompt =
       customPrompt ||
       `You are an experienced and friendly English teacher, specializing in creating coherent and reinforcing lessons for ${difficulty} level Spanish speakers. The goal of this lesson is deep learning and practical application, not just testing. All exercises MUST revolve strictly around the topic/verb: "${topic}".`;
@@ -74,7 +80,7 @@ export default async function handler(req, res) {
       - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
       - For 'translation': This is the English phrase from 'questionEN'.
     -   'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
-    -   **'optionsEN': For 'multiple_choice' exercises, this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN' as one of them.** The options should be plausible and related to the context. For other exercise types, this array must be empty. The order within this array does not matter as the frontend will randomize it.
+    -   **'optionsEN': For 'multiple_choice' exercises, this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN' as one of them.** The options should be plausible and related to the context. For other exercise types, this array must be empty. The order within this array does not matters as the frontend will randomize it.
     -   'orderInLesson': Sequential number from 1 to ${exerciseCount}.
     -   'notes': (CRITICAL FOR LEARNING) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
     
@@ -88,7 +94,7 @@ export default async function handler(req, res) {
     
     -   **'fill_in_the_blank' (Exercises 4, 5, 6)**:
         -   'questionEN': A sentence in English with exactly one '_______' placeholder. The word that fills this blank **MUST be the 'answerEN'** (e.g., if 'answerEN' is "get", then 'questionEN' could be "I need to _______ a new job."). The sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
-        -   'questionES': **The complete Spanish translation of 'questionEN' *con el espacio rellenado correctamente en español*. Esta es la pista/guía directa para el usuario.** For example, if 'questionEN' is "I need to _______ a new job." and 'answerEN' is "get", then 'questionES' should be "Necesito conseguir un nuevo trabajo.".
+        -   'questionES': **The complete Spanish translation of 'questionEN' *con el espacio rellenado correctamente en español*. Esta es la pista/guía directa para el usuario.** Por ejemplo, si 'questionEN' es "I need to _______ a new job." y 'answerEN' es "get", entonces 'questionES' debería ser "Necesito conseguir un nuevo trabajo.".
         -   'answerEN': The English word/phrase that fills the blank. (Must correspond to the core phrase from Ex. 1, 2, or 3).
     
     -   **'translation' (Exercises 7, 8, 9)**:
@@ -129,7 +135,7 @@ export default async function handler(req, res) {
     **Lesson Structure for Chatbot Module:**
     
     1.  **Exercise 1 (type: 'practice_chat')**: This is the core dialogue.
-        -   'questionEN': An introductory English phrase for the chat scenario.
+        -   'questionEN': An introductory English phrase for the chat.
         -   'questionES': Spanish translation of the intro phrase.
         -   'answerEN': The expected *first* English response from the user to start the dialogue.
         -   'answerES': Spanish translation of 'answerEN'.
@@ -163,7 +169,6 @@ export default async function handler(req, res) {
       SPREADSHEET_ID
     );
     if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
-      // <-- ¡ESTA ES LA LÍNEA QUE SE CORRIGIÓ!
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
       );
@@ -338,6 +343,9 @@ export default async function handler(req, res) {
         case "OrderInPage":
           newModuleRow[index] = "";
           break; // Se deja vacío para edición manual
+        case "TypeModule":
+          newModuleRow[index] = moduleType;
+          break; // ¡NUEVO! Guardar el tipo de módulo
         default:
           newModuleRow[index] = "";
       }
@@ -379,7 +387,7 @@ export default async function handler(req, res) {
             break;
           case "Type":
             newExerciseRow[index] = exercise.type;
-            break; // Mapear el tipo de ejercicio (ej. practice_chat)
+            break;
           case "QuestionEN":
             newExerciseRow[index] = exercise.questionEN;
             break;
@@ -446,7 +454,8 @@ export default async function handler(req, res) {
           GeneratedDate: generatedDate,
           GeneratedBy: "Gemini",
           PromptUsed: geminiPrompt,
-        },
+          TypeModule: moduleType,
+        }, // ¡NUEVO! Devolver el tipo de módulo
         exercises: generatedExercises,
       },
     });
