@@ -1,13 +1,13 @@
-// src/lesson/LessonCard.js
+// src/lesson/components/lessonCard.js
 import React, { useState, useEffect, useContext } from "react";
 import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones
-import { normalizeText, renderClickableText } from "../utils/textUtils";
-import ExerciseDisplay from "./components/ExerciseDisplay"; // Componente para ejercicios estándar
-import ExerciseNavigation from "./components/ExerciseNavigation";
-import PracticeChatInterface from "./Practice/PracticeChatInterface"; // ¡Importar el componente de chat!
+import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Subir dos niveles para utils
+import ExerciseDisplay from "./ExerciseDisplay"; // ¡CORREGIDO! Ahora en la misma carpeta
+import ExerciseNavigation from "./ExerciseNavigation"; // ¡CORREGIDO! Ahora en la misma carpeta
+import PracticeChatInterface from "../../Practice/components/PracticeChatInterface"; // ¡CORREGIDO! Subir dos niveles para Practice
 
 // Importar el contexto
-import AppContext from "../context/AppContext";
+import AppContext from "../../context/AppContext"; // Subir dos niveles para context
 
 const LessonCard = ({ lesson, onBack }) => {
   // Consumir valores del contexto
@@ -60,9 +60,6 @@ const LessonCard = ({ lesson, onBack }) => {
 
   // --- Funciones de manejo de ejercicios (pasadas a ExerciseDisplay o usadas directamente) ---
   const handleNextExercise = () => {
-    // Para ejercicios de chat, el avance lo gestiona PracticeChatInterface internamente.
-    // Solo avanzamos aquí cuando PracticeChatInterface nos notifica que el diálogo terminó.
-    // Para otros tipos, la lógica de validación se mantiene.
     const requiresAnswer = [
       "fill_in_the_blank",
       "multiple_choice",
@@ -265,7 +262,12 @@ const LessonCard = ({ lesson, onBack }) => {
             currentExercise.Type === "practice_chat" &&
             currentExercise.DialogueSequence &&
             currentExercise.DialogueSequence.length > 0 &&
-            currentDialogueStep >= currentExercise.DialogueSequence.length
+            (currentExercise.DialogueSequence[
+              currentExercise.DialogueSequence.length - 1
+            ]?.speaker === "ai"
+              ? currentDialogueIndex >= currentExercise.DialogueSequence.length
+              : currentDialogueIndex >=
+                currentExercise.DialogueSequence.length - 1)
           } // Verifica si el diálogo ha avanzado hasta el final
         />
       </div>
