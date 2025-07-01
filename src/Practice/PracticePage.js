@@ -1,13 +1,13 @@
 // src/Practice/PracticePage.js
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-import MessageDisplay from "../components/MessageDisplay";
-// ¡CORREGIDO! Rutas de importación directas
+import MessageDisplay from "../components/MessageDisplay"; // Sube a src/, baja a components/
+// ¡CORREGIDO! Rutas de importación directas en Practice/
 import PracticeExerciseDisplay from "./PracticeExerciseDisplay"; // Ahora está en el mismo nivel
 import PracticeChatInterface from "./PracticeChatInterface"; // Ahora está en el mismo nivel
-import { normalizeText } from "../utils/textUtils";
+
 // Importa el contexto
-import AppContext from "../context/AppContext";
+import AppContext from "../context/AppContext"; // Sube a src/, baja a context/
 
 const PracticePage = () => {
   // Consumir valores del contexto

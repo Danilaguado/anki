@@ -6,23 +6,22 @@ import SpeechToTextButton from "../components/SpeechToTextButton";
 // Importa el contexto
 import AppContext from "../context/AppContext";
 
-const ExerciseDisplay = ({
+const PracticeExerciseDisplay = ({
   currentExercise,
-  isAnswerVisible,
-  setIsAnswerVisible,
+  onPlayAudio,
+  setAppMessage,
+  appIsLoading,
   userTypedAnswer,
   setUserTypedAnswer,
   matchFeedback,
   showCorrectAnswer,
   recordedMicrophoneText,
-  handleCheckAnswer,
-  handleOptionClick,
-  handleSpeechResultForListening,
+  handleCheckAnswer, // Se pasa desde PracticePage
+  handleOptionClick, // Se pasa desde PracticePage
+  handleSpeechResultForListening, // Se pasa desde PracticePage
+  isAnswerVisible,
+  setIsAnswerVisible, // Se pasa desde PracticePage
 }) => {
-  // Consumir valores del contexto directamente
-  const { onPlayAudio, setAppMessage, appIsLoading } = useContext(AppContext);
-
-  // Función para renderizar el botón de reproducción de audio
   const playAudioButton = (
     <button
       onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
@@ -42,39 +41,37 @@ const ExerciseDisplay = ({
     </button>
   );
 
-  // Función para renderizar el botón de micrófono
   const microphoneButton = (
     <SpeechToTextButton
       onResult={handleSpeechResultForListening}
-      lang='en-US' // El idioma a reconocer es el inglés de la pregunta (QuestionEN)
+      lang='en-US'
       disabled={matchFeedback !== null || appIsLoading}
     />
   );
 
   return (
     <>
-      {/* Mostrar las notas del ejercicio si existen - FUERA DEL SWITCH PARA TODOS LOS EJERCICIOS */}
       {currentExercise.Notes && (
         <div className='exercise-notes-display'>
           <p>{currentExercise.Notes}</p>
         </div>
       )}
-      {/* Botones de audio y micrófono siempre en todos los ejercicios */}
+
       <div className='microphone-play-buttons-group'>
         {playAudioButton}
         {microphoneButton}
       </div>
-      {/* Mostrar lo que se grabó del micrófono (estilo flashcard) */}
+
       {recordedMicrophoneText && (
         <div className='recorded-text-display'>{recordedMicrophoneText}</div>
       )}
-      {/* Contenido del ejercicio según su tipo */}
+
       <div
         className={`card-content-area quiz-content-area ${
           matchFeedback ? `match-${matchFeedback}` : ""
         }`}
       >
-        {currentExercise.Type === "translation" && (
+        {currentExercise.Type === "practice_translation" && (
           <>
             <div id='question-text' className='card-text question'>
               {renderClickableText(
@@ -99,7 +96,7 @@ const ExerciseDisplay = ({
           </>
         )}
 
-        {currentExercise.Type === "fill_in_the_blank" && (
+        {currentExercise.Type === "practice_fill_in_the_blank" && (
           <>
             <div className='card-text quiz-question'>
               {currentExercise.QuestionEN.split("_______")[0]}
@@ -140,20 +137,16 @@ const ExerciseDisplay = ({
           </>
         )}
 
-        {currentExercise.Type === "multiple_choice" && (
+        {currentExercise.Type === "practice_multiple_choice" && (
           <>
             <div id='question-text' className='card-text question'>
               {currentExercise.QuestionES}
             </div>
             <div className='multiple-choice-options'>
-              {currentExercise.OptionsEN.map(
-                (
-                  option,
-                  idx // Iterar sobre OptionsEN
-                ) => (
-                  <button
-                    key={idx}
-                    className={`button multiple-choice-button 
+              {currentExercise.OptionsEN.map((option, idx) => (
+                <button
+                  key={idx}
+                  className={`button multiple-choice-button 
                     ${
                       matchFeedback &&
                       normalizeText(option) ===
@@ -170,19 +163,18 @@ const ExerciseDisplay = ({
                         : ""
                     }
                   `}
-                    onClick={() => {
-                      if (matchFeedback === null) {
-                        setAppMessage("");
-                        setUserTypedAnswer(option);
-                        handleOptionClick(option);
-                      }
-                    }}
-                    disabled={matchFeedback !== null || appIsLoading}
-                  >
-                    {option}
-                  </button>
-                )
-              )}
+                  onClick={() => {
+                    if (matchFeedback === null) {
+                      setAppMessage("");
+                      setUserTypedAnswer(option);
+                      handleOptionClick(option);
+                    }
+                  }}
+                  disabled={matchFeedback !== null || appIsLoading}
+                >
+                  {option}
+                </button>
+              ))}
             </div>
             {showCorrectAnswer && matchFeedback === "correct" && (
               <p className='correct-answer-display success-text'>¡Correcto!</p>
@@ -198,7 +190,7 @@ const ExerciseDisplay = ({
           </>
         )}
 
-        {currentExercise.Type === "listening" && (
+        {currentExercise.Type === "practice_listening" && (
           <>
             {showCorrectAnswer && (
               <div className='card-text question'>
@@ -251,42 +243,20 @@ const ExerciseDisplay = ({
           </>
         )}
 
-        {/* ¡NUEVO! Tipo de ejercicio de chat */}
-        {currentExercise.Type === "practice_chat" && (
-          <PracticeChatInterface
-            dialogueSequence={currentExercise.DialogueSequence}
-            onPlayAudio={onPlayAudio}
-            appIsLoading={appIsLoading}
-            userTypedAnswer={userTypedAnswer}
-            setUserTypedAnswer={setUserTypedAnswer}
-            matchFeedback={matchFeedback}
-            setMatchFeedback={setMatchFeedback}
-            handleCheckAnswer={handleCheckAnswer}
-            setAppMessage={setAppMessage}
-            setShowCorrectAnswer={setShowCorrectAnswer}
-            showCorrectAnswer={showCorrectAnswer}
-            recordedMicrophoneText={recordedMicrophoneText}
-            handleSpeechResultForListening={handleSpeechResultForListening}
-            expectedAnswerEN={currentExercise.AnswerEN} // Pasar la respuesta esperada para el chat
-          />
-        )}
-
-        {/* Mensaje si el tipo de ejercicio no es reconocido */}
+        {/* Mensaje si el tipo de ejercicio no es reconocido por PracticeExerciseDisplay */}
         {![
-          "translation",
-          "fill_in_the_blank",
-          "multiple_choice",
-          "listening",
-          "practice_chat",
+          "practice_translation",
+          "practice_multiple_choice",
+          "practice_fill_in_the_blank",
+          "practice_listening",
         ].includes(currentExercise.Type) && (
           <p className='info-text'>
-            Tipo de ejercicio no soportado: {currentExercise.Type}
+            Tipo de ejercicio de práctica no soportado: {currentExercise.Type}
           </p>
         )}
-      </div>{" "}
-      {/* Fin de card-content-area */}
+      </div>
     </>
   );
 };
 
-export default ExerciseDisplay;
+export default PracticeExerciseDisplay;

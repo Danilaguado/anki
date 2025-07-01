@@ -18,7 +18,6 @@ import PracticePage from "../Practice/PracticePage";
 
 // 5) contexto global en src/components/context
 import AppContext from "../context/AppContext";
-
 const LessonCard = ({ lesson, onBack }) => {
   // Consumir valores del contexto
   const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
@@ -34,6 +33,8 @@ const LessonCard = ({ lesson, onBack }) => {
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   // Nuevo estado para el texto grabado por el micrófono en el ejercicio de escucha
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
+  // NUEVO: Estado para el índice del diálogo de chat (gestionado por LessonCard)
+  const [lessonCardDialogueIndex, setLessonCardDialogueIndex] = useState(0);
 
   // Restablecer estados al cambiar de ejercicio
   useEffect(() => {
@@ -42,6 +43,7 @@ const LessonCard = ({ lesson, onBack }) => {
     setMatchFeedback(null);
     setShowCorrectAnswer(false);
     setRecordedMicrophoneText("");
+    setLessonCardDialogueIndex(0); // Resetear el índice del diálogo al cambiar de ejercicio
     if (
       lesson &&
       lesson.exercises &&
@@ -236,7 +238,9 @@ const LessonCard = ({ lesson, onBack }) => {
             recordedMicrophoneText={recordedMicrophoneText}
             handleSpeechResultForListening={handleSpeechResultForListening}
             expectedAnswerEN={currentExercise.AnswerEN} // La primera respuesta esperada del usuario en el chat
-            onDialogueComplete={handleChatDialogueComplete} // ¡NUEVO! Callback al completar el diálogo
+            onDialogueComplete={handleChatDialogueComplete} // Callback al completar el diálogo
+            currentDialogueIndex={lessonCardDialogueIndex} // NUEVO: Pasar el índice del diálogo
+            setCurrentDialogueIndex={setLessonCardDialogueIndex} // NUEVO: Pasar la función para actualizarlo
           />
         ) : (
           // Componente para mostrar los ejercicios estándar (flashcard-style)
@@ -271,14 +275,8 @@ const LessonCard = ({ lesson, onBack }) => {
           isChatDialogueComplete={
             currentExercise.Type === "practice_chat" &&
             currentExercise.DialogueSequence &&
-            currentExercise.DialogueSequence.length > 0 &&
-            (currentExercise.DialogueSequence[
-              currentExercise.DialogueSequence.length - 1
-            ]?.speaker === "ai"
-              ? currentDialogueIndex >= currentExercise.DialogueSequence.length
-              : currentDialogueIndex >=
-                currentExercise.DialogueSequence.length - 1)
-          } // Verifica si el diálogo ha avanzado hasta el final
+            lessonCardDialogueIndex >= currentExercise.DialogueSequence.length
+          } // ¡CORREGIDO! Usar lessonCardDialogueIndex
         />
       </div>
 

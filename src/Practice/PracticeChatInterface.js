@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { normalizeText } from "../utils/textUtils";
 import SpeechToTextButton from "../components/SpeechToTextButton";
+import "./PracticeChatInterface.css"; // Correcto: en la misma carpeta
 
 const PracticeChatInterface = ({
   dialogueSequence, // Secuencia completa del diálogo
@@ -9,22 +10,27 @@ const PracticeChatInterface = ({
   appIsLoading,
   userTypedAnswer,
   setUserTypedAnswer,
-  // matchFeedback, // Ya no se pasa directamente para controlar la UI principal
-  // setMatchFeedback, // Ya no se pasa directamente para controlar la UI principal
+  // matchFeedback, // Se gestiona localmente
+  // setMatchFeedback, // Se gestiona localmente
   setAppMessage, // Para mensajes globales de la app
-  // setShowCorrectAnswer, // Ya no se usa para controlar la visibilidad principal
-  // showCorrectAnswer, // Ya no se usa para controlar la visibilidad principal
-  recordedMicrophoneText,
-  handleSpeechResultForListening,
+  // setShowCorrectAnswer, // Se gestiona localmente
+  // showCorrectAnswer, // Se gestiona localmente
+  // recordedMicrophoneText, // Se gestiona localmente
+  handleSpeechResultForListening, // Ahora es una prop para pasar la transcripción al padre
   expectedAnswerEN: initialExpectedAnswerEN, // La respuesta esperada para el primer turno del usuario
+  onDialogueComplete, // Callback al completar el diálogo
 }) => {
   // Estado local para el progreso del diálogo (índice actual en dialogueSequence)
-  const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
+  const [currentDialogueStep, setCurrentDialogueStep] = useState(0); // <-- ¡CORREGIDO! Declarado
   // Estado para almacenar todos los mensajes que ya se han mostrado en el chat
   const [chatMessages, setChatMessages] = useState([]);
   // Estado para el feedback de la última respuesta del usuario (local al chat)
-  const [lastFeedback, setLastFeedback] = useState(null); // 'correct', 'incorrect'
+  const [lastFeedback, setLastFeedback] = useState(null); // <-- ¡CORREGIDO! Declarado
   const [lastExpectedAnswer, setLastExpectedAnswer] = useState(""); // Para mostrar la respuesta si falla
+  // Estado local para el texto grabado por el micrófono
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState(""); // <-- ¡CORREGIDO! Declarado
+  // Estado local para mostrar la respuesta correcta
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // <-- ¡CORREGIDO! Declarado
 
   const chatMessagesRef = useRef(null); // Para hacer scroll automático
 
@@ -32,16 +38,18 @@ const PracticeChatInterface = ({
   useEffect(() => {
     // Resetear el chat cuando cambie el dialogueSequence (nuevo ejercicio)
     setChatMessages([]);
-    setCurrentDialogueStep(0);
+    setCurrentDialogueStep(0); // Reinicia el paso del diálogo
     setLastFeedback(null);
     setLastExpectedAnswer("");
     setUserTypedAnswer("");
-    setAppMessage("");
+    setRecordedMicrophoneText(""); // Limpiar texto del micrófono local
+    setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
 
     if (dialogueSequence && dialogueSequence.length > 0) {
       // Iniciar el chat con el primer mensaje de la IA si es su turno
       const firstStep = dialogueSequence[0];
       if (firstStep && firstStep.speaker === "ai") {
+        // Si el primer paso es de la IA, lo añadimos y avanzamos el currentDialogueStep
         setChatMessages([
           {
             id: `ai-${Date.now()}-0`,
@@ -87,8 +95,17 @@ const PracticeChatInterface = ({
           setAppMessage("");
         }, 1000); // Pequeño retraso para la respuesta de la IA
       }
+    } else if (dialogueCompleted && onDialogueComplete) {
+      // Si el diálogo ha terminado y hay un callback
+      onDialogueComplete(); // Notificar al padre que el diálogo ha terminado
     }
-  }, [chatMessages, currentDialogueStep, dialogueSequence]); // Dependencias para re-scroll y lógica de IA
+  }, [
+    chatMessages,
+    currentDialogueStep,
+    dialogueSequence,
+    dialogueCompleted,
+    onDialogueComplete,
+  ]); // Dependencias para re-scroll y lógica de IA
 
   // Manejar el envío de la respuesta del usuario en el chat
   const handleChatSubmit = () => {
@@ -159,11 +176,14 @@ const PracticeChatInterface = ({
   const microphoneButton = (
     <SpeechToTextButton
       onResult={(transcript) => {
+        // Función local para manejar el resultado del STT
         setRecordedMicrophoneText(transcript);
         setUserTypedAnswer(transcript); // Rellenar el input con la transcripción
       }}
       lang='en-US'
-      disabled={appIsLoading || (lastFeedback === "correct" && isUserTurn)} // Deshabilitar si se está procesando o si ya acertó y es su turno
+      disabled={
+        appIsLoading || (lastFeedback === "correct" && isUserTurnCurrent)
+      }
     />
   );
 
@@ -173,6 +193,7 @@ const PracticeChatInterface = ({
   // Determinar si el turno actual es del usuario
   const isUserTurnCurrent =
     dialogueSequence &&
+    currentDialogueStep < dialogueSequence.length &&
     dialogueSequence[currentDialogueStep]?.speaker === "user";
 
   return (
@@ -219,7 +240,7 @@ const PracticeChatInterface = ({
             }}
             disabled={
               appIsLoading || (lastFeedback === "correct" && isUserTurnCurrent)
-            } // Deshabilitar si se está procesando o ya acertó
+            }
           />
           {microphoneButton}
           <button
