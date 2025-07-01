@@ -4,7 +4,7 @@ import { normalizeText, renderClickableText } from "../utils/textUtils";
 import SpeechToTextButton from "../components/SpeechToTextButton";
 
 // Importa el contexto
-import AppContext from "../../context/AppContext";
+import AppContext from "../context/AppContext";
 
 const ExerciseDisplay = ({
   currentExercise,
