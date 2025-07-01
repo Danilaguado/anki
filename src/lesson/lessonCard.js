@@ -4,7 +4,7 @@ import "../PrincipalPageLessons.css"; // ¡CORREGIDO! Subir un nivel para encont
 import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Subir dos niveles para utils
 import ExerciseDisplay from "./ExerciseDisplay"; // Correcto: en la misma carpeta
 import ExerciseNavigation from "./ExerciseNavigation"; // Correcto: en la misma carpeta
-import PracticeChatInterface from "../../Practice/PracticeChatInterface"; // Correcto: Subir dos niveles para Practice
+import PracticeChatInterface from "../../PracticeChatInterface"; // Correcto: Subir dos niveles para Practice
 
 // Importar el contexto
 import AppContext from "../../context/AppContext"; // Correcto: Subir dos niveles para context
