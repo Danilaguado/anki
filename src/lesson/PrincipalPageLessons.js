@@ -290,6 +290,7 @@ const PrincipalPageLessons = () => {
         Volver a la pantalla principal
       </Link>
       <h1 className='app-title'>Generador de Lecciones</h1>{" "}
+      {/* Título ajustado para indicar generación */}
       <p className='info-text'>
         Genera lecciones personalizadas con la ayuda de la IA.
       </p>
@@ -300,6 +301,7 @@ const PrincipalPageLessons = () => {
           <span className='message-text'>{error}</span>
         </div>
       )}
+      {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
       {selectedLesson ? (
         <LessonCard lesson={selectedLesson} onBack={handleBackToLessonList} />
       ) : (
@@ -340,6 +342,7 @@ const PrincipalPageLessons = () => {
               </select>
             </div>
 
+            {/* La cantidad de ejercicios y los tipos ya no se eligen, se fijan por el esquema */}
             <div className='input-group-vertical'>
               <span className='input-label'>
                 Tipos de Ejercicio (Orden Fijo):

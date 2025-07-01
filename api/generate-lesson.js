@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid"; // Para generar IDs únicos
 // Tu ID de Google Sheet. ¡IMPORTANTE! Reemplázalo.
 const SPREADSHEET_ID = "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"; // ¡IMPORTANTE! Reemplaza con el ID de tu Google Sheet
 const MODULES_SHEET_NAME = "Modules";
-const EXERCISES_SHEET_NAME = "Exercises";
+const EXERCISES_SHEET_NAME = "Exercises"; // Ojo: si creaste una hoja separada para prácticas, este nombre debe cambiar aquí y en get-all/add-exercise
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -17,95 +17,165 @@ export default async function handler(req, res) {
     });
   }
 
-  const { topic, difficulty, exerciseCount, exerciseTypes, customPrompt } =
-    req.body; // exerciseTypes es el esquema de orden
+  const {
+    topic,
+    difficulty,
+    exerciseCount,
+    exerciseTypes,
+    customPrompt,
+    moduleType,
+  } = req.body; // <-- Añadido moduleType
 
-  if (!topic || !difficulty || !exerciseCount) {
+  if (!topic || !difficulty || !exerciseCount || !moduleType) {
     return res.status(400).json({
       success: false,
       error:
-        "Missing required parameters: topic, difficulty, and exerciseCount are required.",
+        "Missing required parameters: topic, difficulty, exerciseCount, and moduleType are required.",
     });
   }
 
-  // --- Construcción del Prompt para Gemini (¡Lógica clave para la coherencia!) ---
-  // Se presenta a Gemini como un "maestro" y se refuerza el foco en el tema.
-  let geminiPrompt = `You are an experienced and friendly English teacher, specializing in creating coherent and reinforcing lessons for ${difficulty} level Spanish speakers. The goal of this lesson is deep learning and practical application, not just testing. All exercises MUST revolve strictly around the topic/verb: "${topic}".`;
+  let geminiPrompt = "";
+  let exercisesSchemaForGemini = []; // El esquema de ejercicios que Gemini debe seguir
 
-  if (customPrompt) {
-    geminiPrompt += ` Special instruction for lesson content: ${customPrompt}.`;
+  // --- Construcción del Prompt para Gemini (Condicional por moduleType) ---
+  if (moduleType === "standard_lesson") {
+    exercisesSchemaForGemini = exerciseTypes; // Para lección estándar, exerciseTypes es el esquema de orden
+    geminiPrompt =
+      customPrompt ||
+      `You are an experienced and friendly English teacher, specializing in creating coherent and reinforcing lessons for ${difficulty} level Spanish speakers. The goal of this lesson is deep learning and practical application, not just testing. All exercises MUST revolve strictly around the topic/verb: "${topic}".`;
+
+    if (customPrompt) {
+      geminiPrompt += ` Special instruction for lesson content: ${customPrompt}.`;
+    }
+
+    geminiPrompt += `
+    **Learning Strategy: Reinforcement and Contextual Introduction**
+    
+    1.  **Identify 3 core English phrases/sentences** directly related to "${topic}" at a ${difficulty} level. These will be the foundational learning points. You must use these as CORE_PHRASE_1, CORE_PHRASE_2, and CORE_PHRASE_3 for consistent reuse.
+    2.  Exercises will heavily reuse and adapt these 3 core phrases (CORE_PHRASE_1, CORE_PHRASE_2, CORE_PHRASE_3) for reinforcement across different exercise types.
+    3.  **Vocabulary Introduction:** Any English word/phrase required as an 'answerEN' in 'multiple_choice' or 'fill_in_the_blank' exercises MUST either be:
+        a.  Introduced and explained in the 'notes' of an earlier exercise (especially the first one).
+        b.  Appeared as a clear translation (questionEN/questionES pair) in an earlier 'translation' exercise.
+        This ensures a teaching-first approach. Avoid completely new words as answers without prior explanation.
+    
+    **Exercise Order and Specific Content Requirements for Each Type:**
+    
+    The exercises MUST follow this exact sequential order and type for the ${exerciseCount} exercises: ${exercisesSchemaForGemini
+      .map((type, index) => `${index + 1}. ${type}`)
+      .join(", ")}.
+    
+    For each exercise object, ensure the following fields are correctly populated:
+    -   'type': Matches the ordered type.
+    -   'questionEN': The English sentence or phrase for the exercise.
+    -   'questionES': The Spanish translation of 'questionEN'.
+    -   'answerEN': The correct ENGLISH answer/word.
+      - For 'fill_in_the_blank': This is the specific English word that fills the '_______' blank in 'questionEN'.
+      - For 'multiple_choice': This is the correct English option among the choices.
+      - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
+      - For 'translation': This is the English phrase from 'questionEN'.
+    -   'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
+    -   **'optionsEN': For 'multiple_choice' exercises, this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN' as one of them.** The options should be plausible and related to the context. For other exercise types, this array must be empty. The order within this array does not matter as the frontend will randomize it.
+    -   'orderInLesson': Sequential number from 1 to ${exerciseCount}.
+    -   'notes': (CRITICAL FOR LEARNING) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
+    
+    **Specific Requirements by Exercise Type (Reinforced Coherence):**
+    
+    -   **'multiple_choice' (Exercises 1, 2, 3)**:
+        -   'questionEN': A practical English sentence where the 'answerEN' is the key missing word, or a phrase that sets context for the 'answerEN'.
+        -   'questionES': A simple, direct question in **Spanish** that relates to 'questionEN' and guides the user to select the correct English word. Example: "¿Qué palabra completa mejor la frase?" or "¿Cuál de estas palabras significa [traducción de answerEN]?". Avoid complex grammar terminology or abstract definitions.
+        -   'answerEN': CORE_PHRASE_1 (Ex.1), CORE_PHRASE_2 (Ex.2), CORE_PHRASE_3 (Ex.3) as correct options.
+        -   'notes': For Ex. 1, explain CORE_PHRASE_1 thoroughly with 2 examples. For Ex. 2 and 3, explain any new vocabulary or reinforce the meaning of the core phrase (CORE_PHRASE_2 or CORE_PHRASE_3) if applicable.
+    
+    -   **'fill_in_the_blank' (Exercises 4, 5, 6)**:
+        -   'questionEN': A sentence in English with exactly one '_______' placeholder. The word that fills this blank **MUST be the 'answerEN'** (e.g., if 'answerEN' is "get", then 'questionEN' could be "I need to _______ a new job."). The sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
+        -   'questionES': **The complete Spanish translation of 'questionEN' *con el espacio rellenado correctamente en español*. Esta es la pista/guía directa para el usuario.** For example, if 'questionEN' is "I need to _______ a new job." and 'answerEN' is "get", then 'questionES' should be "Necesito conseguir un nuevo trabajo.".
+        -   'answerEN': The English word/phrase that fills the blank. (Must correspond to the core phrase from Ex. 1, 2, or 3).
+    
+    -   **'translation' (Exercises 7, 8, 9)**:
+        -   'questionEN': An English sentence/phrase for translation. This sentence **MUST be CORE_PHRASE_1 (Ex.7), CORE_PHRASE_2 (Ex.8), CORE_PHRASE_3 (Ex.9).**
+        -   'questionES': The correct Spanish translation of 'questionEN'.
+        -   'answerEN': The original 'questionEN' text itself (for validation).
+    
+    -   **'listening' (Exercises 10, 11, 12)**:
+        -   'questionEN': An English sentence/phrase to listen to. This sentence **MUST be CORE_PHRASE_1 (Ex.10), CORE_PHRASE_2 (Ex.11), CORE_PHRASE_3 (Ex.12).**
+        -   'questionES': The correct Spanish translation of 'questionEN'.
+        -   'answerEN': The original 'questionEN' text itself (for validation).
+    
+    Ensure the entire response is a valid JSON array of EXACTLY ${exerciseCount} exercise objects, nothing more, nothing less.`;
+  } else if (moduleType === "chatbot_lesson") {
+    // Esquemático para la lección de chatbot: 1 chat + 11 ejercicios de refuerzo
+    exercisesSchemaForGemini = [
+      "practice_chat", // El primer ejercicio es el chat
+      "practice_multiple_choice",
+      "practice_multiple_choice",
+      "practice_multiple_choice",
+      "practice_fill_in_the_blank",
+      "practice_fill_in_the_blank",
+      "practice_fill_in_the_blank",
+      "practice_translation",
+      "practice_translation",
+      "practice_translation",
+      "practice_listening",
+      "practice_listening",
+    ]; // 12 ejercicios en total
+
+    geminiPrompt = `You are an AI simulating a conversation partner and English teacher. Generate a ${difficulty} level English lesson for a Spanish speaker, centered around a conversational scenario related to "${topic}". The lesson will have exactly ${exerciseCount} exercises.`;
+
+    if (customPrompt) {
+      geminiPrompt += ` Special instruction: ${customPrompt}.`;
+    }
+
+    geminiPrompt += `
+    **Lesson Structure for Chatbot Module:**
+    
+    1.  **Exercise 1 (type: 'practice_chat')**: This is the core dialogue.
+        -   'questionEN': An introductory English phrase for the chat scenario.
+        -   'questionES': Spanish translation of the intro phrase.
+        -   'answerEN': The expected *first* English response from the user to start the dialogue.
+        -   'answerES': Spanish translation of 'answerEN'.
+        -   'optionsEN': Empty array.
+        -   'notes': A brief Spanish explanation of the chat scenario and what the user should aim to practice.
+        -   'dialogueSequence': A JSON array defining the full multi-turn chat flow. This is the main content for the chat interaction. It must contain at least 3 turns (AI, User, AI).
+            -   Each object has 'speaker' ('ai' or 'user').
+            -   If 'speaker' is 'ai': include 'phraseEN' (AI's line in English) and 'phraseES' (Spanish translation).
+            -   If 'speaker' is 'user': include 'expectedEN' (the exact English phrase the user is expected to type/say).
+            -   Ensure the dialogue is natural and flows well, introducing vocabulary related to "${topic}".
+    
+    2.  **Exercises 2-12 (Reinforcement based on the chat dialogue):**
+        -   These exercises (types: 'practice_multiple_choice', 'practice_fill_in_the_blank', 'practice_translation', 'practice_listening') MUST reuse vocabulary and phrases directly from the 'practice_chat' dialogue (Exercise 1).
+        -   'notes': Provide brief explanations in Spanish for the vocabulary/grammar being reinforced.
+        -   'optionsEN': For 'practice_multiple_choice', this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN'.
+        -   'questionES': For 'practice_multiple_choice', this is a Spanish question guiding the user.
+        -   'questionES': For 'practice_fill_in_the_blank', this is the complete Spanish translation of 'questionEN' with the blank filled.
+    
+    Ensure the entire response is a valid JSON array of EXACTLY ${exerciseCount} exercise objects, nothing more, nothing less.`;
+  } else {
+    return res.status(400).json({
+      success: false,
+      error:
+        "Invalid moduleType. Must be 'standard_lesson' or 'chatbot_lesson'.",
+    });
   }
-
-  // INSTRUCCIONES REFORZADAS PARA COHERENCIA Y REUTILIZACIÓN DE FRASES CLAVE
-  geminiPrompt += `
-  **Learning Strategy: Reinforcement and Contextual Introduction**
-  
-  1.  **Identify 3 core English phrases/sentences** directly related to "${topic}" at a ${difficulty} level. These will be the foundational learning points. You must use these as CORE_PHRASE_1, CORE_PHRASE_2, and CORE_PHRASE_3 for consistent reuse.
-  2.  Exercises will heavily reuse and adapt these 3 core phrases (CORE_PHRASE_1, CORE_PHRASE_2, CORE_PHRASE_3) for reinforcement across different exercise types.
-  3.  **Vocabulary Introduction:** Any English word/phrase required as an 'answerEN' in 'multiple_choice' or 'fill_in_the_blank' exercises MUST either be:
-      a.  Introduced and explained in the 'notes' of an earlier exercise (especially the first one).
-      b.  Appeared as a clear translation (questionEN/questionES pair) in an earlier 'translation' exercise.
-      This ensures a teaching-first approach. Avoid completely new words as answers without prior explanation.
-  
-  **Exercise Order and Specific Content Requirements for Each Type:**
-  
-  The exercises MUST follow this exact sequential order and type for the ${exerciseCount} exercises: ${exerciseTypes
-    .map((type, index) => `${index + 1}. ${type}`)
-    .join(", ")}.
-  
-  For each exercise object, ensure the following fields are correctly populated:
-  -   'type': Matches the ordered type.
-  -   'questionEN': The English sentence or phrase for the exercise.
-  -   'questionES': The Spanish translation of 'questionEN'.
-  -   'answerEN': The correct ENGLISH answer/word.
-    - For 'fill_in_the_blank': This is the specific English word that fills the '_______' blank in 'questionEN'.
-    - For 'multiple_choice': This is the correct English option among the choices.
-    - For 'listening': This is the complete English phrase from 'questionEN' (for transcription).
-    - For 'translation': This is the English phrase from 'questionEN'.
-  -   'answerES': The correct SPANISH translation for 'answerEN'. (This is the translation of the single word 'answerEN', not the full sentence 'questionEN', unless 'answerEN' *is* the full sentence.)
-  -   **'optionsEN': For 'multiple_choice' exercises, this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN' as one of them.** The options should be plausible and related to the context. For other exercise types, this array must be empty. The order within this array does not matter as the frontend will randomize it.
-  -   'orderInLesson': Sequential number from 1 to ${exerciseCount}.
-  -   'notes': (CRITICAL FOR LEARNING) Provide a brief, friendly, and insightful explanation in **Spanish** of the main concept, word, or grammar point being taught in this specific exercise. Include 2 clear examples of its usage (English sentence + Spanish translation for each example) related to the lesson's topic.
-  
-  **Specific Requirements by Exercise Type (Reinforced Coherence):**
-  
-  -   **'multiple_choice' (Exercises 1, 2, 3)**:
-      -   'questionEN': A practical English sentence where the 'answerEN' is the key missing word, or a phrase that sets context for the 'answerEN'.
-      -   'questionES': A simple, direct question in **Spanish** that relates to 'questionEN' and guides the user to select the correct English word. Example: "¿Qué palabra completa mejor la frase?" or "¿Cuál de estas palabras significa [traducción de answerEN]?". Avoid complex grammar terminology or abstract definitions.
-      -   'answerEN': CORE_PHRASE_1 (Ex.1), CORE_PHRASE_2 (Ex.2), CORE_PHRASE_3 (Ex.3) as correct options.
-      -   'notes': For Ex. 1, explain CORE_PHRASE_1 thoroughly with 2 examples. For Ex. 2 and 3, explain any new vocabulary or reinforce the meaning of the core phrase (CORE_PHRASE_2 or CORE_PHRASE_3) if applicable.
-  
-  -   **'fill_in_the_blank' (Exercises 4, 5, 6)**:
-      -   'questionEN': A sentence in English with exactly one '_______' placeholder. The word that fills this blank **MUST be the 'answerEN'** (e.g., if 'answerEN' is "get", then 'questionEN' could be "I need to _______ a new job."). The sentence MUST be CORE_PHRASE_1 (Ex.4), CORE_PHRASE_2 (Ex.5), CORE_PHRASE_3 (Ex.6) or a sentence clearly using them.
-      -   'questionES': **The complete Spanish translation of 'questionEN' *con el espacio rellenado correctamente en español*. Esta es la pista/guía directa para el usuario.** Por ejemplo, si 'questionEN' es "I need to _______ a new job." y 'answerEN' es "get", entonces 'questionES' debería ser "Necesito conseguir un nuevo trabajo.".
-      -   'answerEN': The English word/phrase that fills the blank. (Must correspond to the core phrase from Ex. 1, 2, or 3).
-  
-  -   **'translation' (Exercises 7, 8, 9)**:
-      -   'questionEN': An English sentence/phrase for translation. This sentence **MUST be CORE_PHRASE_1 (Ex.7), CORE_PHRASE_2 (Ex.8), CORE_PHRASE_3 (Ex.9).**
-      -   'questionES': The correct Spanish translation of 'questionEN'.
-      -   'answerEN': The original 'questionEN' text itself (for validation).
-  
-  -   **'listening' (Exercises 10, 11, 12)**:
-      -   'questionEN': An English sentence/phrase to listen to. This sentence **MUST be CORE_PHRASE_1 (Ex.10), CORE_PHRASE_2 (Ex.11), CORE_PHRASE_3 (Ex.12).**
-      -   'questionES': The correct Spanish translation of 'questionEN'.
-      -   'answerEN': The original 'questionEN' text itself (for validation).
-  
-  Ensure the entire response is a valid JSON array of EXACTLY ${exerciseCount} exercise objects, nothing more, nothing less.`;
 
   try {
     console.log("SPREADSHEET_ID actual en el backend:", SPREADSHEET_ID);
-    if (SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO") {
+    // Verificación de SPREADSHEET_ID
+    if (
+      SPREADSHEET_ID === "TU_ID_DE_HOJA_DE_CALCULO" ||
+      SPREADSHEET_ID === "1prBbTKmhzo-VkPCDTXz_IhnsE0zsFlFrq5SDh4Fvo9M"
+    ) {
+      // Incluir el ID anterior como marcador
       console.error(
         "SPREADSHEET_ID is not configured in api/generate-lesson.js"
       );
       return res.status(500).json({
         success: false,
         error:
-          "Server configuration error: SPREADSHEET_ID is not set in the backend API. Please update it.",
+          "Server configuration error: SPREADSHEET_ID is not set in the backend API. Please update it to your actual Google Sheet ID.",
       });
     }
 
-    const geminiApiKey = process.env.GEMINI_API_KEY; // Using GOOGLE_API_KEY as per the image
+    const geminiApiKey = process.env.GEMINI_API_KEY;
 
     if (!geminiApiKey) {
       console.error("GEMINI_API_KEY environment variable is not set.");
@@ -128,7 +198,7 @@ export default async function handler(req, res) {
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
-            // Esquema de respuesta para Gemini
+            // Esquema de respuesta para Gemini (debe ser flexible para ambos tipos)
             type: "ARRAY",
             items: {
               type: "OBJECT",
@@ -144,7 +214,22 @@ export default async function handler(req, res) {
                 },
                 orderInLesson: { type: "NUMBER" },
                 notes: { type: "STRING" },
+                dialogueSequence: {
+                  // Campo opcional para practice_chat
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      speaker: { type: "STRING" },
+                      phraseEN: { type: "STRING" },
+                      phraseES: { type: "STRING" },
+                      expectedEN: { type: "STRING" },
+                    },
+                    required: ["speaker"],
+                  },
+                },
               },
+              // Requerimientos mínimos que aplican a ambos tipos de lecciones
               required: [
                 "type",
                 "questionEN",
@@ -252,7 +337,6 @@ export default async function handler(req, res) {
         case "PromptUsed":
           newModuleRow[index] = geminiPrompt || "";
           break;
-        // NUEVO: Mapear OrderInPage
         case "OrderInPage":
           newModuleRow[index] = "";
           break; // Se deja vacío para edición manual
@@ -297,7 +381,7 @@ export default async function handler(req, res) {
             break;
           case "Type":
             newExerciseRow[index] = exercise.type;
-            break;
+            break; // Mapear el tipo de ejercicio (ej. practice_chat)
           case "QuestionEN":
             newExerciseRow[index] = exercise.questionEN;
             break;
@@ -321,16 +405,14 @@ export default async function handler(req, res) {
           case "Notes":
             newExerciseRow[index] = exercise.notes || "";
             break;
-          // NUEVO: Mapear Image
           case "Image":
-            newExerciseRow[index] = "";
-            break; // Se deja vacío para edición manual
-          // NUEVO: Mapear DialogueSequence para practice_chat
+            newExerciseRow[index] = exercise.image || "";
+            break;
           case "DialogueSequence":
             newExerciseRow[index] = exercise.dialogueSequence
               ? JSON.stringify(exercise.dialogueSequence)
               : "";
-            break;
+            break; // Mapear DialogueSequence
           default:
             newExerciseRow[index] = "";
         }
