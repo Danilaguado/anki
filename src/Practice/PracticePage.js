@@ -2,8 +2,9 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import MessageDisplay from "../components/MessageDisplay";
-import PracticeExerciseDisplay from "./components/PracticeExerciseDisplay"; // Componente para mostrar el ejercicio
-import PracticeChatInterface from "./components/PracticeChatInterface"; // Componente para la interfaz de chat
+// ¡CORREGIDO! Rutas de importación directas
+import PracticeExerciseDisplay from "./PracticeExerciseDisplay"; // Ahora está en el mismo nivel
+import PracticeChatInterface from "./PracticeChatInterface"; // Ahora está en el mismo nivel
 
 // Importa el contexto
 import AppContext from "../context/AppContext";
