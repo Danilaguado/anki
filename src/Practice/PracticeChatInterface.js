@@ -8,8 +8,8 @@ const PracticeChatInterface = ({
   dialogueSequence, // Secuencia completa del diálogo
   onPlayAudio,
   appIsLoading,
-  userTypedAnswer,
-  setUserTypedAnswer,
+  userTypedAnswer, // userTypedAnswer y setUserTypedAnswer aún se gestionan en el padre
+  setUserTypedAnswer, // para que el input del chat pueda ser controlado por el padre
   setAppMessage, // Para mensajes globales de la app
   onDialogueComplete, // Callback al completar el diálogo
 
@@ -36,8 +36,8 @@ const PracticeChatInterface = ({
     setChatMessages([]);
     setCurrentDialogueStep(0); // Reinicia el paso del diálogo
     setLastFeedback(null);
-    setLocalExpectedAnswer(initialExpectedAnswerEN || ""); // <-- ¡CORREGIDO! Asegurar inicialización con fallback
-    setUserTypedAnswer("");
+    setLocalExpectedAnswer(initialExpectedAnswerEN || ""); // Asegurar inicialización con fallback
+    setUserTypedAnswer(""); // Limpiar input del usuario
     setRecordedMicrophoneText(""); // Limpiar texto del micrófono local
     setShowCorrectAnswer(false); // Limpiar showCorrectAnswer local
     setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
@@ -59,7 +59,12 @@ const PracticeChatInterface = ({
         setCurrentDialogueStep(0); // El primer paso es del usuario, esperamos su input
       }
     }
-  }, [dialogueSequence, initialExpectedAnswerEN, setAppMessage]); // Dependencia para reinicializar si el ejercicio cambia
+  }, [
+    dialogueSequence,
+    initialExpectedAnswerEN,
+    setAppMessage,
+    setUserTypedAnswer,
+  ]); // Añadido setUserTypedAnswer a dependencias
 
   // Determinar si el diálogo ha terminado (no hay más pasos)
   const dialogueCompleted =
@@ -114,7 +119,7 @@ const PracticeChatInterface = ({
     setShowCorrectAnswer,
     setLastFeedback,
     setLocalExpectedAnswer,
-  ]); // <-- ¡CORREGIDO! Añadidas dependencias de set estados
+  ]); // Dependencias para re-scroll y lógica de IA
 
   // Manejar el envío de la respuesta del usuario en el chat
   const handleChatSubmit = () => {
@@ -188,7 +193,7 @@ const PracticeChatInterface = ({
     <SpeechToTextButton
       onResult={(transcript) => {
         // Función local para manejar el resultado del STT
-        setRecordedMicrophoneText(transcript); // <-- ¡CORREGIDO! Usar estado local
+        setRecordedMicrophoneText(transcript);
         setUserTypedAnswer(transcript); // Rellenar el input con la transcripción
       }}
       lang='en-US'
