@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     exerciseTypes,
     customPrompt,
     moduleType,
-  } = req.body; // <-- moduleType recibido
+  } = req.body; // exerciseTypes es el esquema de orden
 
   if (!topic || !difficulty || !exerciseCount || !moduleType) {
     return res.status(400).json({
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
   let exercisesSchemaForGemini = [];
 
   if (moduleType === "standard_lesson") {
-    exercisesSchemaForGemini = exerciseTypes;
+    exercisesSchemaForGemini = exerciseTypes; // Para lección estándar, exerciseTypes es el esquema de orden
     geminiPrompt =
       customPrompt ||
       `You are an experienced and friendly English teacher, specializing in creating coherent and reinforcing lessons for ${difficulty} level Spanish speakers. The goal of this lesson is deep learning and practical application, not just testing. All exercises MUST revolve strictly around the topic/verb: "${topic}".`;
@@ -109,52 +109,43 @@ export default async function handler(req, res) {
     
     Ensure the entire response is a valid JSON array of EXACTLY ${exerciseCount} exercise objects, nothing more, nothing less.`;
   } else if (moduleType === "chatbot_lesson") {
-    // Esquemático para la lección de chatbot: 1 chat + 11 ejercicios de refuerzo
-    exercisesSchemaForGemini = [
-      "practice_chat", // El primer ejercicio es el chat
-      "practice_multiple_choice",
-      "practice_multiple_choice",
-      "practice_multiple_choice",
-      "practice_fill_in_the_blank",
-      "practice_fill_in_the_blank",
-      "practice_fill_in_the_blank",
-      "practice_translation",
-      "practice_translation",
-      "practice_translation",
-      "practice_listening",
-      "practice_listening",
-    ]; // 12 ejercicios en total
+    // ¡NUEVO ESQUEMA PARA CHATBOT_LESSON! Genera UN SOLO ejercicio de tipo 'practice_chat'
+    // Este ejercicio contendrá TODA la secuencia de la lección en su dialogueSequence.
+    exercisesSchemaForGemini = ["practice_chat"]; // Solo 1 ejercicio principal de chat
+    exerciseCount = 1; // Forzar a 1 ejercicio para Gemini
 
-    geminiPrompt = `You are an AI simulating a conversation partner and English teacher. Generate a ${difficulty} level English lesson for a Spanish speaker, centered around a conversational scenario related to "${topic}". The lesson will have exactly ${exerciseCount} exercises.`;
+    geminiPrompt = `You are an AI simulating a conversation partner and English teacher. Generate a ${difficulty} level English lesson for a Spanish speaker, centered around a conversational scenario related to "${topic}". The lesson will be presented as a continuous chat dialogue.`;
 
     if (customPrompt) {
       geminiPrompt += ` Special instruction: ${customPrompt}.`;
     }
 
     geminiPrompt += `
-    **Lesson Structure for Chatbot Module:**
-    
-    1.  **Exercise 1 (type: 'practice_chat')**: This is the core dialogue.
-        -   'questionEN': An introductory English phrase for the chat.
-        -   'questionES': Spanish translation of the intro phrase.
-        -   'answerEN': The expected *first* English response from the user to start the dialogue.
-        -   'answerES': Spanish translation of 'answerEN'.
-        -   'optionsEN': Empty array.
-        -   'notes': A brief Spanish explanation of the chat scenario and what the user should aim to practice.
-        -   'dialogueSequence': A JSON array defining the full multi-turn chat flow. This is the main content. It must contain at least 3 turns (AI, User, AI).
-            -   Each object has 'speaker' ('ai' or 'user').
-            -   If 'speaker' is 'ai': include 'phraseEN' (AI's line in English) and 'phraseES' (Spanish translation).
-            -   If 'speaker' is 'user': include 'expectedEN' (the exact English phrase the user is expected to type/say).
-            -   Ensure the dialogue is natural and flows well, introducing vocabulary related to "${topic}".
-    
-    2.  **Exercises 2-12 (Reinforcement based on the chat dialogue):**
-        -   These exercises (types: 'practice_multiple_choice', 'practice_fill_in_the_blank', 'practice_translation', 'practice_listening') MUST reuse vocabulary and phrases directly from the 'practice_chat' dialogue (Exercise 1).
-        -   'notes': Provide brief explanations in Spanish for the vocabulary/grammar being reinforced.
-        -   'optionsEN': For 'practice_multiple_choice', this array MUST contain 4 distinct ENGLISH options, INCLUDING 'answerEN'.
-        -   'questionES': For 'practice_multiple_choice', this is a Spanish question guiding the user.
-        -   'questionES': For 'practice_fill_in_the_blank', this is the complete Spanish translation of 'questionEN' with the blank filled.
-    
-    Ensure the entire response is a valid JSON array of EXACTLY ${exerciseCount} exercise objects, nothing more, nothing less.`;
+**Lesson Structure for Chatbot Module (Single Exercise Object):**
+
+Provide a single JSON object for ONE exercise of type "practice_chat". This exercise's "dialogueSequence" will contain the entire 12-step lesson flow.
+
+- "type": "practice_chat"
+- "questionEN": "Let's start our conversation about ${topic}." (or a similar engaging intro)
+- "questionES": "Comencemos nuestra conversación sobre ${topic}."
+- "answerEN": The expected *first* English response from the user to start the dialogue (e.g., "Okay, I'm ready.")
+- "answerES": Spanish translation of "answerEN"
+- "optionsEN": Empty array
+- "notes": A brief Spanish explanation of the chat scenario and what the user should aim to practice.
+- **"dialogueSequence"**: This is a JSON array that defines the full 12-step conversational lesson. Each step corresponds to one of the exercise types you specified, presented conversationally.
+  - **For AI turns**: "speaker": "ai", "phraseEN": AI's line in English, "phraseES": Spanish translation.
+    - For the first AI turn, it should be an introduction.
+    - For subsequent AI turns that *present an exercise*: "phraseEN" should be the exercise's question (e.g., "Now, complete the sentence: 'I _______ a new job.'"), "phraseES" its Spanish translation, AND include the "exerciseType", "exerciseAnswerEN", "exerciseOptionsEN" (if multiple choice), and "exerciseNotes" for that specific exercise *within the AI's step object*.
+  - **For User turns**: "speaker": "user", "expectedEN": The exact English phrase the user is expected to type/say (which is the "exerciseAnswerEN" of the exercise being presented by the preceding AI turn).
+  - **Ensure the dialogue is natural and flows well, introducing vocabulary related to "${topic}".** The conversation should seamlessly integrate the 12 exercises.
+  - **The 12 exercises (multiple_choice, fill_in_the_blank, translation, listening) must be integrated into the AI's turns in the dialogueSequence.** The AI will present the exercise, and the user will respond.
+  - **Example structure for an AI step presenting a multiple_choice exercise:**
+    \`{ "speaker": "ai", "phraseEN": "Let's try a multiple choice question. Which word completes: 'I need to _______ a new book.'?", "phraseES": "Intentemos una pregunta de opción múltiple. ¿Qué palabra completa: 'Necesito _______ un libro nuevo.'?", "exerciseType": "multiple_choice", "exerciseQuestionEN": "I need to _______ a new book.", "exerciseQuestionES": "Necesito _______ un libro nuevo.", "exerciseAnswerEN": "get", "exerciseOptionsEN": ["buy", "find", "have", "get"], "exerciseNotes": "El verbo 'get' significa 'obtener'..." }\`
+  - **Example structure for a User step:**
+    \`{ "speaker": "user", "expectedEN": "get" }\`
+
+Ensure the entire response is a valid JSON array containing EXACTLY ONE exercise object of type "practice_chat", nothing more, nothing less.
+`;
   } else {
     return res.status(400).json({
       success: false,
@@ -175,7 +166,7 @@ export default async function handler(req, res) {
       return res.status(500).json({
         success: false,
         error:
-          "Server configuration error: SPREADSHEET_ID is not set in the backend API. Please update it to your actual Google Sheet ID.",
+          "Server configuration error: SPREADSHEET_ID is not set in the backend API. Please update it.",
       });
     }
 
@@ -228,6 +219,16 @@ export default async function handler(req, res) {
                       phraseEN: { type: "STRING" },
                       phraseES: { type: "STRING" },
                       expectedEN: { type: "STRING" },
+                      // Nuevos campos para ejercicios incrustados en el diálogo
+                      exerciseType: { type: "STRING" },
+                      exerciseQuestionEN: { type: "STRING" },
+                      exerciseQuestionES: { type: "STRING" },
+                      exerciseAnswerEN: { type: "STRING" },
+                      exerciseOptionsEN: {
+                        type: "ARRAY",
+                        items: { type: "STRING" },
+                      },
+                      exerciseNotes: { type: "STRING" },
                     },
                     required: ["speaker"],
                   },
@@ -418,6 +419,27 @@ export default async function handler(req, res) {
             newExerciseRow[index] = exercise.dialogueSequence
               ? JSON.stringify(exercise.dialogueSequence)
               : "";
+            break;
+          // Nuevos campos para ejercicios incrustados en el diálogo
+          case "ExerciseType":
+            newExerciseRow[index] = exercise.exerciseType || "";
+            break;
+          case "ExerciseQuestionEN":
+            newExerciseRow[index] = exercise.exerciseQuestionEN || "";
+            break;
+          case "ExerciseQuestionES":
+            newExerciseRow[index] = exercise.exerciseQuestionES || "";
+            break;
+          case "ExerciseAnswerEN":
+            newExerciseRow[index] = exercise.exerciseAnswerEN || "";
+            break;
+          case "ExerciseOptionsEN":
+            newExerciseRow[index] = exercise.exerciseOptionsEN
+              ? JSON.stringify(exercise.exerciseOptionsEN)
+              : "";
+            break;
+          case "ExerciseNotes":
+            newExerciseRow[index] = exercise.exerciseNotes || "";
             break;
           default:
             newExerciseRow[index] = "";
