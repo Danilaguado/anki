@@ -4,7 +4,7 @@ import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones
 import { normalizeText, renderClickableText } from "../utils/textUtils";
 import ExerciseDisplay from "./components/ExerciseDisplay"; // Componente para ejercicios estándar
 import ExerciseNavigation from "./components/ExerciseNavigation";
-import PracticeChatInterface from "../practice/PracticeChatInterface"; // ¡Importar el componente de chat!
+import PracticeChatInterface from "./Practice/PracticeChatInterface"; // ¡Importar el componente de chat!
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
