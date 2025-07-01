@@ -1,13 +1,24 @@
-// src/lesson/components/lessonCard.js
-import React, { useState, useEffect, useContext } from "react"; // Importar useContext y useEffect
-import "../PrincipalPageLessons.css"; // Estilos compartidos para lecciones (sube un nivel)
-import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Utilidades de texto (sube dos niveles)
-import ExerciseDisplay from "./ExerciseDisplay"; // En la misma carpeta
-import ExerciseNavigation from "./ExerciseNavigation"; // En la misma carpeta
-import PracticeChatInterface from "../../Practice/PracticeChatInterface"; // ¡CORREGIDO! Sube dos niveles, luego baja a Practice/PracticeChatInterface.js
+// src/lesson/lessonCard.js
 
-// Importar el contexto (sube dos niveles)
-import AppContext from "../../context/AppContext";
+import React, { useState, useEffect, useContext } from "react";
+
+// 1) CSS de la carpeta lesson
+import "./PrincipalPageLessons.css";
+
+// 2) Utils (sube un nivel: lesson → src, entra en utils)
+import { normalizeText, renderClickableText } from "../utils/textUtils";
+
+// 3) Componentes de lesson (están en lesson/components)
+import ExerciseDisplay from "./components/ExerciseDisplay";
+import ExerciseNavigation from "./components/ExerciseNavigation";
+
+// 4) Componentes de Practice (sube un nivel: lesson → src, entra en Practice)
+import PracticeChatInterface from "../Practice/PracticeChatInterface";
+import PracticeExerciseDisplay from "../Practice/PracticeExerciseDisplay";
+import PracticePage from "../Practice/PracticePage";
+
+// 5) Context global (está en src/components/context)
+import AppContext from "../components/context/AppContext";
 
 const LessonCard = ({ lesson, onBack }) => {
   // Consumir valores del contexto
