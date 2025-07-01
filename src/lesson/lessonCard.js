@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useContext } from "react";
 import "../PrincipalPageLessons.css"; // Subir un nivel para encontrar PrincipalPageLessons.css
 import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Subir dos niveles para utils
-import ExerciseDisplay from "./ExerciseDisplay"; // Correcto: en la misma carpeta
-import ExerciseNavigation from "./ExerciseNavigation"; // Correcto: en la misma carpeta
+import ExerciseDisplay from "./components/ExerciseDisplay"; // Correcto: en la misma carpeta
+import ExerciseNavigation from "./components/ExerciseNavigation"; // Correcto: en la misma carpeta
 import PracticeChatInterface from "../../Practice/PracticeChatInterface"; // ¡CORREGIDO! Ahora en src/Practice/ (subir dos niveles, luego bajar a Practice)
 
 // Importar el contexto
