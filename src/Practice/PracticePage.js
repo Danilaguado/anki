@@ -1,12 +1,16 @@
 // src/Practice/PracticePage.js
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-import MessageDisplay from "../components/MessageDisplay";
-import PracticeExerciseDisplay from "./PracticeExerciseDisplay"; // Ahora está en el mismo nivel
-import PracticeChatInterface from "./PracticeChatInterface"; // Ahora está en el mismo nivel
+import MessageDisplay from "../components/MessageDisplay"; // Sube a src/, baja a components/
+// Rutas de importación directas en Practice/
+import PracticeExerciseDisplay from "./PracticeExerciseDisplay";
+import PracticeChatInterface from "./PracticeChatInterface";
 
 // Importa el contexto
-import AppContext from "../context/AppContext";
+import AppContext from "../context/AppContext"; // Sube a src/, baja a context/
+
+// Importar utilidades (¡CORREGIDO! normalizeText importado)
+import { normalizeText } from "../utils/textUtils"; // Sube a src/, baja a utils/
 
 const PracticePage = () => {
   // Consumir valores del contexto
@@ -19,10 +23,9 @@ const PracticePage = () => {
 
   // Estados para la interacción del ejercicio (similar a LessonCard)
   const [userTypedAnswer, setUserTypedAnswer] = useState("");
-  // matchFeedback, showCorrectAnswer, recordedMicrophoneText ahora son locales de PracticeChatInterface
-  const [matchFeedback, setMatchFeedback] = useState(null); // <-- Mantenemos aquí para PracticeExerciseDisplay
-  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // <-- Mantenemos aquí para PracticeExerciseDisplay
-  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState(""); // <-- Mantenemos aquí para PracticeExerciseDisplay
+  const [matchFeedback, setMatchFeedback] = useState(null);
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
   const [isAnswerVisible, setIsAnswerVisible] = useState(false); // Para traducción
 
   // Estado para el diálogo de chat (si el tipo es practice_chat)
@@ -41,9 +44,9 @@ const PracticePage = () => {
 
     // Resetear estados de interacción
     setUserTypedAnswer("");
-    setMatchFeedback(null); // Resetear
-    setShowCorrectAnswer(false); // Resetear
-    setRecordedMicrophoneText(""); // Resetear
+    setMatchFeedback(null);
+    setShowCorrectAnswer(false);
+    setRecordedMicrophoneText("");
     setIsAnswerVisible(false);
     setCurrentDialogueIndex(0); // Resetear diálogo
 
@@ -91,7 +94,8 @@ const PracticePage = () => {
 
     if (
       currentExercise.Type === "practice_fill_in_the_blank" ||
-      currentExercise.Type === "practice_multiple_choice"
+      currentExercise.Type === "practice_multiple_choice" ||
+      currentExercise.Type === "practice_chat"
     ) {
       normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || "");
     } else if (currentExercise.Type === "practice_listening") {
@@ -190,13 +194,13 @@ const PracticePage = () => {
               appIsLoading={appIsLoading}
               userTypedAnswer={userTypedAnswer}
               setUserTypedAnswer={setUserTypedAnswer}
-              // matchFeedback={matchFeedback} // NO PASAR: gestionado internamente por PracticeChatInterface
-              // setMatchFeedback={setMatchFeedback} // NO PASAR: gestionado internamente por PracticeChatInterface
+              matchFeedback={matchFeedback} // <-- Pasar matchFeedback
+              setMatchFeedback={setMatchFeedback} // <-- Pasar setMatchFeedback
               setAppMessage={setAppMessage}
-              // setShowCorrectAnswer={setShowCorrectAnswer} // NO PASAR: gestionado internamente
-              // showCorrectAnswer={showCorrectAnswer} // NO PASAR: gestionado internamente
-              // recordedMicrophoneText={recordedMicrophoneText} // NO PASAR: gestionado internamente
-              // handleSpeechResultForListening={handleSpeechResultForListening} // NO PASAR: gestionado internamente
+              showCorrectAnswer={showCorrectAnswer} // <-- Pasar showCorrectAnswer
+              setShowCorrectAnswer={setShowCorrectAnswer} // <-- Pasar setShowCorrectAnswer
+              recordedMicrophoneText={recordedMicrophoneText} // <-- Pasar recordedMicrophoneText
+              handleSpeechResultForListening={handleSpeechResultForListening} // <-- Pasar handleSpeechResultForListening
               expectedAnswerEN={currentExercise.AnswerEN} // Pasar la respuesta esperada para el chat
             />
           ) : (
