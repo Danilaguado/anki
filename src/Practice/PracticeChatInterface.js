@@ -2,8 +2,8 @@
 // ¡Este componente ahora gestiona el flujo de toda la lección de chat!
 
 import React, { useState, useEffect, useRef } from "react";
-import { normalizeText } from "../../utils/textUtils"; // Ruta relativa
-import SpeechToTextButton from "../../components/SpeechToTextButton"; // Ruta relativa
+import { normalizeText } from "../utils/textUtils"; // Ruta relativa
+import SpeechToTextButton from "../components/SpeechToTextButton"; // Ruta relativa
 import "./PracticeChatInterface.css"; // Correcto: en la misma carpeta
 
 const PracticeChatInterface = ({
