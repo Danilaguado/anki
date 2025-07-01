@@ -1,15 +1,15 @@
 // src/Practice/components/PracticeChatInterface.js
+// ¡Este componente gestiona el flujo de toda la lección de chat!
+
 import React, { useState, useEffect, useRef } from "react";
-import { normalizeText } from "../utils/textUtils"; // Ruta relativa
+import { normalizeText, renderClickableText } from "../utils/textUtils"; // Ruta relativa
 import SpeechToTextButton from "../components/SpeechToTextButton"; // Ruta relativa
 import "./PracticeChatInterface.css"; // Correcto: en la misma carpeta
 
 const PracticeChatInterface = ({
-  lessonExercises, // ¡NUEVO! Recibe TODOS los ejercicios de la lección
+  lessonExercises, // Recibe TODOS los ejercicios de la lección
   onPlayAudio,
   appIsLoading,
-  userTypedAnswer,
-  setUserTypedAnswer,
   setAppMessage,
   onDialogueComplete, // Callback al completar *toda la lección* de chat
 }) => {
@@ -23,9 +23,10 @@ const PracticeChatInterface = ({
   const [chatMessages, setChatMessages] = useState([]);
   // Estados de feedback y micrófono (ahora locales a este componente)
   const [lastFeedback, setLastFeedback] = useState(null);
-  const [localExpectedAnswer, setLocalExpectedAnswer] = useState(""); // <-- ¡CORREGIDO! Declarado
+  const [localExpectedAnswer, setLocalExpectedAnswer] = useState("");
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
+  const [userTypedAnswer, setUserTypedAnswer] = useState(""); // Estado del input del usuario
 
   const chatMessagesRef = useRef(null); // Para hacer scroll automático
 
@@ -51,10 +52,10 @@ const PracticeChatInterface = ({
     setCurrentLessonExerciseIndex(0); // Reinicia el progreso de la lección
     setCurrentChatDialogueStep(0); // Reinicia el paso del diálogo interno
     setLastFeedback(null);
-    setLocalExpectedAnswer(""); // Limpiar
-    setUserTypedAnswer(""); // Limpiar
-    setRecordedMicrophoneText(""); // Limpiar
-    setShowCorrectAnswer(false); // Limpiar
+    setLocalExpectedAnswer("");
+    setUserTypedAnswer("");
+    setRecordedMicrophoneText("");
+    setShowCorrectAnswer(false);
     setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
 
     if (lessonExercises && lessonExercises.length > 0) {
@@ -125,7 +126,7 @@ const PracticeChatInterface = ({
     setLocalExpectedAnswer,
     setCurrentLessonExerciseIndex,
     setCurrentChatDialogueStep,
-  ]); // Dependencias completas
+  ]); // Dependencias completas y correctas
 
   // Efecto para hacer scroll al final del chat y manejar el avance automático
   useEffect(() => {
@@ -133,6 +134,8 @@ const PracticeChatInterface = ({
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
     }
 
+    // Lógica para que la IA responda automáticamente y para que el chat avance.
+    // Esto se dispara cuando currentChatDialogueStep o currentLessonExerciseIndex cambian.
     if (
       lessonExercises &&
       currentLessonExerciseIndex < lessonExercises.length
@@ -168,7 +171,7 @@ const PracticeChatInterface = ({
           // El diálogo interno del 'practice_chat' ha terminado, avanzar al siguiente ejercicio de la lección
           if (currentLessonExerciseIndex < lessonExercises.length - 1) {
             setCurrentLessonExerciseIndex((prev) => prev + 1);
-            setCurrentChatDialogueStep(0);
+            setCurrentChatDialogueStep(0); // Reiniciar el diálogo interno para el nuevo ejercicio
             setLastFeedback(null);
             setLocalExpectedAnswer("");
             setAppMessage("¡Diálogo completado! Siguiente ejercicio.");
