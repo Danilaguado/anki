@@ -1,7 +1,7 @@
 // src/lesson/components/lessonCard.js
 import React, { useState, useEffect, useContext } from "react";
 import "../PrincipalPageLessons.css"; // Estilos compartidos para lecciones (sube un nivel)
-import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Utilidades de texto (sube dos niveles)
+import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto (sube dos niveles)
 import ExerciseDisplay from "./ExerciseDisplay"; // En la misma carpeta
 import ExerciseNavigation from "./ExerciseNavigation"; // En la misma carpeta
 // ¡CORREGIDO! Ruta de PracticeChatInterface
