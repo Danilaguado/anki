@@ -13,7 +13,7 @@ import AppContext from "./context/AppContext";
 // Importa tus secciones principales (Rutas relativas corregidas)
 import MainVocabSection from "./MainVocabSection";
 import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
-import PracticePage from "./practice/PracticePage"; // Importación de la página de práctica
+import PracticePage from "./Practice/PracticePage"; // Importación de la página de práctica
 
 // Importar utilidades de audio (Ruta relativa corregida)
 import { playAudio, b64toBlob } from "./utils/audioUtils";
