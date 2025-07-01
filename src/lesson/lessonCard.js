@@ -17,7 +17,7 @@ import PracticeExerciseDisplay from "../Practice/PracticeExerciseDisplay";
 import PracticePage from "../Practice/PracticePage";
 
 // 5) contexto global en src/components/context
-import AppContext from "../components/context/AppContext";
+import AppContext from "../context/AppContext";
 
 const LessonCard = ({ lesson, onBack }) => {
   // Consumir valores del contexto
