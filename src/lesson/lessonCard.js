@@ -23,7 +23,7 @@ const LessonCard = ({ lesson, onBack }) => {
   const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
 
-  // Estado para el índice del ejercicio actual dentro de la lección
+  // Estado para el índice del ejercicio actual dentro de la lección (solo para STANDARD_LESSON)
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   // Estado para la visibilidad de la respuesta (para ejercicios de traducción)
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
@@ -33,25 +33,22 @@ const LessonCard = ({ lesson, onBack }) => {
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   // Nuevo estado para el texto grabado por el micrófono en el ejercicio de escucha
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
-  // NUEVO: Estado para el índice del diálogo de chat (gestionado por LessonCard)
-  const [lessonCardDialogueIndex, setLessonCardDialogueIndex] = useState(0);
 
-  // Restablecer estados al cambiar de ejercicio
+  // NUEVO: Estado para el progreso del diálogo de chat cuando la lección es un chatbot
+  // Este índice ahora rastrea el progreso a través de los *ejercicios de la lección*
+  // dentro del PracticeChatInterface, no solo los pasos internos de un diálogo.
+  const [chatLessonProgressIndex, setChatLessonProgressIndex] = useState(0);
+
+  // Restablecer estados al cambiar de ejercicio o lección
   useEffect(() => {
     setIsAnswerVisible(false);
     setUserTypedAnswer("");
     setMatchFeedback(null);
     setShowCorrectAnswer(false);
     setRecordedMicrophoneText("");
-    setLessonCardDialogueIndex(0); // Resetear el índice del diálogo al cambiar de ejercicio
-    if (
-      lesson &&
-      lesson.exercises &&
-      currentExerciseIndex >= lesson.exercises.length
-    ) {
-      setCurrentExerciseIndex(0);
-    }
-  }, [currentExerciseIndex, lesson]);
+    setCurrentExerciseIndex(0); // Resetear el índice del ejercicio para flashcards
+    setChatLessonProgressIndex(0); // Resetear el progreso del chat al cambiar de lección
+  }, [lesson]); // Dependencia 'lesson' para resetear al cambiar la lección
 
   // Si no hay lección o ejercicios, mostrar mensaje
   if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
@@ -68,15 +65,17 @@ const LessonCard = ({ lesson, onBack }) => {
     );
   }
 
-  const currentExercise = lesson.exercises[currentExerciseIndex];
+  // El ejercicio actual para las lecciones estándar (flashcards)
+  const currentStandardExercise = lesson.exercises[currentExerciseIndex];
 
   // --- Funciones de manejo de ejercicios (pasadas a ExerciseDisplay o usadas directamente) ---
   const handleNextExercise = () => {
+    // Esta lógica de avance es para lecciones ESTÁNDAR (flashcards)
     const requiresAnswer = [
       "fill_in_the_blank",
       "multiple_choice",
       "listening",
-    ].includes(currentExercise.Type);
+    ].includes(currentStandardExercise.Type);
     if (requiresAnswer && matchFeedback === null) {
       setAppMessage(
         "Por favor, completa el ejercicio actual antes de avanzar."
@@ -93,12 +92,16 @@ const LessonCard = ({ lesson, onBack }) => {
   };
 
   const handlePrevExercise = () => {
+    // Esta lógica de retroceso es para lecciones ESTÁNDAR (flashcards)
     if (currentExerciseIndex > 0) {
       setCurrentExerciseIndex((prev) => prev - 1);
       setAppMessage("");
     }
   };
 
+  // Las funciones handleCheckAnswer, handleOptionClick, handleSpeechResultForListening
+  // ahora son pasadas a ExerciseDisplay para STANDARD_LESSON.
+  // Para CHATBOT_LESSON, PracticeChatInterface las gestiona internamente.
   const handleCheckAnswer = () => {
     if (!userTypedAnswer.trim()) {
       setAppMessage("Por favor, escribe tu respuesta.");
@@ -110,14 +113,20 @@ const LessonCard = ({ lesson, onBack }) => {
     let normalizedCorrectAnswer;
 
     if (
-      currentExercise.Type === "fill_in_the_blank" ||
-      currentExercise.Type === "multiple_choice"
+      currentStandardExercise.Type === "fill_in_the_blank" ||
+      currentStandardExercise.Type === "multiple_choice"
     ) {
-      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || "");
-    } else if (currentExercise.Type === "listening") {
-      normalizedCorrectAnswer = normalizeText(currentExercise.QuestionEN || "");
+      normalizedCorrectAnswer = normalizeText(
+        currentStandardExercise.AnswerEN || ""
+      );
+    } else if (currentStandardExercise.Type === "listening") {
+      normalizedCorrectAnswer = normalizeText(
+        currentStandardExercise.QuestionEN || ""
+      );
     } else {
-      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerES || "");
+      normalizedCorrectAnswer = normalizeText(
+        currentStandardExercise.AnswerES || ""
+      );
     }
 
     if (normalizedUserAnswer === normalizedCorrectAnswer) {
@@ -136,7 +145,9 @@ const LessonCard = ({ lesson, onBack }) => {
     setUserTypedAnswer(selectedOption);
 
     const normalizedSelected = normalizeText(selectedOption);
-    const normalizedCorrect = normalizeText(currentExercise.AnswerEN || "");
+    const normalizedCorrect = normalizeText(
+      currentStandardExercise.AnswerEN || ""
+    );
 
     if (normalizedSelected === normalizedCorrect) {
       setMatchFeedback("correct");
@@ -155,7 +166,7 @@ const LessonCard = ({ lesson, onBack }) => {
 
     const normalizedTranscript = normalizeText(transcript);
     const normalizedQuestionEN = normalizeText(
-      currentExercise.QuestionEN || ""
+      currentStandardExercise.QuestionEN || ""
     );
 
     if (normalizedTranscript === normalizedQuestionEN) {
@@ -169,20 +180,27 @@ const LessonCard = ({ lesson, onBack }) => {
     }
   };
 
-  // --- NUEVA FUNCIÓN: Manejar la finalización del diálogo de chat ---
-  const handleChatDialogueComplete = () => {
-    setAppMessage("¡Diálogo completado! Avanzando al siguiente ejercicio.");
-    // Avanzar al siguiente ejercicio de la lección
-    if (currentExerciseIndex < lesson.exercises.length - 1) {
-      setCurrentExerciseIndex((prev) => prev + 1);
+  // --- NUEVA FUNCIÓN: Manejar la finalización de un ejercicio de chat (dentro de la lección de chat) ---
+  const handleChatExerciseComplete = (completedExerciseIndex) => {
+    // Esta función se llama cuando un ejercicio (chat o refuerzo) dentro de PracticeChatInterface se completa.
+    // Avanzamos el índice de progreso de la lección de chat.
+    setAppMessage(
+      `Ejercicio ${completedExerciseIndex + 1} completado. Avanzando...`
+    );
+    if (completedExerciseIndex < lesson.exercises.length - 1) {
+      setChatLessonProgressIndex(completedExerciseIndex + 1); // Avanza al siguiente ejercicio de la lección
     } else {
-      setAppMessage("¡Has completado esta lección!");
+      setAppMessage("¡Has completado esta lección de chat!");
+      // Aquí podrías volver a la lista de lecciones o mostrar un resumen
     }
     setMatchFeedback(null); // Reiniciar feedback
     setShowCorrectAnswer(false);
     setUserTypedAnswer("");
     setRecordedMicrophoneText("");
   };
+
+  // Determinar si la lección actual es un módulo de chatbot
+  const isChatbotLesson = lesson.Type === "chatbot_lesson";
 
   return (
     <div className='lesson-detail-view section-container'>
@@ -195,19 +213,19 @@ const LessonCard = ({ lesson, onBack }) => {
       <p className='lesson-description'>{lesson.Description}</p>
 
       {/* Mostrar notas de la lección (si existen) */}
-      {currentExercise.Notes && (
+      {currentStandardExercise.Notes && ( // Mostrar notas solo para ejercicios estándar
         <div className='section-container lesson-notes'>
           <h3 className='subsection-title'>Notas:</h3>
-          <p>{currentExercise.Notes}</p>
+          <p>{currentStandardExercise.Notes}</p>
         </div>
       )}
 
       {/* Mostrar la imagen del ejercicio si existe */}
-      {currentExercise.Image && (
+      {currentStandardExercise.Image && ( // Mostrar imagen solo para ejercicios estándar
         <div className='exercise-image-container'>
           <img
-            src={currentExercise.Image}
-            alt={`Imagen para ${currentExercise.Type} ejercicio`}
+            src={currentStandardExercise.Image}
+            alt={`Imagen para ${currentStandardExercise.Type} ejercicio`}
             className='exercise-image'
             onError={(e) => {
               e.target.onerror = null;
@@ -217,35 +235,39 @@ const LessonCard = ({ lesson, onBack }) => {
         </div>
       )}
 
-      <div
-        className={`card-container lesson-exercise-card ${
-          matchFeedback ? `match-${matchFeedback}` : ""
-        }`}
-      >
-        {/* Renderizado condicional: CHATBOT vs. ESTÁNDAR */}
-        {currentExercise.Type === "practice_chat" ? (
-          <PracticeChatInterface
-            dialogueSequence={currentExercise.DialogueSequence}
-            onPlayAudio={onPlayAudio}
-            appIsLoading={appIsLoading}
-            userTypedAnswer={userTypedAnswer}
-            setUserTypedAnswer={setUserTypedAnswer}
-            matchFeedback={matchFeedback}
-            setMatchFeedback={setMatchFeedback}
-            setAppMessage={setAppMessage}
-            setShowCorrectAnswer={setShowCorrectAnswer}
-            showCorrectAnswer={showCorrectAnswer}
-            recordedMicrophoneText={recordedMicrophoneText}
-            handleSpeechResultForListening={handleSpeechResultForListening}
-            expectedAnswerEN={currentExercise.AnswerEN} // La primera respuesta esperada del usuario en el chat
-            onDialogueComplete={handleChatDialogueComplete} // Callback al completar el diálogo
-            currentDialogueIndex={lessonCardDialogueIndex} // NUEVO: Pasar el índice del diálogo
-            setCurrentDialogueIndex={setLessonCardDialogueIndex} // NUEVO: Pasar la función para actualizarlo
-          />
-        ) : (
-          // Componente para mostrar los ejercicios estándar (flashcard-style)
+      {/* Renderizado condicional: Flujo de CHATBOT CONTINUO vs. Flashcards Estándar */}
+      {isChatbotLesson ? (
+        // Si es una lección de chatbot, renderizamos el PracticeChatInterface
+        // y le pasamos TODOS los ejercicios de la lección para que los gestione internamente
+        <PracticeChatInterface
+          lessonExercises={lesson.exercises} // ¡NUEVO! Pasar TODOS los ejercicios de la lección
+          onPlayAudio={onPlayAudio}
+          appIsLoading={appIsLoading}
+          userTypedAnswer={userTypedAnswer}
+          setUserTypedAnswer={setUserTypedAnswer}
+          setAppMessage={setAppMessage}
+          onDialogueComplete={onBack} // Al completar toda la lección de chat, vuelve a la lista
+          onExerciseComplete={handleChatExerciseComplete} // Callback al completar cada ejercicio de chat
+
+          // Props que PracticeChatInterface gestiona localmente
+          // matchFeedback={matchFeedback}
+          // setMatchFeedback={setMatchFeedback}
+          // showCorrectAnswer={showCorrectAnswer}
+          // setShowCorrectAnswer={setShowCorrectAnswer}
+          // recordedMicrophoneText={recordedMicrophoneText}
+          // handleSpeechResultForListening={handleSpeechResultForListening}
+          // expectedAnswerEN={currentExercise.AnswerEN} // Ya no se pasa, PracticeChatInterface lo obtiene de lessonExercises
+        />
+      ) : (
+        // Si es una lección estándar (flashcards), el flujo es el mismo de antes
+        <div
+          className={`card-container lesson-exercise-card ${
+            matchFeedback ? `match-${matchFeedback}` : ""
+          }`}
+        >
+          {/* Componente para mostrar el ejercicio actual */}
           <ExerciseDisplay
-            currentExercise={currentExercise}
+            currentExercise={currentStandardExercise}
             onPlayAudio={onPlayAudio}
             setAppMessage={setAppMessage}
             appIsLoading={appIsLoading}
@@ -260,26 +282,21 @@ const LessonCard = ({ lesson, onBack }) => {
             handleOptionClick={handleOptionClick}
             handleSpeechResultForListening={handleSpeechResultForListening}
           />
-        )}
 
-        {/* El componente de navegación se muestra para TODOS los ejercicios,
-            pero su botón "Siguiente" se deshabilitará si es un chat no completado. */}
-        <ExerciseNavigation
-          currentExerciseIndex={currentExerciseIndex}
-          totalExercises={lesson.exercises.length}
-          onNextExercise={handleNextExercise}
-          onPrevExercise={handlePrevExercise}
-          matchFeedback={matchFeedback}
-          currentExerciseType={currentExercise.Type}
-          // Para chat, el botón Siguiente se habilita solo si el diálogo está completo
-          isChatDialogueComplete={
-            currentExercise.Type === "practice_chat" &&
-            currentExercise.DialogueSequence &&
-            lessonCardDialogueIndex >= currentExercise.DialogueSequence.length
-          } // ¡CORREGIDO! Usar lessonCardDialogueIndex
-        />
-      </div>
+          {/* El componente de navegación se muestra para TODOS los ejercicios estándar */}
+          <ExerciseNavigation
+            currentExerciseIndex={currentExerciseIndex}
+            totalExercises={lesson.exercises.length}
+            onNextExercise={handleNextExercise}
+            onPrevExercise={handlePrevExercise}
+            matchFeedback={matchFeedback}
+            currentExerciseType={currentStandardExercise.Type}
+            isChatDialogueComplete={false} // Siempre falso para lecciones estándar
+          />
+        </div>
+      )}
 
+      {/* Botón para volver a la lista de lecciones (siempre visible) */}
       <button
         onClick={onBack}
         className='button back-button return-to-list-button'

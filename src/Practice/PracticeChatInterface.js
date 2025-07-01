@@ -1,28 +1,29 @@
 // src/Practice/components/PracticeChatInterface.js
+// ¡Este componente ahora gestiona el flujo de toda la lección de chat!
+
 import React, { useState, useEffect, useRef } from "react";
-import { normalizeText } from "../utils/textUtils"; // Ruta relativa
-import SpeechToTextButton from "../components/SpeechToTextButton"; // Ruta relativa
+import { normalizeText } from "../../utils/textUtils"; // Ruta relativa
+import SpeechToTextButton from "../../components/SpeechToTextButton"; // Ruta relativa
 import "./PracticeChatInterface.css"; // Correcto: en la misma carpeta
 
 const PracticeChatInterface = ({
-  dialogueSequence, // Secuencia completa del diálogo
+  dialogueSequence, // ¡Ahora es el array COMPLETO de ejercicios de la lección!
   onPlayAudio,
   appIsLoading,
-  userTypedAnswer, // userTypedAnswer y setUserTypedAnswer aún se gestionan en el padre
-  setUserTypedAnswer, // para que el input del chat pueda ser controlado por el padre
-  setAppMessage, // Para mensajes globales de la app
-  onDialogueComplete, // Callback al completar el diálogo
+  userTypedAnswer,
+  setUserTypedAnswer,
+  setAppMessage,
+  onDialogueComplete, // Callback al completar *toda la lección* de chat
 
-  // La respuesta esperada para el primer turno del usuario (sigue siendo una prop)
-  expectedAnswerEN: initialExpectedAnswerEN,
+  // currentDialogueIndex y setCurrentDialogueIndex ahora vienen del padre (LessonCard)
+  currentDialogueIndex,
+  setCurrentDialogueIndex,
 }) => {
-  // Estado local para el progreso del diálogo (índice actual en dialogueSequence)
-  const [currentDialogueStep, setCurrentDialogueStep] = useState(0);
-  // Estado para almacenar todos los mensajes que ya se han mostrado en el chat
+  // Estado local para los mensajes que se han mostrado en el chat
   const [chatMessages, setChatMessages] = useState([]);
-  // Estado para el feedback de la última respuesta del usuario (local al chat)
+  // Estado local para el feedback de la última respuesta del usuario
   const [lastFeedback, setLastFeedback] = useState(null);
-  const [localExpectedAnswer, setLocalExpectedAnswer] = useState("");
+  const [lastExpectedAnswer, setLastExpectedAnswer] = useState("");
   // Estado local para el texto grabado por el micrófono
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
   // Estado local para mostrar la respuesta correcta
@@ -32,48 +33,59 @@ const PracticeChatInterface = ({
 
   // Efecto para inicializar el chat y avanzar automáticamente los mensajes de la IA
   useEffect(() => {
-    // Resetear todos los estados relevantes al cargar un nuevo diálogo
     setChatMessages([]);
-    setCurrentDialogueStep(0); // Reinicia el paso del diálogo
     setLastFeedback(null);
-    setLocalExpectedAnswer(initialExpectedAnswerEN || ""); // Asegurar inicialización con fallback
-    setUserTypedAnswer(""); // Limpiar input del usuario
-    setRecordedMicrophoneText(""); // Limpiar texto del micrófono local
-    setShowCorrectAnswer(false); // Limpiar showCorrectAnswer local
+    setLastExpectedAnswer("");
+    setUserTypedAnswer("");
+    setRecordedMicrophoneText("");
+    setShowCorrectAnswer(false);
     setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
 
-    // Iniciar el chat con el primer mensaje de la IA si existe y es su turno
+    // Iniciar el chat con el primer elemento de la secuencia de diálogo (que es el primer ejercicio)
     if (dialogueSequence && dialogueSequence.length > 0) {
-      const firstStep = dialogueSequence[0];
-      if (firstStep && firstStep.speaker === "ai") {
+      const firstExercise = dialogueSequence[0];
+      // Si el primer ejercicio es un chat de diálogo (Type: 'practice_chat')
+      if (
+        firstExercise.Type === "practice_chat" &&
+        firstExercise.DialogueSequence &&
+        firstExercise.DialogueSequence.length > 0
+      ) {
+        const firstChatStep = firstExercise.DialogueSequence[0];
+        if (firstChatStep && firstChatStep.speaker === "ai") {
+          setChatMessages([
+            {
+              id: `ai-${Date.now()}-0`,
+              speaker: "ai",
+              phraseEN: firstChatStep.phraseEN,
+              phraseES: firstChatStep.phraseES,
+            },
+          ]);
+          // Avanzar el índice del diálogo interno al siguiente paso del chat
+          setCurrentDialogueIndex(1);
+        } else if (firstChatStep && firstChatStep.speaker === "user") {
+          setCurrentDialogueIndex(0); // El primer paso del chat es del usuario
+        }
+      } else {
+        // Si el primer ejercicio NO es un 'practice_chat' (ej. es un multiple_choice de refuerzo),
+        // lo tratamos como un mensaje de la IA para iniciar el flujo.
         setChatMessages([
           {
             id: `ai-${Date.now()}-0`,
             speaker: "ai",
-            phraseEN: firstStep.phraseEN,
-            phraseES: firstStep.phraseES,
+            phraseEN: firstExercise.QuestionEN,
+            phraseES: firstExercise.QuestionES,
           },
         ]);
-        setCurrentDialogueStep(1); // Avanzar al siguiente paso (que debería ser el turno del usuario)
-      } else if (firstStep && firstStep.speaker === "user") {
-        setCurrentDialogueStep(0); // El primer paso es del usuario, esperamos su input
+        setCurrentDialogueIndex(0); // Mantenemos el índice en 0, esperando la respuesta del usuario para este ejercicio
       }
     }
   }, [
     dialogueSequence,
-    initialExpectedAnswerEN,
+    onPlayAudio,
     setAppMessage,
     setUserTypedAnswer,
-  ]); // Añadido setUserTypedAnswer a dependencias
-
-  // Determinar si el diálogo ha terminado (no hay más pasos)
-  const dialogueCompleted =
-    dialogueSequence && currentDialogueStep >= dialogueSequence.length;
-  // Determinar si el turno actual es del usuario
-  const isUserTurnCurrent =
-    dialogueSequence &&
-    currentDialogueStep < dialogueSequence.length &&
-    dialogueSequence[currentDialogueStep]?.speaker === "user";
+    setCurrentDialogueIndex,
+  ]); // Dependencias para reinicializar si la lección cambia
 
   // Efecto para hacer scroll al final del chat y manejar las respuestas automáticas de la IA
   useEffect(() => {
@@ -81,37 +93,85 @@ const PracticeChatInterface = ({
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
     }
 
-    // Lógica para que la IA responda automáticamente después de que el usuario acierte
-    // y para que el chat avance si el siguiente paso es de la IA.
-    if (dialogueSequence && currentDialogueStep < dialogueSequence.length) {
-      const currentStepData = dialogueSequence[currentDialogueStep];
+    // Lógica para que la IA responda automáticamente y para que el chat avance.
+    // Esto se dispara cuando currentDialogueIndex cambia (después de una respuesta correcta del usuario)
+    // o al inicializar si el primer mensaje es de la IA.
+    if (dialogueSequence && currentDialogueIndex < dialogueSequence.length) {
+      const currentExerciseData = dialogueSequence[currentDialogueIndex];
 
-      if (currentStepData && currentStepData.speaker === "ai") {
-        // Asegurarse de que currentStepData exista
-        setTimeout(() => {
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              id: `ai-${Date.now()}-${currentDialogueStep}`,
-              speaker: "ai",
-              phraseEN: currentStepData.phraseEN,
-              phraseES: currentStepData.phraseES,
-            },
-          ]);
-          setCurrentDialogueStep((prev) => prev + 1); // Avanza al siguiente paso
-          setLastFeedback(null); // Reinicia feedback visual
-          setLocalExpectedAnswer(""); // Limpia la respuesta esperada anterior
-          setAppMessage("");
-          setShowCorrectAnswer(false); // Oculta la respuesta correcta de la interacción anterior
-        }, 1000); // Pequeño retraso para la respuesta de la IA
+      // Si el ejercicio actual es de tipo 'practice_chat' y es el turno de la IA en su secuencia interna
+      if (
+        currentExerciseData.Type === "practice_chat" &&
+        currentExerciseData.DialogueSequence &&
+        currentDialogueStep < currentExerciseData.DialogueSequence.length
+      ) {
+        const currentChatStep =
+          currentExerciseData.DialogueSequence[currentDialogueStep];
+
+        if (currentChatStep && currentChatStep.speaker === "ai") {
+          setTimeout(() => {
+            setChatMessages((prev) => [
+              ...prev,
+              {
+                id: `ai-${Date.now()}-${currentDialogueIndex}-${currentDialogueStep}`,
+                speaker: "ai",
+                phraseEN: currentChatStep.phraseEN,
+                phraseES: currentChatStep.phraseES,
+              },
+            ]);
+            setCurrentDialogueIndex((prev) => prev + 1); // Avanza al siguiente paso interno del chat
+            setLastFeedback(null);
+            setLocalExpectedAnswer("");
+            setAppMessage("");
+            setShowCorrectAnswer(false);
+          }, 1000);
+        }
+      } else if (currentExerciseData.Type !== "practice_chat") {
+        // Si no es un chat de diálogo, pero es un ejercicio de refuerzo (multiple_choice, fill_in_the_blank, etc.)
+        // y el usuario acaba de responder el anterior correctamente, mostramos la "pregunta" del ejercicio como si fuera la IA.
+        // Esto solo se hará una vez por ejercicio.
+        const lastMessageIsUserCorrect =
+          chatMessages.length > 0 &&
+          chatMessages[chatMessages.length - 1].speaker === "user" &&
+          lastFeedback === "correct";
+
+        if (lastMessageIsUserCorrect || currentDialogueStep === 0) {
+          // Si el usuario acertó el anterior, o es el primer ejercicio (no chat)
+          const messageId = `ai-exercise-${Date.now()}-${currentDialogueIndex}`;
+          const existingMessage = chatMessages.find(
+            (msg) => msg.id === messageId
+          );
+
+          if (!existingMessage) {
+            // Evitar duplicar el mensaje del ejercicio
+            setTimeout(() => {
+              setChatMessages((prev) => [
+                ...prev,
+                {
+                  id: messageId,
+                  speaker: "ai",
+                  phraseEN: currentExerciseData.QuestionEN,
+                  phraseES: currentExerciseData.QuestionES,
+                  type: currentExerciseData.Type, // Para que el frontend sepa cómo renderizarlo
+                  optionsEN: currentExerciseData.OptionsEN,
+                  answerEN: currentExerciseData.AnswerEN,
+                },
+              ]);
+              // No avanzamos currentDialogueIndex aquí, esperamos la respuesta del usuario
+              setLastFeedback(null);
+              setLocalExpectedAnswer("");
+              setAppMessage("");
+              setShowCorrectAnswer(false);
+            }, 500);
+          }
+        }
       }
     } else if (dialogueCompleted && onDialogueComplete) {
-      // Si el diálogo ha terminado y hay un callback
-      onDialogueComplete(); // Notificar al padre que el diálogo ha terminado
+      onDialogueComplete(); // Notificar al padre que toda la lección de chat ha terminado
     }
   }, [
     chatMessages,
-    currentDialogueStep,
+    currentDialogueIndex,
     dialogueSequence,
     dialogueCompleted,
     onDialogueComplete,
@@ -119,52 +179,67 @@ const PracticeChatInterface = ({
     setShowCorrectAnswer,
     setLastFeedback,
     setLocalExpectedAnswer,
-  ]); // Dependencias para re-scroll y lógica de IA
+  ]);
 
   // Manejar el envío de la respuesta del usuario en el chat
   const handleChatSubmit = () => {
     if (!userTypedAnswer.trim()) {
-      setAppMessage(
-        "Por favor, escribe tu respuesta para continuar el diálogo."
-      );
+      setAppMessage("Por favor, escribe tu respuesta para continuar.");
       return;
     }
 
-    const currentExpectedStep = dialogueSequence[currentDialogueStep];
-    if (!currentExpectedStep || currentExpectedStep.speaker !== "user") {
-      setAppMessage("No es tu turno de responder o el diálogo ha terminado.");
-      return;
+    const currentExerciseData = dialogueSequence[currentDialogueIndex];
+    let expectedAnswerForCurrentTurn = "";
+
+    if (currentExerciseData.Type === "practice_chat") {
+      // Si es un ejercicio de chat, la respuesta esperada viene de DialogueSequence
+      const currentChatStep =
+        currentExerciseData.DialogueSequence[currentDialogueStep];
+      if (!currentChatStep || currentChatStep.speaker !== "user") {
+        setAppMessage("No es tu turno de responder o el diálogo ha terminado.");
+        return;
+      }
+      expectedAnswerForCurrentTurn = currentChatStep.expectedEN;
+    } else {
+      // Si es un ejercicio de refuerzo, la respuesta esperada es AnswerEN del ejercicio
+      expectedAnswerForCurrentTurn = currentExerciseData.AnswerEN;
     }
 
     const normalizedUserAnswer = normalizeText(userTypedAnswer);
     const normalizedExpectedAnswer = normalizeText(
-      currentExpectedStep.expectedEN || ""
+      expectedAnswerForCurrentTurn || ""
     );
 
-    // Añadir el mensaje del usuario al array de chatMessages ANTES de la verificación
     setChatMessages((prev) => [
       ...prev,
       {
-        id: `user-${Date.now()}-${currentDialogueStep}`,
+        id: `user-${Date.now()}-${currentDialogueIndex}-${currentDialogueStep}`,
         speaker: "user",
-        phraseEN: userTypedAnswer, // La frase del usuario es lo que escribió
-        expectedEN: currentExpectedStep.expectedEN, // Guarda la respuesta esperada para referencia
+        phraseEN: userTypedAnswer,
+        expectedEN: expectedAnswerForCurrentTurn, // Guarda la respuesta esperada para referencia
       },
     ]);
 
     if (normalizedUserAnswer === normalizedExpectedAnswer) {
       setLastFeedback("correct");
       setAppMessage("¡Correcto!");
-      setLocalExpectedAnswer(""); // Limpiar si fue correcto
+      setLocalExpectedAnswer("");
       setUserTypedAnswer(""); // Limpia el input
-      setShowCorrectAnswer(true); // Mostrar la respuesta correcta si se quiere
-      setCurrentDialogueStep((prev) => prev + 1); // Avanza al siguiente paso (IA o fin)
+      setShowCorrectAnswer(true);
+
+      // Avanzar al siguiente paso (si es chat interno) o al siguiente ejercicio (si es de refuerzo)
+      if (currentExerciseData.Type === "practice_chat") {
+        setCurrentDialogueIndex((prev) => prev + 1); // Avanza dentro del diálogo interno
+      } else {
+        // Si es un ejercicio de refuerzo y se acertó, avanzar al siguiente ejercicio de la lección
+        setCurrentDialogueIndex((prev) => prev + 1);
+      }
     } else {
       setLastFeedback("incorrect");
-      setLocalExpectedAnswer(currentExpectedStep.expectedEN); // Guarda la respuesta correcta para mostrar
+      setLocalExpectedAnswer(expectedAnswerForCurrentTurn);
       setAppMessage("Incorrecto. Intenta de nuevo.");
-      setShowCorrectAnswer(true); // Mostrar la respuesta correcta para que el usuario la vea
-      // No avanzamos el currentDialogueStep si es incorrecto, para que el usuario pueda reintentar
+      setShowCorrectAnswer(true);
+      // No avanzamos el currentDialogueIndex si es incorrecto
     }
   };
 
@@ -192,9 +267,8 @@ const PracticeChatInterface = ({
   const microphoneButton = (
     <SpeechToTextButton
       onResult={(transcript) => {
-        // Función local para manejar el resultado del STT
         setRecordedMicrophoneText(transcript);
-        setUserTypedAnswer(transcript); // Rellenar el input con la transcripción
+        setUserTypedAnswer(transcript);
       }}
       lang='en-US'
       disabled={
@@ -203,6 +277,205 @@ const PracticeChatInterface = ({
     />
   );
 
+  // Determinar si el diálogo ha terminado (no hay más pasos)
+  const dialogueCompleted =
+    dialogueSequence && currentDialogueIndex >= dialogueSequence.length;
+  // Determinar si el turno actual es del usuario
+  const isUserTurnCurrent =
+    dialogueSequence &&
+    currentDialogueIndex < dialogueSequence.length &&
+    dialogueSequence[currentDialogueIndex]?.speaker === "user";
+
+  // Renderizar el contenido del ejercicio de refuerzo si no es un 'practice_chat'
+  const renderReinforcementExercise = (exercise) => {
+    switch (exercise.Type) {
+      case "practice_multiple_choice":
+        const options = [...(exercise.OptionsEN || []), exercise.AnswerEN].sort(
+          () => Math.random() - 0.5
+        );
+        return (
+          <>
+            <div className='chat-exercise-question'>
+              <span className='chat-question-text'>{exercise.QuestionES}</span>
+              {playAudioButton(exercise.QuestionEN)}
+            </div>
+            <div className='multiple-choice-options'>
+              {options.map((option, idx) => (
+                <button
+                  key={idx}
+                  className={`button multiple-choice-button 
+                    ${
+                      lastFeedback &&
+                      normalizeText(option) === normalizeText(exercise.AnswerEN)
+                        ? "correct-option"
+                        : ""
+                    }
+                    ${
+                      lastFeedback &&
+                      normalizeText(option) ===
+                        normalizeText(userTypedAnswer) &&
+                      lastFeedback === "incorrect"
+                        ? "incorrect-selected-option"
+                        : ""
+                    }
+                  `}
+                  onClick={() => {
+                    if (lastFeedback === null) {
+                      setAppMessage("");
+                      setUserTypedAnswer(option); // Guarda la opción seleccionada
+                      handleChatSubmit(); // Llama a la lógica de envío del chat
+                    }
+                  }}
+                  disabled={lastFeedback !== null || appIsLoading}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            {lastFeedback && lastFeedback === "correct" && (
+              <p className='chat-feedback-message correct'>¡Correcto!</p>
+            )}
+            {lastFeedback && lastFeedback === "incorrect" && (
+              <p className='chat-feedback-message incorrect'>
+                Incorrecto. La respuesta esperada era: {exercise.AnswerEN}
+              </p>
+            )}
+          </>
+        );
+      case "practice_fill_in_the_blank":
+        const blankPlaceholder = "_______";
+        const parts = exercise.QuestionEN.split(blankPlaceholder);
+        return (
+          <>
+            <div className='chat-exercise-question'>
+              <span className='chat-question-text'>{parts[0]}</span>
+              <input
+                type='text'
+                className='input-field chat-input-inline'
+                value={userTypedAnswer}
+                onChange={(e) => setUserTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleChatSubmit();
+                }}
+                disabled={lastFeedback !== null || appIsLoading}
+              />
+              <span className='chat-question-text'>{parts[1]}</span>
+              {playAudioButton(exercise.QuestionEN)}
+            </div>
+            <p className='fill-in-the-blank-translation'>
+              {exercise.QuestionES}
+            </p>
+            {lastFeedback && lastFeedback === "correct" && (
+              <p className='chat-feedback-message correct'>¡Correcto!</p>
+            )}
+            {lastFeedback && lastFeedback === "incorrect" && (
+              <p className='chat-feedback-message incorrect'>
+                Incorrecto. La respuesta esperada era: {exercise.AnswerEN}
+              </p>
+            )}
+            <button
+              onClick={handleChatSubmit}
+              className='button primary-button chat-send-button'
+              disabled={lastFeedback !== null || appIsLoading}
+            >
+              Verificar
+            </button>
+          </>
+        );
+      case "practice_translation":
+        return (
+          <>
+            <div className='chat-exercise-question'>
+              <span className='chat-question-text'>{exercise.QuestionEN}</span>
+              {playAudioButton(exercise.QuestionEN)}
+            </div>
+            <p className='chat-translation-hint'>{exercise.QuestionES}</p>
+            {lastFeedback && lastFeedback === "correct" && (
+              <p className='chat-feedback-message correct'>¡Correcto!</p>
+            )}
+            {lastFeedback && lastFeedback === "incorrect" && (
+              <p className='chat-feedback-message incorrect'>
+                Incorrecto. La respuesta esperada era: {exercise.AnswerEN}
+              </p>
+            )}
+            <div className='chat-input-area'>
+              <input
+                type='text'
+                className='input-field chat-input'
+                placeholder='Tu traducción en inglés...'
+                value={userTypedAnswer}
+                onChange={(e) => setUserTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleChatSubmit();
+                }}
+                disabled={lastFeedback !== null || appIsLoading}
+              />
+              {microphoneButton}
+              <button
+                onClick={handleChatSubmit}
+                className='button primary-button chat-send-button'
+                disabled={lastFeedback !== null || appIsLoading}
+              >
+                Enviar
+              </button>
+            </div>
+          </>
+        );
+      case "practice_listening":
+        return (
+          <>
+            <div className='chat-exercise-question'>
+              <span className='chat-question-text'>
+                Escucha y escribe lo que oigas:
+              </span>
+              {playAudioButton(exercise.QuestionEN)}
+            </div>
+            <p className='chat-translation-hint'>{exercise.QuestionES}</p>
+            {recordedMicrophoneText && (
+              <div className='recorded-text-display'>
+                {recordedMicrophoneText}
+              </div>
+            )}
+            {lastFeedback && lastFeedback === "correct" && (
+              <p className='chat-feedback-message correct'>¡Correcto!</p>
+            )}
+            {lastFeedback && lastFeedback === "incorrect" && (
+              <p className='chat-feedback-message incorrect'>
+                Incorrecto. La respuesta esperada era: {exercise.QuestionEN}
+              </p>
+            )}
+            <div className='chat-input-area'>
+              <input
+                type='text'
+                className='input-field chat-input'
+                placeholder='Escribe lo que escuchaste aquí'
+                value={userTypedAnswer}
+                onChange={(e) => setUserTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleChatSubmit();
+                }}
+                disabled={lastFeedback !== null || appIsLoading}
+              />
+              {microphoneButton}
+              <button
+                onClick={handleChatSubmit}
+                className='button primary-button chat-send-button'
+                disabled={lastFeedback !== null || appIsLoading}
+              >
+                Verificar
+              </button>
+            </div>
+          </>
+        );
+      default:
+        return (
+          <p className='info-text'>
+            Tipo de ejercicio de refuerzo no soportado: {exercise.Type}
+          </p>
+        );
+    }
+  };
+
   return (
     <div className='chat-lesson-container'>
       <div className='chat-container' ref={chatMessagesRef}>
@@ -210,26 +483,32 @@ const PracticeChatInterface = ({
           <div key={msg.id} className={`chat-message ${msg.speaker}`}>
             {msg.speaker === "ai" ? (
               <div className='chat-text-with-audio'>
-                <span>{msg.phraseEN}</span>
-                {playAudioButton(msg.phraseEN)}
+                <span>{msg.phraseEN || msg.QuestionEN}</span>{" "}
+                {/* Puede ser phraseEN o QuestionEN */}
+                {playAudioButton(msg.phraseEN || msg.QuestionEN)}
               </div>
             ) : (
-              // Mensaje del usuario: mostrar lo que escribió. Si falló, mostrar el esperado.
-              <span>
-                {msg.phraseEN}
-                {msg.speaker === "user" &&
-                  msg.id === chatMessages[chatMessages.length - 1]?.id &&
-                  lastFeedback === "incorrect" &&
-                  showCorrectAnswer && (
-                    <p className='chat-translation incorrect-answer-hint'>
-                      Esperado: {msg.expectedEN}
-                    </p>
-                  )}
-              </span>
+              <span>{msg.phraseEN}</span>
             )}
             {msg.speaker === "ai" && (
-              <p className='chat-translation'>{msg.phraseES}</p>
-            )}
+              <p className='chat-translation'>
+                {msg.phraseES || msg.QuestionES}
+              </p>
+            )}{" "}
+            {/* Puede ser phraseES o QuestionES */}
+            {/* Mostrar el contenido del ejercicio de refuerzo si es el turno de la IA y no es un chat interno */}
+            {msg.speaker === "ai" &&
+              msg.type &&
+              msg.type !== "practice_chat" &&
+              renderReinforcementExercise(msg)}
+            {msg.speaker === "user" &&
+              msg.id === chatMessages[chatMessages.length - 1]?.id &&
+              lastFeedback === "incorrect" &&
+              showCorrectAnswer && (
+                <p className='chat-translation incorrect-answer-hint'>
+                  Esperado: {lastExpectedAnswer}
+                </p>
+              )}
           </div>
         ))}
       </div>
