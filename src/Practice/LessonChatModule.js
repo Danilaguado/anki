@@ -1,5 +1,5 @@
 // src/Practice/LessonChatModule.js
-// ¡Este componente ahora gestiona el flujo de toda la lección de chat!
+// ¡Este componente ahora gestiona el flujo de toda la lección de chat, mostrando todos los ejercicios en una sola pantalla!
 
 import React, { useState, useEffect, useRef } from "react";
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Ruta relativa
@@ -10,17 +10,17 @@ const LessonChatModule = ({
   lessonExercises, // Recibe TODOS los ejercicios de la lección
   onPlayAudio,
   appIsLoading,
-  userTypedAnswer,
-  setUserTypedAnswer,
+  userTypedAnswer, // userTypedAnswer y setUserTypedAnswer aún se gestionan en el padre
+  setUserTypedAnswer, // para que el input del chat pueda ser controlado por el padre
   setAppMessage,
   onDialogueComplete, // Callback al completar *toda la lección* de chat
 
-  // currentDialogueIndex y setCurrentDialogueIndex ahora vienen del padre (LessonCard)
+  // currentLessonExerciseIndex y setCurrentLessonExerciseIndex ahora vienen del padre (LessonCard)
   currentLessonExerciseIndex, // <-- ¡CORREGIDO! Usar el nombre del padre
   setCurrentLessonExerciseIndex, // <-- ¡CORREGIDO! Usar el nombre del padre
 }) => {
   // Estado local para el progreso *interno* de un diálogo de chat (si el ejercicio es 'practice_chat')
-  const [currentChatDialogueStep, setCurrentChatDialogueStep] = useState(0); // <-- Declarado
+  const [currentChatDialogueStep, setCurrentChatDialogueStep] = useState(0);
   // Estado para almacenar todos los mensajes que ya se han mostrado en el chat
   const [chatMessages, setChatMessages] = useState([]);
   // Estados de feedback y micrófono (ahora locales a este componente)
@@ -34,8 +34,9 @@ const LessonChatModule = ({
   // Determinar si toda la lección de chat ha terminado (todos los ejercicios)
   const dialogueCompleted =
     lessonExercises && currentLessonExerciseIndex >= lessonExercises.length;
-  // Determinar si el turno actual es del usuario
-  const isUserTurnCurrent =
+
+  // Determinar si el turno actual es del usuario para el *ejercicio activo*
+  const isUserTurnCurrentExercise =
     lessonExercises &&
     currentLessonExerciseIndex < lessonExercises.length &&
     lessonExercises[currentLessonExerciseIndex].Type === "practice_chat" &&
@@ -46,24 +47,35 @@ const LessonChatModule = ({
       currentChatDialogueStep
     ]?.speaker === "user";
 
-  // Efecto para inicializar el chat con el primer ejercicio de la lección
+  // Determinar si el ejercicio actual requiere input del usuario (para habilitar/deshabilitar input)
+  const currentExerciseRequiresInput =
+    lessonExercises &&
+    currentLessonExerciseIndex < lessonExercises.length &&
+    [
+      "practice_multiple_choice",
+      "practice_fill_in_the_blank",
+      "practice_translation",
+      "practice_listening",
+    ].includes(lessonExercises[currentLessonExerciseIndex].Type);
+
+  // Efecto para inicializar el chat y avanzar automáticamente los mensajes de la IA
   useEffect(() => {
-    // Resetear todos los estados relevantes al cargar un nuevo diálogo
+    // Resetear todos los estados relevantes al cargar una nueva lección
     setChatMessages([]);
-    setCurrentLessonExerciseIndex(0); // Reinicia el progreso de la lección
+    // currentLessonExerciseIndex y setCurrentLessonExerciseIndex ya se gestionan desde el padre
     setCurrentChatDialogueStep(0); // Reinicia el paso del diálogo interno
     setLastFeedback(null);
     setLocalExpectedAnswer("");
     setUserTypedAnswer("");
     setRecordedMicrophoneText("");
     setShowCorrectAnswer(false);
-    setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
+    setAppMessage(""); // Limpiar mensaje global al iniciar nueva lección
 
+    // Lógica para iniciar el chat con el primer ejercicio de la lección
     if (lessonExercises && lessonExercises.length > 0) {
       const firstExercise = lessonExercises[currentLessonExerciseIndex];
 
       if (
-        firstExercise &&
         firstExercise.Type === "practice_chat" &&
         firstExercise.DialogueSequence &&
         firstExercise.DialogueSequence.length > 0
@@ -114,18 +126,18 @@ const LessonChatModule = ({
         ]);
         setLocalExpectedAnswer(
           firstExercise.AnswerEN || firstExercise.QuestionEN || ""
-        ); // Inicializar con la AnswerEN/QuestionEN
+        ); // Inicializar con la.AnswerEN/QuestionEN
       }
     }
   }, [
     lessonExercises,
+    currentLessonExerciseIndex,
     setAppMessage,
     setUserTypedAnswer,
     setRecordedMicrophoneText,
     setShowCorrectAnswer,
     setLastFeedback,
     setLocalExpectedAnswer,
-    setCurrentLessonExerciseIndex,
     setCurrentChatDialogueStep,
   ]); // Dependencias completas y correctas
 
