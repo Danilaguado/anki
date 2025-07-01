@@ -1,24 +1,14 @@
-// src/lesson/lessonCard.js
-
+// src/lesson/components/lessonCard.js
 import React, { useState, useEffect, useContext } from "react";
+import "../PrincipalPageLessons.css"; // Estilos compartidos para lecciones (sube un nivel)
+import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Utilidades de texto (sube dos niveles)
+import ExerciseDisplay from "./ExerciseDisplay"; // En la misma carpeta
+import ExerciseNavigation from "./ExerciseNavigation"; // En la misma carpeta
+// ¡CORREGIDO! Ruta de PracticeChatInterface
+import PracticeChatInterface from "../../Practice/PracticeChatInterface"; // Sube dos niveles, luego baja a Practice/PracticeChatInterface.js
 
-// 1) CSS de la carpeta lesson
-import "./PrincipalPageLessons.css";
-
-// 2) Utils (sube un nivel: lesson → src, entra en utils)
-import { normalizeText, renderClickableText } from "../utils/textUtils";
-
-// 3) Componentes de lesson (están en lesson/components)
-import ExerciseDisplay from "./components/ExerciseDisplay";
-import ExerciseNavigation from "./components/ExerciseNavigation";
-
-// 4) Componentes de Practice (sube un nivel: lesson → src, entra en Practice)
-import PracticeChatInterface from "../Practice/PracticeChatInterface";
-import PracticeExerciseDisplay from "../Practice/PracticeExerciseDisplay";
-import PracticePage from "../Practice/PracticePage";
-
-// 5) Context global (está en src/components/context)
-import AppContext from "../components/context/AppContext";
+// Importar el contexto (sube dos niveles)
+import AppContext from "../../context/AppContext";
 
 const LessonCard = ({ lesson, onBack }) => {
   // Consumir valores del contexto
@@ -38,7 +28,6 @@ const LessonCard = ({ lesson, onBack }) => {
 
   // Restablecer estados al cambiar de ejercicio
   useEffect(() => {
-    // Usar useEffect en lugar de React.useEffect
     setIsAnswerVisible(false);
     setUserTypedAnswer("");
     setMatchFeedback(null);
@@ -51,7 +40,7 @@ const LessonCard = ({ lesson, onBack }) => {
     ) {
       setCurrentExerciseIndex(0);
     }
-  }, [currentExerciseIndex, lesson]); // Dependencia 'lesson' para resetear al cambiar la lección
+  }, [currentExerciseIndex, lesson]);
 
   // Si no hay lección o ejercicios, mostrar mensaje
   if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
