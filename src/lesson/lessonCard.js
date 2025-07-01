@@ -7,7 +7,7 @@ import ExerciseNavigation from "./ExerciseNavigation"; // ¡CORREGIDO! Ahora en 
 import PracticeChatInterface from "../Practice/components/PracticeChatInterface"; // ¡CORREGIDO! Subir dos niveles para Practice
 
 // Importar el contexto
-import AppContext from "../../context/AppContext"; // Subir dos niveles para context
+import AppContext from "../context/AppContext"; // Subir dos niveles para context
 
 const LessonCard = ({ lesson, onBack }) => {
   // Consumir valores del contexto
