@@ -3,21 +3,20 @@
 // y ahora también los estados globales de carga, mensajes y audio,
 // proporcionados a través de React Context.
 
-import React, { useState, useEffect, useRef } from "react"; // Necesario para los estados globales
+import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import "./index.css"; // Importa los estilos globales para toda la aplicación
 
-// Importa el contexto
-import AppContext from "./context/AppContext";
+// Importa el contexto (Ruta absoluta desde src/)
+import AppContext from "context/AppContext";
 
-// Importa tus secciones principales
-import MainVocabSection from "./MainVocabSection";
-import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
+// Importa tus secciones principales (Ruta absoluta desde src/)
+import MainVocabSection from "MainVocabSection";
+import PrincipalPageLessons from "lesson/PrincipalPageLessons";
+import PracticePage from "Practice/PracticePage"; // Importación de la página de práctica
 
-// Importar utilidades de audio (solo playAudio y b64toBlob son usados aquí)
-import { playAudio, b64toBlob } from "./utils/audioUtils";
-// normalizeText, renderClickableText no son necesarios aquí a menos que se usen directamente.
-// Se seguirán importando donde se necesiten realmente.
+// Importar utilidades de audio (Ruta absoluta desde src/)
+import { playAudio, b64toBlob } from "utils/audioUtils";
 
 // Componente de ejemplo para la pantalla principal o "Home"
 const HomeScreen = () => {
@@ -34,6 +33,9 @@ const HomeScreen = () => {
         <Link to='/lessons' className='button primary-button'>
           Lecciones
         </Link>
+        <Link to='/practice' className='button primary-button'>
+          Práctica
+        </Link>
       </nav>
     </div>
   );
@@ -46,7 +48,6 @@ const App = () => {
   const audioCache = useRef(new Map()); // Caché de audio global
 
   // Función para envolver playAudio con sus dependencias globales
-  // Se memoiza para evitar que cambie en cada render si sus dependencias no cambian.
   const wrappedPlayAudio = React.useCallback((text, lang) => {
     playAudio(
       text,
@@ -56,10 +57,9 @@ const App = () => {
       setMessage,
       setIsLoading
     );
-  }, []); // Dependencias vacías porque las funciones de set estado son estables.
+  }, []);
 
   // Asegurarse de limpiar los URLs de Blob del caché cuando el componente App se desmonte
-  // (Aunque App generalmente no se desmonta en una SPA, es buena práctica si tuvieras lógica para ello)
   useEffect(() => {
     return () => {
       audioCache.current.forEach((url) => URL.revokeObjectURL(url));
@@ -78,17 +78,13 @@ const App = () => {
 
   return (
     <Router>
-      {/* Envuelve toda la aplicación con el AppContext.Provider */}
       <AppContext.Provider value={contextValue}>
         <div className='app-container'>
-          {/* Opcional: Puedes mostrar un MessageDisplay global aquí si quieres que los mensajes aparezcan en todas las rutas */}
-          {/* <MessageDisplay message={message} isLoading={isLoading} /> */}
-
           <Routes>
             <Route path='/' element={<HomeScreen />} />
-            {/* Los componentes ahora consumirán el contexto directamente */}
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
+            <Route path='/practice' element={<PracticePage />} />
           </Routes>
         </div>
       </AppContext.Provider>
