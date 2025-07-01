@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import MessageDisplay from "../components/MessageDisplay"; // Sube a src/, baja a components/
 // Rutas de importación directas en Practice/
 import PracticeExerciseDisplay from "./PracticeExerciseDisplay";
-import PracticeChatInterface from "./PracticeChatInterface";
+import PracticeChatInterface from "./LessonChatModule";
 
 // Importa el contexto
 import AppContext from "../context/AppContext"; // Sube a src/, baja a context/

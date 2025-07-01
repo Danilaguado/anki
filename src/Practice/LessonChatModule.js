@@ -1,12 +1,12 @@
-// src/Practice/components/PracticeChatInterface.js
-// ¡Este componente gestiona el flujo de toda la lección de chat!
+// src/Practice/LessonChatModule.js
+// ¡Este componente ahora gestiona el flujo de toda la lección de chat!
 
 import React, { useState, useEffect, useRef } from "react";
-import { normalizeText, renderClickableText } from "../utils/textUtils"; // Ruta relativa
-import SpeechToTextButton from "../components/SpeechToTextButton"; // Ruta relativa
-import "./PracticeChatInterface.css"; // Correcto: en la misma carpeta
+import { normalizeText, renderClickableText } from "../utils/textUtils";
+import SpeechToTextButton from "../components/SpeechToTextButton";
+import "./PracticeChatInterface.css"; // Mantiene el CSS original del chat
 
-const PracticeChatInterface = ({
+const LessonChatModule = ({
   lessonExercises, // Recibe TODOS los ejercicios de la lección
   onPlayAudio,
   appIsLoading,
@@ -47,16 +47,15 @@ const PracticeChatInterface = ({
 
   // Efecto para inicializar el chat con el primer ejercicio de la lección
   useEffect(() => {
-    // Resetear todos los estados relevantes al cargar un nuevo diálogo
     setChatMessages([]);
-    setCurrentLessonExerciseIndex(0); // Reinicia el progreso de la lección
-    setCurrentChatDialogueStep(0); // Reinicia el paso del diálogo interno
+    setCurrentLessonExerciseIndex(0); // Iniciar siempre desde el primer ejercicio de la lección
+    setCurrentChatDialogueStep(0); // Iniciar el diálogo interno desde el principio
     setLastFeedback(null);
     setLocalExpectedAnswer("");
     setUserTypedAnswer("");
     setRecordedMicrophoneText("");
     setShowCorrectAnswer(false);
-    setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
+    setAppMessage("");
 
     if (lessonExercises && lessonExercises.length > 0) {
       const firstExercise = lessonExercises[0];
@@ -500,6 +499,7 @@ const PracticeChatInterface = ({
       <div className='chat-container' ref={chatMessagesRef}>
         {chatMessages.map((msg) => (
           <div key={msg.id} className={`chat-message ${msg.speaker}`}>
+            {/* Mensaje principal (AI phraseEN/QuestionEN o User phraseEN) */}
             {msg.speaker === "ai" ? (
               <div className='chat-text-with-audio'>
                 <span>{msg.phraseEN || msg.QuestionEN}</span>
@@ -508,19 +508,20 @@ const PracticeChatInterface = ({
             ) : (
               <span>{msg.phraseEN}</span>
             )}
+            {/* Traducción de la IA (phraseES/QuestionES) */}
             {msg.speaker === "ai" && (
               <p className='chat-translation'>
                 {msg.phraseES || msg.QuestionES}
               </p>
             )}
 
-            {/* Renderizar el contenido del ejercicio de refuerzo si es el turno de la IA y no es un chat interno */}
+            {/* Contenido interactivo del ejercicio de refuerzo (si es un ejercicio de la IA y no es de chat) */}
             {msg.speaker === "ai" &&
               msg.type &&
               msg.type !== "practice_chat" &&
               renderReinforcementExerciseContent(msg)}
 
-            {/* Mostrar feedback de acierto/error para el mensaje del usuario */}
+            {/* Feedback de la última respuesta del usuario */}
             {msg.speaker === "user" &&
               msg.id === chatMessages[chatMessages.length - 1]?.id &&
               lastFeedback === "incorrect" &&
