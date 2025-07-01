@@ -1,23 +1,16 @@
 // src/lesson/lessonCard.js
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react"; // Importar useContext y useEffect
+import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones (mismo directorio)
+import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto (sube un nivel)
+import ExerciseDisplay from "./components/ExerciseDisplay"; // En la misma carpeta
+import ExerciseNavigation from "./components/ExerciseNavigation"; // En la misma carpeta
+import PracticeChatInterface from "../Practice/PracticeChatInterface"; // Sube un nivel, luego baja a Practice/
 
-// 1) estilos de la carpeta lesson (mismo nivel)
-import "./PrincipalPageLessons.css";
+// Importar el contexto (¡CORREGIDO! Ruta relativa)
+import AppContext from "../context/AppContext"; // Sube un nivel a src/, luego baja a context/
 
-// 2) utilidades de texto en src/utils
-import { normalizeText, renderClickableText } from "../utils/textUtils";
-
-// 3) componentes de lesson en src/lesson/components
-import ExerciseDisplay from "./components/ExerciseDisplay";
-import ExerciseNavigation from "./components/ExerciseNavigation";
-
-// 4) componentes de Practice en src/Practice
-import PracticeChatInterface from "../Practice/PracticeChatInterface";
-import PracticeExerciseDisplay from "../Practice/PracticeExerciseDisplay";
-import PracticePage from "../Practice/PracticePage";
-
-// 5) contexto global en src/components/context
 const LessonCard = ({ lesson, onBack }) => {
+  // Ya no recibe props de contexto directamente
   // Consumir valores del contexto
   const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
@@ -40,6 +33,7 @@ const LessonCard = ({ lesson, onBack }) => {
 
   // Restablecer estados al cambiar de ejercicio o lección
   useEffect(() => {
+    // Usar useEffect en lugar de React.useEffect
     setIsAnswerVisible(false);
     setUserTypedAnswer("");
     setMatchFeedback(null);
