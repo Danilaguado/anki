@@ -1,0 +1,7 @@
+// jsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": "src" // Esto le dice al compilador que 'src/' es la base para las importaciones
+  },
+  "include": ["src"] // Le dice qué carpetas debe incluir para la compilación
+}
