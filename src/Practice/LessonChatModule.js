@@ -2,23 +2,25 @@
 // ¡Este componente ahora gestiona el flujo de toda la lección de chat!
 
 import React, { useState, useEffect, useRef } from "react";
-import { normalizeText, renderClickableText } from "../utils/textUtils";
-import SpeechToTextButton from "../components/SpeechToTextButton";
-import "./PracticeChatInterface.css"; // Mantiene el CSS original del chat
+import { normalizeText, renderClickableText } from "../utils/textUtils"; // Ruta relativa
+import SpeechToTextButton from "../components/SpeechToTextButton"; // Ruta relativa
+import "./PracticeChatInterface.css"; // Correcto: en la misma carpeta
 
 const LessonChatModule = ({
   lessonExercises, // Recibe TODOS los ejercicios de la lección
   onPlayAudio,
   appIsLoading,
+  userTypedAnswer,
+  setUserTypedAnswer,
   setAppMessage,
   onDialogueComplete, // Callback al completar *toda la lección* de chat
-}) => {
-  // Estado local para el progreso a través de los ejercicios de la lección
-  const [currentLessonExerciseIndex, setCurrentLessonExerciseIndex] =
-    useState(0);
-  // Estado local para el progreso *interno* de un diálogo de chat (si el ejercicio es 'practice_chat')
-  const [currentChatDialogueStep, setCurrentChatDialogueStep] = useState(0);
 
+  // currentDialogueIndex y setCurrentDialogueIndex ahora vienen del padre (LessonCard)
+  currentLessonExerciseIndex, // <-- ¡CORREGIDO! Usar el nombre del padre
+  setCurrentLessonExerciseIndex, // <-- ¡CORREGIDO! Usar el nombre del padre
+}) => {
+  // Estado local para el progreso *interno* de un diálogo de chat (si el ejercicio es 'practice_chat')
+  const [currentChatDialogueStep, setCurrentChatDialogueStep] = useState(0); // <-- Declarado
   // Estado para almacenar todos los mensajes que ya se han mostrado en el chat
   const [chatMessages, setChatMessages] = useState([]);
   // Estados de feedback y micrófono (ahora locales a este componente)
@@ -26,7 +28,6 @@ const LessonChatModule = ({
   const [localExpectedAnswer, setLocalExpectedAnswer] = useState("");
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
-  const [userTypedAnswer, setUserTypedAnswer] = useState(""); // Estado del input del usuario
 
   const chatMessagesRef = useRef(null); // Para hacer scroll automático
 
@@ -47,18 +48,19 @@ const LessonChatModule = ({
 
   // Efecto para inicializar el chat con el primer ejercicio de la lección
   useEffect(() => {
+    // Resetear todos los estados relevantes al cargar un nuevo diálogo
     setChatMessages([]);
-    setCurrentLessonExerciseIndex(0); // Iniciar siempre desde el primer ejercicio de la lección
-    setCurrentChatDialogueStep(0); // Iniciar el diálogo interno desde el principio
+    setCurrentLessonExerciseIndex(0); // Reinicia el progreso de la lección
+    setCurrentChatDialogueStep(0); // Reinicia el paso del diálogo interno
     setLastFeedback(null);
     setLocalExpectedAnswer("");
     setUserTypedAnswer("");
     setRecordedMicrophoneText("");
     setShowCorrectAnswer(false);
-    setAppMessage("");
+    setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
 
     if (lessonExercises && lessonExercises.length > 0) {
-      const firstExercise = lessonExercises[0];
+      const firstExercise = lessonExercises[currentLessonExerciseIndex];
 
       if (
         firstExercise &&
@@ -133,8 +135,6 @@ const LessonChatModule = ({
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
     }
 
-    // Lógica para que la IA responda automáticamente y para que el chat avance.
-    // Esto se dispara cuando currentChatDialogueStep o currentLessonExerciseIndex cambian.
     if (
       lessonExercises &&
       currentLessonExerciseIndex < lessonExercises.length
@@ -499,7 +499,6 @@ const LessonChatModule = ({
       <div className='chat-container' ref={chatMessagesRef}>
         {chatMessages.map((msg) => (
           <div key={msg.id} className={`chat-message ${msg.speaker}`}>
-            {/* Mensaje principal (AI phraseEN/QuestionEN o User phraseEN) */}
             {msg.speaker === "ai" ? (
               <div className='chat-text-with-audio'>
                 <span>{msg.phraseEN || msg.QuestionEN}</span>
@@ -508,20 +507,19 @@ const LessonChatModule = ({
             ) : (
               <span>{msg.phraseEN}</span>
             )}
-            {/* Traducción de la IA (phraseES/QuestionES) */}
             {msg.speaker === "ai" && (
               <p className='chat-translation'>
                 {msg.phraseES || msg.QuestionES}
               </p>
             )}
 
-            {/* Contenido interactivo del ejercicio de refuerzo (si es un ejercicio de la IA y no es de chat) */}
+            {/* Renderizar el contenido del ejercicio de refuerzo si es el turno de la IA y no es un chat interno */}
             {msg.speaker === "ai" &&
               msg.type &&
               msg.type !== "practice_chat" &&
               renderReinforcementExerciseContent(msg)}
 
-            {/* Feedback de la última respuesta del usuario */}
+            {/* Mostrar feedback de acierto/error para el mensaje del usuario */}
             {msg.speaker === "user" &&
               msg.id === chatMessages[chatMessages.length - 1]?.id &&
               lastFeedback === "incorrect" &&
