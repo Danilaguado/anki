@@ -1,13 +1,13 @@
 // src/lesson/components/lessonCard.js
-import React, { useState, useEffect, useContext } from "react";
-import "../PrincipalPageLessons.css"; // Subir un nivel para encontrar PrincipalPageLessons.css
-import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Subir dos niveles para utils
-import ExerciseDisplay from "./components/ExerciseDisplay"; // Correcto: en la misma carpeta
-import ExerciseNavigation from "./components/ExerciseNavigation"; // Correcto: en la misma carpeta
-import PracticeChatInterface from "../../Practice/PracticeChatInterface"; // ¡CORREGIDO! Ahora en src/Practice/ (subir dos niveles, luego bajar a Practice)
+import React, { useState, useEffect, useContext } from "react"; // Importar useContext y useEffect
+import "../PrincipalPageLessons.css"; // Estilos compartidos para lecciones (sube un nivel)
+import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Utilidades de texto (sube dos niveles)
+import ExerciseDisplay from "./ExerciseDisplay"; // En la misma carpeta
+import ExerciseNavigation from "./ExerciseNavigation"; // En la misma carpeta
+import PracticeChatInterface from "../../Practice/PracticeChatInterface"; // ¡CORREGIDO! Sube dos niveles, luego baja a Practice/PracticeChatInterface.js
 
-// Importar el contexto
-import AppContext from "../../context/AppContext"; // Correcto: Subir dos niveles para context
+// Importar el contexto (sube dos niveles)
+import AppContext from "../../context/AppContext";
 
 const LessonCard = ({ lesson, onBack }) => {
   // Consumir valores del contexto
@@ -27,6 +27,7 @@ const LessonCard = ({ lesson, onBack }) => {
 
   // Restablecer estados al cambiar de ejercicio
   useEffect(() => {
+    // Usar useEffect en lugar de React.useEffect
     setIsAnswerVisible(false);
     setUserTypedAnswer("");
     setMatchFeedback(null);
@@ -39,7 +40,7 @@ const LessonCard = ({ lesson, onBack }) => {
     ) {
       setCurrentExerciseIndex(0);
     }
-  }, [currentExerciseIndex, lesson]);
+  }, [currentExerciseIndex, lesson]); // Dependencia 'lesson' para resetear al cambiar la lección
 
   // Si no hay lección o ejercicios, mostrar mensaje
   if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
