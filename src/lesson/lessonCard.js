@@ -4,7 +4,7 @@ import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones (mism
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto (sube un nivel)
 import ExerciseDisplay from "./components/ExerciseDisplay"; // En la misma carpeta
 import ExerciseNavigation from "./components/ExerciseNavigation"; // En la misma carpeta
-import LessonChatModule from "../Practice/LessonChatModule"; // Sube un nivel, luego baja a Practice/
+import LessonChatModule from "../Practice/LessonChatModule"; // ¡CORREGIDO! Importar LessonChatModule
 
 // Importar el contexto (Sube un nivel)
 import AppContext from "../context/AppContext";
@@ -29,7 +29,7 @@ const LessonCard = ({ lesson, onBack }) => {
   // dentro del LessonChatModule, no solo los pasos internos de un diálogo.
   const [chatLessonProgressIndex, setChatLessonProgressIndex] = useState(0);
   // Estado para indicar si toda la lección de chat ha sido completada
-  const [isChatLessonComplete, setIsChatLessonComplete] = useState(false); // <-- Declarado
+  const [isChatLessonComplete, setIsChatLessonComplete] = useState(false);
 
   // Restablecer estados al cambiar de ejercicio o lección
   useEffect(() => {
@@ -63,8 +63,7 @@ const LessonCard = ({ lesson, onBack }) => {
 
   // --- Funciones de manejo de ejercicios (SOLO para lecciones estándar) ---
   const handleNextExercise = () => {
-    // currentStandardExercise se define dentro del return para lecciones estándar
-    const currentStandardExercise = lesson.exercises[currentExerciseIndex];
+    const currentStandardExercise = lesson.exercises[currentExerciseIndex]; // Definir aquí
     const requiresAnswer = [
       "fill_in_the_blank",
       "multiple_choice",
@@ -219,14 +218,14 @@ const LessonCard = ({ lesson, onBack }) => {
         // Si es una lección de chatbot, renderizamos el LessonChatModule
         // y le pasamos TODOS los ejercicios de la lección para que los gestione internamente
         <LessonChatModule
-          lessonExercises={lesson.exercises} // Pasar TODOS los ejercicios de la lección al chat
+          lessonExercises={lesson.exercises} // ¡NUEVO! Pasar TODOS los ejercicios de la lección
           onPlayAudio={onPlayAudio}
           appIsLoading={appIsLoading}
           userTypedAnswer={userTypedAnswer}
           setUserTypedAnswer={setUserTypedAnswer}
           setAppMessage={setAppMessage}
-          onDialogueComplete={onChatLessonCompleted} // Callback al completar *toda la lección* de chat
-          // currentDialogueIndex y setCurrentDialogueIndex ahora son gestionados por LessonChatModule
+          onDialogueComplete={onChatLessonCompleted} // Al completar *toda la lección* de chat
+          // currentLessonExerciseIndex y setCurrentLessonExerciseIndex ahora son gestionados por LessonChatModule
           // y no se pasan desde aquí.
           currentLessonExerciseIndex={chatLessonProgressIndex} // Pasar el índice de progreso
           setCurrentLessonExerciseIndex={setChatLessonProgressIndex} // Pasar la función para actualizarlo
