@@ -13,22 +13,20 @@ const PracticeChatInterface = ({
   setAppMessage, // Para mensajes globales de la app
   onDialogueComplete, // Callback al completar el diálogo
 
-  matchFeedback, // Recibir matchFeedback del padre
-  setMatchFeedback, // Recibir setMatchFeedback del padre
-  showCorrectAnswer, // Recibir showCorrectAnswer del padre
-  setShowCorrectAnswer, // Recibir setShowCorrectAnswer del padre
-  recordedMicrophoneText, // Recibir recordedMicrophoneText del padre
-  handleSpeechResultForListening, // Recibir handleSpeechResultForListening del padre
-  expectedAnswerEN: initialExpectedAnswerEN, // La respuesta esperada para el primer turno del usuario
+  // La respuesta esperada para el primer turno del usuario (sigue siendo una prop)
+  expectedAnswerEN: initialExpectedAnswerEN,
 }) => {
   // Estado local para el progreso del diálogo (índice actual en dialogueSequence)
-  const [currentDialogueStep, setCurrentDialogueStep] = useState(0);
+  const [currentDialogueStep, setCurrentDialogueStep] = useState(0); // <-- Declarado
   // Estado para almacenar todos los mensajes que ya se han mostrado en el chat
   const [chatMessages, setChatMessages] = useState([]);
-  // Estado local para la respuesta esperada actual (para mostrar feedback)
-  const [localExpectedAnswer, setLocalExpectedAnswer] = useState(
-    initialExpectedAnswerEN
-  ); // Mantener este estado local
+  // Estado para el feedback de la última respuesta del usuario (local al chat)
+  const [lastFeedback, setLastFeedback] = useState(null); // <-- ¡CORREGIDO! Declarado
+  const [lastExpectedAnswer, setLastExpectedAnswer] = useState(""); // <-- ¡CORREGIDO! Declarado
+  // Estado local para el texto grabado por el micrófono
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState(""); // <-- ¡CORREGIDO! Declarado
+  // Estado local para mostrar la respuesta correcta
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // <-- ¡CORREGIDO! Declarado
 
   const chatMessagesRef = useRef(null); // Para hacer scroll automático
 
@@ -36,17 +34,18 @@ const PracticeChatInterface = ({
   useEffect(() => {
     // Resetear todos los estados relevantes al cargar un nuevo diálogo
     setChatMessages([]);
-    setCurrentDialogueStep(0);
-    setLocalExpectedAnswer(initialExpectedAnswerEN); // Asegurarse de que se inicialice correctamente
+    setCurrentDialogueStep(0); // Reinicia el paso del diálogo
+    setLastFeedback(null);
+    setLastExpectedAnswer("");
     setUserTypedAnswer("");
-    setRecordedMicrophoneText("");
-    setMatchFeedback(null); // Limpiar feedback
-    setShowCorrectAnswer(false); // Limpiar showCorrectAnswer
-    setAppMessage(""); // Limpiar mensaje global
+    setRecordedMicrophoneText(""); // Limpiar texto del micrófono local
+    setShowCorrectAnswer(false); // Limpiar showCorrectAnswer local
+    setAppMessage(""); // Limpiar mensaje global al iniciar nuevo chat
 
     if (dialogueSequence && dialogueSequence.length > 0) {
       const firstStep = dialogueSequence[0];
       if (firstStep && firstStep.speaker === "ai") {
+        // Si el primer paso es de la IA, lo añadimos y avanzamos el currentDialogueStep
         setChatMessages([
           {
             id: `ai-${Date.now()}-0`,
@@ -57,7 +56,8 @@ const PracticeChatInterface = ({
         ]);
         setCurrentDialogueStep(1); // Avanzar al siguiente paso (que debería ser el turno del usuario)
       } else if (firstStep && firstStep.speaker === "user") {
-        setCurrentDialogueStep(0); // El primer paso es del usuario, esperamos su input
+        // Si el primer paso es del usuario, no añadimos nada, esperamos su input
+        setCurrentDialogueStep(0);
       }
     }
   }, [dialogueSequence, initialExpectedAnswerEN]); // Dependencia para reinicializar si el ejercicio cambia
@@ -74,6 +74,7 @@ const PracticeChatInterface = ({
       const currentStepData = dialogueSequence[currentDialogueStep];
 
       if (currentStepData && currentStepData.speaker === "ai") {
+        // Asegurarse de que currentStepData exista
         setTimeout(() => {
           setChatMessages((prev) => [
             ...prev,
@@ -85,8 +86,8 @@ const PracticeChatInterface = ({
             },
           ]);
           setCurrentDialogueStep((prev) => prev + 1); // Avanza al siguiente paso
-          setMatchFeedback(null); // Reinicia feedback visual
-          setLocalExpectedAnswer(""); // Limpia la respuesta esperada anterior
+          setLastFeedback(null); // Reinicia feedback visual
+          setLastExpectedAnswer(""); // Limpia la respuesta esperada anterior
           setAppMessage("");
           setShowCorrectAnswer(false); // Oculta la respuesta correcta de la interacción anterior
         }, 1000); // Pequeño retraso para la respuesta de la IA
@@ -211,7 +212,7 @@ const PracticeChatInterface = ({
                 {msg.speaker === "user" &&
                   msg.id === chatMessages[chatMessages.length - 1]?.id &&
                   lastFeedback === "incorrect" &&
-                  showCorrectAnswer && ( // <-- Añadido showCorrectAnswer
+                  showCorrectAnswer && (
                     <p className='chat-translation incorrect-answer-hint'>
                       Esperado: {msg.expectedEN}
                     </p>
@@ -260,8 +261,7 @@ const PracticeChatInterface = ({
       )}
       {lastFeedback && lastFeedback === "incorrect" && (
         <p className='chat-feedback-message incorrect'>
-          Incorrecto. La respuesta esperada era: {localExpectedAnswer}{" "}
-          {/* Usar localExpectedAnswer */}
+          Incorrecto. La respuesta esperada era: {lastExpectedAnswer}
         </p>
       )}
 
