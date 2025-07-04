@@ -16,6 +16,7 @@ export default async function handler(req, res) {
   }
 
   // Desestructurar los datos esperados del cuerpo de la solicitud
+  // ¡NUEVO! Recibir moduleType aquí también si se va a guardar por ejercicio
   let {
     lessonId,
     type,
@@ -27,7 +28,7 @@ export default async function handler(req, res) {
     orderInLesson,
     notes,
     image,
-    typeModule, // <-- Nuevo campo para indicar el módulo (e.g. "chatbot_lesson")
+    typeModule, // <-- ¡NUEVO! Recibir typeModule aquí
   } = req.body;
 
   // Validar que los campos esenciales no estén vacíos.
@@ -59,7 +60,6 @@ export default async function handler(req, res) {
 
     const exerciseId = uuidv4();
 
-    // Leer la fila de cabeceras para conocer el orden de columnas
     const headersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${EXERCISES_SHEET_NAME}!1:1`,
@@ -72,10 +72,8 @@ export default async function handler(req, res) {
       throw new Error(`No headers found in "${EXERCISES_SHEET_NAME}" sheet.`);
     }
 
-    // Preparar una nueva fila vacía con el mismo número de columnas
     const newRow = new Array(headers.length).fill("");
 
-    // Mapear cada header a su valor correspondiente
     headers.forEach((header, index) => {
       switch (header) {
         case "ExerciseID":
@@ -111,16 +109,14 @@ export default async function handler(req, res) {
         case "Image":
           newRow[index] = image || "";
           break;
-        case "TypeModule": // <-- Nuevo case para TypeModule
+        case "TypeModule":
           newRow[index] = typeModule || "";
-          break;
+          break; // ¡CORREGIDO! Mapear TypeModule
         default:
-          // Otras columnas pueden quedar vacías o manejarse aquí si es necesario
           break;
       }
     });
 
-    // Añadir la nueva fila a la hoja
     const appendResponse = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: `${EXERCISES_SHEET_NAME}!A:Z`,
@@ -146,7 +142,7 @@ export default async function handler(req, res) {
           orderInLesson,
           notes,
           image,
-          typeModule, // <-- devolver también en la respuesta
+          typeModule, // Devolver typeModule
         },
       });
     } else {
