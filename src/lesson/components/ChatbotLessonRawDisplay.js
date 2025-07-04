@@ -6,322 +6,28 @@ import { normalizeText, renderClickableText } from "../../utils/textUtils"; // R
 import SpeechToTextButton from "../../components/SpeechToTextButton"; // Ruta relativa
 import "./ChatbotLessonRawDisplay.css"; // Correcto: en la misma carpeta
 
-const LessonChatModule = ({
-  lessonExercises, // Recibe TODOS los ejercicios de la lección
+const ChatbotLessonRawDisplay = ({
+  lessonExercises,
   onPlayAudio,
   appIsLoading,
-  userTypedAnswer,
-  setUserTypedAnswer,
-  setAppMessage,
-  onDialogueComplete, // Callback al completar *toda la lección* de chat
-
-  // currentLessonExerciseIndex y setCurrentLessonExerciseIndex ahora vienen del padre (LessonCard)
-  currentLessonExerciseIndex,
-  setCurrentLessonExerciseIndex,
 }) => {
-  // Estado local para el progreso *interno* de un diálogo de chat (si el ejercicio es 'practice_chat')
-  const [currentChatDialogueStep, setCurrentChatDialogueStep] = useState(0);
-  // Estado para almacenar todos los mensajes que ya se han mostrado en el chat
-  const [chatMessages, setChatMessages] = useState([]);
-  // Estados de feedback y micrófono (ahora locales a este componente)
-  const [lastFeedback, setLastFeedback] = useState(null);
-  const [localExpectedAnswer, setLocalExpectedAnswer] = useState("");
-  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
-  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
-
-  const chatMessagesRef = useRef(null); // Para hacer scroll automático
-
-  // Variables derivadas del estado (declaradas al inicio para evitar errores de referencia)
-  const dialogueCompleted =
-    lessonExercises && currentLessonExerciseIndex >= lessonExercises.length; // <-- ¡CORREGIDO! Declarada aquí
-  const isUserTurnCurrent =
-    lessonExercises &&
-    currentLessonExerciseIndex < lessonExercises.length &&
-    lessonExercises[currentLessonExerciseIndex].Type === "practice_chat" &&
-    lessonExercises[currentLessonExerciseIndex].DialogueSequence &&
-    currentChatDialogueStep <
-      lessonExercises[currentLessonExerciseIndex].DialogueSequence.length &&
-    lessonExercises[currentLessonExerciseIndex].DialogueSequence[
-      currentChatDialogueStep
-    ]?.speaker === "user";
-
-  const currentExerciseRequiresInput =
-    lessonExercises &&
-    currentLessonExerciseIndex < lessonExercises.length &&
-    [
-      "practice_multiple_choice",
-      "practice_fill_in_the_blank",
-      "practice_translation",
-      "practice_listening",
-    ].includes(lessonExercises[currentLessonExerciseIndex].Type);
-
-  // Efecto para inicializar el chat con el primer ejercicio de la lección
-  useEffect(() => {
-    // Resetear todos los estados relevantes al cargar un nuevo diálogo
-    setChatMessages([]);
-    setCurrentLessonExerciseIndex(0); // Reinicia el progreso de la lección
-    setCurrentChatDialogueStep(0); // Reinicia el paso del diálogo interno
-    setLastFeedback(null);
-    setLocalExpectedAnswer("");
-    setUserTypedAnswer("");
-    setRecordedMicrophoneText("");
-    setShowCorrectAnswer(false);
-    setAppMessage(""); // Limpiar mensaje global al iniciar nueva lección
-
-    if (lessonExercises && lessonExercises.length > 0) {
-      const firstExercise = lessonExercises[currentLessonExerciseIndex];
-
-      if (
-        firstExercise &&
-        firstExercise.Type === "practice_chat" &&
-        firstExercise.DialogueSequence &&
-        firstExercise.DialogueSequence.length > 0
-      ) {
-        const firstChatStep = firstExercise.DialogueSequence[0];
-        if (firstChatStep && firstChatStep.speaker === "ai") {
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              id: `ai-intro-${Date.now()}`,
-              speaker: "ai",
-              phraseEN: firstChatStep.phraseEN,
-              phraseES: firstChatStep.phraseES,
-              notes: firstExercise.Notes, // Añadir notas del ejercicio si es el primer mensaje
-            },
-          ]);
-          setCurrentChatDialogueStep(1); // Avanza al siguiente paso del diálogo interno
-        } else if (firstChatStep && firstChatStep.speaker === "user") {
-          // Si el primer paso del chat es del usuario, esperamos su input
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              // Añadir mensaje introductorio si el usuario empieza
-              id: `ai-intro-${Date.now()}`,
-              speaker: "ai",
-              phraseEN: firstExercise.QuestionEN,
-              phraseES: firstExercise.QuestionES,
-              notes: firstExercise.Notes,
-            },
-          ]);
-          setCurrentChatDialogueStep(0);
-        }
-        setLocalExpectedAnswer(firstExercise.AnswerEN || ""); // Inicializar con la AnswerEN del primer ejercicio
-      } else if (firstExercise) {
-        // Si el primer ejercicio NO es un 'practice_chat'
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: `ai-exercise-intro-${Date.now()}`,
-            speaker: "ai",
-            phraseEN: firstExercise.QuestionEN,
-            phraseES: firstExercise.QuestionES,
-            type: firstExercise.Type,
-            optionsEN: firstExercise.OptionsEN,
-            answerEN: firstExercise.AnswerEN,
-            notes: firstExercise.Notes,
-          },
-        ]);
-        setLocalExpectedAnswer(
-          firstExercise.AnswerEN || firstExercise.QuestionEN || ""
-        );
-      }
-    }
-  }, [
-    lessonExercises,
-    currentLessonExerciseIndex,
-    setAppMessage,
-    setUserTypedAnswer,
-    setRecordedMicrophoneText,
-    setShowCorrectAnswer,
-    setLastFeedback,
-    setLocalExpectedAnswer,
-    setCurrentLessonExerciseIndex,
-    setCurrentChatDialogueStep,
-  ]);
-
-  // Efecto para hacer scroll al final del chat y manejar el avance automático
-  useEffect(() => {
-    if (chatMessagesRef.current) {
-      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
-    }
-
-    if (
-      lessonExercises &&
-      currentLessonExerciseIndex < lessonExercises.length
-    ) {
-      const currentExerciseData = lessonExercises[currentLessonExerciseIndex];
-
-      if (currentExerciseData && currentExerciseData.Type === "practice_chat") {
-        if (
-          currentChatDialogueStep < currentExerciseData.DialogueSequence.length
-        ) {
-          const currentChatStep =
-            currentExerciseData.DialogueSequence[currentChatDialogueStep];
-          if (currentChatStep && currentChatStep.speaker === "ai") {
-            setTimeout(() => {
-              setChatMessages((prev) => [
-                ...prev,
-                {
-                  id: `ai-${Date.now()}-${currentLessonExerciseIndex}-${currentChatDialogueStep}`,
-                  speaker: "ai",
-                  phraseEN: currentChatStep.phraseEN,
-                  phraseES: currentChatStep.phraseES,
-                  notes: currentExerciseData.Notes,
-                },
-              ]);
-              setCurrentChatDialogueStep((prev) => prev + 1);
-              setLastFeedback(null);
-              setLocalExpectedAnswer("");
-              setAppMessage("");
-              setShowCorrectAnswer(false);
-            }, 1000);
-          }
-        } else {
-          // El diálogo interno del 'practice_chat' ha terminado, avanzar al siguiente ejercicio de la lección
-          if (currentLessonExerciseIndex < lessonExercises.length - 1) {
-            setCurrentLessonExerciseIndex((prev) => prev + 1);
-            setCurrentChatDialogueStep(0); // Reiniciar el diálogo interno para el nuevo ejercicio
-            setLastFeedback(null);
-            setLocalExpectedAnswer("");
-            setAppMessage("¡Diálogo completado! Siguiente ejercicio.");
-            setShowCorrectAnswer(false);
-          } else {
-            // Todos los ejercicios de la lección han terminado
-            if (onDialogueComplete) {
-              onDialogueComplete();
-            }
-          }
-        }
-      } else if (currentExerciseData) {
-        // Si es un ejercicio de refuerzo (no chat)
-        const lastMessageIsUserCorrect =
-          chatMessages.length > 0 &&
-          chatMessages[chatMessages.length - 1].speaker === "user" &&
-          lastFeedback === "correct";
-        const isFirstRenderOfExercise =
-          chatMessages.length > 0 &&
-          chatMessages[chatMessages.length - 1].id.startsWith(
-            "ai-exercise-intro-"
-          ) &&
-          chatMessages[chatMessages.length - 1].id.includes(
-            currentLessonExerciseIndex.toString()
-          );
-
-        if (
-          lastMessageIsUserCorrect ||
-          (currentChatDialogueStep === 0 && !isFirstRenderOfExercise)
-        ) {
-          const messageId = `ai-exercise-${Date.now()}-${currentLessonExerciseIndex}`;
-          const existingMessage = chatMessages.find(
-            (msg) => msg.id === messageId
-          );
-
-          if (!existingMessage) {
-            setTimeout(() => {
-              setChatMessages((prev) => [
-                ...prev,
-                {
-                  id: messageId,
-                  speaker: "ai",
-                  phraseEN: currentExerciseData.QuestionEN,
-                  phraseES: currentExerciseData.QuestionES,
-                  type: currentExerciseData.Type,
-                  optionsEN: currentExerciseData.OptionsEN,
-                  answerEN: currentExerciseData.AnswerEN,
-                  notes: currentExerciseData.Notes,
-                },
-              ]);
-              setLastFeedback(null);
-              setLocalExpectedAnswer("");
-              setAppMessage("");
-              setShowCorrectAnswer(false);
-            }, 500);
-          }
-        }
-      }
-    } else if (dialogueCompleted && onDialogueComplete) {
-      onDialogueComplete();
-    }
-  }, [
-    chatMessages,
-    currentLessonExerciseIndex,
-    currentChatDialogueStep,
-    lessonExercises,
-    dialogueCompleted,
-    onDialogueComplete,
-    setAppMessage,
-    setShowCorrectAnswer,
-    setLastFeedback,
-    setLocalExpectedAnswer,
-    setCurrentLessonExerciseIndex,
-    setCurrentChatDialogueStep,
-  ]);
-
-  // Manejar el envío de la respuesta del usuario en el chat
-  const handleChatSubmit = () => {
-    if (!userTypedAnswer.trim()) {
-      setAppMessage("Por favor, escribe tu respuesta para continuar.");
-      return;
-    }
-
-    const currentExerciseData = lessonExercises[currentLessonExerciseIndex];
-    let expectedAnswerForCurrentTurn = "";
-
-    if (currentExerciseData.Type === "practice_chat") {
-      const currentChatStep =
-        currentExerciseData.DialogueSequence[currentChatDialogueStep];
-      if (!currentChatStep || currentChatStep.speaker !== "user") {
-        setAppMessage("No es tu turno de responder o el diálogo ha terminado.");
-        return;
-      }
-      expectedAnswerForCurrentTurn = currentChatStep.expectedEN;
-    } else {
-      expectedAnswerForCurrentTurn = currentExerciseData.AnswerEN;
-    }
-
-    const normalizedUserAnswer = normalizeText(userTypedAnswer);
-    const normalizedExpectedAnswer = normalizeText(
-      expectedAnswerForCurrentTurn || ""
+  // ¡NUEVO! Recibe onPlayAudio y appIsLoading
+  if (!lessonExercises || lessonExercises.length === 0) {
+    return (
+      <p style={{ textAlign: "center", color: "#666" }}>
+        No hay ejercicios para esta lección de chatbot.
+      </p>
     );
+  }
 
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: `user-${Date.now()}-${currentLessonExerciseIndex}-${currentChatDialogueStep}`,
-        speaker: "user",
-        phraseEN: userTypedAnswer,
-        expectedEN: expectedAnswerForCurrentTurn,
-      },
-    ]);
-
-    if (normalizedUserAnswer === normalizedExpectedAnswer) {
-      setLastFeedback("correct");
-      setAppMessage("¡Correcto!");
-      setLocalExpectedAnswer("");
-      setUserTypedAnswer("");
-      setShowCorrectAnswer(true);
-
-      if (currentExerciseData.Type === "practice_chat") {
-        setCurrentChatDialogueStep((prev) => prev + 1);
-      } else {
-        setCurrentLessonExerciseIndex((prev) => prev + 1);
-        setCurrentChatDialogueStep(0);
-      }
-    } else {
-      setLastFeedback("incorrect");
-      setLocalExpectedAnswer(expectedAnswerForCurrentTurn);
-      setAppMessage("Incorrecto. Intenta de nuevo.");
-      setShowCorrectAnswer(true);
-    }
-  };
-
-  // Renderizar el botón de reproducción de audio para la línea de la IA
+  // Renderizar el botón de reproducción de audio
   const playAudioButton = (phrase) => (
     <button
       onClick={() => onPlayAudio(phrase, "en-US")}
       className='button audio-button-round primary-button small-button'
       disabled={appIsLoading}
       aria-label={`Reproducir: ${phrase}`}
+      style={{ marginLeft: "10px", flexShrink: 0 }} // Estilo básico para que no rompa el layout
     >
       <svg
         xmlns='http://www.w3.org/2000/svg'
@@ -335,263 +41,100 @@ const LessonChatModule = ({
     </button>
   );
 
-  // Renderizar el botón de micrófono para la línea del usuario
-  const microphoneButton = (
-    <SpeechToTextButton
-      onResult={(transcript) => {
-        setRecordedMicrophoneText(transcript);
-        setUserTypedAnswer(transcript);
-      }}
-      lang='en-US'
-      disabled={
-        appIsLoading || (lastFeedback === "correct" && isUserTurnCurrent)
-      }
-    />
-  );
-
-  // Renderizar el contenido del ejercicio de refuerzo si no es un 'practice_chat'
-  const renderReinforcementExerciseContent = (exercise) => {
-    // Determinar la respuesta esperada para este ejercicio de refuerzo
-    const expectedReinforcementAnswer =
-      exercise.AnswerEN || exercise.QuestionEN;
-
-    switch (
-      exercise.type // Usar exercise.type
-    ) {
-      case "practice_multiple_choice":
-        const options = [...(exercise.OptionsEN || []), exercise.AnswerEN].sort(
-          () => Math.random() - 0.5
-        );
-        return (
-          <>
-            <p className='chat-exercise-question'>{exercise.QuestionES}</p>
-            <div className='multiple-choice-options'>
-              {options.map((option, idx) => (
-                <button
-                  key={idx}
-                  className={`button multiple-choice-button 
-                    ${
-                      lastFeedback &&
-                      normalizeText(option) ===
-                        normalizeText(expectedReinforcementAnswer)
-                        ? "correct-option"
-                        : ""
-                    }
-                    ${
-                      lastFeedback &&
-                      normalizeText(option) ===
-                        normalizeText(userTypedAnswer) &&
-                      lastFeedback === "incorrect"
-                        ? "incorrect-selected-option"
-                        : ""
-                    }
-                  `}
-                  onClick={() => {
-                    if (lastFeedback === null) {
-                      setAppMessage("");
-                      setUserTypedAnswer(option);
-                      handleChatSubmit(); // Llama a la lógica de envío del chat
-                    }
-                  }}
-                  disabled={lastFeedback !== null || appIsLoading}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </>
-        );
-      case "practice_fill_in_the_blank":
-        const blankPlaceholder = "_______";
-        const parts = exercise.QuestionEN.split(blankPlaceholder);
-        return (
-          <>
-            <p className='chat-exercise-question'>
-              {parts[0]}
-              <input
-                type='text'
-                className='input-field chat-input-inline'
-                value={userTypedAnswer}
-                onChange={(e) => setUserTypedAnswer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleChatSubmit();
-                }}
-                disabled={lastFeedback !== null || appIsLoading}
-              />
-              {parts[1]}
-            </p>
-            <p className='fill-in-the-blank-translation'>
-              {exercise.QuestionES}
-            </p>
-            <button
-              onClick={handleChatSubmit}
-              className='button primary-primary chat-send-button'
-              disabled={lastFeedback !== null || appIsLoading}
-            >
-              Verificar
-            </button>
-          </>
-        );
-      case "practice_translation":
-        return (
-          <>
-            <p className='chat-exercise-question'>{exercise.QuestionEN}</p>
-            <p className='chat-translation-hint'>{exercise.QuestionES}</p>
-            <div className='chat-input-area'>
-              <input
-                type='text'
-                className='input-field chat-input'
-                placeholder='Tu traducción en inglés...'
-                value={userTypedAnswer}
-                onChange={(e) => setUserTypedAnswer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleChatSubmit();
-                }}
-                disabled={lastFeedback !== null || appIsLoading}
-              />
-              {microphoneButton}
-              <button
-                onClick={handleChatSubmit}
-                className='button primary-primary chat-send-button'
-                disabled={lastFeedback !== null || appIsLoading}
-              >
-                Enviar
-              </button>
-            </div>
-          </>
-        );
-      case "practice_listening":
-        return (
-          <>
-            <p className='chat-exercise-question'>
-              Escucha y escribe lo que oigas:
-            </p>
-            <p className='chat-translation-hint'>{exercise.QuestionES}</p>
-            {recordedMicrophoneText && (
-              <div className='recorded-text-display'>
-                {recordedMicrophoneText}
-              </div>
-            )}
-            <div className='chat-input-area'>
-              <input
-                type='text'
-                className='input-field chat-input'
-                placeholder='Escribe lo que escuchaste aquí'
-                value={userTypedAnswer}
-                onChange={(e) => setUserTypedAnswer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleChatSubmit();
-                }}
-                disabled={lastFeedback !== null || appIsLoading}
-              />
-              {microphoneButton}
-              <button
-                onClick={handleChatSubmit}
-                className='button primary-primary chat-send-button'
-                disabled={lastFeedback !== null || appIsLoading}
-              >
-                Verificar
-              </button>
-            </div>
-          </>
-        );
-      default:
-        return (
-          <p className='info-text'>
-            Tipo de ejercicio de refuerzo no soportado: {exercise.type}
-          </p>
-        );
-    }
-  };
-
   return (
-    <div className='chat-lesson-container'>
-      <div className='chat-container' ref={chatMessagesRef}>
-        {chatMessages.map((msg) => (
-          <div key={msg.id} className={`chat-message ${msg.speaker}`}>
-            {/* Mostrar notas del ejercicio si existen */}
-            {msg.notes && (
-              <div className='exercise-notes-display'>
-                <p>{msg.notes}</p>
-              </div>
-            )}
+    <div className='chatbot-raw-display-container'>
+      <h3 className='chatbot-raw-display-title'>
+        Contenido Crudo de Lección Chatbot
+      </h3>
+      <p className='info-text-debug'>
+        (Esto es solo para depuración. Muestra todos los ejercicios de la
+        lección uno debajo del otro.)
+      </p>
+      <hr style={{ borderTop: "1px dashed #ddd", margin: "15px 0" }} />
 
-            {msg.speaker === "ai" ? (
-              <div className='chat-text-with-audio'>
-                <span>{msg.phraseEN || msg.QuestionEN}</span>
-                {onPlayAudio && playAudioButton(msg.phraseEN || msg.QuestionEN)}
-              </div>
-            ) : (
-              <span>{msg.phraseEN}</span>
-            )}
-            {msg.speaker === "ai" && (
-              <p className='chat-translation'>
-                {msg.phraseES || msg.QuestionES}
-              </p>
-            )}
-
-            {/* Contenido interactivo del ejercicio de refuerzo si es el turno de la IA y no es un chat interno */}
-            {msg.speaker === "ai" &&
-              msg.type &&
-              msg.type !== "practice_chat" &&
-              renderReinforcementExerciseContent(msg)}
-
-            {/* Mostrar feedback de acierto/error para el mensaje del usuario */}
-            {msg.speaker === "user" &&
-              msg.id === chatMessages[chatMessages.length - 1]?.id &&
-              lastFeedback === "incorrect" &&
-              showCorrectAnswer && (
-                <p className='chat-feedback-message incorrect'>
-                  Esperado: {localExpectedAnswer}
-                </p>
-              )}
-            {msg.speaker === "user" &&
-              msg.id === chatMessages[chatMessages.length - 1]?.id &&
-              lastFeedback === "correct" && (
-                <p className='chat-feedback-message correct'>¡Correcto!</p>
-              )}
-          </div>
-        ))}
-      </div>
-
-      {/* Mostrar el input del usuario solo si es su turno y el diálogo no ha terminado */}
-      {isUserTurnCurrent && !dialogueCompleted && (
-        <div className='chat-input-area current-user-input'>
-          <input
-            type='text'
-            className='input-field chat-input'
-            placeholder='Tu respuesta en inglés...'
-            value={userTypedAnswer}
-            onChange={(e) => setUserTypedAnswer(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleChatSubmit();
-            }}
-            disabled={
-              appIsLoading || (lastFeedback === "correct" && isUserTurnCurrent)
-            }
-          />
-          {microphoneButton}
-          <button
-            onClick={handleChatSubmit}
-            className='button primary-button chat-send-button'
-            disabled={
-              appIsLoading || (lastFeedback === "correct" && isUserTurnCurrent)
-            }
-          >
-            Enviar
-          </button>
+      {lessonExercises.map((exercise, index) => (
+        <div
+          key={exercise.ExerciseID || index}
+          className='chatbot-raw-display-exercise-block'
+        >
+          <h4>
+            Ejercicio {index + 1} - Tipo: {exercise.Type} (Orden:{" "}
+            {exercise.OrderInLesson})
+          </h4>
+          <p>
+            <strong className='label-en'>Question EN:</strong>{" "}
+            {exercise.QuestionEN}
+            {onPlayAudio && playAudioButton(exercise.QuestionEN)}{" "}
+            {/* Botón de audio */}
+          </p>
+          <p>
+            <strong className='label-es'>Question ES:</strong>{" "}
+            {exercise.QuestionES}
+          </p>
+          {exercise.AnswerEN && (
+            <p>
+              <strong className='label-answer'>Answer EN:</strong>{" "}
+              {exercise.AnswerEN}
+            </p>
+          )}
+          {exercise.AnswerES && (
+            <p>
+              <strong className='label-answer'>Answer ES:</strong>{" "}
+              {exercise.AnswerES}
+            </p>
+          )}
+          {exercise.OptionsEN && exercise.OptionsEN.length > 0 && (
+            <p>
+              <strong className='label-options'>Options EN:</strong>{" "}
+              {exercise.OptionsEN.join(", ")}
+            </p>
+          )}
+          {exercise.Notes && (
+            <p className='label-notes'>
+              <strong>Notas:</strong> {exercise.Notes}
+            </p>
+          )}
+          {exercise.Image && (
+            <p>
+              <strong>Imagen:</strong>{" "}
+              <a
+                href={exercise.Image}
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                {exercise.Image}
+              </a>
+            </p>
+          )}
+          {exercise.DialogueSequence && (
+            <div
+              style={{
+                marginTop: "10px",
+                borderTop: "1px solid #eee",
+                paddingTop: "10px",
+              }}
+            >
+              <strong>Dialogue Sequence:</strong>
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  fontSize: "0.85em",
+                  backgroundColor: "#f0f0f0",
+                  padding: "8px",
+                  borderRadius: "4px",
+                }}
+              >
+                {JSON.stringify(exercise.DialogueSequence, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
-      )}
-
-      {/* Mensaje de diálogo/lección completado */}
-      {dialogueCompleted && (
-        <p className='info-text'>
-          ¡Lección de chat completada! Haz clic en Siguiente Ejercicio para
-          continuar.
-        </p>
-      )}
+      ))}
+      <p className='chatbot-raw-display-footer'>
+        Fin de la lección de chatbot.
+      </p>
     </div>
   );
 };
 
-export default LessonChatModule;
+export default ChatbotLessonRawDisplay;

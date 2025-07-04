@@ -17,13 +17,10 @@ const LessonCard = ({ lesson, onBack }) => {
   // --- ESTADOS DE INTERACCIÓN DE FLASHCARD (Solo para STANDARD_LESSON) ---
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
-  const [userTypedAnswer, setUserTypedAnswer] = useState("");
+  const [userTypedAnswer, setUserTypedAnswer] = useState(""); // Global para el input de flashcards
   const [matchFeedback, setMatchFeedback] = useState(null);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
-
-  // No se usa isChatLessonComplete en este flujo raw, ya que no hay interactividad de completado.
-  // const [isChatLessonComplete, setIsChatLessonComplete] = useState(false);
 
   // --- DEBUG: LOGS DE INICIALIZACIÓN DE COMPONENTE ---
   console.log("DEBUG: LessonCard se ha renderizado.");
@@ -50,7 +47,6 @@ const LessonCard = ({ lesson, onBack }) => {
   useEffect(() => {
     console.log("DEBUG: useEffect de reinicio de lección disparado.");
     setCurrentExerciseIndex(0); // Esto sí, al cargar una nueva lección, empezamos por el primer ejercicio
-    // setIsChatLessonComplete(false); // Ya no se usa aquí en este flujo raw
     setAppMessage(""); // Limpiar mensaje global al cargar nueva lección
     console.log("DEBUG: Lección reiniciada a índice 0.");
     // DEBUG: Alerta para ver el ID de la lección
@@ -74,11 +70,13 @@ const LessonCard = ({ lesson, onBack }) => {
   }
 
   // Determinar si la lección actual es un módulo de chatbot
-  const isChatbotLesson = lesson.TypeModule === "chatbot_lesson";
+  // ¡CORREGIDO! Normalizar lesson.TypeModule antes de la comparación
+  const isChatbotLesson =
+    (lesson.TypeModule || "").toLowerCase().trim() === "chatbot_lesson";
   console.log(
-    `DEBUG: isChatbotLesson: ${isChatbotLesson} (lesson.TypeModule: ${lesson.TypeModule})`
+    `DEBUG: isChatbotLesson: ${isChatbotLesson} (lesson.TypeModule RAW: "${lesson.TypeModule}")`
   );
-  // alert(`DEBUG: Tipo de Módulo: ${lesson.TypeModule}. Es Chatbot: ${isChatbotLesson}`);
+  // alert(`DEBUG: Tipo de Módulo: "${lesson.TypeModule}". Es Chatbot: ${isChatbotLesson}`);
 
   // El ejercicio actual para las lecciones estándar (flashcards)
   // Solo se usa si !isChatbotLesson
@@ -264,6 +262,8 @@ const LessonCard = ({ lesson, onBack }) => {
           {/* alert('DEBUG: Mostrando ejercicios de CHATBOT (RAW).') */}
           <ChatbotLessonRawDisplay
             lessonExercises={lesson.exercises} // Pasar TODOS los ejercicios de la lección
+            onPlayAudio={onPlayAudio} // <-- ¡NUEVO! Pasa onPlayAudio
+            appIsLoading={appIsLoading} // <-- ¡NUEVO! Pasa appIsLoading
           />
         </>
       ) : (
