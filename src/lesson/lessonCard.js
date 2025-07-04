@@ -4,7 +4,8 @@ import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones (mism
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto (sube un nivel)
 import ExerciseDisplay from "./components/ExerciseDisplay"; // En la misma carpeta
 import ExerciseNavigation from "./components/ExerciseNavigation"; // En la misma carpeta
-import LessonChatModule from "../Practice/LessonChatModule"; // Sube un nivel, luego baja a Practice/
+// ¡NUEVO! Importar el componente para mostrar el chatbot en crudo
+import ChatbotLessonRawDisplay from "./components/ChatbotLessonRawDisplay";
 
 // Importar el contexto (Sube un nivel)
 import AppContext from "../context/AppContext";
@@ -24,25 +25,24 @@ const LessonCard = ({ lesson, onBack }) => {
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
-  // Estado para indicar si toda la lección de chat ha sido completada
-  const [isChatLessonComplete, setIsChatLessonComplete] = useState(false);
+  // Estado para indicar si toda la lección de chat ha sido completada (ya no se usa aquí para el flujo raw)
+  // const [isChatLessonComplete, setIsChatLessonComplete] = useState(false);
 
   // Restablecer estados al cambiar de ejercicio o lección
-  // ¡CORREGIDO! Ahora también depende de currentExerciseIndex para reinicio de estados de interacción.
   useEffect(() => {
     setIsAnswerVisible(false);
     setUserTypedAnswer("");
     setMatchFeedback(null);
     setShowCorrectAnswer(false);
     setRecordedMicrophoneText("");
-    // currentExerciseIndex se gestiona por Next/Prev y no debe resetearse aquí al cambiar de ejercicio
-    // setIsChatLessonComplete(false); // Este solo se resetea al cambiar de lesson
-  }, [currentExerciseIndex, lesson]); // <-- ¡Añadido currentExerciseIndex a las dependencias!
+    setCurrentExerciseIndex(0); // Resetear el índice del ejercicio para flashcards
+    // setIsChatLessonComplete(false); // Ya no se usa aquí
+  }, [currentExerciseIndex, lesson]); // Dependencia 'lesson' para resetear al cambiar la lección
 
   // Resetear solo lo que depende de la lección (no del ejercicio actual)
   useEffect(() => {
     setCurrentExerciseIndex(0); // Esto sí, al cargar una nueva lección, empezamos por el primer ejercicio
-    setIsChatLessonComplete(false); // Esto sí, al cargar una nueva lección, el chat no está completo
+    // setIsChatLessonComplete(false); // Esto sí, al cargar una nueva lección, el chat no está completo
   }, [lesson]);
 
   // Si no hay lección o ejercicios, mostrar mensaje
@@ -168,17 +168,8 @@ const LessonCard = ({ lesson, onBack }) => {
     }
   };
 
-  // Callback cuando la lección de chat completa ha terminado (desde LessonChatModule)
-  const onChatLessonCompleted = () => {
-    setIsChatLessonComplete(true);
-    setAppMessage("¡Lección de chat completada!");
-    setMatchFeedback(null); // Reiniciar feedback
-    setShowCorrectAnswer(false);
-    setUserTypedAnswer("");
-    setRecordedMicrophoneText("");
-    // Aquí puedes decidir si automáticamente vuelves a la lista de lecciones o qué hacer
-    // setTimeout(() => onBack(), 2000); // Ejemplo: volver después de 2 segundos
-  };
+  // onChatLessonCompleted ya no es necesario aquí, ya que el ChatbotLessonRawDisplay no tiene interactividad de completado.
+  // const onChatLessonCompleted = () => { /* ... */ };
 
   return (
     <div className='lesson-detail-view section-container'>
@@ -190,45 +181,12 @@ const LessonCard = ({ lesson, onBack }) => {
       </p>
       <p className='lesson-description'>{lesson.Description}</p>
 
-      {/* Mostrar notas y imagen solo para la sección de flashcards, o si es un chat, la primera nota. */}
-      {/* Las notas y la imagen se gestionan dentro de LessonChatModule para las lecciones de chat */}
-      {!isChatbotLesson &&
-        lesson.exercises[currentExerciseIndex]?.Notes && ( // Mostrar notas solo para ejercicios estándar
-          <div className='section-container lesson-notes'>
-            <h3 className='subsection-title'>Notas:</h3>
-            <p>{lesson.exercises[currentExerciseIndex].Notes}</p>
-          </div>
-        )}
-      {!isChatbotLesson &&
-        lesson.exercises[currentExerciseIndex]?.Image && ( // Mostrar imagen solo para ejercicios estándar
-          <div className='exercise-image-container'>
-            <img
-              src={lesson.exercises[currentExerciseIndex].Image}
-              alt={`Imagen para ${lesson.exercises[currentExerciseIndex].Type} ejercicio`}
-              className='exercise-image'
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = `https://placehold.co/300x200/cccccc/ffffff?text=No+Image`;
-              }}
-            />
-          </div>
-        )}
-
-      {/* Renderizado condicional: Flujo de CHATBOT CONTINUO vs. Flashcards Estándar */}
+      {/* Renderizado condicional: Flujo de CHATBOT (RAW) vs. Flashcards Estándar */}
       {isChatbotLesson ? (
-        // Si es una lección de chatbot, renderizamos el LessonChatModule
-        // y le pasamos TODOS los ejercicios de la lección para que los gestione internamente
-        <LessonChatModule
-          lessonExercises={lesson.exercises} // Pasar TODOS los ejercicios de la lección al chat
-          onPlayAudio={onPlayAudio}
-          appIsLoading={appIsLoading}
-          userTypedAnswer={userTypedAnswer}
-          setUserTypedAnswer={setUserTypedAnswer}
-          setAppMessage={setAppMessage}
-          onDialogueComplete={onChatLessonCompleted} // Al completar *toda la lección* de chat
-
-          // currentLessonExerciseIndex y setCurrentLessonExerciseIndex ahora son gestionados por LessonChatModule
-          // y no se pasan desde aquí.
+        // Si es una lección de chatbot, renderizamos el ChatbotLessonRawDisplay
+        // y le pasamos TODOS los ejercicios para que los muestre en crudo.
+        <ChatbotLessonRawDisplay
+          lessonExercises={lesson.exercises} // Pasar TODOS los ejercicios de la lección
         />
       ) : (
         // Si es una lección estándar (flashcards), el flujo es el mismo de antes
@@ -237,6 +195,27 @@ const LessonCard = ({ lesson, onBack }) => {
             matchFeedback ? `match-${matchFeedback}` : ""
           }`}
         >
+          {/* Mostrar notas y imagen para ejercicios estándar */}
+          {lesson.exercises[currentExerciseIndex]?.Notes && (
+            <div className='section-container lesson-notes'>
+              <h3 className='subsection-title'>Notas:</h3>
+              <p>{lesson.exercises[currentExerciseIndex].Notes}</p>
+            </div>
+          )}
+          {lesson.exercises[currentExerciseIndex]?.Image && (
+            <div className='exercise-image-container'>
+              <img
+                src={lesson.exercises[currentExerciseIndex].Image}
+                alt={`Imagen para ${lesson.exercises[currentExerciseIndex].Type} ejercicio`}
+                className='exercise-image'
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://placehold.co/300x200/cccccc/ffffff?text=No+Image`;
+                }}
+              />
+            </div>
+          )}
+
           {/* Componente para mostrar el ejercicio actual */}
           <ExerciseDisplay
             currentExercise={lesson.exercises[currentExerciseIndex]} // Asegurar que pasamos el ejercicio correcto
@@ -257,9 +236,8 @@ const LessonCard = ({ lesson, onBack }) => {
         </div>
       )}
 
-      {/* El componente de navegación se muestra para TODOS los ejercicios,
-          pero su botón "Siguiente" se deshabilitará si es un chat no completado. */}
-      {!isChatbotLesson && ( // ¡CORREGIDO! Solo mostrar navegación si NO es chatbot
+      {/* El componente de navegación se muestra para TODOS los ejercicios estándar */}
+      {!isChatbotLesson && ( // ¡NUEVO! Solo mostrar navegación si NO es chatbot
         <ExerciseNavigation
           currentExerciseIndex={currentExerciseIndex} // Usar el índice correcto
           totalExercises={lesson.exercises.length}
@@ -275,7 +253,6 @@ const LessonCard = ({ lesson, onBack }) => {
       <button
         onClick={onBack}
         className='button back-button return-to-list-button'
-        disabled={isChatbotLesson && !isChatLessonComplete}
       >
         Volver a la lista de lecciones
       </button>
