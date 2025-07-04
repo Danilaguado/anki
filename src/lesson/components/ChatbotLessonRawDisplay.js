@@ -12,21 +12,21 @@ const ChatbotLessonRawDisplay = ({
   appIsLoading,
   setAppMessage,
 }) => {
-  // Estado para el índice del ejercicio que se está mostrando actualmente (para el botón Siguiente)
+  // Estado para el índice del ejercicio que se está mostrando actualmente
   const [currentDisplayedExerciseIndex, setCurrentDisplayedExerciseIndex] =
-    useState(-1);
+    useState(-1); // Empieza en -1 para no mostrar nada al inicio
   // Estado para almacenar los ejercicios que ya han sido "mostrados" (añadidos al historial)
   const [displayedExercises, setDisplayedExercises] = useState([]);
   // Estado para almacenar el estado de respuesta de CADA ejercicio
   // { [exerciseId]: { answered: boolean, correct: boolean, userAnswer: string } }
   const [exerciseCompletionStates, setExerciseCompletionStates] = useState({});
 
-  // Estado para el input de texto del usuario (un solo input para todos los ejercicios)
+  // Estado para el input de texto del usuario (un solo input para todos los inputs)
   const [userTypedAnswer, setUserTypedAnswer] = useState("");
   // Estado para el texto grabado por el micrófono (un solo estado para todos los micrófonos)
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
-  const chatContainerRef = useRef(null); // Para hacer scroll automático al final del chat
+  const chatContainerRef = useRef(null); // Para hacer scroll automático
 
   // Efecto para inicializar el chat y añadir el primer mensaje de la IA
   useEffect(() => {
@@ -44,7 +44,20 @@ const ChatbotLessonRawDisplay = ({
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
-  }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio al historial
+  }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio
+
+  // Función para avanzar y mostrar el siguiente ejercicio
+  const handleShowNextExercise = () => {
+    const nextIndex = currentDisplayedExerciseIndex + 1;
+    if (lessonExercises && nextIndex < lessonExercises.length) {
+      const nextExercise = lessonExercises[nextIndex];
+      setDisplayedExercises((prev) => [...prev, nextExercise]); // Añadir el nuevo ejercicio al historial
+      setCurrentDisplayedExerciseIndex(nextIndex); // Actualizar el índice
+    } else {
+      // Todos los ejercicios han sido mostrados
+      setAppMessage("¡Todos los ejercicios han sido mostrados!");
+    }
+  };
 
   // --- Lógica de Manejo de Envío de Respuesta para CADA Ejercicio ---
   const handleExerciseSubmit = (exerciseBeingAnswered) => {
@@ -197,7 +210,7 @@ const ChatbotLessonRawDisplay = ({
     // Si no ha sido respondido, renderizar los elementos interactivos
     switch (exercise.Type) {
       case "multiple_choice":
-      case "practice_multiple_choice":
+      case "practice_multiple_choice": // Incluir tipos de práctica si es necesario
         const options = [...(exercise.OptionsEN || []), exercise.AnswerEN].sort(
           () => Math.random() - 0.5
         );
@@ -209,7 +222,7 @@ const ChatbotLessonRawDisplay = ({
                 className='button multiple-choice-button'
                 onClick={() => {
                   setUserTypedAnswer(option); // Establecer la opción seleccionada en el input
-                  handleExerciseSubmit(exercise); // Enviar la respuesta
+                  handleExerciseSubmit(exercise); // Envía la respuesta
                 }}
                 disabled={appIsLoading}
               >
@@ -337,7 +350,7 @@ const ChatbotLessonRawDisplay = ({
         );
       default:
         return (
-          <p className='info-text'>
+          <p className='info-info'>
             Tipo de ejercicio no soportado: {exercise.Type}
           </p>
         );
@@ -373,7 +386,7 @@ const ChatbotLessonRawDisplay = ({
           return (
             <div
               key={exercise.ExerciseID || index}
-              className='chatbot-raw-display-exercise-block'
+              className='chat-message-block'
             >
               {/* Mensaje de la IA (pregunta del ejercicio) */}
               <div className='chat-message ai'>
