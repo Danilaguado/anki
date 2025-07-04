@@ -7,15 +7,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import "./index.css"; // Importa los estilos globales para toda la aplicación
 
-// Importa el contexto (Ruta relativa corregida)
+// Importa el contexto
 import AppContext from "./context/AppContext";
 
-// Importa tus secciones principales (Rutas relativas corregidas)
+// Importa tus secciones principales
 import MainVocabSection from "./MainVocabSection";
 import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
-import PracticePage from "./Practice/PracticePage"; // Importación de la página de práctica
+// import PracticePage from './Practice/PracticePage'; // ¡ELIMINADO! Ya no existe la página de práctica
 
-// Importar utilidades de audio (Ruta relativa corregida)
+// Importar utilidades de audio
 import { playAudio, b64toBlob } from "./utils/audioUtils";
 
 // Componente de ejemplo para la pantalla principal o "Home"
@@ -33,9 +33,9 @@ const HomeScreen = () => {
         <Link to='/lessons' className='button primary-button'>
           Lecciones
         </Link>
-        <Link to='/practice' className='button primary-button'>
+        {/* <Link to="/practice" className="button primary-button"> // ¡ELIMINADO! Botón para la sección de Práctica
           Práctica
-        </Link>
+        </Link> */}
       </nav>
     </div>
   );
@@ -84,7 +84,7 @@ const App = () => {
             <Route path='/' element={<HomeScreen />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
-            <Route path='/practice' element={<PracticePage />} />
+            {/* <Route path="/practice" element={<PracticePage />} /> // ¡ELIMINADO! Ruta para la página de Práctica */}
           </Routes>
         </div>
       </AppContext.Provider>
