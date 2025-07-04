@@ -28,14 +28,21 @@ const LessonCard = ({ lesson, onBack }) => {
   const [isChatLessonComplete, setIsChatLessonComplete] = useState(false);
 
   // Restablecer estados al cambiar de ejercicio o lección
+  // ¡CORREGIDO! Ahora también depende de currentExerciseIndex para reinicio de estados de interacción.
   useEffect(() => {
     setIsAnswerVisible(false);
     setUserTypedAnswer("");
     setMatchFeedback(null);
     setShowCorrectAnswer(false);
     setRecordedMicrophoneText("");
-    setCurrentExerciseIndex(0); // Resetear el índice del ejercicio para flashcards
-    setIsChatLessonComplete(false); // Resetear el estado de completado del chat
+    // currentExerciseIndex se gestiona por Next/Prev y no debe resetearse aquí al cambiar de ejercicio
+    // setIsChatLessonComplete(false); // Este solo se resetea al cambiar de lesson
+  }, [currentExerciseIndex, lesson]); // <-- ¡Añadido currentExerciseIndex a las dependencias!
+
+  // Resetear solo lo que depende de la lección (no del ejercicio actual)
+  useEffect(() => {
+    setCurrentExerciseIndex(0); // Esto sí, al cargar una nueva lección, empezamos por el primer ejercicio
+    setIsChatLessonComplete(false); // Esto sí, al cargar una nueva lección, el chat no está completo
   }, [lesson]);
 
   // Si no hay lección o ejercicios, mostrar mensaje
@@ -54,16 +61,21 @@ const LessonCard = ({ lesson, onBack }) => {
   }
 
   // Determinar si la lección actual es un módulo de chatbot
-  const isChatbotLesson = lesson.Type === "chatbot_lesson";
+  const isChatbotLesson = lesson.TypeModule === "chatbot_lesson";
+
+  // El ejercicio actual para las lecciones estándar (flashcards)
+  // Solo se usa si !isChatbotLesson
+  const currentStandardExercise = lesson.exercises[currentExerciseIndex];
 
   // --- Funciones de manejo de ejercicios (SOLO para lecciones estándar) ---
   const handleNextExercise = () => {
-    const currentStandardExercise = lesson.exercises[currentExerciseIndex]; // Definir aquí
+    // currentStandardExercise se define dentro del return para lecciones estándar
+    const currentExercise = lesson.exercises[currentExerciseIndex]; // Usar variable local
     const requiresAnswer = [
       "fill_in_the_blank",
       "multiple_choice",
       "listening",
-    ].includes(currentStandardExercise.Type);
+    ].includes(currentExercise.Type);
     if (requiresAnswer && matchFeedback === null) {
       setAppMessage(
         "Por favor, completa el ejercicio actual antes de avanzar."
@@ -94,24 +106,18 @@ const LessonCard = ({ lesson, onBack }) => {
       return;
     }
     const normalizedUserAnswer = normalizeText(userTypedAnswer);
-    const currentStandardExercise = lesson.exercises[currentExerciseIndex]; // Definir aquí
+    const currentExercise = lesson.exercises[currentExerciseIndex]; // Usar variable local
     let normalizedCorrectAnswer;
 
     if (
-      currentStandardExercise.Type === "fill_in_the_blank" ||
-      currentStandardExercise.Type === "multiple_choice"
+      currentExercise.Type === "fill_in_the_blank" ||
+      currentExercise.Type === "multiple_choice"
     ) {
-      normalizedCorrectAnswer = normalizeText(
-        currentStandardExercise.AnswerEN || ""
-      );
-    } else if (currentStandardExercise.Type === "listening") {
-      normalizedCorrectAnswer = normalizeText(
-        currentStandardExercise.QuestionEN || ""
-      );
+      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || "");
+    } else if (currentExercise.Type === "listening") {
+      normalizedCorrectAnswer = normalizeText(currentExercise.QuestionEN || "");
     } else {
-      normalizedCorrectAnswer = normalizeText(
-        currentStandardExercise.AnswerES || ""
-      );
+      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerES || "");
     }
     if (normalizedUserAnswer === normalizedCorrectAnswer) {
       setMatchFeedback("correct");
@@ -219,7 +225,7 @@ const LessonCard = ({ lesson, onBack }) => {
           userTypedAnswer={userTypedAnswer}
           setUserTypedAnswer={setUserTypedAnswer}
           setAppMessage={setAppMessage}
-          onDialogueComplete={onChatLessonCompleted} // Callback al completar *toda la lección* de chat
+          onDialogueComplete={onChatLessonCompleted} // Al completar *toda la lección* de chat
 
           // currentLessonExerciseIndex y setCurrentLessonExerciseIndex ahora son gestionados por LessonChatModule
           // y no se pasan desde aquí.
@@ -248,19 +254,21 @@ const LessonCard = ({ lesson, onBack }) => {
             handleOptionClick={handleOptionClick}
             handleSpeechResultForListening={handleSpeechResultForListening}
           />
-
-          {/* El componente de navegación se muestra para TODOS los ejercicios,
-              pero su botón "Siguiente" se deshabilitará si es un chat no completado. */}
-          <ExerciseNavigation
-            currentExerciseIndex={currentExerciseIndex} // Usar el índice correcto
-            totalExercises={lesson.exercises.length}
-            onNextExercise={handleNextExercise}
-            onPrevExercise={handlePrevExercise}
-            matchFeedback={matchFeedback}
-            currentExerciseType={lesson.exercises[currentExerciseIndex]?.Type} // Usar el tipo correcto
-            isChatDialogueComplete={false} // Siempre falso para lecciones estándar
-          />
         </div>
+      )}
+
+      {/* El componente de navegación se muestra para TODOS los ejercicios,
+          pero su botón "Siguiente" se deshabilitará si es un chat no completado. */}
+      {!isChatbotLesson && ( // ¡CORREGIDO! Solo mostrar navegación si NO es chatbot
+        <ExerciseNavigation
+          currentExerciseIndex={currentExerciseIndex} // Usar el índice correcto
+          totalExercises={lesson.exercises.length}
+          onNextExercise={handleNextExercise}
+          onPrevExercise={handlePrevExercise}
+          matchFeedback={matchFeedback}
+          currentExerciseType={lesson.exercises[currentExerciseIndex]?.Type} // Usar el tipo correcto
+          isChatDialogueComplete={false} // Siempre falso para lecciones estándar
+        />
       )}
 
       {/* Botón para volver a la lista de lecciones (siempre visible) */}
