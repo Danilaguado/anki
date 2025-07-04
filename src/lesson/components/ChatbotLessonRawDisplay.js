@@ -26,7 +26,7 @@ const ChatbotLessonRawDisplay = ({
   // Estado para el texto grabado por el micrófono (un solo estado para todos los micrófonos)
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
-  const chatContainerRef = useRef(null); // Para hacer scroll automático
+  const chatContainerRef = useRef(null); // Para hacer scroll automático al final del chat
   const lastExerciseRef = useRef(null); // Para anclar el scroll al último ejercicio
 
   // Efecto para inicializar el chat y añadir el primer mensaje de la IA
@@ -39,13 +39,16 @@ const ChatbotLessonRawDisplay = ({
     setAppMessage(""); // Limpiar mensaje global al inicio de la lección
   }, [lessonExercises, setAppMessage]);
 
-  // Efecto para hacer scroll al final del chat cuando se añade un nuevo ejercicio
+  // Efecto para hacer scroll al último ejercicio cuando se añade uno nuevo
   useEffect(() => {
     if (lastExerciseRef.current) {
-      lastExerciseRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
+      // Usar setTimeout para asegurar que el DOM se haya actualizado antes de hacer scroll
+      setTimeout(() => {
+        lastExerciseRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }, 100); // Pequeño retraso de 100ms
     }
   }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio
 
@@ -436,6 +439,8 @@ const ChatbotLessonRawDisplay = ({
             </div>
           );
         })}
+        {/* Este div será el objetivo del scroll para el último ejercicio */}
+        <div ref={lastExerciseRef} />
       </div>
 
       <div style={{ textAlign: "center", marginTop: "20px" }}>
