@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Ruta relativa
 import SpeechToTextButton from "../../components/SpeechToTextButton"; // Ruta relativa
-import "./PracticeChatInterface.css"; // Correcto: en la misma carpeta
+import "./ChatbotLessonRawDisplay.css"; // Correcto: en la misma carpeta
 
 const LessonChatModule = ({
   lessonExercises, // Recibe TODOS los ejercicios de la lección
