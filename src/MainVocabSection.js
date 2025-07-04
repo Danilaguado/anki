@@ -18,6 +18,7 @@ import EditCategoryPage from "./components/EditCategoryPage";
 
 // Importar utilidades
 import { normalizeText } from "./utils/textUtils"; // renderizableText se pasa como prop
+import BottomNavigationBar from "./components/BottomNavigationBar";
 
 const MainVocabSection = () => {
   // Consumir valores del contexto
@@ -27,7 +28,7 @@ const MainVocabSection = () => {
     setAppIsLoading,
     appIsLoading,
     appGlobalMessage,
-  } = useContext(AppContext); // <-- Consumir del contexto
+  } = useContext(AppContext);
 
   // State para gestionar categorías y tarjetas (específicos de esta sección)
   const [categories, setCategories] = useState([]);
@@ -37,10 +38,6 @@ const MainVocabSection = () => {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCardQuestion, setNewCardQuestion] = useState("");
   const [newCardAnswer, setNewCardAnswer] = useState("");
-
-  // States de mensaje y carga locales se eliminan ya que se usan los globales del contexto
-  // const [message, setMessage] = useState("");
-  // const [isLoading, setIsLoading] = useState(false);
 
   // State para el modal de confirmación de eliminación de CATEGORÍA
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -450,6 +447,7 @@ const MainVocabSection = () => {
 
       const result = await response.json();
       if (result.success) {
+        setNewCategoryName("");
         setAppMessage(`Categoría eliminada.`);
         setShowDeleteConfirm(false);
         setCategoryToDeleteId(null);
@@ -478,12 +476,11 @@ const MainVocabSection = () => {
   // --- Renderizado Principal de MainVocabSection ---
   return (
     <div className='app-container'>
-      {" "}
-      {/* Mantén el app-container aquí para estilos */}
       <h1 className='app-title'>Mi Entrenador de Vocabulario</h1>
+
       {/* MessageDisplay se encarga de mostrar mensajes y estado de carga */}
-      {/* Usamos appGlobalMessage que viene de props en lugar de una variable 'message' local */}
       <MessageDisplay message={appGlobalMessage} isLoading={appIsLoading} />
+
       {/* Renderizado condicional de las páginas internas de MainVocabSection */}
       {currentPage === "home" && (
         <CategoryList
@@ -501,6 +498,7 @@ const MainVocabSection = () => {
           onAddCategory={addCategory}
         />
       )}
+
       {currentPage === "addCardPage" && (
         <AddCardForm
           currentCategory={currentCategory}
@@ -513,6 +511,7 @@ const MainVocabSection = () => {
           onNavigateToHome={navigateToHome}
         />
       )}
+
       {currentPage === "practicePage" && (
         <PracticeCard
           currentCard={currentCard}
@@ -530,6 +529,7 @@ const MainVocabSection = () => {
           onNavigateToHome={navigateToHome}
         />
       )}
+
       {currentPage === "quizPage" && (
         <QuizCard
           currentCard={currentCard}
@@ -550,6 +550,7 @@ const MainVocabSection = () => {
           onNavigateToHome={navigateToHome}
         />
       )}
+
       {currentPage === "editCategoryPage" && (
         <EditCategoryPage
           category={currentCategory}
@@ -559,6 +560,7 @@ const MainVocabSection = () => {
           setMessage={setAppMessage}
         />
       )}
+
       {showDeleteConfirm && (
         <DeleteConfirmationModal
           onDelete={deleteCategory}
@@ -566,6 +568,8 @@ const MainVocabSection = () => {
           isLoading={appIsLoading}
         />
       )}
+      {/* ¡NUEVO! Renderiza la barra de navegación inferior */}
+      <BottomNavigationBar />
     </div>
   );
 };

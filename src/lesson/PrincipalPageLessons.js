@@ -73,13 +73,15 @@ const PrincipalPageLessons = () => {
 
   return (
     <div className='lessons-page-wrapper app-container'>
-      <Link to='/' className='button back-button top-back-button'>
+      {/* ¡ELIMINADO! Botón "Volver a la pantalla principal" */}
+      {/* <Link to='/' className='button back-button top-back-button'>
         Volver a la pantalla principal
-      </Link>
-      <h1 className='app-title'>Lecciones</h1> {/* Título ajustado */}
+      </Link> */}
+      <h1 className='app-title'>Lecciones</h1>
       <p className='info-text'>
         Selecciona una lección para comenzar a aprender.
       </p>
+
       {/* Mostrar mensajes de carga o error */}
       <MessageDisplay message={message} isLoading={isLoading} />
       {error && (
@@ -87,6 +89,7 @@ const PrincipalPageLessons = () => {
           <span className='message-text'>{error}</span>
         </div>
       )}
+
       {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
       {selectedLesson ? (
         <LessonCard lesson={selectedLesson} onBack={handleBackToLessonList} />
@@ -94,8 +97,7 @@ const PrincipalPageLessons = () => {
         // Si no hay lección seleccionada, mostrar la lista de lecciones disponibles
         <>
           <div className='section-container available-lessons-list'>
-            <h2 className='section-title'>Lecciones Disponibles</h2>{" "}
-            {/* Título ajustado */}
+            <h2 className='section-title'>Lecciones Disponibles</h2>
             {isLoading && availableLessons.length === 0 ? (
               <p className='info-text'>Cargando lecciones...</p>
             ) : availableLessons.length === 0 ? (

@@ -1,0 +1,56 @@
+/* src/components/BottomNavigationBar.css */
+
+.bottom-navigation-bar {
+  position: fixed; /* Fija la barra en la pantalla */
+  bottom: 0; /* En la parte inferior */
+  left: 0;
+  width: 100%; /* Ocupa todo el ancho */
+  background-color: var(--primary-color); /* Color de fondo */
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15); /* Sombra superior */
+  display: flex;
+  justify-content: space-around; /* Espacia los ítems uniformemente */
+  align-items: center;
+  padding: 10px 0;
+  z-index: 1000; /* Asegura que esté por encima de otros elementos */
+  border-top-left-radius: 12px; /* Pequeño redondeado en las esquinas superiores */
+  border-top-right-radius: 12px;
+}
+
+.bottom-navigation-bar .nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: var(--text-color-light); /* Color de texto blanco */
+  font-size: 0.75em; /* Tamaño de fuente más pequeño para móvil */
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.bottom-navigation-bar .nav-item:hover,
+.bottom-navigation-bar .nav-item:focus {
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.15
+  ); /* Fondo ligeramente más claro al pasar el ratón/tocar */
+  color: var(--accent-color); /* Color de acento al interactuar */
+}
+
+.bottom-navigation-bar .nav-item svg {
+  width: 24px; /* Tamaño del icono */
+  height: 24px;
+  margin-bottom: 4px; /* Espacio entre icono y texto */
+  fill: currentColor; /* Usa el color del texto para el icono */
+}
+
+/* Ajustes para pantallas más grandes (opcional, si quieres que desaparezca o cambie de posición) */
+@media (min-width: 769px) {
+  /* Aquí podrías hacer que la barra se oculte o se mueva a un sidebar, por ejemplo */
+  /* .bottom-navigation-bar {
+        display: none;
+    } */
+}

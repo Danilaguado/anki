@@ -13,10 +13,13 @@ import AppContext from "./context/AppContext";
 // Importa tus secciones principales
 import MainVocabSection from "./MainVocabSection";
 import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
-// import PracticePage from './Practice/PracticePage'; // ¡ELIMINADO! Ya no existe la página de práctica
+// import PracticePage from './Practice/PracticePage'; // Ya no se usa
 
 // Importar utilidades de audio
 import { playAudio, b64toBlob } from "./utils/audioUtils";
+
+// ¡NUEVO! Importa la barra de navegación inferior
+import BottomNavigationBar from "./components/BottomNavigationBar";
 
 // Componente de ejemplo para la pantalla principal o "Home"
 const HomeScreen = () => {
@@ -26,6 +29,7 @@ const HomeScreen = () => {
       <p className='info-text'>
         Esta es la pantalla principal. ¿Qué te gustaría hacer?
       </p>
+      {/* Botones de navegación principales (pueden ser reemplazados por la barra inferior en móvil) */}
       <nav className='home-nav-buttons'>
         <Link to='/vocab-trainer' className='button primary-button'>
           Ir al Entrenador de Vocabulario
@@ -33,9 +37,6 @@ const HomeScreen = () => {
         <Link to='/lessons' className='button primary-button'>
           Lecciones
         </Link>
-        {/* <Link to="/practice" className="button primary-button"> // ¡ELIMINADO! Botón para la sección de Práctica
-          Práctica
-        </Link> */}
       </nav>
     </div>
   );
@@ -84,8 +85,11 @@ const App = () => {
             <Route path='/' element={<HomeScreen />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
-            {/* <Route path="/practice" element={<PracticePage />} /> // ¡ELIMINADO! Ruta para la página de Práctica */}
+            {/* La ruta /practice ya no es necesaria si la barra de navegación es la principal */}
+            {/* <Route path="/practice" element={<PracticePage />} /> */}
           </Routes>
+          {/* ¡NUEVO! Renderiza la barra de navegación inferior */}
+          <BottomNavigationBar />
         </div>
       </AppContext.Provider>
     </Router>
