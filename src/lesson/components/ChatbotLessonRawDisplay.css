@@ -1,0 +1,97 @@
+/* src/lesson/components/ChatbotLessonRawDisplay.css */
+
+.chatbot-raw-display-container {
+  border: 1px solid #e0e0e0;
+  padding: 20px;
+  margin: 20px auto;
+  background-color: #fcfcfc;
+  border-radius: 10px;
+  max-height: 70vh; /* Altura máxima para el scroll */
+  overflow-y: auto; /* Permite scroll vertical */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  font-family: "Inter", sans-serif;
+  color: #333;
+}
+
+.chatbot-raw-display-container h3 {
+  text-align: center;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  font-size: 1.6em;
+  font-weight: 700;
+}
+
+.chatbot-raw-display-container .info-text-debug {
+  text-align: center;
+  font-size: 0.9em;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+.chatbot-raw-display-exercise-block {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed #ddd;
+  font-size: 0.95em;
+  word-break: break-word;
+  text-align: left;
+  background-color: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.chatbot-raw-display-exercise-block:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.chatbot-raw-display-exercise-block h4 {
+  color: var(--secondary-color);
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.chatbot-raw-display-exercise-block p {
+  margin: 5px 0;
+  line-height: 1.5;
+}
+
+.chatbot-raw-display-exercise-block strong {
+  color: #555;
+}
+
+.chatbot-raw-display-exercise-block .label-en {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.chatbot-raw-display-exercise-block .label-es {
+  color: #666;
+}
+
+.chatbot-raw-display-exercise-block .label-answer {
+  color: #28a745; /* Color para respuestas correctas */
+  font-weight: 500;
+}
+
+.chatbot-raw-display-exercise-block .label-options {
+  color: #007bff; /* Color para opciones */
+}
+
+.chatbot-raw-display-exercise-block .label-notes {
+  font-style: italic;
+  color: #888;
+  border-left: 3px solid var(--info-color);
+  padding-left: 10px;
+  margin-top: 10px;
+}
+
+.chatbot-raw-display-footer {
+  text-align: center;
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 20px;
+}
