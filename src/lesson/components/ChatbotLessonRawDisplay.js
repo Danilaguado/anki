@@ -1,10 +1,8 @@
-// src/Practice/LessonChatModule.js
-// ¡Este componente ahora gestiona el flujo de toda la lección de chat, mostrando todos los ejercicios en una sola pantalla!
+// src/lesson/components/ChatbotLessonRawDisplay.js
+// Este componente muestra los ejercicios de una lección chatbot de forma secuencial con scroll.
 
 import React, { useState, useEffect, useRef } from "react";
-import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Ruta relativa
-import SpeechToTextButton from "../../components/SpeechToTextButton"; // Ruta relativa
-import "./ChatbotLessonRawDisplay.css"; // Correcto: en la misma carpeta
+import "./ChatbotLessonRawDisplay.css"; // Importa el CSS personal
 
 const ChatbotLessonRawDisplay = ({
   lessonExercises,
@@ -20,45 +18,106 @@ const ChatbotLessonRawDisplay = ({
 
   const chatContainerRef = useRef(null); // Para hacer scroll automático
 
+  // --- DEBUG: LOGS DE INICIALIZACIÓN DE COMPONENTE ---
+  console.log("DEBUG: ChatbotLessonRawDisplay se ha renderizado.");
+  console.log("DEBUG: Props recibidas en ChatbotLessonRawDisplay:", {
+    lessonExercises,
+    onPlayAudio,
+    appIsLoading,
+    setAppMessage,
+  });
+  console.log(
+    "DEBUG: Tipo de onPlayAudio en ChatbotLessonRawDisplay:",
+    typeof onPlayAudio
+  );
+  // --- FIN DEBUG ---
+
   // Efecto para inicializar el chat con el primer ejercicio al cargar la lección
   useEffect(() => {
+    console.log(
+      "DEBUG: ChatbotLessonRawDisplay - useEffect de inicialización disparado."
+    );
     setDisplayedExercises([]); // Reiniciar el historial al cambiar de lección
     setCurrentDisplayedExerciseIndex(-1); // Reiniciar el índice
     setAppMessage(""); // Limpiar mensaje al inicio de la lección
+    console.log("DEBUG: ChatbotLessonRawDisplay - Estados reiniciados.");
+
+    // DEBUG: Alerta para ver el inicio de la lección
+    // alert('DEBUG: ChatbotLessonRawDisplay - Iniciando nueva lección de chatbot.');
   }, [lessonExercises, setAppMessage]); // Añadido setAppMessage a las dependencias
 
   // Efecto para hacer scroll al final del chat cuando se añade un nuevo ejercicio
   useEffect(() => {
+    console.log(
+      "DEBUG: ChatbotLessonRawDisplay - useEffect de scroll disparado."
+    );
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
+      console.log("DEBUG: ChatbotLessonRawDisplay - Scroll realizado.");
     }
   }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio
 
   // Función para avanzar y mostrar el siguiente ejercicio
   const handleShowNextExercise = () => {
+    console.log(
+      "DEBUG: ChatbotLessonRawDisplay - handleShowNextExercise llamado."
+    );
     const nextIndex = currentDisplayedExerciseIndex + 1;
+    console.log(
+      "DEBUG: ChatbotLessonRawDisplay - currentDisplayedExerciseIndex:",
+      currentDisplayedExerciseIndex,
+      "nextIndex:",
+      nextIndex
+    );
+
     if (lessonExercises && nextIndex < lessonExercises.length) {
       const nextExercise = lessonExercises[nextIndex];
+      console.log(
+        "DEBUG: ChatbotLessonRawDisplay - Añadiendo ejercicio al historial:",
+        nextExercise
+      );
       setDisplayedExercises((prev) => [...prev, nextExercise]); // Añadir el nuevo ejercicio al historial
       setCurrentDisplayedExerciseIndex(nextIndex); // Actualizar el índice
+      // alert(`DEBUG: Mostrando Ejercicio ${nextIndex + 1}`);
     } else {
-      // Todos los ejercicios han sido mostrados
+      console.log(
+        "DEBUG: ChatbotLessonRawDisplay - Todos los ejercicios han sido mostrados."
+      );
       setAppMessage("¡Todos los ejercicios han sido mostrados!");
+      // alert('DEBUG: Todos los ejercicios han sido mostrados.');
     }
   };
 
   // Renderizar el botón de reproducción de audio
   const playAudioButton = (phrase) => {
+    console.log(
+      "DEBUG: ChatbotLessonRawDisplay - renderizando playAudioButton para frase:",
+      phrase
+    );
+    console.log(
+      "DEBUG: ChatbotLessonRawDisplay - typeof onPlayAudio dentro playAudioButton:",
+      typeof onPlayAudio
+    );
+
     // ¡CORREGIDO! Asegurarse de que onPlayAudio sea una función antes de llamarla
     if (typeof onPlayAudio !== "function") {
-      console.warn("onPlayAudio no es una función o no está disponible.");
+      console.warn(
+        "ADVERTENCIA: ChatbotLessonRawDisplay - onPlayAudio no es una función o no está disponible."
+      );
+      // alert("ADVERTENCIA: onPlayAudio no es una función.");
       return null; // No renderizar el botón si la función no está disponible
     }
 
     return (
       <button
-        onClick={() => onPlayAudio(phrase, "en-US")}
+        onClick={() => {
+          console.log(
+            "DEBUG: ChatbotLessonRawDisplay - Botón de audio clicado para frase:",
+            phrase
+          );
+          onPlayAudio(phrase, "en-US");
+        }}
         className='button audio-button-round primary-button small-button'
         disabled={appIsLoading}
         aria-label={`Reproducir: ${phrase}`}
@@ -81,6 +140,10 @@ const ChatbotLessonRawDisplay = ({
   const isNextButtonDisabled =
     !lessonExercises ||
     currentDisplayedExerciseIndex >= lessonExercises.length - 1;
+  console.log(
+    "DEBUG: ChatbotLessonRawDisplay - isNextButtonDisabled:",
+    isNextButtonDisabled
+  );
 
   return (
     <div className='chatbot-raw-display-container'>
