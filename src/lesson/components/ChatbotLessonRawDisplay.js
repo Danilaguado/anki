@@ -12,7 +12,6 @@ const ChatbotLessonRawDisplay = ({
   appIsLoading,
   setAppMessage,
 }) => {
-  // ¡CORREGIDO! Recibe setAppMessage
   // Estado para el índice del ejercicio que se está mostrando actualmente
   const [currentDisplayedExerciseIndex, setCurrentDisplayedExerciseIndex] =
     useState(-1); // Empieza en -1 para no mostrar nada al inicio
@@ -25,7 +24,7 @@ const ChatbotLessonRawDisplay = ({
   useEffect(() => {
     setDisplayedExercises([]); // Reiniciar el historial al cambiar de lección
     setCurrentDisplayedExerciseIndex(-1); // Reiniciar el índice
-    setAppMessage(""); // <-- ¡CORREGIDO! Limpiar mensaje al inicio de la lección
+    setAppMessage(""); // Limpiar mensaje al inicio de la lección
   }, [lessonExercises, setAppMessage]); // Añadido setAppMessage a las dependencias
 
   // Efecto para hacer scroll al final del chat cuando se añade un nuevo ejercicio
@@ -50,25 +49,33 @@ const ChatbotLessonRawDisplay = ({
   };
 
   // Renderizar el botón de reproducción de audio
-  const playAudioButton = (phrase) => (
-    <button
-      onClick={() => onPlayAudio(phrase, "en-US")}
-      className='button audio-button-round primary-button small-button'
-      disabled={appIsLoading}
-      aria-label={`Reproducir: ${phrase}`}
-      style={{ marginLeft: "10px", flexShrink: 0 }} // Estilo básico para que no rompa el layout
-    >
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='100%'
-        height='100%'
-        fill='currentColor'
-        viewBox='0 0 16 16'
+  const playAudioButton = (phrase) => {
+    // ¡CORREGIDO! Asegurarse de que onPlayAudio sea una función antes de llamarla
+    if (typeof onPlayAudio !== "function") {
+      console.warn("onPlayAudio no es una función o no está disponible.");
+      return null; // No renderizar el botón si la función no está disponible
+    }
+
+    return (
+      <button
+        onClick={() => onPlayAudio(phrase, "en-US")}
+        className='button audio-button-round primary-button small-button'
+        disabled={appIsLoading}
+        aria-label={`Reproducir: ${phrase}`}
+        style={{ marginLeft: "10px", flexShrink: 0 }} // Estilo básico para que no rompa el layout
       >
-        <path d='M10.804 8 5 4.633v6.734zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696z' />
-      </svg>
-    </button>
-  );
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='100%'
+          height='100%'
+          fill='currentColor'
+          viewBox='0 0 16 16'
+        >
+          <path d='M10.804 8 5 4.633v6.734zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696z' />
+        </svg>
+      </button>
+    );
+  };
 
   // Determinar si el botón "Siguiente" debe estar deshabilitado
   const isNextButtonDisabled =
@@ -101,7 +108,8 @@ const ChatbotLessonRawDisplay = ({
             <p>
               <strong className='label-en'>Question EN:</strong>{" "}
               {exercise.QuestionEN}
-              {onPlayAudio && playAudioButton(exercise.QuestionEN)}
+              {onPlayAudio && playAudioButton(exercise.QuestionEN)}{" "}
+              {/* Llama a playAudioButton solo si onPlayAudio existe */}
             </p>
             <p>
               <strong className='label-es'>Question ES:</strong>{" "}
