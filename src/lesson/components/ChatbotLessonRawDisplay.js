@@ -1,8 +1,10 @@
 // src/lesson/components/ChatbotLessonRawDisplay.js
-// Este componente muestra los ejercicios de una lección chatbot de forma secuencial con scroll.
+// Este componente muestra los ejercicios de una lección chatbot de forma secuencial con scroll e interactividad.
 
 import React, { useState, useEffect, useRef } from "react";
 import "./ChatbotLessonRawDisplay.css"; // Importa el CSS personal
+import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Necesario para normalizar y renderizar texto
+import SpeechToTextButton from "../../components/SpeechToTextButton"; // Necesario para el botón de micrófono
 
 const ChatbotLessonRawDisplay = ({
   lessonExercises,
@@ -10,118 +12,135 @@ const ChatbotLessonRawDisplay = ({
   appIsLoading,
   setAppMessage,
 }) => {
-  // Estado para el índice del ejercicio que se está mostrando actualmente
+  // Estado para el índice del ejercicio que se está mostrando actualmente (para el botón Siguiente)
   const [currentDisplayedExerciseIndex, setCurrentDisplayedExerciseIndex] =
-    useState(-1); // Empieza en -1 para no mostrar nada al inicio
+    useState(-1);
   // Estado para almacenar los ejercicios que ya han sido "mostrados" (añadidos al historial)
   const [displayedExercises, setDisplayedExercises] = useState([]);
+  // Estado para almacenar el estado de respuesta de CADA ejercicio
+  // { [exerciseId]: { answered: boolean, correct: boolean, userAnswer: string } }
+  const [exerciseCompletionStates, setExerciseCompletionStates] = useState({});
 
-  const chatContainerRef = useRef(null); // Para hacer scroll automático
+  // Estado para el input de texto del usuario (un solo input para todos los ejercicios)
+  const [userTypedAnswer, setUserTypedAnswer] = useState("");
+  // Estado para el texto grabado por el micrófono (un solo estado para todos los micrófonos)
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
-  // --- DEBUG: LOGS DE INICIALIZACIÓN DE COMPONENTE ---
-  console.log("DEBUG: ChatbotLessonRawDisplay se ha renderizado.");
-  console.log("DEBUG: Props recibidas en ChatbotLessonRawDisplay:", {
-    lessonExercises,
-    onPlayAudio,
-    appIsLoading,
-    setAppMessage,
-  });
-  console.log(
-    "DEBUG: Tipo de onPlayAudio en ChatbotLessonRawDisplay:",
-    typeof onPlayAudio
-  );
-  // --- FIN DEBUG ---
+  const chatContainerRef = useRef(null); // Para hacer scroll automático al final del chat
 
-  // Efecto para inicializar el chat con el primer ejercicio al cargar la lección
+  // Efecto para inicializar el chat y añadir el primer mensaje de la IA
   useEffect(() => {
-    console.log(
-      "DEBUG: ChatbotLessonRawDisplay - useEffect de inicialización disparado."
-    );
-    setDisplayedExercises([]); // Reiniciar el historial al cambiar de lección
-    setCurrentDisplayedExerciseIndex(-1); // Reiniciar el índice
-    setAppMessage(""); // Limpiar mensaje al inicio de la lección
-    console.log("DEBUG: ChatbotLessonRawDisplay - Estados reiniciados.");
-
-    // DEBUG: Alerta para ver el inicio de la lección
-    // alert('DEBUG: ChatbotLessonRawDisplay - Iniciando nueva lección de chatbot.');
-  }, [lessonExercises, setAppMessage]); // Añadido setAppMessage a las dependencias
+    setDisplayedExercises([]);
+    setCurrentDisplayedExerciseIndex(-1);
+    setExerciseCompletionStates({});
+    setUserTypedAnswer("");
+    setRecordedMicrophoneText("");
+    setAppMessage(""); // Limpiar mensaje global al inicio de la lección
+  }, [lessonExercises, setAppMessage]);
 
   // Efecto para hacer scroll al final del chat cuando se añade un nuevo ejercicio
   useEffect(() => {
-    console.log(
-      "DEBUG: ChatbotLessonRawDisplay - useEffect de scroll disparado."
-    );
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
-      console.log("DEBUG: ChatbotLessonRawDisplay - Scroll realizado.");
     }
-  }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio
+  }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio al historial
 
-  // Función para avanzar y mostrar el siguiente ejercicio
-  const handleShowNextExercise = () => {
-    console.log(
-      "DEBUG: ChatbotLessonRawDisplay - handleShowNextExercise llamado."
-    );
-    const nextIndex = currentDisplayedExerciseIndex + 1;
-    console.log(
-      "DEBUG: ChatbotLessonRawDisplay - currentDisplayedExerciseIndex:",
-      currentDisplayedExerciseIndex,
-      "nextIndex:",
-      nextIndex
-    );
+  // --- Lógica de Manejo de Envío de Respuesta para CADA Ejercicio ---
+  const handleExerciseSubmit = (exerciseBeingAnswered) => {
+    // Si el ejercicio ya fue respondido, no permitir re-enviar
+    if (exerciseCompletionStates[exerciseBeingAnswered.ExerciseID]?.answered) {
+      setAppMessage("Este ejercicio ya fue respondido.");
+      return;
+    }
 
-    if (lessonExercises && nextIndex < lessonExercises.length) {
-      const nextExercise = lessonExercises[nextIndex];
-      console.log(
-        "DEBUG: ChatbotLessonRawDisplay - Añadiendo ejercicio al historial:",
-        nextExercise
+    // Validar que el input no esté vacío para tipos que lo requieren
+    if (
+      !userTypedAnswer.trim() &&
+      !["multiple_choice", "practice_multiple_choice"].includes(
+        exerciseBeingAnswered.Type
+      )
+    ) {
+      setAppMessage("Por favor, escribe tu respuesta para este ejercicio.");
+      return;
+    }
+
+    const normalizedUserAnswer = normalizeText(userTypedAnswer);
+    let normalizedCorrectAnswer;
+
+    // Determinar la respuesta esperada según el tipo de ejercicio
+    if (
+      exerciseBeingAnswered.Type === "fill_in_the_blank" ||
+      exerciseBeingAnswered.Type === "multiple_choice" ||
+      exerciseBeingAnswered.Type === "practice_fill_in_the_blank" ||
+      exerciseBeingAnswered.Type === "practice_multiple_choice"
+    ) {
+      normalizedCorrectAnswer = normalizeText(
+        exerciseBeingAnswered.AnswerEN || ""
       );
-      setDisplayedExercises((prev) => [...prev, nextExercise]); // Añadir el nuevo ejercicio al historial
-      setCurrentDisplayedExerciseIndex(nextIndex); // Actualizar el índice
-      // alert(`DEBUG: Mostrando Ejercicio ${nextIndex + 1}`);
+    } else if (
+      exerciseBeingAnswered.Type === "listening" ||
+      exerciseBeingAnswered.Type === "practice_listening"
+    ) {
+      normalizedCorrectAnswer = normalizeText(
+        exerciseBeingAnswered.QuestionEN || ""
+      );
+    } else if (
+      exerciseBeingAnswered.Type === "translation" ||
+      exerciseBeingAnswered.Type === "practice_translation"
+    ) {
+      normalizedCorrectAnswer = normalizeText(
+        exerciseBeingAnswered.AnswerEN || ""
+      ); // Traducción se verifica contra AnswerEN
+    } else if (exerciseBeingAnswered.Type === "practice_chat") {
+      normalizedCorrectAnswer = normalizeText(
+        exerciseBeingAnswered.AnswerEN || ""
+      );
     } else {
-      console.log(
-        "DEBUG: ChatbotLessonRawDisplay - Todos los ejercicios han sido mostrados."
-      );
-      setAppMessage("¡Todos los ejercicios han sido mostrados!");
-      // alert('DEBUG: Todos los ejercicios han sido mostrados.');
+      normalizedCorrectAnswer = "";
     }
+
+    const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
+
+    // Actualizar el estado de completado para este ejercicio específico
+    setExerciseCompletionStates((prev) => ({
+      ...prev,
+      [exerciseBeingAnswered.ExerciseID]: {
+        answered: true,
+        correct: isCorrect,
+        userAnswer: userTypedAnswer,
+      },
+    }));
+
+    // Mostrar feedback global y limpiar input
+    if (isCorrect) {
+      setAppMessage("¡Correcto!");
+    } else {
+      setAppMessage(
+        `Incorrecto. La respuesta esperada era: ${
+          exerciseBeingAnswered.AnswerEN || exerciseBeingAnswered.QuestionEN
+        }`
+      );
+    }
+    setUserTypedAnswer(""); // Limpiar el input después de responder
+    setRecordedMicrophoneText(""); // Limpiar texto del micrófono
   };
 
   // Renderizar el botón de reproducción de audio
   const playAudioButton = (phrase) => {
-    console.log(
-      "DEBUG: ChatbotLessonRawDisplay - renderizando playAudioButton para frase:",
-      phrase
-    );
-    console.log(
-      "DEBUG: ChatbotLessonRawDisplay - typeof onPlayAudio dentro playAudioButton:",
-      typeof onPlayAudio
-    );
-
-    // ¡CORREGIDO! Asegurarse de que onPlayAudio sea una función antes de llamarla
     if (typeof onPlayAudio !== "function") {
       console.warn(
-        "ADVERTENCIA: ChatbotLessonRawDisplay - onPlayAudio no es una función o no está disponible."
+        "ADVERTENCIA: onPlayAudio no es una función o no está disponible."
       );
-      // alert("ADVERTENCIA: onPlayAudio no es una función.");
-      return null; // No renderizar el botón si la función no está disponible
+      return null;
     }
-
     return (
       <button
-        onClick={() => {
-          console.log(
-            "DEBUG: ChatbotLessonRawDisplay - Botón de audio clicado para frase:",
-            phrase
-          );
-          onPlayAudio(phrase, "en-US");
-        }}
+        onClick={() => onPlayAudio(phrase, "en-US")}
         className='button audio-button-round primary-button small-button'
         disabled={appIsLoading}
         aria-label={`Reproducir: ${phrase}`}
-        style={{ marginLeft: "10px", flexShrink: 0 }} // Estilo básico para que no rompa el layout
+        style={{ marginLeft: "10px", flexShrink: 0 }}
       >
         <svg
           xmlns='http://www.w3.org/2000/svg'
@@ -136,18 +155,205 @@ const ChatbotLessonRawDisplay = ({
     );
   };
 
+  // Renderizar el botón de micrófono
+  const microphoneButton = (exerciseId) => (
+    <SpeechToTextButton
+      onResult={(transcript) => {
+        setRecordedMicrophoneText(transcript);
+        setUserTypedAnswer(transcript);
+      }}
+      lang='en-US'
+      disabled={appIsLoading || exerciseCompletionStates[exerciseId]?.answered}
+    />
+  );
+
+  // Renderiza el contenido interactivo de un ejercicio
+  const renderInteractiveExerciseContent = (exercise) => {
+    const isAnswered = exerciseCompletionStates[exercise.ExerciseID]?.answered;
+    const isCorrect = exerciseCompletionStates[exercise.ExerciseID]?.correct;
+    const displayUserAnswer =
+      exerciseCompletionStates[exercise.ExerciseID]?.userAnswer; // Mostrar la respuesta del usuario si ya respondió
+
+    // Renderizar el input/opciones solo si el ejercicio no ha sido respondido
+    if (isAnswered) {
+      return (
+        <div className='chat-answered-display'>
+          <p className='user-answered-text'>
+            Tu respuesta: {displayUserAnswer}
+          </p>
+          <p
+            className={`chat-feedback-message ${
+              isCorrect ? "correct" : "incorrect"
+            }`}
+          >
+            {isCorrect
+              ? "¡Correcto!"
+              : `Esperado: ${exercise.AnswerEN || exercise.QuestionEN}`}
+          </p>
+        </div>
+      );
+    }
+
+    // Si no ha sido respondido, renderizar los elementos interactivos
+    switch (exercise.Type) {
+      case "multiple_choice":
+      case "practice_multiple_choice":
+        const options = [...(exercise.OptionsEN || []), exercise.AnswerEN].sort(
+          () => Math.random() - 0.5
+        );
+        return (
+          <div className='multiple-choice-options'>
+            {options.map((option, idx) => (
+              <button
+                key={idx}
+                className='button multiple-choice-button'
+                onClick={() => {
+                  setUserTypedAnswer(option); // Establecer la opción seleccionada en el input
+                  handleExerciseSubmit(exercise); // Enviar la respuesta
+                }}
+                disabled={appIsLoading}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        );
+      case "fill_in_the_blank":
+      case "practice_fill_in_the_blank":
+        const blankPlaceholder = "_______";
+        const parts = exercise.QuestionEN.split(blankPlaceholder);
+        return (
+          <div className='chat-input-area'>
+            <p className='chat-exercise-question'>
+              {parts[0]}
+              <input
+                type='text'
+                className='input-field chat-input-inline'
+                value={userTypedAnswer}
+                onChange={(e) => setUserTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleExerciseSubmit(exercise);
+                }}
+                disabled={appIsLoading}
+              />
+              {parts[1]}
+            </p>
+            <p className='fill-in-the-blank-translation'>
+              {exercise.QuestionES}
+            </p>
+            <button
+              onClick={() => handleExerciseSubmit(exercise)}
+              className='button primary-button chat-send-button'
+              disabled={appIsLoading}
+            >
+              Verificar
+            </button>
+          </div>
+        );
+      case "translation":
+      case "practice_translation":
+        return (
+          <div className='chat-input-area'>
+            <p className='chat-exercise-question'>{exercise.QuestionEN}</p>
+            <p className='chat-translation-hint'>{exercise.QuestionES}</p>
+            <input
+              type='text'
+              className='input-field chat-input'
+              placeholder='Tu traducción en inglés...'
+              value={userTypedAnswer}
+              onChange={(e) => setUserTypedAnswer(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleExerciseSubmit(exercise);
+              }}
+              disabled={appIsLoading}
+            />
+            {microphoneButton(exercise.ExerciseID)}
+            <button
+              onClick={() => handleExerciseSubmit(exercise)}
+              className='button primary-button chat-send-button'
+              disabled={appIsLoading}
+            >
+              Enviar
+            </button>
+          </div>
+        );
+      case "listening":
+      case "practice_listening":
+        return (
+          <div className='chat-input-area'>
+            <p className='chat-exercise-question'>
+              Escucha y escribe lo que oigas:
+            </p>
+            <p className='chat-translation-hint'>{exercise.QuestionES}</p>
+            {recordedMicrophoneText && (
+              <div className='recorded-text-display'>
+                {recordedMicrophoneText}
+              </div>
+            )}
+            <input
+              type='text'
+              className='input-field chat-input'
+              placeholder='Escribe lo que escuchaste aquí'
+              value={userTypedAnswer}
+              onChange={(e) => setUserTypedAnswer(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleExerciseSubmit(exercise);
+              }}
+              disabled={appIsLoading}
+            />
+            {microphoneButton(exercise.ExerciseID)}
+            <button
+              onClick={() => handleExerciseSubmit(exercise)}
+              className='button primary-button chat-send-button'
+              disabled={appIsLoading}
+            >
+              Verificar
+            </button>
+          </div>
+        );
+      case "practice_chat": // Si el tipo es practice_chat (como el ejercicio principal del chatbot)
+        return (
+          <div className='chat-input-area'>
+            <input
+              type='text'
+              className='input-field chat-input'
+              placeholder='Tu respuesta en inglés...'
+              value={userTypedAnswer}
+              onChange={(e) => setUserTypedAnswer(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleExerciseSubmit(exercise);
+              }}
+              disabled={appIsLoading}
+            />
+            {microphoneButton(exercise.ExerciseID)}
+            <button
+              onClick={() => handleExerciseSubmit(exercise)}
+              className='button primary-button chat-send-button'
+              disabled={appIsLoading}
+            >
+              Enviar
+            </button>
+          </div>
+        );
+      default:
+        return (
+          <p className='info-text'>
+            Tipo de ejercicio no soportado: {exercise.Type}
+          </p>
+        );
+    }
+  };
+
   // Determinar si el botón "Siguiente" debe estar deshabilitado
   const isNextButtonDisabled =
     !lessonExercises ||
     currentDisplayedExerciseIndex >= lessonExercises.length - 1;
-  console.log(
-    "DEBUG: ChatbotLessonRawDisplay - isNextButtonDisabled:",
-    isNextButtonDisabled
-  );
 
   return (
     <div className='chatbot-raw-display-container'>
-      <h3 className='chatbot-raw-display-title'>Lección Chatbot (Historial)</h3>
+      <h3 className='chatbot-raw-display-title'>
+        Lección Chatbot (Historial Interactivo)
+      </h3>
       <p className='info-text-debug'>
         (Los ejercicios se mostrarán uno a uno. Haz clic en "Siguiente" para ver
         el siguiente.)
@@ -155,83 +361,62 @@ const ChatbotLessonRawDisplay = ({
       <hr style={{ borderTop: "1px dashed #ddd", margin: "15px 0" }} />
 
       <div className='chat-history-area' ref={chatContainerRef}>
-        {displayedExercises.map((exercise, index) => (
-          <div
-            key={exercise.ExerciseID || index}
-            className='chatbot-raw-display-exercise-block'
-          >
-            <h4>
-              Ejercicio {exercise.OrderInLesson} - Tipo: {exercise.Type}
-            </h4>
-            {exercise.Notes && (
-              <p className='label-notes'>
-                <strong>Notas:</strong> {exercise.Notes}
-              </p>
-            )}
-            <p>
-              <strong className='label-en'>Question EN:</strong>{" "}
-              {exercise.QuestionEN}
-              {onPlayAudio && playAudioButton(exercise.QuestionEN)}{" "}
-              {/* Llama a playAudioButton solo si onPlayAudio existe */}
-            </p>
-            <p>
-              <strong className='label-es'>Question ES:</strong>{" "}
-              {exercise.QuestionES}
-            </p>
-            {exercise.AnswerEN && (
-              <p>
-                <strong className='label-answer'>Answer EN:</strong>{" "}
-                {exercise.AnswerEN}
-              </p>
-            )}
-            {exercise.AnswerES && (
-              <p>
-                <strong className='label-answer'>Answer ES:</strong>{" "}
-                {exercise.AnswerES}
-              </p>
-            )}
-            {exercise.OptionsEN && exercise.OptionsEN.length > 0 && (
-              <p>
-                <strong className='label-options'>Options EN:</strong>{" "}
-                {exercise.OptionsEN.join(", ")}
-              </p>
-            )}
-            {exercise.Image && (
-              <p>
-                <strong>Imagen:</strong>{" "}
-                <a
-                  href={exercise.Image}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  {exercise.Image}
-                </a>
-              </p>
-            )}
-            {exercise.DialogueSequence && (
-              <div
-                style={{
-                  marginTop: "10px",
-                  borderTop: "1px solid #eee",
-                  paddingTop: "10px",
-                }}
-              >
-                <strong>Dialogue Sequence:</strong>
-                <pre
-                  style={{
-                    whiteSpace: "pre-wrap",
-                    fontSize: "0.85em",
-                    backgroundColor: "#f0f0f0",
-                    padding: "8px",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {JSON.stringify(exercise.DialogueSequence, null, 2)}
-                </pre>
+        {displayedExercises.map((exercise, index) => {
+          const exerciseState = exerciseCompletionStates[
+            exercise.ExerciseID
+          ] || { answered: false, correct: false, userAnswer: "" };
+          const isAnswered = exerciseState.answered;
+          const isCorrect = exerciseState.correct;
+          const expectedAnswerForDisplay =
+            exercise.AnswerEN || exercise.QuestionEN;
+
+          return (
+            <div
+              key={exercise.ExerciseID || index}
+              className='chatbot-raw-display-exercise-block'
+            >
+              {/* Mensaje de la IA (pregunta del ejercicio) */}
+              <div className='chat-message ai'>
+                {exercise.Notes && (
+                  <div className='exercise-notes-display'>
+                    <p>{exercise.Notes}</p>
+                  </div>
+                )}
+                <div className='chat-text-with-audio'>
+                  <span>{exercise.QuestionEN}</span>
+                  {onPlayAudio && playAudioButton(exercise.QuestionEN)}
+                </div>
+                <p className='chat-translation'>{exercise.QuestionES}</p>
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Contenido interactivo del ejercicio */}
+              <div
+                className={`chat-interactive-area ${
+                  isAnswered
+                    ? isCorrect
+                      ? "match-correct"
+                      : "match-incorrect"
+                    : ""
+                }`}
+              >
+                {renderInteractiveExerciseContent(exercise)}
+              </div>
+
+              {/* Mostrar feedback de acierto/error para este ejercicio */}
+              {isAnswered && (
+                <p
+                  className={`chat-feedback-message ${
+                    isCorrect ? "correct" : "incorrect"
+                  }`}
+                >
+                  {isCorrect
+                    ? "¡Correcto!"
+                    : `Incorrecto. La respuesta esperada era: ${expectedAnswerForDisplay}`}
+                </p>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div style={{ textAlign: "center", marginTop: "20px" }}>
