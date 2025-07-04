@@ -10,7 +10,9 @@ const ChatbotLessonRawDisplay = ({
   lessonExercises,
   onPlayAudio,
   appIsLoading,
+  setAppMessage,
 }) => {
+  // ¡CORREGIDO! Recibe setAppMessage
   // Estado para el índice del ejercicio que se está mostrando actualmente
   const [currentDisplayedExerciseIndex, setCurrentDisplayedExerciseIndex] =
     useState(-1); // Empieza en -1 para no mostrar nada al inicio
@@ -23,8 +25,8 @@ const ChatbotLessonRawDisplay = ({
   useEffect(() => {
     setDisplayedExercises([]); // Reiniciar el historial al cambiar de lección
     setCurrentDisplayedExerciseIndex(-1); // Reiniciar el índice
-    // No añadir el primer ejercicio aquí, se añadirá con el primer clic en "Siguiente"
-  }, [lessonExercises]);
+    setAppMessage(""); // <-- ¡CORREGIDO! Limpiar mensaje al inicio de la lección
+  }, [lessonExercises, setAppMessage]); // Añadido setAppMessage a las dependencias
 
   // Efecto para hacer scroll al final del chat cuando se añade un nuevo ejercicio
   useEffect(() => {
