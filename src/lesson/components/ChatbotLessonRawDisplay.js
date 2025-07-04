@@ -2,7 +2,7 @@
 // ¡Este componente ahora gestiona el flujo de toda la lección de chat, mostrando todos los ejercicios en una sola pantalla!
 
 import React, { useState, useEffect, useRef } from "react";
-import { normalizeText, renderClickableText } from "../utils/textUtils"; // Ruta relativa
+import { normalizeText, renderClickableText } from "../../utils/textUtils"; // Ruta relativa
 import SpeechToTextButton from "../../components/SpeechToTextButton"; // Ruta relativa
 import "./ChatbotLessonRawDisplay.css"; // Correcto: en la misma carpeta
 
