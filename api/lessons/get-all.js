@@ -48,16 +48,14 @@ export default async function handler(req, res) {
       return lesson;
     });
 
-    // NUEVO: Ordenar las lecciones por OrderInPage
+    // Ordenar las lecciones por OrderInPage
     lessons.sort((a, b) => {
-      // Intenta parsear OrderInPage como número. Si es nulo o no es un número, lo trata como un valor muy alto para que vaya al final.
       const orderA = parseInt(a.OrderInPage, 10);
       const orderB = parseInt(b.OrderInPage, 10);
 
-      // Manejar casos donde OrderInPage no es un número o está vacío
-      if (isNaN(orderA) && isNaN(orderB)) return 0; // Ambos no son números, mantener orden original
-      if (isNaN(orderA)) return 1; // A no es número, B es número, B va primero
-      if (isNaN(orderB)) return -1; // B no es número, A es número, A va primero
+      if (isNaN(orderA) && isNaN(orderB)) return 0;
+      if (isNaN(orderA)) return 1;
+      if (isNaN(orderB)) return -1;
 
       return orderA - orderB;
     });
@@ -89,6 +87,20 @@ export default async function handler(req, res) {
               );
               exercise[header] = row[index]; // Mantener como string si falla el parseo
             }
+          } else if (header === "DialogueSequence" && row[index]) {
+            // Mapear DialogueSequence
+            try {
+              exercise[header] = JSON.parse(row[index]);
+            } catch (e) {
+              console.warn(
+                `Could not parse DialogueSequence for exercise. Value: ${row[index]}`,
+                e
+              );
+              exercise[header] = row[index];
+            }
+          } else if (header === "TypeModule" && row[index]) {
+            // ¡NUEVO! Mapear TypeModule desde Exercises
+            exercise[header] = row[index];
           } else {
             exercise[header] = row[index];
           }
@@ -99,13 +111,18 @@ export default async function handler(req, res) {
 
     // 3. Unir lecciones con sus ejercicios
     const lessonsWithExercises = lessons.map((lesson) => {
-      // Filtrar ejercicios que pertenecen a esta lección
       const lessonExercises = exercises
         .filter((exercise) => exercise.LessonID === lesson.LessonID)
-        .sort((a, b) => (a.OrderInLesson || 0) - (b.OrderInLesson || 0)); // Ordenar por OrderInLesson
+        .sort((a, b) => (a.OrderInLesson || 0) - (b.OrderInLesson || 0));
+
+      // ¡NUEVO! Asignar TypeModule a la lección desde el PRIMER ejercicio si existe
+      // O si la lección no tiene TypeModule en la hoja Modules, tomarlo de un ejercicio.
+      const firstExerciseTypeModule =
+        lessonExercises.length > 0 ? lessonExercises[0].TypeModule : undefined;
 
       return {
         ...lesson,
+        TypeModule: lesson.TypeModule || firstExerciseTypeModule, // Priorizar TypeModule de Modules, si no, del ejercicio
         exercises: lessonExercises,
       };
     });
