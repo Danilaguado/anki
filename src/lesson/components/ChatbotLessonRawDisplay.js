@@ -27,6 +27,7 @@ const ChatbotLessonRawDisplay = ({
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
   const chatContainerRef = useRef(null); // Para hacer scroll automático
+  const lastExerciseRef = useRef(null); // Para anclar el scroll al último ejercicio
 
   // Efecto para inicializar el chat y añadir el primer mensaje de la IA
   useEffect(() => {
@@ -40,9 +41,11 @@ const ChatbotLessonRawDisplay = ({
 
   // Efecto para hacer scroll al final del chat cuando se añade un nuevo ejercicio
   useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+    if (lastExerciseRef.current) {
+      lastExerciseRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
     }
   }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio
 
@@ -60,16 +63,20 @@ const ChatbotLessonRawDisplay = ({
   };
 
   // --- Lógica de Manejo de Envío de Respuesta para CADA Ejercicio ---
-  const handleExerciseSubmit = (exerciseBeingAnswered) => {
+  const handleExerciseSubmit = (
+    exerciseBeingAnswered,
+    submittedAnswer = userTypedAnswer
+  ) => {
+    // <-- submittedAnswer para selección múltiple
     // Si el ejercicio ya fue respondido, no permitir re-enviar
     if (exerciseCompletionStates[exerciseBeingAnswered.ExerciseID]?.answered) {
       setAppMessage("Este ejercicio ya fue respondido.");
       return;
     }
 
-    // Validar que el input no esté vacío para tipos que lo requieren
+    // Validar que el input no esté vacío para tipos que lo requieren (excepto selección múltiple que siempre tiene un valor)
     if (
-      !userTypedAnswer.trim() &&
+      !submittedAnswer.trim() &&
       !["multiple_choice", "practice_multiple_choice"].includes(
         exerciseBeingAnswered.Type
       )
@@ -78,7 +85,7 @@ const ChatbotLessonRawDisplay = ({
       return;
     }
 
-    const normalizedUserAnswer = normalizeText(userTypedAnswer);
+    const normalizedUserAnswer = normalizeText(submittedAnswer); // <-- Usar submittedAnswer
     let normalizedCorrectAnswer;
 
     // Determinar la respuesta esperada según el tipo de ejercicio
@@ -104,7 +111,7 @@ const ChatbotLessonRawDisplay = ({
     ) {
       normalizedCorrectAnswer = normalizeText(
         exerciseBeingAnswered.AnswerEN || ""
-      ); // Traducción se verifica contra AnswerEN
+      );
     } else if (exerciseBeingAnswered.Type === "practice_chat") {
       normalizedCorrectAnswer = normalizeText(
         exerciseBeingAnswered.AnswerEN || ""
@@ -121,7 +128,7 @@ const ChatbotLessonRawDisplay = ({
       [exerciseBeingAnswered.ExerciseID]: {
         answered: true,
         correct: isCorrect,
-        userAnswer: userTypedAnswer,
+        userAnswer: submittedAnswer, // <-- Guardar submittedAnswer
       },
     }));
 
@@ -221,8 +228,7 @@ const ChatbotLessonRawDisplay = ({
                 key={idx}
                 className='button multiple-choice-button'
                 onClick={() => {
-                  setUserTypedAnswer(option); // Establecer la opción seleccionada en el input
-                  handleExerciseSubmit(exercise); // Envía la respuesta
+                  handleExerciseSubmit(exercise, option); // <-- ¡CORREGIDO! Pasa la opción directamente
                 }}
                 disabled={appIsLoading}
               >
