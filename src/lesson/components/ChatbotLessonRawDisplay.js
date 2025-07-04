@@ -11,14 +11,41 @@ const ChatbotLessonRawDisplay = ({
   onPlayAudio,
   appIsLoading,
 }) => {
-  // ¡NUEVO! Recibe onPlayAudio y appIsLoading
-  if (!lessonExercises || lessonExercises.length === 0) {
-    return (
-      <p style={{ textAlign: "center", color: "#666" }}>
-        No hay ejercicios para esta lección de chatbot.
-      </p>
-    );
-  }
+  // Estado para el índice del ejercicio que se está mostrando actualmente
+  const [currentDisplayedExerciseIndex, setCurrentDisplayedExerciseIndex] =
+    useState(-1); // Empieza en -1 para no mostrar nada al inicio
+  // Estado para almacenar los ejercicios que ya han sido "mostrados" (añadidos al historial)
+  const [displayedExercises, setDisplayedExercises] = useState([]);
+
+  const chatContainerRef = useRef(null); // Para hacer scroll automático
+
+  // Efecto para inicializar el chat con el primer ejercicio al cargar la lección
+  useEffect(() => {
+    setDisplayedExercises([]); // Reiniciar el historial al cambiar de lección
+    setCurrentDisplayedExerciseIndex(-1); // Reiniciar el índice
+    // No añadir el primer ejercicio aquí, se añadirá con el primer clic en "Siguiente"
+  }, [lessonExercises]);
+
+  // Efecto para hacer scroll al final del chat cuando se añade un nuevo ejercicio
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio
+
+  // Función para avanzar y mostrar el siguiente ejercicio
+  const handleShowNextExercise = () => {
+    const nextIndex = currentDisplayedExerciseIndex + 1;
+    if (lessonExercises && nextIndex < lessonExercises.length) {
+      const nextExercise = lessonExercises[nextIndex];
+      setDisplayedExercises((prev) => [...prev, nextExercise]); // Añadir el nuevo ejercicio al historial
+      setCurrentDisplayedExerciseIndex(nextIndex); // Actualizar el índice
+    } else {
+      // Todos los ejercicios han sido mostrados
+      setAppMessage("¡Todos los ejercicios han sido mostrados!");
+    }
+  };
 
   // Renderizar el botón de reproducción de audio
   const playAudioButton = (phrase) => (
@@ -41,98 +68,116 @@ const ChatbotLessonRawDisplay = ({
     </button>
   );
 
+  // Determinar si el botón "Siguiente" debe estar deshabilitado
+  const isNextButtonDisabled =
+    !lessonExercises ||
+    currentDisplayedExerciseIndex >= lessonExercises.length - 1;
+
   return (
     <div className='chatbot-raw-display-container'>
-      <h3 className='chatbot-raw-display-title'>
-        Contenido Crudo de Lección Chatbot
-      </h3>
+      <h3 className='chatbot-raw-display-title'>Lección Chatbot (Historial)</h3>
       <p className='info-text-debug'>
-        (Esto es solo para depuración. Muestra todos los ejercicios de la
-        lección uno debajo del otro.)
+        (Los ejercicios se mostrarán uno a uno. Haz clic en "Siguiente" para ver
+        el siguiente.)
       </p>
       <hr style={{ borderTop: "1px dashed #ddd", margin: "15px 0" }} />
 
-      {lessonExercises.map((exercise, index) => (
-        <div
-          key={exercise.ExerciseID || index}
-          className='chatbot-raw-display-exercise-block'
-        >
-          <h4>
-            Ejercicio {index + 1} - Tipo: {exercise.Type} (Orden:{" "}
-            {exercise.OrderInLesson})
-          </h4>
-          <p>
-            <strong className='label-en'>Question EN:</strong>{" "}
-            {exercise.QuestionEN}
-            {onPlayAudio && playAudioButton(exercise.QuestionEN)}{" "}
-            {/* Botón de audio */}
-          </p>
-          <p>
-            <strong className='label-es'>Question ES:</strong>{" "}
-            {exercise.QuestionES}
-          </p>
-          {exercise.AnswerEN && (
+      <div className='chat-history-area' ref={chatContainerRef}>
+        {displayedExercises.map((exercise, index) => (
+          <div
+            key={exercise.ExerciseID || index}
+            className='chatbot-raw-display-exercise-block'
+          >
+            <h4>
+              Ejercicio {exercise.OrderInLesson} - Tipo: {exercise.Type}
+            </h4>
+            {exercise.Notes && (
+              <p className='label-notes'>
+                <strong>Notas:</strong> {exercise.Notes}
+              </p>
+            )}
             <p>
-              <strong className='label-answer'>Answer EN:</strong>{" "}
-              {exercise.AnswerEN}
+              <strong className='label-en'>Question EN:</strong>{" "}
+              {exercise.QuestionEN}
+              {onPlayAudio && playAudioButton(exercise.QuestionEN)}
             </p>
-          )}
-          {exercise.AnswerES && (
             <p>
-              <strong className='label-answer'>Answer ES:</strong>{" "}
-              {exercise.AnswerES}
+              <strong className='label-es'>Question ES:</strong>{" "}
+              {exercise.QuestionES}
             </p>
-          )}
-          {exercise.OptionsEN && exercise.OptionsEN.length > 0 && (
-            <p>
-              <strong className='label-options'>Options EN:</strong>{" "}
-              {exercise.OptionsEN.join(", ")}
-            </p>
-          )}
-          {exercise.Notes && (
-            <p className='label-notes'>
-              <strong>Notas:</strong> {exercise.Notes}
-            </p>
-          )}
-          {exercise.Image && (
-            <p>
-              <strong>Imagen:</strong>{" "}
-              <a
-                href={exercise.Image}
-                target='_blank'
-                rel='noopener noreferrer'
-              >
-                {exercise.Image}
-              </a>
-            </p>
-          )}
-          {exercise.DialogueSequence && (
-            <div
-              style={{
-                marginTop: "10px",
-                borderTop: "1px solid #eee",
-                paddingTop: "10px",
-              }}
-            >
-              <strong>Dialogue Sequence:</strong>
-              <pre
+            {exercise.AnswerEN && (
+              <p>
+                <strong className='label-answer'>Answer EN:</strong>{" "}
+                {exercise.AnswerEN}
+              </p>
+            )}
+            {exercise.AnswerES && (
+              <p>
+                <strong className='label-answer'>Answer ES:</strong>{" "}
+                {exercise.AnswerES}
+              </p>
+            )}
+            {exercise.OptionsEN && exercise.OptionsEN.length > 0 && (
+              <p>
+                <strong className='label-options'>Options EN:</strong>{" "}
+                {exercise.OptionsEN.join(", ")}
+              </p>
+            )}
+            {exercise.Image && (
+              <p>
+                <strong>Imagen:</strong>{" "}
+                <a
+                  href={exercise.Image}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  {exercise.Image}
+                </a>
+              </p>
+            )}
+            {exercise.DialogueSequence && (
+              <div
                 style={{
-                  whiteSpace: "pre-wrap",
-                  fontSize: "0.85em",
-                  backgroundColor: "#f0f0f0",
-                  padding: "8px",
-                  borderRadius: "4px",
+                  marginTop: "10px",
+                  borderTop: "1px solid #eee",
+                  paddingTop: "10px",
                 }}
               >
-                {JSON.stringify(exercise.DialogueSequence, null, 2)}
-              </pre>
-            </div>
-          )}
-        </div>
-      ))}
-      <p className='chatbot-raw-display-footer'>
-        Fin de la lección de chatbot.
-      </p>
+                <strong>Dialogue Sequence:</strong>
+                <pre
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    fontSize: "0.85em",
+                    backgroundColor: "#f0f0f0",
+                    padding: "8px",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {JSON.stringify(exercise.DialogueSequence, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
+        <button
+          onClick={handleShowNextExercise}
+          className='button primary-button'
+          disabled={isNextButtonDisabled}
+        >
+          {currentDisplayedExerciseIndex === -1
+            ? "Comenzar Lección"
+            : "Siguiente Ejercicio"}
+        </button>
+      </div>
+
+      {isNextButtonDisabled && currentDisplayedExerciseIndex !== -1 && (
+        <p className='chatbot-raw-display-footer'>
+          Fin de la lección de chatbot.
+        </p>
+      )}
     </div>
   );
 };
