@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom"; // Importar useNavigate
 import MessageDisplay from "../components/MessageDisplay";
+import LessonCard from "./lessonCard";
 // LessonCard ya no se importa ni se renderiza directamente aquí
 // import LessonCard from './components/lessonCard';
 
