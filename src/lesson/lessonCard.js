@@ -68,7 +68,11 @@ const LessonCard = ({ lesson, onBack }) => {
   // --- Funciones de manejo de ejercicios (SOLO para lecciones estándar) ---
   const handleCheckAnswer = () => {
     /* Lógica de verificación para flashcards */
-    if (!userTypedAnswer.trim()) {
+    if (
+      !userTypedAnswer.trim() &&
+      currentStandardExercise.Type !== "multiple_choice"
+    ) {
+      // Multi-choice no necesita input previo
       setAppMessage("Por favor, escribe tu respuesta.");
       setMatchFeedback(null);
       return;
@@ -100,46 +104,23 @@ const LessonCard = ({ lesson, onBack }) => {
 
   const handleOptionClick = (selectedOption) => {
     /* Lógica para flashcards */
-    if (matchFeedback !== null) return;
+    // ¡CORREGIDO! Solo establece la respuesta, no comprueba inmediatamente
+    if (matchFeedback !== null) return; // No permitir cambiar la selección si ya se comprobó
     setUserTypedAnswer(selectedOption);
-    const normalizedSelected = normalizeText(selectedOption);
-    const normalizedCorrect = normalizeText(
-      lesson.exercises[currentExerciseIndex].AnswerEN || ""
-    );
-    if (normalizedSelected === normalizedCorrect) {
-      setMatchFeedback("correct");
-      setShowCorrectAnswer(true);
-      setAppMessage("¡Correcto!");
-    } else {
-      setMatchFeedback("incorrect");
-      setShowCorrectAnswer(true);
-      setAppMessage("Incorrecto. Intenta de nuevo.");
-    }
+    // No se llama handleCheckAnswer aquí, se espera el botón "Comprobar"
   };
 
   const handleSpeechResultForListening = (transcript) => {
     /* Lógica para flashcards */
     setRecordedMicrophoneText(transcript);
-    if (matchFeedback !== null) return;
-    const normalizedTranscript = normalizeText(transcript);
-    const normalizedQuestionEN = normalizeText(
-      lesson.exercises[currentExerciseIndex].QuestionEN || ""
-    );
-    if (normalizedTranscript === normalizedQuestionEN) {
-      setMatchFeedback("correct");
-      setShowCorrectAnswer(true);
-      setAppMessage("¡Excelente! Transcripción correcta.");
-    } else {
-      setMatchFeedback("incorrect");
-      setShowCorrectAnswer(true);
-      setAppMessage("Incorrecto. Escucha de nuevo.");
-    }
+    // No se llama handleCheckAnswer aquí, se espera el botón "Comprobar"
   };
 
   // --- NUEVA LÓGICA DE BOTÓN "COMPROBAR" / "CONTINUAR" ---
   const handleCheckOrContinue = () => {
-    if (matchFeedback === "correct") {
-      // Si ya es correcto, avanzar al siguiente ejercicio
+    if (matchFeedback === "correct" || matchFeedback === "incorrect") {
+      // ¡CORREGIDO! Si ya se comprobó (correcto o incorrecto), avanzar
+      // Si ya es correcto o incorrecto, avanzar al siguiente ejercicio
       if (currentExerciseIndex < lesson.exercises.length - 1) {
         setCurrentExerciseIndex((prev) => prev + 1);
         setAppMessage(""); // Limpiar mensaje al avanzar
@@ -147,7 +128,7 @@ const LessonCard = ({ lesson, onBack }) => {
         setAppMessage("¡Has completado esta lección!");
       }
     } else {
-      // Si no es correcto o no se ha comprobado, realizar la comprobación
+      // Si no se ha comprobado, realizar la comprobación
       handleCheckAnswer();
     }
   };
@@ -164,14 +145,18 @@ const LessonCard = ({ lesson, onBack }) => {
 
   return (
     <div className='lesson-detail-view section-container'>
-      {/* ¡ELIMINADO! Título dinámico de la lección y meta info */}
-      {/* <h2 className="section-title">Lección: {lesson.Title}</h2>
-      <p className="lesson-meta-info">
-        <strong>Tema:</strong> {lesson.Topic} | 
-        <strong>Dificultad:</strong> {lesson.Difficulty} | 
-        <strong>Fecha:</strong> {new Date(lesson.GeneratedDate).toLocaleDateString()}
-      </p>
-      <p className="lesson-description">{lesson.Description}</p> */}
+      {/* ¡NUEVO! Botón de cerrar para volver a la lista de lecciones */}
+      <button onClick={onBack} className='close-lesson-button'>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='16'
+          height='16'
+          fill='currentColor'
+          viewBox='0 0 16 16'
+        >
+          <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z' />
+        </svg>
+      </button>
 
       {/* Pop-up de Notas (Modal) */}
       {showNotesModal && (
@@ -201,7 +186,7 @@ const LessonCard = ({ lesson, onBack }) => {
           onPlayAudio={onPlayAudio} // Pasa onPlayAudio
           appIsLoading={appIsLoading} // Pasa appIsLoading
           setAppMessage={setAppMessage} // Pasa setAppMessage
-          onShowNotes={handleShowNotes} // ¡NUEVO! Pasa la función para mostrar notas
+          onShowNotes={handleShowNotes} // Pasa la función para mostrar notas
         />
       ) : (
         // Si es una lección estándar (flashcards), el flujo es el mismo de antes
@@ -285,13 +270,10 @@ const LessonCard = ({ lesson, onBack }) => {
         </div>
       )}
 
-      {/* Botón para volver a la lista de lecciones (siempre visible) */}
-      <button
-        onClick={onBack}
-        className='button back-button return-to-list-button'
-      >
+      {/* ¡ELIMINADO! Botón "Volver a la lista de lecciones" */}
+      {/* <button onClick={onBack} className="button back-button return-to-list-button">
         Volver a la lista de lecciones
-      </button>
+      </button> */}
     </div>
   );
 };

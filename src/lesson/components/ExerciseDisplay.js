@@ -53,7 +53,6 @@ const ExerciseDisplay = ({
 
   return (
     <>
-      {/* Mostrar las notas del ejercicio si existen - FUERA DEL SWITCH PARA TODOS LOS EJERCICIOS */}
       {/* Las notas ahora se gestionan con un botón de pop-up en LessonCard */}
       {/* {currentExercise.Notes && (
         <div className="exercise-notes-display">
@@ -155,10 +154,11 @@ const ExerciseDisplay = ({
                         : ""
                     }
                     ${
-                      normalizeText(option) === normalizeText(userTypedAnswer)
+                      normalizeText(option) ===
+                        normalizeText(userTypedAnswer) && matchFeedback === null
                         ? "selected-option"
                         : ""
-                    } {/* ¡NUEVO! Resaltar opción seleccionada */}
+                    } {/* ¡NUEVO! Resaltar opción seleccionada solo si no se ha comprobado */}
                     ${
                       matchFeedback &&
                       normalizeText(option) ===

@@ -54,7 +54,7 @@ const PrincipalPageLessons = () => {
     };
 
     fetchExistingLessons();
-  }, []);
+  }, [setAppMessage, setAppIsLoading]); // Dependencias para evitar alertas
 
   // Función para manejar la selección de una lección del listado
   const handleSelectLesson = (lessonId) => {
@@ -77,9 +77,10 @@ const PrincipalPageLessons = () => {
       {/* <Link to='/' className='button back-button top-back-button'>
         Volver a la pantalla principal
       </Link> */}
-      {/* ¡ELIMINADO! Título "Lecciones" y texto introductorio */}
-      {/* <h1 className='app-title'>Lecciones</h1>
-      <p className='info-text'>Selecciona una lección para comenzar a aprender.</p> */}
+      <h1 className='app-title'>Lecciones</h1>
+      <p className='info-text'>
+        Selecciona una lección para comenzar a aprender.
+      </p>
 
       {/* Mostrar mensajes de carga o error */}
       <MessageDisplay message={message} isLoading={isLoading} />
