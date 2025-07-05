@@ -11,8 +11,9 @@ import LessonCard from "./lessonCard"; // Importa el componente LessonCard
 import AppContext from "../context/AppContext";
 
 const LessonDisplayPage = () => {
-  const { lessonId } = useParams(); // Hook para obtener el LessonID de la URL
-  const navigate = useNavigate(); // Hook para la navegación programática
+  // No usamos useParams aquí porque la ruta es fija, no dinámica
+  // const { lessonId } = useParams();
+  const navigate = useNavigate();
   const {
     setAppMessage,
     setAppIsLoading,
@@ -29,7 +30,10 @@ const LessonDisplayPage = () => {
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [notesContent, setNotesContent] = useState("");
 
+  // Efecto para cargar la lección basada en el ID de localStorage
   useEffect(() => {
+    const storedLessonId = localStorage.getItem("currentLessonId"); // <-- ¡CORREGIDO! Leer de localStorage
+
     const fetchLesson = async () => {
       setIsLoadingLesson(true);
       setAppIsLoading(true);
@@ -37,8 +41,8 @@ const LessonDisplayPage = () => {
       setError(null);
       setLesson(null);
 
-      if (!lessonId) {
-        // Si no hay lessonId en el estado, es un error
+      if (!storedLessonId) {
+        // Si no hay lessonId en localStorage, es un error
         setError(
           "Error: ID de lección no proporcionado. Por favor, selecciona una lección de la lista."
         );
@@ -62,14 +66,15 @@ const LessonDisplayPage = () => {
         const result = await response.json();
         if (result.success && result.lessons) {
           const foundLesson = result.lessons.find(
-            (l) => l.LessonID === lessonId
-          );
+            (l) => l.LessonID === storedLessonId
+          ); // <-- Usar storedLessonId
           if (foundLesson) {
             setLesson(foundLesson);
             setAppMessage(`Lección "${foundLesson.Title}" cargada.`);
           } else {
             setError("Lección no encontrada.");
             setAppMessage("Lección no encontrada.");
+            localStorage.removeItem("currentLessonId"); // Limpiar ID si no se encuentra la lección
           }
         } else {
           setError(result.error || "Error al cargar lecciones.");
@@ -86,10 +91,11 @@ const LessonDisplayPage = () => {
     };
 
     fetchLesson(); // Llama a fetchLesson directamente
-  }, [lessonId, setAppMessage, setAppIsLoading]); // Dependencias: lessonId para recargar si cambia
+  }, [setAppMessage, setAppIsLoading]); // Dependencias: solo setters y lessonId (implícito por closure)
 
   // Función para volver a la lista de lecciones
   const handleBackToList = () => {
+    localStorage.removeItem("currentLessonId"); // Limpiar el ID del localStorage al volver
     navigate("/lessons"); // Navega de vuelta a la página de lista de lecciones
   };
 
