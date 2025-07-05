@@ -13,12 +13,12 @@ import AppContext from "./context/AppContext";
 // Importa tus secciones principales
 import MainVocabSection from "./MainVocabSection";
 import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
-// import PracticePage from './Practice/PracticePage'; // Ya no se usa
+// import LessonDisplayPage from './lesson/LessonDisplayPage'; // ¡ELIMINADO! Ya no se usa esta página
 
 // Importar utilidades de audio
 import { playAudio, b64toBlob } from "./utils/audioUtils";
 
-// ¡NUEVO! Importa la barra de navegación inferior
+// Importa la barra de navegación inferior
 import BottomNavigationBar from "./components/BottomNavigationBar";
 
 // Componente de ejemplo para la pantalla principal o "Home"
@@ -85,10 +85,9 @@ const App = () => {
             <Route path='/' element={<HomeScreen />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
-            {/* La ruta /practice ya no es necesaria si la barra de navegación es la principal */}
-            {/* <Route path="/practice" element={<PracticePage />} /> */}
+            {/* ¡ELIMINADO! La ruta /lesson/:lessonId ya no es necesaria */}
           </Routes>
-          {/* ¡NUEVO! Renderiza la barra de navegación inferior */}
+          {/* Renderiza la barra de navegación inferior */}
           <BottomNavigationBar />
         </div>
       </AppContext.Provider>

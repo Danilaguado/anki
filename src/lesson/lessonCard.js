@@ -1,14 +1,17 @@
-// src/lesson/lessonCard.js
+// src/lesson/components/lessonCard.js
 import React, { useState, useEffect, useContext } from "react";
 import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones (mismo directorio)
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto (sube un nivel)
 import ExerciseDisplay from "./components/ExerciseDisplay"; // En la misma carpeta
+// ExerciseNavigation ya no se importa ni se renderiza para ningún tipo de lección
+// import ExerciseNavigation from './components/ExerciseNavigation';
 import ChatbotLessonRawDisplay from "./components/ChatbotLessonRawDisplay"; // Componente para mostrar el chatbot en crudo
 
+// Importar el contexto (Sube dos niveles)
 import AppContext from "../context/AppContext";
 
-const LessonCard = ({ lesson, onBack }) => {
-  // onBack es la función para volver a la lista de lecciones
+const LessonCard = ({ lesson, onBack, onShowNotes }) => {
+  // ¡NUEVO! Recibe onShowNotes
   // Consumir valores del contexto
   const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
@@ -21,9 +24,9 @@ const LessonCard = ({ lesson, onBack }) => {
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // Para mostrar la respuesta correcta
   const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
-  // --- ESTADOS PARA EL POP-UP DE NOTAS ---
-  const [showNotesModal, setShowNotesModal] = useState(false);
-  const [notesContent, setNotesContent] = useState("");
+  // Estados para el pop-up de notas (ya no son necesarios aquí, se gestionan en el padre)
+  // const [showNotesModal, setShowNotesModal] = useState(false);
+  // const [notesContent, setNotesContent] = useState('');
 
   // Restablecer estados al cambiar de ejercicio o lección
   useEffect(() => {
@@ -33,8 +36,8 @@ const LessonCard = ({ lesson, onBack }) => {
     setShowCorrectAnswer(false);
     setRecordedMicrophoneText("");
     // Al cambiar de ejercicio, ocultar el modal de notas si está abierto
-    setShowNotesModal(false);
-    setNotesContent("");
+    // setShowNotesModal(false);
+    // setNotesContent('');
   }, [currentExerciseIndex, lesson]); // Dependencia 'lesson' y 'currentExerciseIndex' para reinicio de estados
 
   // Resetear solo lo que depende de la lección (no del ejercicio actual)
@@ -46,7 +49,9 @@ const LessonCard = ({ lesson, onBack }) => {
   // Si no hay lección o ejercicios, mostrar mensaje
   if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
     return (
-      <div className='lesson-detail-view section-container'>
+      <div className='lesson-detail-view-content'>
+        {" "}
+        {/* Usar el div de contenido */}
         <p className='info-text'>
           No se ha seleccionado ninguna lección o esta lección no tiene
           ejercicios.
@@ -67,7 +72,6 @@ const LessonCard = ({ lesson, onBack }) => {
   // --- Funciones de manejo de ejercicios (SOLO para lecciones estándar) ---
   const handleCheckAnswer = () => {
     /* Lógica de verificación para flashcards */
-    // Para multiple_choice, userTypedAnswer ya se establece al hacer clic en la opción
     if (
       !userTypedAnswer.trim() &&
       !["multiple_choice", "practice_multiple_choice"].includes(
@@ -137,36 +141,16 @@ const LessonCard = ({ lesson, onBack }) => {
     }
   };
 
-  // --- Lógica para el Pop-up de Notas ---
-  const handleShowNotes = (content) => {
-    setNotesContent(content);
-    setShowNotesModal(true);
-  };
-  const handleCloseNotesModal = () => {
-    setShowNotesModal(false);
-    setNotesContent("");
-  };
+  // Lógica para el Pop-up de Notas (ahora se pasa desde el padre)
+  // const handleShowNotes = (content) => { /* ... */ };
+  // const handleCloseNotesModal = () => { /* ... */ };
 
   return (
     <div className='lesson-detail-view-content'>
-      {showNotesModal && (
-        <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
-          <div
-            className='notes-modal-content'
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className='notes-modal-close-button'
-              onClick={handleCloseNotesModal}
-            >
-              &times;
-            </button>
-            <h3>Notas del Ejercicio</h3>
-            <p>{notesContent}</p>
-          </div>
-        </div>
-      )}
-
+      {" "}
+      {/* Cambiado a un div de contenido para que LessonDisplayPage maneje el section-container */}
+      {/* El botón de cerrar para volver a la lista de lecciones ahora está en LessonDisplayPage */}
+      {/* Pop-up de Notas (Modal) - Ahora gestionado en LessonDisplayPage */}
       {/* Renderizado condicional: Flujo de CHATBOT (RAW) vs. Flashcards Estándar */}
       {isChatbotLesson ? (
         // Si es una lección de chatbot, renderizamos el ChatbotLessonRawDisplay
@@ -176,7 +160,7 @@ const LessonCard = ({ lesson, onBack }) => {
           onPlayAudio={onPlayAudio} // Pasa onPlayAudio
           appIsLoading={appIsLoading} // Pasa appIsLoading
           setAppMessage={setAppMessage} // Pasa setAppMessage
-          onShowNotes={handleShowNotes} // Pasa la función para mostrar notas
+          onShowNotes={onShowNotes} // ¡NUEVO! Pasa la función onShowNotes del padre
         />
       ) : (
         // Si es una lección estándar (flashcards), el flujo es el mismo de antes
@@ -189,7 +173,7 @@ const LessonCard = ({ lesson, onBack }) => {
           {currentStandardExercise?.Notes && (
             <button
               className='notes-toggle-button'
-              onClick={() => handleShowNotes(currentStandardExercise.Notes)}
+              onClick={() => onShowNotes(currentStandardExercise.Notes)}
             >
               <svg
                 xmlns='http://www.w3.org/2000/svg'
