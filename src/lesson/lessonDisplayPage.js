@@ -1,5 +1,6 @@
 // src/lesson/LessonDisplayPage.js
 // Esta es la nueva página que muestra una lección específica (estándar o chatbot).
+// Ahora es minimalista, solo contiene LessonCard y MessageDisplay.
 
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom"; // Importar useNavigate
@@ -97,19 +98,13 @@ const LessonDisplayPage = () => {
     <div className='lessons-page-wrapper app-container'>
       {" "}
       {/* Usa el wrapper de lecciones */}
-      {/* Botón de cerrar para volver a la lista de lecciones */}
-      <button onClick={handleBackToList} className='close-lesson-button'>
-        <svg
-          xmlns='http://www.w3.org/2000/svg'
-          width='16'
-          height='16'
-          fill='currentColor'
-          viewBox='0 0 16 16'
-        >
-          <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z' />
+      {/* Botón de cerrar para volver a la lista de lecciones (gestionado por LessonCard) */}
+      {/* <button onClick={handleBackToList} className="close-lesson-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
         </svg>
-      </button>
-      {/* Pop-up de Notas (Modal) */}
+      </button> */}
+      {/* Pop-up de Notas (Modal) - Ahora gestionado aquí */}
       {showNotesModal && (
         <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
           <div
@@ -140,28 +135,12 @@ const LessonDisplayPage = () => {
         <p className='info-text'>Cargando lección...</p>
       )}
       {lesson && (
-        <>
-          {/* Título de la lección y meta info */}
-          <div className='lesson-detail-header-info section-container'>
-            {" "}
-            {/* Nuevo contenedor para info */}
-            <h2 className='section-title'>{lesson.Title}</h2>
-            <p className='lesson-meta-info'>
-              <strong>Tema:</strong> {lesson.Topic} |
-              <strong>Dificultad:</strong> {lesson.Difficulty} |
-              <strong>Fecha:</strong>{" "}
-              {new Date(lesson.GeneratedDate).toLocaleDateString()}
-            </p>
-            <p className='lesson-description'>{lesson.Description}</p>
-          </div>
-
-          {/* El LessonCard ahora es el que contiene el contenido del ejercicio */}
-          <LessonCard
-            lesson={lesson}
-            onBack={handleBackToList} // Pasa la función de volver a LessonCard
-            onShowNotes={handleShowNotes} // Pasa la función para mostrar notas
-          />
-        </>
+        // Renderiza LessonCard, que a su vez decide qué tipo de display usar
+        <LessonCard
+          lesson={lesson}
+          onBack={handleBackToList} // Pasa la función de volver a LessonCard
+          onShowNotes={handleShowNotes} // Pasa la función para mostrar notas
+        />
       )}
     </div>
   );

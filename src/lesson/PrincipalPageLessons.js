@@ -86,34 +86,42 @@ const PrincipalPageLessons = () => {
         </div>
       )}
 
-      {/* Siempre muestra la lista de lecciones, ya que la visualización de la lección es una página separada */}
-      <div className='section-container available-lessons-list'>
-        <h2 className='section-title'>Lecciones Disponibles</h2>
-        {isLoading && availableLessons.length === 0 ? (
-          <p className='info-text'>Cargando lecciones...</p>
-        ) : availableLessons.length === 0 ? (
-          <p className='info-text'>
-            No hay lecciones disponibles. Por favor, crea algunas en tu Google
-            Sheet.
-          </p>
-        ) : (
-          <div className='lessons-buttons-grid'>
-            {availableLessons.map((lesson) => (
-              <button
-                key={lesson.LessonID}
-                onClick={() => handleSelectLesson(lesson.LessonID)}
-                className='button lesson-list-button'
-                title={lesson.Description}
-              >
-                {lesson.Title} ({lesson.Difficulty}) -{" "}
-                {lesson.TypeModule === "chatbot_lesson"
-                  ? "Chatbot"
-                  : "Estándar"}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
+      {/* LessonCard ahora se renderiza en LessonDisplayPage */}
+      {/* {selectedLesson ? (
+        <LessonCard lesson={selectedLesson} onBack={handleBackToLessonList} />
+      ) : ( */}
+      {/* Si no hay lección seleccionada, mostrar la lista de lecciones disponibles */}
+      <>
+        <div className='section-container available-lessons-list'>
+          <h2 className='section-title'>Lecciones Disponibles</h2>
+          {isLoading && availableLessons.length === 0 ? (
+            <p className='info-text'>Cargando lecciones...</p>
+          ) : availableLessons.length === 0 ? (
+            <p className='info-text'>
+              No hay lecciones disponibles. Por favor, crea algunas en tu Google
+              Sheet.
+            </p>
+          ) : (
+            <div className='lessons-buttons-grid'>
+              {availableLessons.map((lesson) => (
+                <button
+                  key={lesson.LessonID}
+                  onClick={() => handleSelectLesson(lesson.LessonID)}
+                  className='button lesson-list-button'
+                  title={lesson.Description}
+                >
+                  {lesson.Title} ({lesson.Difficulty}) -{" "}
+                  {lesson.TypeModule === "chatbot_lesson"
+                    ? "Chatbot"
+                    : "Estándar"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+      {/* )} */}
     </div>
   );
 };
