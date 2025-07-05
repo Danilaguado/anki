@@ -3,10 +3,8 @@ import React, { useState, useEffect, useContext } from "react";
 import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones (mismo directorio)
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto (sube un nivel)
 import ExerciseDisplay from "./components/ExerciseDisplay"; // En la misma carpeta
-import ExerciseNavigation from "./components/ExerciseNavigation"; // En la misma carpeta
 import ChatbotLessonRawDisplay from "./components/ChatbotLessonRawDisplay"; // Componente para mostrar el chatbot en crudo
 
-// Importar el contexto (Sube un nivel)
 import AppContext from "../context/AppContext";
 
 const LessonCard = ({ lesson, onBack }) => {
@@ -14,52 +12,38 @@ const LessonCard = ({ lesson, onBack }) => {
   const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
 
-  // --- ESTADOS DE INTERACCIÓN DE FLASHCARD (Solo para STANDARD_LESSON) ---
+  // --- ESTADOS DE INTERACCIÓN DE EJERCICIO ---
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [isAnswerVisible, setIsAnswerVisible] = useState(false);
-  const [userTypedAnswer, setUserTypedAnswer] = useState(""); // Global para el input de flashcards
-  const [matchFeedback, setMatchFeedback] = useState(null);
-  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
-  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
+  const [isAnswerVisible, setIsAnswerVisible] = useState(false); // Para traducción
+  const [userTypedAnswer, setUserTypedAnswer] = useState(""); // Input del usuario
+  const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // Para mostrar la respuesta correcta
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState(""); // Texto del micrófono
 
-  // --- DEBUG: LOGS DE INICIALIZACIÓN DE COMPONENTE ---
-  console.log("DEBUG: LessonCard se ha renderizado.");
-  console.log("DEBUG: Props recibidas en LessonCard:", { lesson, onBack });
-  console.log("DEBUG: onPlayAudio en LessonCard (desde Context):", onPlayAudio);
-  console.log(
-    "DEBUG: appIsLoading en LessonCard (desde Context):",
-    appIsLoading
-  );
-  // --- FIN DEBUG ---
+  // --- ESTADOS PARA EL POP-UP DE NOTAS ---
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [notesContent, setNotesContent] = useState("");
 
-  // Restablecer estados de interacción al cambiar de ejercicio o lección
+  // Restablecer estados al cambiar de ejercicio o lección
   useEffect(() => {
-    console.log(
-      "DEBUG: LessonCard - useEffect de reinicio de estados de interacción disparado."
-    );
     setIsAnswerVisible(false);
     setUserTypedAnswer("");
     setMatchFeedback(null);
     setShowCorrectAnswer(false);
     setRecordedMicrophoneText("");
-    console.log("DEBUG: LessonCard - Estados de interacción reiniciados.");
-  }, [currentExerciseIndex, lesson]);
+    // Al cambiar de ejercicio, ocultar el modal de notas si está abierto
+    setShowNotesModal(false);
+    setNotesContent("");
+  }, [currentExerciseIndex, lesson]); // Dependencia 'lesson' y 'currentExerciseIndex' para reinicio de estados
 
   // Resetear solo lo que depende de la lección (no del ejercicio actual)
   useEffect(() => {
-    console.log(
-      "DEBUG: LessonCard - useEffect de reinicio de lección disparado."
-    );
-    setCurrentExerciseIndex(0); // Esto sí, al cargar una nueva lección, empezamos por el primer ejercicio
+    setCurrentExerciseIndex(0); // Al cargar una nueva lección, empezamos por el primer ejercicio
     setAppMessage(""); // Limpiar mensaje global al cargar nueva lección
-    console.log("DEBUG: LessonCard - Lección reiniciada a índice 0.");
   }, [lesson, setAppMessage]);
 
   // Si no hay lección o ejercicios, mostrar mensaje
   if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
-    console.log(
-      "DEBUG: LessonCard - No hay lección o ejercicios para mostrar."
-    );
     return (
       <div className='lesson-detail-view section-container'>
         <p className='info-text'>
@@ -76,66 +60,17 @@ const LessonCard = ({ lesson, onBack }) => {
   // Determinar si la lección actual es un módulo de chatbot
   const isChatbotLesson =
     (lesson.TypeModule || "").toLowerCase().trim() === "chatbot_lesson";
-  console.log(
-    `DEBUG: LessonCard - isChatbotLesson: ${isChatbotLesson} (lesson.TypeModule RAW: "${lesson.TypeModule}")`
-  );
 
   // El ejercicio actual para las lecciones estándar (flashcards)
   // Solo se usa si !isChatbotLesson
   const currentStandardExercise = lesson.exercises[currentExerciseIndex];
-  console.log(
-    "DEBUG: LessonCard - currentStandardExercise:",
-    currentStandardExercise
-  );
 
   // --- Funciones de manejo de ejercicios (SOLO para lecciones estándar) ---
-  const handleNextExercise = () => {
-    console.log("DEBUG: LessonCard - handleNextExercise llamado.");
-    const currentExercise = lesson.exercises[currentExerciseIndex];
-    const requiresAnswer = [
-      "fill_in_the_blank",
-      "multiple_choice",
-      "listening",
-    ].includes(currentExercise.Type);
-
-    if (requiresAnswer && matchFeedback === null) {
-      console.log(
-        "DEBUG: LessonCard - Requiere respuesta y no se ha respondido."
-      );
-      setAppMessage(
-        "Por favor, completa el ejercicio actual antes de avanzar."
-      );
-      return;
-    }
-
-    if (currentExerciseIndex < lesson.exercises.length - 1) {
-      console.log("DEBUG: LessonCard - Avanzando al siguiente ejercicio.");
-      setCurrentExerciseIndex((prev) => prev + 1);
-      setAppMessage("");
-    } else {
-      console.log("DEBUG: LessonCard - Lección estándar completada.");
-      setAppMessage("¡Has completado esta lección!");
-    }
-  };
-
-  const handlePrevExercise = () => {
-    console.log("DEBUG: LessonCard - handlePrevExercise llamado.");
-    if (currentExerciseIndex > 0) {
-      console.log("DEBUG: LessonCard - Retrocediendo al ejercicio anterior.");
-      setCurrentExerciseIndex((prev) => prev - 1);
-      setAppMessage("");
-    } else {
-      console.log("DEBUG: LessonCard - Ya en el primer ejercicio.");
-    }
-  };
-
   const handleCheckAnswer = () => {
     /* Lógica de verificación para flashcards */
-    console.log("DEBUG: LessonCard - handleCheckAnswer llamado.");
     if (!userTypedAnswer.trim()) {
       setAppMessage("Por favor, escribe tu respuesta.");
       setMatchFeedback(null);
-      console.log("DEBUG: LessonCard - Respuesta vacía.");
       return;
     }
     const normalizedUserAnswer = normalizeText(userTypedAnswer);
@@ -152,207 +87,202 @@ const LessonCard = ({ lesson, onBack }) => {
     } else {
       normalizedCorrectAnswer = normalizeText(currentExercise.AnswerES || "");
     }
-    console.log(
-      "DEBUG: LessonCard - Usuario:",
-      normalizedUserAnswer,
-      "Esperado:",
-      normalizedCorrectAnswer
-    );
     if (normalizedUserAnswer === normalizedCorrectAnswer) {
       setMatchFeedback("correct");
       setShowCorrectAnswer(true);
       setAppMessage("¡Correcto!");
-      console.log("DEBUG: LessonCard - Respuesta CORRECTA.");
     } else {
       setMatchFeedback("incorrect");
       setShowCorrectAnswer(true);
       setAppMessage("Incorrecto. Intenta de nuevo.");
-      console.log("DEBUG: LessonCard - Respuesta INCORRECTA.");
     }
   };
 
   const handleOptionClick = (selectedOption) => {
     /* Lógica para flashcards */
-    console.log(
-      "DEBUG: LessonCard - handleOptionClick llamado con:",
-      selectedOption
-    );
-    if (matchFeedback !== null) {
-      console.log(
-        "DEBUG: LessonCard - Ya hay feedback, ignorando clic de opción."
-      );
-      return;
-    }
+    if (matchFeedback !== null) return;
     setUserTypedAnswer(selectedOption);
     const normalizedSelected = normalizeText(selectedOption);
     const normalizedCorrect = normalizeText(
       lesson.exercises[currentExerciseIndex].AnswerEN || ""
     );
-    console.log(
-      "DEBUG: LessonCard - Opción seleccionada normalizada:",
-      normalizedSelected,
-      "Respuesta correcta normalizada:",
-      normalizedCorrect
-    );
     if (normalizedSelected === normalizedCorrect) {
       setMatchFeedback("correct");
       setShowCorrectAnswer(true);
       setAppMessage("¡Correcto!");
-      console.log("DEBUG: LessonCard - Opción CORRECTA.");
     } else {
       setMatchFeedback("incorrect");
       setShowCorrectAnswer(true);
       setAppMessage("Incorrecto. Intenta de nuevo.");
-      console.log("DEBUG: LessonCard - Opción INCORRECTA.");
     }
   };
 
   const handleSpeechResultForListening = (transcript) => {
     /* Lógica para flashcards */
-    console.log(
-      "DEBUG: LessonCard - handleSpeechResultForListening llamado con:",
-      transcript
-    );
     setRecordedMicrophoneText(transcript);
-    if (matchFeedback !== null) {
-      console.log(
-        "DEBUG: LessonCard - Ya hay feedback, ignorando resultado de voz."
-      );
-      return;
-    }
+    if (matchFeedback !== null) return;
     const normalizedTranscript = normalizeText(transcript);
     const normalizedQuestionEN = normalizeText(
       lesson.exercises[currentExerciseIndex].QuestionEN || ""
-    );
-    console.log(
-      "DEBUG: LessonCard - Transcripción normalizada:",
-      normalizedTranscript,
-      "Pregunta EN normalizada:",
-      normalizedQuestionEN
     );
     if (normalizedTranscript === normalizedQuestionEN) {
       setMatchFeedback("correct");
       setShowCorrectAnswer(true);
       setAppMessage("¡Excelente! Transcripción correcta.");
-      console.log("DEBUG: LessonCard - Transcripción CORRECTA.");
     } else {
       setMatchFeedback("incorrect");
       setShowCorrectAnswer(true);
       setAppMessage("Incorrecto. Escucha de nuevo.");
-      console.log("DEBUG: LessonCard - Transcripción INCORRECTA.");
     }
   };
 
-  // onChatLessonCompleted ya no es necesario aquí, ya que el ChatbotLessonRawDisplay no tiene interactividad de completado.
-  // const onChatLessonCompleted = () => { /* ... */ };
+  // --- NUEVA LÓGICA DE BOTÓN "COMPROBAR" / "CONTINUAR" ---
+  const handleCheckOrContinue = () => {
+    if (matchFeedback === "correct") {
+      // Si ya es correcto, avanzar al siguiente ejercicio
+      if (currentExerciseIndex < lesson.exercises.length - 1) {
+        setCurrentExerciseIndex((prev) => prev + 1);
+        setAppMessage(""); // Limpiar mensaje al avanzar
+      } else {
+        setAppMessage("¡Has completado esta lección!");
+      }
+    } else {
+      // Si no es correcto o no se ha comprobado, realizar la comprobación
+      handleCheckAnswer();
+    }
+  };
+
+  // --- Lógica para el Pop-up de Notas ---
+  const handleShowNotes = (content) => {
+    setNotesContent(content);
+    setShowNotesModal(true);
+  };
+  const handleCloseNotesModal = () => {
+    setShowNotesModal(false);
+    setNotesContent("");
+  };
 
   return (
     <div className='lesson-detail-view section-container'>
-      <h2 className='section-title'>Lección: {lesson.Title}</h2>
-      <p className='lesson-meta-info'>
-        <strong>Tema:</strong> {lesson.Topic} |<strong>Dificultad:</strong>{" "}
-        {lesson.Difficulty} |<strong>Fecha:</strong>{" "}
-        {new Date(lesson.GeneratedDate).toLocaleDateString()}
+      {/* ¡ELIMINADO! Título dinámico de la lección y meta info */}
+      {/* <h2 className="section-title">Lección: {lesson.Title}</h2>
+      <p className="lesson-meta-info">
+        <strong>Tema:</strong> {lesson.Topic} | 
+        <strong>Dificultad:</strong> {lesson.Difficulty} | 
+        <strong>Fecha:</strong> {new Date(lesson.GeneratedDate).toLocaleDateString()}
       </p>
-      <p className='lesson-description'>{lesson.Description}</p>
+      <p className="lesson-description">{lesson.Description}</p> */}
 
-      {/* DEBUG: Alerta para ver el tipo de módulo */}
-      {/* <p>DEBUG: Tipo de Módulo: {lesson.TypeModule}</p> */}
+      {/* Pop-up de Notas (Modal) */}
+      {showNotesModal && (
+        <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
+          <div
+            className='notes-modal-content'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className='notes-modal-close-button'
+              onClick={handleCloseNotesModal}
+            >
+              &times;
+            </button>
+            <h3>Notas del Ejercicio</h3>
+            <p>{notesContent}</p>
+          </div>
+        </div>
+      )}
 
       {/* Renderizado condicional: Flujo de CHATBOT (RAW) vs. Flashcards Estándar */}
       {isChatbotLesson ? (
         // Si es una lección de chatbot, renderizamos el ChatbotLessonRawDisplay
         // y le pasamos TODOS los ejercicios para que los muestre en crudo.
-        <>
-          {console.log(
-            "DEBUG: LessonCard - Renderizando ChatbotLessonRawDisplay."
-          )}
-          {console.log(
-            "DEBUG: LessonCard - Pasando onPlayAudio a ChatbotLessonRawDisplay:",
-            onPlayAudio
-          )}
-          {console.log(
-            "DEBUG: LessonCard - Pasando appIsLoading a ChatbotLessonRawDisplay:",
-            appIsLoading
-          )}
-          {console.log(
-            "DEBUG: LessonCard - Pasando setAppMessage a ChatbotLessonRawDisplay:",
-            setAppMessage
-          )}
-          <ChatbotLessonRawDisplay
-            lessonExercises={lesson.exercises} // Pasar TODOS los ejercicios de la lección
-            onPlayAudio={onPlayAudio} // <-- ¡NUEVO! Pasa onPlayAudio
-            appIsLoading={appIsLoading} // <-- ¡NUEVO! Pasa appIsLoading
-            setAppMessage={setAppMessage} // <-- ¡NUEVO! Pasa setAppMessage
-          />
-        </>
+        <ChatbotLessonRawDisplay
+          lessonExercises={lesson.exercises} // Pasar TODOS los ejercicios de la lección
+          onPlayAudio={onPlayAudio} // Pasa onPlayAudio
+          appIsLoading={appIsLoading} // Pasa appIsLoading
+          setAppMessage={setAppMessage} // Pasa setAppMessage
+          onShowNotes={handleShowNotes} // ¡NUEVO! Pasa la función para mostrar notas
+        />
       ) : (
         // Si es una lección estándar (flashcards), el flujo es el mismo de antes
-        <>
-          {console.log(
-            "DEBUG: LessonCard - Renderizando Ejercicio Estándar (Flashcard)."
-          )}
-          <div
-            className={`card-container lesson-exercise-card ${
-              matchFeedback ? `match-${matchFeedback}` : ""
-            }`}
-          >
-            {/* Mostrar notas y imagen para ejercicios estándar */}
-            {lesson.exercises[currentExerciseIndex]?.Notes && (
-              <div className='section-container lesson-notes'>
-                <h3 className='subsection-title'>Notas:</h3>
-                <p>{lesson.exercises[currentExerciseIndex].Notes}</p>
-              </div>
-            )}
-            {lesson.exercises[currentExerciseIndex]?.Image && (
-              <div className='exercise-image-container'>
-                <img
-                  src={lesson.exercises[currentExerciseIndex].Image}
-                  alt={`Imagen para ${lesson.exercises[currentExerciseIndex].Type} ejercicio`}
-                  className='exercise-image'
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = `https://placehold.co/300x200/cccccc/ffffff?text=No+Image`;
-                  }}
+        <div
+          className={`card-container lesson-exercise-card ${
+            matchFeedback ? `match-${matchFeedback}` : ""
+          }`}
+        >
+          {/* Botón de notas para flashcards */}
+          {currentStandardExercise?.Notes && (
+            <button
+              className='notes-toggle-button'
+              onClick={() => handleShowNotes(currentStandardExercise.Notes)}
+            >
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='16'
+                height='16'
+                fill='currentColor'
+                viewBox='0 0 16 16'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M4.475 5.458c-.284 0-.514-.237-.47-.517C4.28 3.24 5.576 2 7.825 2c2.25 0 3.767 1.36 3.767 3.215 0 1.344-.665 2.288-1.79 2.973-1.1.659-1.414 1.118-1.414 2.01v.03a.5.5 0 0 1-.5.5h-.77a.5.5 0 0 1-.5-.495l-.003-.2c-.043-1.221.477-2.001 1.645-2.712 1.03-.632 1.397-1.135 1.397-2.028 0-.979-.758-1.698-1.926-1.698-1.009 0-1.71.529-1.938 1.402-.066.254-.278.461-.54.461h-.777ZM7.496 14c.622 0 1.095-.474 1.095-1.09 0-.618-.473-1.092-1.095-1.092-.606 0-1.087.474-1.087 1.091S6.89 14 7.496 14'
                 />
-              </div>
-            )}
+              </svg>
+            </button>
+          )}
 
-            {/* Componente para mostrar el ejercicio actual */}
-            <ExerciseDisplay
-              currentExercise={lesson.exercises[currentExerciseIndex]} // Asegurar que pasamos el ejercicio correcto
-              onPlayAudio={onPlayAudio}
-              setAppMessage={setAppMessage}
-              appIsLoading={appIsLoading}
-              isAnswerVisible={isAnswerVisible}
-              setIsAnswerVisible={setIsAnswerVisible}
-              userTypedAnswer={userTypedAnswer}
-              setUserTypedAnswer={setUserTypedAnswer}
-              matchFeedback={matchFeedback}
-              showCorrectAnswer={showCorrectAnswer}
-              recordedMicrophoneText={recordedMicrophoneText}
-              handleCheckAnswer={handleCheckAnswer}
-              handleOptionClick={handleOptionClick}
-              handleSpeechResultForListening={handleSpeechResultForListening}
-            />
-          </div>
-        </>
-      )}
+          {/* Mostrar imagen para ejercicios estándar */}
+          {currentStandardExercise?.Image && (
+            <div className='exercise-image-container'>
+              <img
+                src={currentStandardExercise.Image}
+                alt={`Imagen para ${currentStandardExercise.Type} ejercicio`}
+                className='exercise-image'
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://placehold.co/300x200/cccccc/ffffff?text=No+Image`;
+                }}
+              />
+            </div>
+          )}
 
-      {/* El componente de navegación YA NO SE RENDERIZA para chatbot, solo para estándar. */}
-      {!isChatbotLesson && (
-        <>
-          {console.log("DEBUG: LessonCard - Renderizando ExerciseNavigation.")}
-          <ExerciseNavigation
-            currentExerciseIndex={currentExerciseIndex}
-            totalExercises={lesson.exercises.length}
-            onNextExercise={handleNextExercise}
-            onPrevExercise={handlePrevExercise}
+          {/* Componente para mostrar el ejercicio actual */}
+          <ExerciseDisplay
+            currentExercise={currentStandardExercise}
+            onPlayAudio={onPlayAudio}
+            setAppMessage={setAppMessage}
+            appIsLoading={appIsLoading}
+            isAnswerVisible={isAnswerVisible}
+            setIsAnswerVisible={setIsAnswerVisible}
+            userTypedAnswer={userTypedAnswer}
+            setUserTypedAnswer={setUserTypedAnswer}
             matchFeedback={matchFeedback}
-            currentExerciseType={lesson.exercises[currentExerciseIndex]?.Type}
-            isChatDialogueComplete={false}
+            showCorrectAnswer={showCorrectAnswer}
+            recordedMicrophoneText={recordedMicrophoneText}
+            handleCheckAnswer={handleCheckAnswer}
+            handleOptionClick={handleOptionClick}
+            handleSpeechResultForListening={handleSpeechResultForListening}
           />
-        </>
+
+          {/* Botón Comprobar / Continuar */}
+          <div className='navigation-buttons-group'>
+            {" "}
+            {/* Reutiliza el grupo para el botón */}
+            <button
+              onClick={handleCheckOrContinue}
+              className={`button primary-button check-continue-button ${
+                matchFeedback === "correct" ? "continue" : "check"
+              }`}
+              disabled={
+                appIsLoading ||
+                (matchFeedback === "correct" &&
+                  currentExerciseIndex >= lesson.exercises.length - 1)
+              }
+            >
+              {matchFeedback === "correct" ? "Continuar" : "Comprobar"}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Botón para volver a la lista de lecciones (siempre visible) */}

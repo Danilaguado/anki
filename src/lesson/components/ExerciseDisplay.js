@@ -53,7 +53,7 @@ const ExerciseDisplay = ({
 
   return (
     <>
-      {/* Mostrar las notas del ejercicio si existen */}
+      {/* Mostrar las notas del ejercicio si existen - FUERA DEL SWITCH PARA TODOS LOS EJERCICIOS */}
       {currentExercise.Notes && (
         <div className='exercise-notes-display'>
           <p>{currentExercise.Notes}</p>
@@ -64,11 +64,9 @@ const ExerciseDisplay = ({
         {playAudioButton}
         {microphoneButton}
       </div>
-      {/* Mostrar lo que se grabó del micrófono (estilo flashcard) */}
       {recordedMicrophoneText && (
         <div className='recorded-text-display'>{recordedMicrophoneText}</div>
       )}
-      {/* Contenido del ejercicio según su tipo */}
       <div
         className={`card-content-area quiz-content-area ${
           matchFeedback ? `match-${matchFeedback}` : ""
@@ -102,7 +100,6 @@ const ExerciseDisplay = ({
         {currentExercise.Type === "fill_in_the_blank" && (
           <>
             <div className='card-text quiz-question'>
-              {/* Aquí mostramos la pregunta en inglés con el placeholder */}
               {currentExercise.QuestionEN.split("_______")[0]}
               <input
                 type='text'
@@ -116,7 +113,7 @@ const ExerciseDisplay = ({
               />
               {currentExercise.QuestionEN.split("_______")[1]}
             </div>
-            {/* La traducción para la guía */}
+
             <p className='fill-in-the-blank-translation'>
               {currentExercise.QuestionES}
             </p>
@@ -132,21 +129,14 @@ const ExerciseDisplay = ({
             {showCorrectAnswer && matchFeedback === "correct" && (
               <p className='correct-answer-display success-text'>¡Correcto!</p>
             )}
-            <button
-              onClick={handleCheckAnswer}
-              className='button quiz-check-button'
-              disabled={matchFeedback !== null || appIsLoading}
-            >
-              Verificar
-            </button>
+            {/* El botón de verificar/enviar ahora está en LessonCard */}
           </>
         )}
 
         {currentExercise.Type === "multiple_choice" && (
           <>
             <div id='question-text' className='card-text question'>
-              {currentExercise.QuestionES}{" "}
-              {/* MOSTRAR QuestionES para la pregunta */}
+              {currentExercise.QuestionES}
             </div>
             <div className='multiple-choice-options'>
               {currentExercise.OptionsEN.map(
@@ -203,8 +193,6 @@ const ExerciseDisplay = ({
 
         {currentExercise.Type === "listening" && (
           <>
-            {/* Para Listening, la pregunta inicial no se muestra, solo el audio */}
-            {/* El contenido de la pregunta y respuesta se muestra después de intentar responder (showCorrectAnswer) */}
             {showCorrectAnswer && (
               <div className='card-text question'>
                 {renderClickableText(
@@ -220,8 +208,8 @@ const ExerciseDisplay = ({
             </p>
             <p className='listening-translation-hint'>
               {currentExercise.QuestionES}
-            </p>{" "}
-            {/* Pista de traducción */}
+            </p>
+
             {showCorrectAnswer && matchFeedback !== "correct" && (
               <p className='correct-answer-display'>
                 La frase correcta era:{" "}
@@ -233,7 +221,6 @@ const ExerciseDisplay = ({
             {showCorrectAnswer && matchFeedback === "correct" && (
               <p className='correct-answer-display success-text'>¡Correcto!</p>
             )}
-            {/* Input de texto para el ejercicio de escucha */}
             <div className='quiz-input-group'>
               <input
                 type='text'
@@ -246,15 +233,22 @@ const ExerciseDisplay = ({
                 }}
                 disabled={matchFeedback !== null || appIsLoading}
               />
-              <button
-                onClick={handleCheckAnswer}
-                className='button quiz-check-button'
-                disabled={matchFeedback !== null || appIsLoading}
-              >
-                Verificar
-              </button>
+              {/* El botón de verificar/enviar ahora está en LessonCard */}
             </div>
           </>
+        )}
+
+        {/* Mensaje si el tipo de ejercicio no es reconocido (solo para tipos de lección estándar) */}
+        {![
+          "translation",
+          "fill_in_the_blank",
+          "multiple_choice",
+          "listening",
+        ].includes(currentExercise.Type) && (
+          <p className='info-text'>
+            Tipo de ejercicio no soportado en esta lección:{" "}
+            {currentExercise.Type}
+          </p>
         )}
       </div>{" "}
       {/* Fin de card-content-area */}
