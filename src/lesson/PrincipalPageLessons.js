@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom"; // No se necesita useNavigate aquí
 import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./components/lessonCard"; // Importación de LessonCard
+import LessonCard from "./lessonCard"; // Importación de LessonCard
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
