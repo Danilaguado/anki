@@ -10,43 +10,27 @@ import LessonCard from "./lessonCard"; // Importa el componente LessonCard
 // Importar el contexto
 import AppContext from "../context/AppContext";
 
-const LessonDisplayPage = () => {
-  const { lessonId } = useParams();
-  const navigate = useNavigate();
-  const {
-    setAppMessage,
-    setAppIsLoading,
-    appIsLoading,
-    appGlobalMessage,
-    onPlayAudio,
-  } = useContext(AppContext);
+const PrincipalPageLessons = () => {
+  const navigate = useNavigate(); // Hook para la navegación
+  // Consumir valores del contexto
+  const { setAppMessage, setAppIsLoading, appIsLoading } =
+    useContext(AppContext);
 
-  const [lesson, setLesson] = useState(null);
-  const [isLoadingLesson, setIsLoadingLesson] = useState(true);
+  // Estados para la carga, errores y las lecciones disponibles (locales a este componente)
+  const [isLoading, setIsLoading] = useState(false); // Estado de carga local del componente
+  const [message, setMessage] = useState(""); // Mensajes locales de este componente
   const [error, setError] = useState(null);
+  const [availableLessons, setAvailableLessons] = useState([]); // Todas las lecciones cargadas/generadas
+  // selectedLesson ya no se necesita aquí, la navegación lo gestiona
+  // const [selectedLesson, setSelectedLesson] = useState(null);
 
-  // --- ESTADOS PARA EL POP-UP DE NOTAS (gestionados aquí para el botón de cerrar) ---
-  const [showNotesModal, setShowNotesModal] = useState(false);
-  const [notesContent, setNotesContent] = useState("");
-
+  // Efecto para cargar las lecciones existentes al montar el componente
   useEffect(() => {
-    const fetchLesson = async () => {
-      setIsLoadingLesson(true);
-      setAppIsLoading(true);
-      setAppMessage("Cargando lección...");
+    const fetchExistingLessons = async () => {
+      setIsLoading(true);
+      setAppIsLoading(true); // Indicar a la App principal que hay carga global
+      setMessage("Cargando lecciones existentes...");
       setError(null);
-      setLesson(null);
-
-      if (!lessonId) {
-        setError(
-          "Error: ID de lección no proporcionado. Por favor, selecciona una lección de la lista."
-        );
-        setAppMessage("Error: ID de lección no proporcionado.");
-        setIsLoadingLesson(false);
-        setAppIsLoading(false);
-        return;
-      }
-
       try {
         const response = await fetch("/api/lessons/get-all");
         if (!response.ok) {
@@ -59,118 +43,96 @@ const LessonDisplayPage = () => {
           );
         }
         const result = await response.json();
-        if (result.success && result.lessons) {
-          const foundLesson = result.lessons.find(
-            (l) => l.LessonID === lessonId
-          );
-          if (foundLesson) {
-            setLesson(foundLesson);
-            setAppMessage(`Lección "${foundLesson.Title}" cargada.`);
-          } else {
-            setError("Lección no encontrada.");
-            setAppMessage("Lección no encontrada.");
-            localStorage.removeItem("currentLessonId");
-          }
+        if (result.success) {
+          setAvailableLessons(result.lessons);
+          console.log(
+            "DEBUG: PrincipalPageLessons - Lecciones cargadas del backend:",
+            result.lessons
+          ); // DEBUG
+          setMessage("Lecciones cargadas.");
         } else {
-          setError(result.error || "Error al cargar lecciones.");
-          setAppMessage("Error al cargar lección.");
+          setError(result.error || "Error desconocido al cargar lecciones.");
         }
       } catch (err) {
-        console.error("Error al cargar la lección:", err);
-        setError(`Error al cargar la lección: ${err.message}.`);
-        setAppMessage(`Error: ${err.message}.`);
+        console.error("Error al cargar lecciones existentes:", err);
+        setError(`Error al cargar lecciones: ${err.message}.`);
       } finally {
-        setIsLoadingLesson(false);
+        setIsLoading(false);
         setAppIsLoading(false);
       }
     };
 
-    fetchLesson();
-  }, [lessonId, setAppMessage, setAppIsLoading]);
+    fetchExistingLessons();
+  }, [setAppMessage, setAppIsLoading]); // Dependencias para evitar alertas
 
-  const handleBackToList = () => {
-    localStorage.removeItem("currentLessonId");
-    navigate("/lessons");
+  // Función para manejar la selección de una lección del listado
+  const handleSelectLesson = (lessonId) => {
+    console.log(
+      "DEBUG: PrincipalPageLessons - Seleccionando lección con ID:",
+      lessonId
+    ); // DEBUG
+    // ¡CORREGIDO! Guardar el lessonId en localStorage antes de navegar
+    localStorage.setItem("currentLessonId", lessonId);
+    console.log(
+      "DEBUG: PrincipalPageLessons - lessonId guardado en localStorage:",
+      localStorage.getItem("currentLessonId")
+    ); // DEBUG
+    navigate(`/lessons/exercises`); // Navegar a la ruta fija
+    setMessage(""); // Limpiar mensajes al cambiar de vista
+    setError(null);
   };
 
-  const handleShowNotes = (content) => {
-    setNotesContent(content);
-    setShowNotesModal(true);
-  };
-  const handleCloseNotesModal = () => {
-    setShowNotesModal(false);
-    setNotesContent("");
-  };
+  // handleBackToLessonList ya no es necesario aquí, la navegación lo gestiona
+  // const handleBackToLessonList = () => {
+  //   setSelectedLesson(null);
+  //   setMessage("");
+  //   setError(null);
+  // };
 
   return (
-    <div className='lesson-detail-page-wrapper section-container'>
-      {" "}
-      {/* ¡CORREGIDO! Usa section-container directamente */}
-      {/* Botón de cerrar para volver a la lista de lecciones (dentro del section-container) */}
-      <button onClick={handleBackToList} className='close-lesson-button'>
-        <svg
-          xmlns='http://www.w3.org/2000/svg'
-          width='16'
-          height='16'
-          fill='currentColor'
-          viewBox='0 0 16 16'
-        >
-          <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z' />
-        </svg>
-      </button>
-      {/* Pop-up de Notas (Modal) */}
-      {showNotesModal && (
-        <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
-          <div
-            className='notes-modal-content'
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className='notes-modal-close-button'
-              onClick={handleCloseNotesModal}
-            >
-              &times;
-            </button>
-            <h3>Notas del Ejercicio</h3>
-            <p>{notesContent}</p>
-          </div>
-        </div>
-      )}
-      <MessageDisplay
-        message={appGlobalMessage}
-        isLoading={appIsLoading || isLoadingLesson}
-      />
+    <div className='lessons-page-wrapper app-container'>
+      {/* El botón de volver a la pantalla principal se maneja con BottomNavigationBar */}
+      <h1 className='app-title'>Lecciones</h1>
+      {/* El texto introductorio ya no es necesario */}
+
+      {/* Mostrar mensajes de carga o error */}
+      <MessageDisplay message={message} isLoading={isLoading} />
       {error && (
         <div className='message-box error-box' role='alert'>
           <span className='message-text'>{error}</span>
         </div>
       )}
-      {isLoadingLesson && !lesson && (
-        <p className='info-text'>Cargando lección...</p>
-      )}
-      {lesson && (
-        <>
-          {/* ¡ELIMINADO! Título de la lección y meta info duplicados */}
-          {/* <div className="lesson-detail-header-info section-container">
-            <h2 className="section-title">{lesson.Title}</h2>
-            <p className="lesson-meta-info">
-              <strong>Tema:</strong> {lesson.Topic} | 
-              <strong>Dificultad:</strong> {lesson.Difficulty} | 
-              <strong>Fecha:</strong> {new Date(lesson.GeneratedDate).toLocaleDateString()}
-            </p>
-            <p className="lesson-description">{lesson.Description}</p>
-          </div> */}
 
-          {/* El LessonCard ahora es el que contiene el contenido del ejercicio */}
-          <LessonCard
-            lesson={lesson}
-            onBack={handleBackToList} // Pasa la función de volver a la lista
-            onShowNotes={handleShowNotes} // Pasa la función para mostrar notas
-          />
-        </>
-      )}
+      {/* Siempre muestra la lista de lecciones, ya que la visualización de la lección es una página separada */}
+      <div className='section-container available-lessons-list'>
+        <h2 className='section-title'>Lecciones Disponibles</h2>
+        {isLoading && availableLessons.length === 0 ? (
+          <p className='info-text'>Cargando lecciones...</p>
+        ) : availableLessons.length === 0 ? (
+          <p className='info-text'>
+            No hay lecciones disponibles. Por favor, crea algunas en tu Google
+            Sheet.
+          </p>
+        ) : (
+          <div className='lessons-buttons-grid'>
+            {availableLessons.map((lesson) => (
+              <button
+                key={lesson.LessonID}
+                onClick={() => handleSelectLesson(lesson.LessonID)}
+                className='button lesson-list-button'
+                title={lesson.Description}
+              >
+                {lesson.Title} ({lesson.Difficulty}) -{" "}
+                {lesson.TypeModule === "chatbot_lesson"
+                  ? "Chatbot"
+                  : "Estándar"}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-export default LessonDisplayPage;
+export default PrincipalPageLessons;
