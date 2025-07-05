@@ -10,8 +10,8 @@ import ChatbotLessonRawDisplay from "./components/ChatbotLessonRawDisplay"; // C
 // Importar el contexto (Sube dos niveles)
 import AppContext from "../context/AppContext";
 
-const LessonCard = ({ lesson, onBack, onShowNotes }) => {
-  // ¡NUEVO! Recibe onShowNotes
+const LessonCard = ({ lesson, onBack }) => {
+  // onBack es la función para volver a la lista de lecciones
   // Consumir valores del contexto
   const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
@@ -22,11 +22,11 @@ const LessonCard = ({ lesson, onBack, onShowNotes }) => {
   const [userTypedAnswer, setUserTypedAnswer] = useState(""); // Input del usuario
   const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // Para mostrar la respuesta correcta
-  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState(""); // Texto del micrófono
 
-  // Estados para el pop-up de notas (ya no son necesarios aquí, se gestionan en el padre)
-  // const [showNotesModal, setShowNotesModal] = useState(false);
-  // const [notesContent, setNotesContent] = useState('');
+  // --- ESTADOS PARA EL POP-UP DE NOTAS ---
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [notesContent, setNotesContent] = useState("");
 
   // Restablecer estados al cambiar de ejercicio o lección
   useEffect(() => {
@@ -36,8 +36,8 @@ const LessonCard = ({ lesson, onBack, onShowNotes }) => {
     setShowCorrectAnswer(false);
     setRecordedMicrophoneText("");
     // Al cambiar de ejercicio, ocultar el modal de notas si está abierto
-    // setShowNotesModal(false);
-    // setNotesContent('');
+    setShowNotesModal(false);
+    setNotesContent("");
   }, [currentExerciseIndex, lesson]); // Dependencia 'lesson' y 'currentExerciseIndex' para reinicio de estados
 
   // Resetear solo lo que depende de la lección (no del ejercicio actual)
@@ -141,9 +141,15 @@ const LessonCard = ({ lesson, onBack, onShowNotes }) => {
     }
   };
 
-  // Lógica para el Pop-up de Notas (ahora se pasa desde el padre)
-  // const handleShowNotes = (content) => { /* ... */ };
-  // const handleCloseNotesModal = () => { /* ... */ };
+  // --- Lógica para el Pop-up de Notas ---
+  const handleShowNotes = (content) => {
+    setNotesContent(content);
+    setShowNotesModal(true);
+  };
+  const handleCloseNotesModal = () => {
+    setShowNotesModal(false);
+    setNotesContent("");
+  };
 
   return (
     <div className='lesson-detail-view-content'>
@@ -151,6 +157,14 @@ const LessonCard = ({ lesson, onBack, onShowNotes }) => {
       {/* Cambiado a un div de contenido para que LessonDisplayPage maneje el section-container */}
       {/* El botón de cerrar para volver a la lista de lecciones ahora está en LessonDisplayPage */}
       {/* Pop-up de Notas (Modal) - Ahora gestionado en LessonDisplayPage */}
+      {/* Título de la lección y meta info (ahora en LessonCard) */}
+      <h2 className='section-title'>{lesson.Title}</h2>
+      <p className='lesson-meta-info'>
+        <strong>Tema:</strong> {lesson.Topic} |<strong>Dificultad:</strong>{" "}
+        {lesson.Difficulty} |<strong>Fecha:</strong>{" "}
+        {new Date(lesson.GeneratedDate).toLocaleDateString()}
+      </p>
+      <p className='lesson-description'>{lesson.Description}</p>
       {/* Renderizado condicional: Flujo de CHATBOT (RAW) vs. Flashcards Estándar */}
       {isChatbotLesson ? (
         // Si es una lección de chatbot, renderizamos el ChatbotLessonRawDisplay
@@ -160,7 +174,7 @@ const LessonCard = ({ lesson, onBack, onShowNotes }) => {
           onPlayAudio={onPlayAudio} // Pasa onPlayAudio
           appIsLoading={appIsLoading} // Pasa appIsLoading
           setAppMessage={setAppMessage} // Pasa setAppMessage
-          onShowNotes={onShowNotes} // ¡NUEVO! Pasa la función onShowNotes del padre
+          onShowNotes={handleShowNotes} // Pasa la función onShowNotes del padre
         />
       ) : (
         // Si es una lección estándar (flashcards), el flujo es el mismo de antes

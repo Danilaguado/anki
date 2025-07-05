@@ -13,7 +13,8 @@ import AppContext from "./context/AppContext";
 // Importa tus secciones principales
 import MainVocabSection from "./MainVocabSection";
 import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
-// import LessonDisplayPage from './lesson/LessonDisplayPage'; // ¡ELIMINADO! Ya no se usa esta página
+// ¡NUEVO! Importa la nueva página para mostrar lecciones
+import LessonDisplayPage from "./lesson/LessonDisplayPage";
 
 // Importar utilidades de audio
 import { playAudio, b64toBlob } from "./utils/audioUtils";
@@ -85,7 +86,8 @@ const App = () => {
             <Route path='/' element={<HomeScreen />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
-            {/* ¡ELIMINADO! La ruta /lesson/:lessonId ya no es necesaria */}
+            {/* ¡CORREGIDO! Ruta fija para la visualización de lecciones */}
+            <Route path='/lessons/exercises' element={<LessonDisplayPage />} />
           </Routes>
           {/* Renderiza la barra de navegación inferior */}
           <BottomNavigationBar />
