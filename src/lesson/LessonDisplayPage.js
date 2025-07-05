@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom"; // ¡CORREGIDO! Importar useParams y useNavigate
 import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./components/lessonCard"; // Importa el componente LessonCard
+import LessonCard from "./lessonCard"; // Importa el componente LessonCard
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
