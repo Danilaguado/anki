@@ -4,7 +4,13 @@
 // proporcionados a través de React Context.
 
 import React, { useState, useEffect, useRef } from "react";
-import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Link,
+  useLocation,
+} from "react-router-dom"; // ¡NUEVO! Importa useLocation
 import "./index.css"; // Importa los estilos globales para toda la aplicación
 
 // Importa el contexto
@@ -13,7 +19,7 @@ import AppContext from "./context/AppContext";
 // Importa tus secciones principales
 import MainVocabSection from "./MainVocabSection";
 import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
-// ¡NUEVO! Importa la nueva página para mostrar lecciones
+// Importa la nueva página para mostrar lecciones
 import LessonDisplayPage from "./lesson/LessonDisplayPage";
 
 // Importar utilidades de audio
@@ -44,6 +50,7 @@ const HomeScreen = () => {
 };
 
 const App = () => {
+  const location = useLocation(); // ¡NUEVO! Hook para obtener la ubicación actual
   // Estados globales gestionados por App.js
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Estado de carga global
@@ -78,6 +85,10 @@ const App = () => {
     setAppIsLoading: setIsLoading,
   };
 
+  // Determina si la barra de navegación debe mostrarse
+  // No se mostrará si la ruta actual es /lessons/exercises
+  const shouldShowBottomNav = location.pathname !== "/lessons/exercises";
+
   return (
     <Router>
       <AppContext.Provider value={contextValue}>
@@ -86,11 +97,11 @@ const App = () => {
             <Route path='/' element={<HomeScreen />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
-            {/* ¡CORREGIDO! Ruta fija para la visualización de lecciones */}
+            {/* Ruta fija para la visualización de lecciones */}
             <Route path='/lessons/exercises' element={<LessonDisplayPage />} />
           </Routes>
-          {/* Renderiza la barra de navegación inferior */}
-          <BottomNavigationBar />
+          {/* ¡NUEVO! Renderiza la barra de navegación inferior condicionalmente */}
+          {shouldShowBottomNav && <BottomNavigationBar />}
         </div>
       </AppContext.Provider>
     </Router>
