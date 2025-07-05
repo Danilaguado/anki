@@ -1,8 +1,9 @@
+// import ExerciseNavigation from './components/ExerciseNavigation';
 // src/lesson/components/lessonCard.js
 import React, { useState, useEffect, useContext } from "react";
 import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones (mismo directorio)
 import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto (sube un nivel)
-import ExerciseDisplay from "./ExerciseDisplay"; // En la misma carpeta
+import ExerciseDisplay from "./components/ExerciseDisplay"; // En la misma carpeta
 // ExerciseNavigation ya no se importa ni se renderiza para ningún tipo de lección
 // import ExerciseNavigation from './components/ExerciseNavigation';
 import ChatbotLessonRawDisplay from "./ChatbotLessonRawDisplay"; // Componente para mostrar el chatbot en crudo
