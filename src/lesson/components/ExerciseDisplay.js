@@ -13,10 +13,10 @@ const ExerciseDisplay = ({
   userTypedAnswer,
   setUserTypedAnswer,
   matchFeedback,
-  showCorrectAnswer,
+  showCorrectAnswer, // Mantener para mostrar el mensaje "La respuesta correcta era:"
   recordedMicrophoneText,
-  handleCheckAnswer, // Ahora se usa para el botón "Comprobar"
-  handleOptionClick, // Solo para seleccionar la opción en multiple_choice
+  handleCheckAnswer,
+  handleOptionClick,
   handleSpeechResultForListening,
 }) => {
   // Consumir valores del contexto directamente
@@ -53,12 +53,7 @@ const ExerciseDisplay = ({
 
   return (
     <>
-      {/* Las notas ahora se gestionan con un botón de pop-up en LessonCard */}
-      {/* {currentExercise.Notes && (
-        <div className="exercise-notes-display">
-          <p>{currentExercise.Notes}</p>
-        </div>
-      )} */}
+      {/* Las notas se gestionan con un botón de pop-up en LessonCard */}
       {/* Botones de audio y micrófono siempre en todos los ejercicios */}
       <div className='microphone-play-buttons-group'>
         {playAudioButton}
@@ -125,8 +120,11 @@ const ExerciseDisplay = ({
                 </span>
               </p>
             )}
-
-            {/* El botón de verificar/enviar ahora está en LessonCard */}
+            {showCorrectAnswer && matchFeedback === "correct" && (
+              <p className='correct-answer-display success-text'>
+                ¡Correcto! {/* Este mensaje visual se mantiene */}
+              </p>
+            )}
           </>
         )}
 
@@ -152,10 +150,11 @@ const ExerciseDisplay = ({
                         : ""
                     }
                     ${
-                      normalizeText(option) === normalizeText(userTypedAnswer)
+                      normalizeText(option) ===
+                        normalizeText(userTypedAnswer) && matchFeedback === null
                         ? "selected-option"
                         : ""
-                    } {/* ¡NUEVO! Resaltar opción seleccionada solo si no se ha comprobado */}
+                    } {/* ¡CORREGIDO! Resaltar opción seleccionada solo si no se ha comprobado */}
                     ${
                       matchFeedback &&
                       normalizeText(option) ===
@@ -170,7 +169,6 @@ const ExerciseDisplay = ({
                       if (matchFeedback === null) {
                         // Solo permitir seleccionar si no se ha comprobado
                         setUserTypedAnswer(option); // Establece la opción seleccionada
-                        // setAppMessage(''); // Opcional: limpiar mensaje al seleccionar
                       }
                     }}
                     disabled={matchFeedback !== null || appIsLoading} // Deshabilitar si ya se comprobó
@@ -180,7 +178,11 @@ const ExerciseDisplay = ({
                 )
               )}
             </div>
-
+            {showCorrectAnswer && matchFeedback === "correct" && (
+              <p className='correct-answer-display success-text'>
+                ¡Correcto! {/* Este mensaje visual se mantiene */}
+              </p>
+            )}
             {showCorrectAnswer && matchFeedback !== "correct" && (
               <p className='correct-answer-display'>
                 La respuesta correcta era:{" "}
@@ -219,7 +221,11 @@ const ExerciseDisplay = ({
                 </span>
               </p>
             )}
-
+            {showCorrectAnswer && matchFeedback === "correct" && (
+              <p className='correct-answer-display success-text'>
+                ¡Correcto! {/* Este mensaje visual se mantiene */}
+              </p>
+            )}
             <div className='quiz-input-group'>
               <input
                 type='text'
