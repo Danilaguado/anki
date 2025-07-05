@@ -13,7 +13,6 @@ const ExerciseDisplay = ({
   userTypedAnswer,
   setUserTypedAnswer,
   matchFeedback,
-  showCorrectAnswer, // Mantener para mostrar el mensaje "La respuesta correcta era:"
   recordedMicrophoneText,
   handleCheckAnswer,
   handleOptionClick,
@@ -120,11 +119,6 @@ const ExerciseDisplay = ({
                 </span>
               </p>
             )}
-            {showCorrectAnswer && matchFeedback === "correct" && (
-              <p className='correct-answer-display success-text'>
-                ¡Correcto! {/* Este mensaje visual se mantiene */}
-              </p>
-            )}
           </>
         )}
 
@@ -165,9 +159,7 @@ const ExerciseDisplay = ({
                     }
                   `}
                     onClick={() => {
-                      // ¡CORREGIDO! Solo selecciona la opción, no la verifica inmediatamente
                       if (matchFeedback === null) {
-                        // Solo permitir seleccionar si no se ha comprobado
                         setUserTypedAnswer(option); // Establece la opción seleccionada
                       }
                     }}
@@ -178,11 +170,7 @@ const ExerciseDisplay = ({
                 )
               )}
             </div>
-            {showCorrectAnswer && matchFeedback === "correct" && (
-              <p className='correct-answer-display success-text'>
-                ¡Correcto! {/* Este mensaje visual se mantiene */}
-              </p>
-            )}
+
             {showCorrectAnswer && matchFeedback !== "correct" && (
               <p className='correct-answer-display'>
                 La respuesta correcta era:{" "}
@@ -221,11 +209,7 @@ const ExerciseDisplay = ({
                 </span>
               </p>
             )}
-            {showCorrectAnswer && matchFeedback === "correct" && (
-              <p className='correct-answer-display success-text'>
-                ¡Correcto! {/* Este mensaje visual se mantiene */}
-              </p>
-            )}
+
             <div className='quiz-input-group'>
               <input
                 type='text'
@@ -238,12 +222,10 @@ const ExerciseDisplay = ({
                 }}
                 disabled={matchFeedback !== null || appIsLoading}
               />
-              {/* El botón de verificar/enviar ahora está en LessonCard */}
             </div>
           </>
         )}
 
-        {/* Mensaje si el tipo de ejercicio no es reconocido (solo para tipos de lección estándar) */}
         {![
           "translation",
           "fill_in_the_blank",
@@ -256,7 +238,6 @@ const ExerciseDisplay = ({
           </p>
         )}
       </div>{" "}
-      {/* Fin de card-content-area */}
     </>
   );
 };
