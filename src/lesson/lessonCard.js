@@ -8,6 +8,7 @@ import ChatbotLessonRawDisplay from "./components/ChatbotLessonRawDisplay"; // C
 import AppContext from "../context/AppContext";
 
 const LessonCard = ({ lesson, onBack }) => {
+  // onBack es la función para volver a la lista de lecciones
   // Consumir valores del contexto
   const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
@@ -18,7 +19,7 @@ const LessonCard = ({ lesson, onBack }) => {
   const [userTypedAnswer, setUserTypedAnswer] = useState(""); // Input del usuario
   const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // Para mostrar la respuesta correcta
-  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState(""); // Texto del micrófono
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
   // --- ESTADOS PARA EL POP-UP DE NOTAS ---
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -147,21 +148,7 @@ const LessonCard = ({ lesson, onBack }) => {
   };
 
   return (
-    <div className='lesson-detail-view section-container'>
-      {/* ¡NUEVO! Botón de cerrar para volver a la lista de lecciones */}
-      <button onClick={onBack} className='close-lesson-button'>
-        <svg
-          xmlns='http://www.w3.org/2000/svg'
-          width='16'
-          height='16'
-          fill='currentColor'
-          viewBox='0 0 16 16'
-        >
-          <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z' />
-        </svg>
-      </button>
-
-      {/* Pop-up de Notas (Modal) */}
+    <div className='lesson-detail-view-content'>
       {showNotesModal && (
         <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
           <div
@@ -276,12 +263,6 @@ const LessonCard = ({ lesson, onBack }) => {
           </div>
         </div>
       )}
-
-      {/* ¡ELIMINADO! Botón "Volver a la lista de lecciones" */}
-      {/* Este botón ya no es necesario si el botón de cerrar en la esquina superior izquierda cumple su función */}
-      {/* <button onClick={onBack} className="button back-button return-to-list-button">
-        Volver a la lista de lecciones
-      </button> */}
     </div>
   );
 };

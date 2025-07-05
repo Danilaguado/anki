@@ -8,6 +8,7 @@ import LessonCard from "./lessonCard"; // Importación corregida según la estru
 import AppContext from "../context/AppContext";
 
 const PrincipalPageLessons = () => {
+  const navigate = useNavigate(); // Hook para la navegación
   // Consumir valores del contexto
   const { setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
@@ -17,7 +18,7 @@ const PrincipalPageLessons = () => {
   const [message, setMessage] = useState(""); // Mensajes locales de este componente
   const [error, setError] = useState(null);
   const [availableLessons, setAvailableLessons] = useState([]); // Todas las lecciones cargadas/generadas
-  const [selectedLesson, setSelectedLesson] = useState(null); // La lección actualmente seleccionada para ver en detalle
+  // const [selectedLesson, setSelectedLesson] = useState(null); // Ya no se necesita aquí
 
   // Efecto para cargar las lecciones existentes al montar el componente
   useEffect(() => {
@@ -58,28 +59,24 @@ const PrincipalPageLessons = () => {
 
   // Función para manejar la selección de una lección del listado
   const handleSelectLesson = (lessonId) => {
-    const lessonToView = availableLessons.find((l) => l.LessonID === lessonId);
-    setSelectedLesson(lessonToView);
+    // ¡NUEVO! Navegar a la página de visualización de la lección con el ID
+    navigate(`/lesson/${lessonId}`);
     setMessage(""); // Limpiar mensajes al cambiar de vista
     setError(null);
   };
 
-  // Función para volver a la lista de lecciones (desde LessonCard)
-  const handleBackToLessonList = () => {
-    setSelectedLesson(null);
-    setMessage("");
-    setError(null);
-  };
+  // Función para volver a la lista de lecciones (ya no se usa onBack aquí)
+  // const handleBackToLessonList = () => {
+  //   setSelectedLesson(null);
+  //   setMessage("");
+  //   setError(null);
+  // };
 
   return (
     <div className='lessons-page-wrapper app-container'>
-      {/* ¡ELIMINADO! Botón "Volver a la pantalla principal" */}
-      {/* <Link to='/' className='button back-button top-back-button'>
-        Volver a la pantalla principal
-      </Link> */}
-      {/* ¡ELIMINADO! Título "Lecciones" y texto introductorio */}
-      {/* <h1 className='app-title'>Lecciones</h1>
-      <p className='info-text'>Selecciona una lección para comenzar a aprender.</p> */}
+      {/* El botón de volver a la pantalla principal se maneja con BottomNavigationBar */}
+      <h1 className='app-title'>Lecciones</h1>
+      {/* El texto introductorio ya no es necesario */}
 
       {/* Mostrar mensajes de carga o error */}
       <MessageDisplay message={message} isLoading={isLoading} />
@@ -89,41 +86,34 @@ const PrincipalPageLessons = () => {
         </div>
       )}
 
-      {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
-      {selectedLesson ? (
-        <LessonCard lesson={selectedLesson} onBack={handleBackToLessonList} />
-      ) : (
-        // Si no hay lección seleccionada, mostrar la lista de lecciones disponibles
-        <>
-          <div className='section-container available-lessons-list'>
-            <h2 className='section-title'>Lecciones Disponibles</h2>
-            {isLoading && availableLessons.length === 0 ? (
-              <p className='info-text'>Cargando lecciones...</p>
-            ) : availableLessons.length === 0 ? (
-              <p className='info-text'>
-                No hay lecciones disponibles. Por favor, crea algunas en tu
-                Google Sheet.
-              </p>
-            ) : (
-              <div className='lessons-buttons-grid'>
-                {availableLessons.map((lesson) => (
-                  <button
-                    key={lesson.LessonID}
-                    onClick={() => handleSelectLesson(lesson.LessonID)}
-                    className='button lesson-list-button'
-                    title={lesson.Description}
-                  >
-                    {lesson.Title} ({lesson.Difficulty}) -{" "}
-                    {lesson.TypeModule === "chatbot_lesson"
-                      ? "Chatbot"
-                      : "Estándar"}
-                  </button>
-                ))}
-              </div>
-            )}
+      {/* Siempre muestra la lista de lecciones, ya que la visualización de la lección es una página separada */}
+      <div className='section-container available-lessons-list'>
+        <h2 className='section-title'>Lecciones Disponibles</h2>
+        {isLoading && availableLessons.length === 0 ? (
+          <p className='info-text'>Cargando lecciones...</p>
+        ) : availableLessons.length === 0 ? (
+          <p className='info-text'>
+            No hay lecciones disponibles. Por favor, crea algunas en tu Google
+            Sheet.
+          </p>
+        ) : (
+          <div className='lessons-buttons-grid'>
+            {availableLessons.map((lesson) => (
+              <button
+                key={lesson.LessonID}
+                onClick={() => handleSelectLesson(lesson.LessonID)}
+                className='button lesson-list-button'
+                title={lesson.Description}
+              >
+                {lesson.Title} ({lesson.Difficulty}) -{" "}
+                {lesson.TypeModule === "chatbot_lesson"
+                  ? "Chatbot"
+                  : "Estándar"}
+              </button>
+            ))}
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };
