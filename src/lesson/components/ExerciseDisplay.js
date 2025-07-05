@@ -13,6 +13,7 @@ const ExerciseDisplay = ({
   userTypedAnswer,
   setUserTypedAnswer,
   matchFeedback,
+  showCorrectAnswer, // Mantener para mostrar el mensaje "La respuesta correcta era:"
   recordedMicrophoneText,
   handleCheckAnswer,
   handleOptionClick,
@@ -21,7 +22,6 @@ const ExerciseDisplay = ({
   // Consumir valores del contexto directamente
   const { onPlayAudio, setAppMessage, appIsLoading } = useContext(AppContext);
 
-  // Función para renderizar el botón de reproducción de audio
   const playAudioButton = (
     <button
       onClick={() => onPlayAudio(currentExercise.QuestionEN, "en-US")}
@@ -41,7 +41,6 @@ const ExerciseDisplay = ({
     </button>
   );
 
-  // Función para renderizar el botón de micrófono
   const microphoneButton = (
     <SpeechToTextButton
       onResult={handleSpeechResultForListening}
@@ -52,8 +51,6 @@ const ExerciseDisplay = ({
 
   return (
     <>
-      {/* Las notas se gestionan con un botón de pop-up en LessonCard */}
-      {/* Botones de audio y micrófono siempre en todos los ejercicios */}
       <div className='microphone-play-buttons-group'>
         {playAudioButton}
         {microphoneButton}
@@ -148,7 +145,7 @@ const ExerciseDisplay = ({
                         normalizeText(userTypedAnswer) && matchFeedback === null
                         ? "selected-option"
                         : ""
-                    } {/* ¡CORREGIDO! Resaltar opción seleccionada solo si no se ha comprobado */}
+                    }
                     ${
                       matchFeedback &&
                       normalizeText(option) ===
