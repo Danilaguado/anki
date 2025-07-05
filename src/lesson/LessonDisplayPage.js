@@ -1,11 +1,11 @@
 // src/lesson/LessonDisplayPage.js
 // Esta es la nueva página que muestra una lección específica (estándar o chatbot).
-// Ahora lee el lessonId del localStorage.
+// Ahora es minimalista, solo contiene LessonCard y MessageDisplay.
 
 import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom"; // useLocation ya no es necesario
+import { useParams, useNavigate } from "react-router-dom"; // ¡CORREGIDO! Importar useParams y useNavigate
 import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./lessonCard"; // Importa el componente LessonCard
+import LessonCard from "./components/lessonCard"; // Importa el componente LessonCard
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
