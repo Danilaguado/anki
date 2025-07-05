@@ -11,8 +11,8 @@ import LessonCard from "./lessonCard"; // Importa el componente LessonCard
 import AppContext from "../context/AppContext";
 
 const LessonDisplayPage = () => {
-  const { lessonId } = useParams();
-  const navigate = useNavigate();
+  const { lessonId } = useParams(); // Hook para obtener el LessonID de la URL
+  const navigate = useNavigate(); // Hook para la navegación programática
   const {
     setAppMessage,
     setAppIsLoading,
@@ -25,7 +25,7 @@ const LessonDisplayPage = () => {
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- ESTADOS PARA EL POP-UP DE NOTAS ---
+  // --- ESTADOS PARA EL POP-UP DE NOTAS (gestionados aquí para el botón de cerrar) ---
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [notesContent, setNotesContent] = useState("");
 
@@ -38,6 +38,7 @@ const LessonDisplayPage = () => {
       setLesson(null);
 
       if (!lessonId) {
+        // Si no hay lessonId en el estado, es un error
         setError(
           "Error: ID de lección no proporcionado. Por favor, selecciona una lección de la lista."
         );
@@ -84,14 +85,15 @@ const LessonDisplayPage = () => {
       }
     };
 
-    fetchLesson();
-  }, [lessonId, setAppMessage, setAppIsLoading]);
+    fetchLesson(); // Llama a fetchLesson directamente
+  }, [lessonId, setAppMessage, setAppIsLoading]); // Dependencias: lessonId para recargar si cambia
 
+  // Función para volver a la lista de lecciones
   const handleBackToList = () => {
-    localStorage.removeItem("currentLessonId");
-    navigate("/lessons");
+    navigate("/lessons"); // Navega de vuelta a la página de lista de lecciones
   };
 
+  // Lógica para el Pop-up de Notas (pasada a LessonCard y ChatbotLessonRawDisplay)
   const handleShowNotes = (content) => {
     setNotesContent(content);
     setShowNotesModal(true);
@@ -103,7 +105,21 @@ const LessonDisplayPage = () => {
 
   return (
     <div className='lessons-page-wrapper app-container'>
-      {/* Pop-up de Notas (Modal) */}
+      {" "}
+      {/* Usa el wrapper de lecciones */}
+      {/* Botón de cerrar para volver a la lista de lecciones */}
+      <button onClick={handleBackToList} className='close-lesson-button'>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='16'
+          height='16'
+          fill='currentColor'
+          viewBox='0 0 16 16'
+        >
+          <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z' />
+        </svg>
+      </button>
+      {/* Pop-up de Notas (Modal) - Ahora gestionado aquí */}
       {showNotesModal && (
         <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
           <div
@@ -121,7 +137,6 @@ const LessonDisplayPage = () => {
           </div>
         </div>
       )}
-
       <MessageDisplay
         message={appGlobalMessage}
         isLoading={appIsLoading || isLoadingLesson}
@@ -131,13 +146,11 @@ const LessonDisplayPage = () => {
           <span className='message-text'>{error}</span>
         </div>
       )}
-
       {isLoadingLesson && !lesson && (
         <p className='info-text'>Cargando lección...</p>
       )}
-
       {lesson && (
-        // El LessonCard ahora es el que contiene el botón de cerrar y el contenido del ejercicio
+        // Renderiza LessonCard, que a su vez decide qué tipo de display usar
         <LessonCard
           lesson={lesson}
           onBack={handleBackToList} // Pasa la función de volver a la lista
