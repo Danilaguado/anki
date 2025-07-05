@@ -7,25 +7,28 @@
 /* Contenedores de sección: se basan en .section-container global */
 .available-lessons-list,
 .lesson-detail-view {
+  /* lesson-detail-view es el contenedor de LessonCard en LessonDisplayPage */
   background-color: var(--text-color-light); /* Fondo blanco puro */
   box-shadow: 0 4px 12px var(--shadow-color); /* Sombra más pronunciada */
   border: none; /* Eliminar borde redundante */
   margin-top: 0; /* Eliminar margen superior para pegar al padre */
   border-radius: var(--border-radius); /* Usar variable global */
 }
-.lesson-detail-view {
-  padding-top: 20px; /* Ajustar padding superior si es necesario */
-  /* ¡NUEVO! Para que ocupe el 100% de alto y ancho en móvil */
+/* ¡NUEVO! Estilos para el contenedor principal de la lección (LessonDisplayPage) */
+.lesson-detail-page-wrapper {
+  /* Clase aplicada al div principal en LessonDisplayPage */
+  padding: 0; /* Eliminar padding para que el contenido interno lo defina */
+  width: 100%; /* Ocupa todo el ancho */
+  max-width: none; /* Sin límite de ancho en desktop */
+  box-shadow: none; /* Eliminar sombra, ya que el body tiene un fondo claro */
+  border-radius: 0; /* Eliminar redondeado para pantalla completa */
+  margin-bottom: 0; /* Eliminar margen inferior */
+
+  /* Para ocupar 100% de alto en móvil */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: calc(
-    100vh - 40px
-  ); /* Altura total - padding vertical de app-container */
-  box-sizing: border-box;
-  width: 100%; /* Ocupa todo el ancho */
-  max-width: none; /* Ancho ilimitado */
-  border-radius: 0; /* Eliminar redondeado para pantalla completa */
-  box-shadow: none; /* Eliminar sombra para un look más limpio */
+  position: relative; /* Para el botón de cerrar */
 }
 
 /* Títulos de la aplicación y secciones ya en index.css */
@@ -65,15 +68,21 @@
 }
 
 /* Estilos para LessonCard (vista de detalle de la lección) */
+/* Este es el div que LessonCard renderiza */
 .lesson-detail-view-content {
-  /* Este es el div que LessonCard renderiza */
   text-align: left;
   width: 100%; /* Ocupar todo el ancho del padre */
   height: 100%; /* Ocupar todo el alto del padre */
   display: flex;
   flex-direction: column;
   position: relative; /* Para posicionar el botón de cerrar */
-  padding: 0; /* Eliminar padding aquí, el contenido interno lo define */
+  padding: 0; /* Eliminar padding aquí, el contenido interno lo defina */
+  background-color: var(
+    --text-color-light
+  ); /* Fondo blanco para la tarjeta interna */
+  box-shadow: 0 4px 12px var(--shadow-color); /* Sombra para la tarjeta interna */
+  border-radius: var(--border-radius); /* Redondeado para la tarjeta interna */
+  box-sizing: border-box; /* Incluir padding/border en el tamaño */
 }
 
 /* ¡NUEVO! Botón de cerrar dentro del box de la lección */
@@ -84,8 +93,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: transparent; /* Fondo transparente */
-  border: 1px solid var(--border-color); /* Borde negro sutil */
+  background-color: rgba(0, 0, 0, 0.05); /* Fondo muy sutil */
+  border: 1px solid #bdbdbd; /* Borde sutil */
   color: var(--text-color-dark); /* Color del icono */
   display: flex;
   align-items: center;
@@ -96,9 +105,9 @@
     border-color 0.2s ease;
 }
 .close-lesson-button:hover {
-  background-color: rgba(0, 0, 0, 0.05); /* Fondo muy sutil al pasar el ratón */
+  background-color: rgba(0, 0, 0, 0.1);
   transform: scale(1.05);
-  border-color: var(--primary-color); /* Borde de color al pasar el ratón */
+  border-color: var(--primary-color);
 }
 .close-lesson-button svg {
   width: 20px;
@@ -139,7 +148,7 @@
   padding: 0; /* Eliminar padding para que el contenido interno lo defina */
   box-sizing: border-box;
   border: none; /* Eliminar borde redundante */
-  flex-grow: 1; /* ¡NUEVO! Permite que ocupe el espacio restante */
+  flex-grow: 1; /* Permite que ocupe el espacio restante */
   justify-content: space-between; /* Empuja el botón de Comprobar/Continuar hacia abajo */
 }
 
