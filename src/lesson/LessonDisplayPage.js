@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom"; // useLocation ya no es necesario
 import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./components/lessonCard"; // Importa el componente LessonCard
+import LessonCard from "./lessonCard"; // Importa el componente LessonCard
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
