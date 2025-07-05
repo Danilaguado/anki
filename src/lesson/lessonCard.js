@@ -6,7 +6,7 @@ import { normalizeText, renderClickableText } from "../utils/textUtils"; // Util
 import ExerciseDisplay from "./components/ExerciseDisplay"; // En la misma carpeta
 // ExerciseNavigation ya no se importa ni se renderiza para ningún tipo de lección
 // import ExerciseNavigation from './components/ExerciseNavigation';
-import ChatbotLessonRawDisplay from "./ChatbotLessonRawDisplay"; // Componente para mostrar el chatbot en crudo
+import ChatbotLessonRawDisplay from "./components/ChatbotLessonRawDisplay"; // Componente para mostrar el chatbot en crudo
 
 // Importar el contexto (Sube dos niveles)
 import AppContext from "../context/AppContext";
