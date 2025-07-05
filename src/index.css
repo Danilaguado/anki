@@ -85,6 +85,7 @@ code {
 .primary-button {
   background-color: var(--primary-color);
   color: var(--text-color-light);
+  width: 100%;
 }
 
 .primary-button:hover:not(:disabled) {

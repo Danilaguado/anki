@@ -125,9 +125,7 @@ const ExerciseDisplay = ({
                 </span>
               </p>
             )}
-            {showCorrectAnswer && matchFeedback === "correct" && (
-              <p className='correct-answer-display success-text'>¡Correcto!</p>
-            )}
+
             {/* El botón de verificar/enviar ahora está en LessonCard */}
           </>
         )}
@@ -182,9 +180,7 @@ const ExerciseDisplay = ({
                 )
               )}
             </div>
-            {showCorrectAnswer && matchFeedback === "correct" && (
-              <p className='correct-answer-display success-text'>¡Correcto!</p>
-            )}
+
             {showCorrectAnswer && matchFeedback !== "correct" && (
               <p className='correct-answer-display'>
                 La respuesta correcta era:{" "}
@@ -223,9 +219,7 @@ const ExerciseDisplay = ({
                 </span>
               </p>
             )}
-            {showCorrectAnswer && matchFeedback === "correct" && (
-              <p className='correct-answer-display success-text'>¡Correcto!</p>
-            )}
+
             <div className='quiz-input-group'>
               <input
                 type='text'
