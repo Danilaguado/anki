@@ -1,14 +1,14 @@
 // src/lesson/PrincipalPageLessons.js
 import React, { useState, useEffect, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // ¡CORREGIDO! Importar useNavigate
 import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./lessonCard"; // Importación corregida según la estructura
+// import LessonCard from './components/lessonCard'; // Ya no se importa directamente aquí
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
 
 const PrincipalPageLessons = () => {
-  const navigate = useNavigate(); // Hook para la navegación
+  const navigate = useNavigate(); // ¡CORREGIDO! Llamar a useNavigate como un Hook
   // Consumir valores del contexto
   const { setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
