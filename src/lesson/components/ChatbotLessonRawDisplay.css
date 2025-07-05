@@ -194,6 +194,17 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+.multiple-choice-button.selected-option {
+  /* tu fondo y color ya lo tienes; añade además: */
+  border: 2px solid var(--primary-color);
+  /* opcional: un poco de padding extra para que no “salte” el contenido */
+  padding: 8px 13px;
+}
+
+.multiple-choice-button:focus {
+  outline: 3px dashed var(--primary-color);
+  outline-offset: 2px;
+}
 .multiple-choice-button:hover:not(:disabled) {
   background-color: #512da8;
 }
