@@ -4,27 +4,28 @@
   position: relative;
 }
 
-.top-back-button {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  min-width: unset;
-  padding: 8px 15px;
-  font-size: 0.9em;
-  z-index: 10;
-}
-
 /* Contenedores de sección: se basan en .section-container global */
 .available-lessons-list,
 .lesson-detail-view {
   background-color: var(--text-color-light); /* Fondo blanco puro */
   box-shadow: 0 4px 12px var(--shadow-color); /* Sombra más pronunciada */
   border: none; /* Eliminar borde redundante */
-  margin-top: 0; /* ¡CORREGIDO! Eliminar margen superior para pegar al padre */
+  margin-top: 0; /* Eliminar margen superior para pegar al padre */
   border-radius: var(--border-radius); /* Usar variable global */
 }
 .lesson-detail-view {
   padding-top: 20px; /* Ajustar padding superior si es necesario */
+  /* ¡NUEVO! Para que ocupe el 100% de alto y ancho en móvil */
+  display: flex;
+  flex-direction: column;
+  min-height: calc(
+    100vh - 40px
+  ); /* Altura total - padding vertical de app-container */
+  box-sizing: border-box;
+  width: 100%; /* Ocupa todo el ancho */
+  max-width: none; /* Ancho ilimitado */
+  border-radius: 0; /* Eliminar redondeado para pantalla completa */
+  box-shadow: none; /* Eliminar sombra para un look más limpio */
 }
 
 /* Títulos de la aplicación y secciones ya en index.css */
@@ -64,49 +65,82 @@
 }
 
 /* Estilos para LessonCard (vista de detalle de la lección) */
-.lesson-detail-view {
+.lesson-detail-view-content {
+  /* Este es el div que LessonCard renderiza */
   text-align: left;
-  /* Ya hereda .section-container, que tiene padding y sombra */
+  width: 100%; /* Ocupar todo el ancho del padre */
+  height: 100%; /* Ocupar todo el alto del padre */
+  display: flex;
+  flex-direction: column;
+  position: relative; /* Para posicionar el botón de cerrar */
+  padding: 0; /* Eliminar padding aquí, el contenido interno lo define */
 }
 
-.lesson-detail-view .section-title {
+/* ¡NUEVO! Botón de cerrar dentro del box de la lección */
+.close-lesson-button {
+  position: absolute;
+  top: 15px; /* Ajustar posición */
+  left: 15px; /* Ajustar posición */
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: transparent; /* Fondo transparente */
+  border: 1px solid var(--border-color); /* Borde negro sutil */
+  color: var(--text-color-dark); /* Color del icono */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: background-color 0.2s ease, transform 0.2s ease,
+    border-color 0.2s ease;
+}
+.close-lesson-button:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* Fondo muy sutil al pasar el ratón */
+  transform: scale(1.05);
+  border-color: var(--primary-color); /* Borde de color al pasar el ratón */
+}
+.close-lesson-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Estilos para el título y meta info de la lección dentro de LessonCard */
+.lesson-detail-view-content .section-title {
   text-align: center;
   margin-bottom: 10px;
+  padding-top: 60px; /* Espacio para el botón de cerrar */
 }
 
-.lesson-meta-info {
+.lesson-detail-view-content .lesson-meta-info {
   font-size: 0.95em;
   color: #666;
   text-align: center;
   margin-bottom: 20px;
 }
 
-.lesson-description {
+.lesson-detail-view-content .lesson-description {
   margin-bottom: 25px;
   line-height: 1.6;
   color: #555;
-}
-
-.lesson-detail-view .subsection-title {
-  text-align: left;
-  margin-top: 20px;
-  margin-bottom: 15px;
+  padding: 0 20px; /* Padding para el texto de descripción */
 }
 
 /* Contenedor de la tarjeta de ejercicio individual (dentro de LessonCard) */
-/* Este es el card interno que quieres pegar más al borde */
 .card-container.lesson-exercise-card {
-  margin-top: 0; /* ¡CORREGIDO! Eliminar margen superior para pegar al padre */
+  margin-top: 0; /* Eliminar margen superior para pegar al padre */
   width: 100%; /* Ocupa todo el ancho disponible */
-  background-color: #ffffff; /* Fondo blanco */
+  background-color: #ffffff;
   border-radius: var(--border-radius);
   box-shadow: none; /* Eliminar sombra si el padre ya tiene una grande */
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 0; /* ¡CORREGIDO! Eliminar padding para que el contenido interno lo defina */
+  padding: 0; /* Eliminar padding para que el contenido interno lo defina */
   box-sizing: border-box;
   border: none; /* Eliminar borde redundante */
+  flex-grow: 1; /* ¡NUEVO! Permite que ocupe el espacio restante */
+  justify-content: space-between; /* Empuja el botón de Comprobar/Continuar hacia abajo */
 }
 
 /* Reutilizar clases de feedback de acierto/error */
@@ -128,7 +162,7 @@
   margin: 0;
   line-height: 1.4;
   text-align: center;
-  padding: 15px; /* Añadir padding interno a los textos */
+  padding: 15px;
 }
 .card-text.question {
   color: var(--primary-color);
@@ -164,7 +198,7 @@
   gap: 15px;
   margin-bottom: 10px;
   width: 100%;
-  padding: 10px 0; /* Padding para separar de los bordes */
+  padding: 10px 0;
 }
 
 .audio-button-round {
@@ -208,12 +242,12 @@
 }
 
 .fill-in-the-blank-translation {
-  font-size: 1em;
+  font-size: 1.05em;
   color: #555;
   margin-top: 10px;
   text-align: center;
   font-style: italic;
-  padding: 0 15px; /* Padding para alinear con card-text */
+  padding: 0 15px;
 }
 
 /* Estilos para opciones múltiples */
@@ -223,7 +257,7 @@
   gap: 10px;
   margin-top: 20px;
   width: 100%;
-  padding: 0 15px; /* Padding para alinear con card-text */
+  padding: 0 15px;
 }
 
 .multiple-choice-button {
@@ -232,7 +266,8 @@
   padding: 10px 15px;
   border-radius: var(--border-radius);
   font-size: 1em;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease;
   white-space: normal;
   word-break: break-word;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -244,21 +279,30 @@
 
 .multiple-choice-button.correct-option {
   background-color: var(--success-color);
-  border: 2px solid #388e3c; /* Tono más oscuro */
+  border: 2px solid #388e3c;
 }
 
 .multiple-choice-button.incorrect-selected-option {
   background-color: var(--error-color);
-  border: 2px solid #d32f2f; /* Tono más oscuro */
+  border: 2px solid #d32f2f;
+}
+
+.multiple-choice-button.selected-option {
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.3);
+  background-color: #e0f7fa;
+  color: var(--text-color-dark);
 }
 
 /* Estilos para el input de texto en el quiz y el botón de verificar */
 .quiz-input-group {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   width: 100%;
   margin-top: 15px;
-  padding: 0 15px; /* Padding para alinear con card-text */
+  padding: 0 15px;
+  align-items: center;
 }
 
 .quiz-input-group .input-field {
@@ -267,16 +311,19 @@
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   font-size: 1em;
+  width: 100%;
+  max-width: 400px;
 }
 
 .quiz-check-button {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  padding: 0;
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: var(--border-radius);
+  padding: 12px 25px;
   flex-shrink: 0;
   background-color: var(--secondary-color);
-  color: var(--text-color-light); /* Texto claro */
+  color: var(--text-color-light);
   box-shadow: 0 2px 4px var(--shadow-color);
 }
 .quiz-check-button:hover:not(:disabled) {
@@ -290,7 +337,7 @@
 
 /* Estilo para el feedback de respuesta correcta/incorrecta y el texto de la respuesta */
 .correct-answer-display {
-  background-color: #e0e0e0; /* Gris claro */
+  background-color: #e0e0e0;
   color: var(--text-color-dark);
   padding: 10px 15px;
   border-radius: var(--border-radius);
@@ -300,7 +347,7 @@
   animation: fadeInScale 0.3s ease-out;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  width: calc(100% - 30px); /* Ajustar al padding de 15px */
+  width: calc(100% - 30px);
   margin-left: 15px;
   margin-right: 15px;
 }
@@ -316,7 +363,7 @@
 
 /* Texto grabado del micrófono */
 .recorded-text-display {
-  background-color: #424242; /* Gris oscuro */
+  background-color: #424242;
   color: #ffffff;
   padding: 10px 15px;
   border-radius: var(--border-radius);
@@ -333,7 +380,7 @@
 .exercise-image-container {
   text-align: center;
   margin: 20px 0;
-  padding: 0 15px; /* Padding para la imagen */
+  padding: 0 15px;
 }
 .exercise-image {
   max-width: 100%;
@@ -348,6 +395,7 @@
     grid-template-columns: 1fr;
   }
   .top-back-button {
+    /* Este ya no se usa, pero se mantiene por si acaso */
     position: static;
     margin-bottom: 20px;
     width: 100%;
@@ -359,21 +407,25 @@
     grid-template-columns: 1fr;
   }
   .card-text {
-    font-size: 1.3em !important; /* Ajustar tamaño de fuente en móviles */
-    padding: 10px; /* Menos padding */
+    font-size: 1.5em !important;
+    padding: 10px;
   }
   .card-text.answer {
-    font-size: 1em !important;
+    font-size: 1.2em !important;
   }
   .quiz-input-group,
   .multiple-choice-options,
   .fill-in-the-blank-translation,
   .exercise-image-container {
-    padding: 0 10px; /* Menos padding en móviles */
+    padding: 0 10px;
   }
   .correct-answer-display {
-    width: calc(100% - 20px); /* Ajustar al nuevo padding */
+    width: calc(100% - 20px);
     margin-left: 10px;
     margin-right: 10px;
+  }
+  .quiz-input-group .input-field,
+  .quiz-input-group .quiz-check-button {
+    max-width: 100%;
   }
 }
