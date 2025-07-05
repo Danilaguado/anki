@@ -73,12 +73,14 @@ const PrincipalPageLessons = () => {
 
   return (
     <div className='lessons-page-wrapper app-container'>
-      <Link to='/' className='button back-button top-back-button'>
+      {/* ¡ELIMINADO! Botón "Volver a la pantalla principal" */}
+      {/* <Link to='/' className='button back-button top-back-button'>
         Volver a la pantalla principal
-      </Link>
-      <h1 className='app-title'>Lecciones</h1> {/* Título ajustado */}
-      {/* ¡ELIMINADO! Texto "Selecciona una lección para comenzar a aprender." */}
-      {/* <p className='info-text'>Selecciona una lección para comenzar a aprender.</p> */}
+      </Link> */}
+      {/* ¡ELIMINADO! Título "Lecciones" y texto introductorio */}
+      {/* <h1 className='app-title'>Lecciones</h1>
+      <p className='info-text'>Selecciona una lección para comenzar a aprender.</p> */}
+
       {/* Mostrar mensajes de carga o error */}
       <MessageDisplay message={message} isLoading={isLoading} />
       {error && (
@@ -86,6 +88,7 @@ const PrincipalPageLessons = () => {
           <span className='message-text'>{error}</span>
         </div>
       )}
+
       {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
       {selectedLesson ? (
         <LessonCard lesson={selectedLesson} onBack={handleBackToLessonList} />

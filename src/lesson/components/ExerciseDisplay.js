@@ -15,8 +15,8 @@ const ExerciseDisplay = ({
   matchFeedback,
   showCorrectAnswer,
   recordedMicrophoneText,
-  handleCheckAnswer,
-  handleOptionClick,
+  handleCheckAnswer, // Ahora se usa para el botón "Comprobar"
+  handleOptionClick, // Solo para seleccionar la opción en multiple_choice
   handleSpeechResultForListening,
 }) => {
   // Consumir valores del contexto directamente
@@ -54,11 +54,12 @@ const ExerciseDisplay = ({
   return (
     <>
       {/* Mostrar las notas del ejercicio si existen - FUERA DEL SWITCH PARA TODOS LOS EJERCICIOS */}
-      {currentExercise.Notes && (
-        <div className='exercise-notes-display'>
+      {/* Las notas ahora se gestionan con un botón de pop-up en LessonCard */}
+      {/* {currentExercise.Notes && (
+        <div className="exercise-notes-display">
           <p>{currentExercise.Notes}</p>
         </div>
-      )}
+      )} */}
       {/* Botones de audio y micrófono siempre en todos los ejercicios */}
       <div className='microphone-play-buttons-group'>
         {playAudioButton}
@@ -113,7 +114,6 @@ const ExerciseDisplay = ({
               />
               {currentExercise.QuestionEN.split("_______")[1]}
             </div>
-
             <p className='fill-in-the-blank-translation'>
               {currentExercise.QuestionES}
             </p>
@@ -155,6 +155,11 @@ const ExerciseDisplay = ({
                         : ""
                     }
                     ${
+                      normalizeText(option) === normalizeText(userTypedAnswer)
+                        ? "selected-option"
+                        : ""
+                    } {/* ¡NUEVO! Resaltar opción seleccionada */}
+                    ${
                       matchFeedback &&
                       normalizeText(option) ===
                         normalizeText(userTypedAnswer) &&
@@ -164,13 +169,14 @@ const ExerciseDisplay = ({
                     }
                   `}
                     onClick={() => {
+                      // ¡CORREGIDO! Solo selecciona la opción, no la verifica inmediatamente
                       if (matchFeedback === null) {
-                        setAppMessage("");
-                        setUserTypedAnswer(option);
-                        handleOptionClick(option);
+                        // Solo permitir seleccionar si no se ha comprobado
+                        setUserTypedAnswer(option); // Establece la opción seleccionada
+                        // setAppMessage(''); // Opcional: limpiar mensaje al seleccionar
                       }
                     }}
-                    disabled={matchFeedback !== null || appIsLoading}
+                    disabled={matchFeedback !== null || appIsLoading} // Deshabilitar si ya se comprobó
                   >
                     {option}
                   </button>
