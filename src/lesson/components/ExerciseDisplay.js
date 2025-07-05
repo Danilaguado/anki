@@ -154,8 +154,7 @@ const ExerciseDisplay = ({
                         : ""
                     }
                     ${
-                      normalizeText(option) ===
-                        normalizeText(userTypedAnswer) && matchFeedback === null
+                      normalizeText(option) === normalizeText(userTypedAnswer)
                         ? "selected-option"
                         : ""
                     } {/* ¡NUEVO! Resaltar opción seleccionada solo si no se ha comprobado */}

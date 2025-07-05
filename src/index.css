@@ -348,6 +348,33 @@ code {
   }
 }
 
+/* --- NUEVO: Estilo para el botón de cerrar la lección (icono X) --- */
+.close-lesson-button {
+  position: absolute;
+  top: 15px; /* Ajustar posición */
+  left: 15px; /* Ajustar posición */
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.05); /* Fondo muy sutil */
+  border: 1px solid #bdbdbd; /* Borde sutil */
+  color: var(--text-color-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.close-lesson-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+.close-lesson-button svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* Responsive adjustments for global styles */
 @media (max-width: 768px) {
   body {
@@ -395,5 +422,12 @@ code {
     font-size: 1.3em;
     top: 10px;
     right: 10px;
+  }
+  .close-lesson-button {
+    width: 35px;
+    height: 35px;
+    top: 10px;
+    left: 10px;
+    font-size: 1.5em;
   }
 }

@@ -50,9 +50,7 @@ const LessonCard = ({ lesson, onBack }) => {
           No se ha seleccionado ninguna lección o esta lección no tiene
           ejercicios.
         </p>
-        <button onClick={onBack} className='button back-button'>
-          Volver a las Lecciones
-        </button>
+        {/* El botón de volver a la lista de lecciones se gestiona con el close-lesson-button */}
       </div>
     );
   }
@@ -68,11 +66,13 @@ const LessonCard = ({ lesson, onBack }) => {
   // --- Funciones de manejo de ejercicios (SOLO para lecciones estándar) ---
   const handleCheckAnswer = () => {
     /* Lógica de verificación para flashcards */
+    // Para multiple_choice, userTypedAnswer ya se establece al hacer clic en la opción
     if (
       !userTypedAnswer.trim() &&
-      currentStandardExercise.Type !== "multiple_choice"
+      !["multiple_choice", "practice_multiple_choice"].includes(
+        currentStandardExercise.Type
+      )
     ) {
-      // Multi-choice no necesita input previo
       setAppMessage("Por favor, escribe tu respuesta.");
       setMatchFeedback(null);
       return;
@@ -94,11 +94,14 @@ const LessonCard = ({ lesson, onBack }) => {
     if (normalizedUserAnswer === normalizedCorrectAnswer) {
       setMatchFeedback("correct");
       setShowCorrectAnswer(true);
-      setAppMessage("¡Correcto!");
+      // setAppMessage('¡Correcto!'); // ¡ELIMINADO! Alerta de correcto
     } else {
       setMatchFeedback("incorrect");
       setShowCorrectAnswer(true);
-      setAppMessage("Incorrecto. Intenta de nuevo.");
+      setAppMessage(
+        "Incorrecto. La respuesta esperada era: " +
+          (currentExercise.AnswerEN || currentExercise.QuestionEN)
+      ); // Mensaje de error
     }
   };
 
@@ -107,7 +110,7 @@ const LessonCard = ({ lesson, onBack }) => {
     // ¡CORREGIDO! Solo establece la respuesta, no comprueba inmediatamente
     if (matchFeedback !== null) return; // No permitir cambiar la selección si ya se comprobó
     setUserTypedAnswer(selectedOption);
-    // No se llama handleCheckAnswer aquí, se espera el botón "Comprobar"
+    // setAppMessage(''); // Opcional: limpiar mensaje al seleccionar
   };
 
   const handleSpeechResultForListening = (transcript) => {
@@ -116,10 +119,10 @@ const LessonCard = ({ lesson, onBack }) => {
     // No se llama handleCheckAnswer aquí, se espera el botón "Comprobar"
   };
 
-  // --- NUEVA LÓGICA DE BOTÓN "COMPROBAR" / "CONTINUAR" ---
+  // --- LÓGICA DE BOTÓN "COMPROBAR" / "CONTINUAR" ---
   const handleCheckOrContinue = () => {
     if (matchFeedback === "correct" || matchFeedback === "incorrect") {
-      // ¡CORREGIDO! Si ya se comprobó (correcto o incorrecto), avanzar
+      // Si ya se comprobó (correcto o incorrecto), avanzar
       // Si ya es correcto o incorrecto, avanzar al siguiente ejercicio
       if (currentExerciseIndex < lesson.exercises.length - 1) {
         setCurrentExerciseIndex((prev) => prev + 1);
@@ -256,7 +259,9 @@ const LessonCard = ({ lesson, onBack }) => {
             <button
               onClick={handleCheckOrContinue}
               className={`button primary-button check-continue-button ${
-                matchFeedback === "correct" ? "continue" : "check"
+                matchFeedback === "correct" || matchFeedback === "incorrect"
+                  ? "continue"
+                  : "check"
               }`}
               disabled={
                 appIsLoading ||
@@ -264,13 +269,16 @@ const LessonCard = ({ lesson, onBack }) => {
                   currentExerciseIndex >= lesson.exercises.length - 1)
               }
             >
-              {matchFeedback === "correct" ? "Continuar" : "Comprobar"}
+              {matchFeedback === "correct" || matchFeedback === "incorrect"
+                ? "Continuar"
+                : "Comprobar"}
             </button>
           </div>
         </div>
       )}
 
       {/* ¡ELIMINADO! Botón "Volver a la lista de lecciones" */}
+      {/* Este botón ya no es necesario si el botón de cerrar en la esquina superior izquierda cumple su función */}
       {/* <button onClick={onBack} className="button back-button return-to-list-button">
         Volver a la lista de lecciones
       </button> */}
