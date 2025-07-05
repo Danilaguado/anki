@@ -188,8 +188,8 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.multiple-choice-button:active {
-  background-color: #3e8e41; /* o algún color más oscuro del secundario */
+.multiple-choice-button:selected {
+  background-color: #75357a; /* o algún color más oscuro del secundario */
   transform: scale(0.97);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
