@@ -10,7 +10,7 @@ import {
   Routes,
   Link,
   useLocation,
-} from "react-router-dom"; // ¡NUEVO! Importa useLocation
+} from "react-router-dom"; // Importa useLocation
 import "./index.css"; // Importa los estilos globales para toda la aplicación
 
 // Importa el contexto
@@ -50,7 +50,6 @@ const HomeScreen = () => {
 };
 
 const App = () => {
-  const location = useLocation(); // ¡NUEVO! Hook para obtener la ubicación actual
   // Estados globales gestionados por App.js
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Estado de carga global
@@ -85,12 +84,13 @@ const App = () => {
     setAppIsLoading: setIsLoading,
   };
 
-  // Determina si la barra de navegación debe mostrarse
-  // No se mostrará si la ruta actual es /lessons/exercises
-  const shouldShowBottomNav = location.pathname !== "/lessons/exercises";
-
   return (
     <Router>
+      {/* ¡CORREGIDO! useLocation se llama dentro del componente envuelto por Router */}
+      {/* Ahora, useLocation está en el ámbito correcto */}
+      {/* La lógica de shouldShowBottomNav se mueve dentro del renderizado */}
+      {/* const location = useLocation(); // ¡MOVIDO! */}
+
       <AppContext.Provider value={contextValue}>
         <div className='app-container'>
           <Routes>
@@ -101,11 +101,19 @@ const App = () => {
             <Route path='/lessons/exercises' element={<LessonDisplayPage />} />
           </Routes>
           {/* ¡NUEVO! Renderiza la barra de navegación inferior condicionalmente */}
-          {shouldShowBottomNav && <BottomNavigationBar />}
+          {/* Se crea un componente funcional anónimo para usar useLocation */}
+          <ConditionalBottomNavigationBar />
         </div>
       </AppContext.Provider>
     </Router>
   );
+};
+
+// ¡NUEVO COMPONENTE! Para envolver BottomNavigationBar y usar useLocation
+const ConditionalBottomNavigationBar = () => {
+  const location = useLocation(); // useLocation se llama aquí, dentro del Router
+  const shouldShowBottomNav = location.pathname !== "/lessons/exercises";
+  return shouldShowBottomNav ? <BottomNavigationBar /> : null;
 };
 
 export default App;
