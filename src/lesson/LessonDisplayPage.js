@@ -1,18 +1,18 @@
 // src/lesson/LessonDisplayPage.js
 // Esta es la nueva página que muestra una lección específica (estándar o chatbot).
-// Ahora es minimalista, solo contiene LessonCard y MessageDisplay.
+// Ahora lee el lessonId del localStorage.
 
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // Importar useNavigate
+import { useNavigate } from "react-router-dom"; // useLocation ya no es necesario
 import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./lessonCard"; // Importa el componente LessonCard
+import LessonCard from "./components/lessonCard"; // Importa el componente LessonCard
 
 // Importar el contexto
 import AppContext from "../context/AppContext";
 
 const LessonDisplayPage = () => {
-  const { lessonId } = useParams(); // Obtener LessonID de la URL
   const navigate = useNavigate(); // Hook para la navegación programática
+  // const location = useLocation(); // ¡ELIMINADO! Ya no se usa useLocation
   const {
     setAppMessage,
     setAppIsLoading,
@@ -24,6 +24,9 @@ const LessonDisplayPage = () => {
   const [lesson, setLesson] = useState(null);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [error, setError] = useState(null);
+
+  // Obtener lessonId del localStorage
+  const lessonId = localStorage.getItem("currentLessonId"); // <-- ¡CORREGIDO! Leer de localStorage
 
   // --- ESTADOS PARA EL POP-UP DE NOTAS (gestionados aquí para el botón de cerrar) ---
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -38,8 +41,10 @@ const LessonDisplayPage = () => {
       setLesson(null);
 
       if (!lessonId) {
-        // Si no hay lessonId en el estado, es un error
-        setError("Error: ID de lección no proporcionado.");
+        // Si no hay lessonId, es un error o el usuario llegó directamente sin seleccionar
+        setError(
+          "Error: ID de lección no proporcionado. Por favor, selecciona una lección de la lista."
+        );
         setAppMessage("Error: ID de lección no proporcionado.");
         setIsLoadingLesson(false);
         setAppIsLoading(false);
@@ -88,6 +93,7 @@ const LessonDisplayPage = () => {
 
   // Función para volver a la lista de lecciones
   const handleBackToList = () => {
+    localStorage.removeItem("currentLessonId"); // Limpiar el ID del localStorage al volver
     navigate("/lessons"); // Navega de vuelta a la página de lista de lecciones
   };
 

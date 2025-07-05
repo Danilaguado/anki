@@ -61,8 +61,9 @@ const PrincipalPageLessons = () => {
 
   // Función para manejar la selección de una lección del listado
   const handleSelectLesson = (lessonId) => {
-    // ¡CORREGIDO! Navegar a la ruta fija, pasando el lessonId en el estado de navegación
-    navigate(`/lessons/exercises`, { state: { lessonId: lessonId } });
+    // ¡CORREGIDO! Guardar el lessonId en localStorage antes de navegar
+    localStorage.setItem("currentLessonId", lessonId);
+    navigate(`/lessons/exercises`); // Navegar a la ruta fija
     setMessage(""); // Limpiar mensajes al cambiar de vista
     setError(null);
   };
