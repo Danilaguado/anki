@@ -20,7 +20,9 @@ const ChatbotLessonRawDisplay = ({
   // Almacena el estado final de cada ejercicio
   const [exerciseCompletionStates, setExerciseCompletionStates] = useState({});
 
-  const actionButtonRef = useRef(null); // Ancla para el botón de acción
+  // Ref para el contenedor del historial del chat
+  const chatContainerRef = useRef(null);
+  const actionButtonRef = useRef(null);
 
   // Inicializar o reiniciar el chat
   useEffect(() => {
@@ -32,15 +34,17 @@ const ChatbotLessonRawDisplay = ({
     setAppMessage("Comienza la lección de chat.");
   }, [lessonExercises, setAppMessage]);
 
-  // Scroll al botón de acción
+  // CAMBIO: Lógica de scroll mejorada para apuntar siempre al final del contenedor
   useEffect(() => {
-    if (actionButtonRef.current) {
-      actionButtonRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+    const container = chatContainerRef.current;
+    if (container) {
+      // El CSS 'scroll-behavior: smooth;' se encargará de la animación.
+      // Esto asegura que el scroll vaya hasta el fondo del todo.
+      setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 100); // Un pequeño delay para dar tiempo al DOM a renderizar el nuevo alto
     }
-  }, [displayedExercises, matchFeedback]);
+  }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio al historial
 
   // Función para verificar la respuesta del ejercicio actual
   const handleCheckAnswer = () => {
@@ -72,7 +76,31 @@ const ChatbotLessonRawDisplay = ({
   const handleShowNextExercise = () => {
     const nextIndex = currentExerciseIndex + 1;
     if (lessonExercises && nextIndex < lessonExercises.length) {
-      setDisplayedExercises((prev) => [...prev, lessonExercises[nextIndex]]);
+      const newExercise = lessonExercises[nextIndex];
+      // Añade tanto la pregunta de la IA como la respuesta del usuario anterior (si existe)
+      const previousExercise =
+        displayedExercises[displayedExercises.length - 1];
+      if (previousExercise) {
+        const previousState =
+          exerciseCompletionStates[previousExercise.ExerciseID];
+        if (previousState) {
+          // Actualizamos el último ejercicio para añadir la respuesta del usuario
+          setDisplayedExercises((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              ...previousExercise,
+              userAnswer: previousState.userAnswer,
+              feedback: previousState.correct,
+            };
+            return [...updated, newExercise];
+          });
+        } else {
+          setDisplayedExercises((prev) => [...prev, newExercise]);
+        }
+      } else {
+        setDisplayedExercises([newExercise]);
+      }
+
       setCurrentExerciseIndex(nextIndex);
       // Reiniciar estados para el nuevo ejercicio
       setCurrentUserInput("");
@@ -99,18 +127,8 @@ const ChatbotLessonRawDisplay = ({
     const exerciseState = exerciseCompletionStates[exercise.ExerciseID] || {};
     const isAnswered = exerciseState.answered;
 
-    // Si ya se respondió, no mostrar más inputs
-    if (isAnswered) {
-      return (
-        <div className='chat-answered-display'>
-          <p className='user-answered-text'>
-            Tu respuesta: {exerciseState.userAnswer}
-          </p>
-        </div>
-      );
-    }
+    if (isAnswered) return null; // No mostrar inputs si ya se respondió
 
-    // Si es el ejercicio activo, mostrar los inputs
     if (
       exercise.ExerciseID === lessonExercises[currentExerciseIndex]?.ExerciseID
     ) {
@@ -132,8 +150,6 @@ const ChatbotLessonRawDisplay = ({
               ))}
             </div>
           );
-        case "fill_in_the_blank":
-        // ... (se puede añadir lógica similar para otros tipos)
         default:
           return (
             <input
@@ -150,12 +166,12 @@ const ChatbotLessonRawDisplay = ({
           );
       }
     }
-    return null; // No mostrar nada para ejercicios pasados que no son el actual
+    return null;
   };
 
   return (
     <div className='chatbot-raw-display-container'>
-      <div className='chat-history-area'>
+      <div className='chat-history-area' ref={chatContainerRef}>
         {displayedExercises.map((exercise) => {
           const exerciseState =
             exerciseCompletionStates[exercise.ExerciseID] || {};
@@ -170,14 +186,14 @@ const ChatbotLessonRawDisplay = ({
                 </div>
               </div>
 
-              {exerciseState.answered && (
+              {exercise.userAnswer && (
                 <div className='chat-message user'>
                   <div
                     className={`chat-bubble ${
-                      exerciseState.correct ? "correct" : "incorrect"
+                      exercise.feedback ? "correct" : "incorrect"
                     }`}
                   >
-                    {exerciseState.userAnswer}
+                    {exercise.userAnswer}
                   </div>
                 </div>
               )}
