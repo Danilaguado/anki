@@ -101,17 +101,14 @@ const PrincipalPageLessons = () => {
         ) : (
           <div className='lessons-buttons-grid'>
             {availableLessons.map((lesson) => (
-              <button
+              <Link
                 key={lesson.LessonID}
-                onClick={() => handleSelectLesson(lesson.LessonID)}
+                to={`/lessons/${lesson.LessonID}`}
                 className='button lesson-list-button'
                 title={lesson.Description}
               >
-                {lesson.Title} ({lesson.Difficulty}) -{" "}
-                {lesson.TypeModule === "chatbot_lesson"
-                  ? "Chatbot"
-                  : "Estándar"}
-              </button>
+                {lesson.Title}…
+              </Link>
             ))}
           </div>
         )}
