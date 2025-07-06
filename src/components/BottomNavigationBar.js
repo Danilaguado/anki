@@ -4,38 +4,29 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AppContext from "../context/AppContext";
 import "./BottomNavigationBar.css";
 
-// CAMBIO: Iconos SVG reales añadidos
+// CAMBIO: Iconos SVG actualizados con los que proporcionaste.
 const LessonsIcon = ({ isActive }) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
-    className='h-6 w-6'
-    fill='none'
-    viewBox='0 0 24 24'
-    stroke='currentColor'
-    strokeWidth={isActive ? 2.5 : 2}
+    width='24'
+    height='24'
+    fill='currentColor'
+    viewBox='0 0 16 16'
   >
-    <path
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
-    />
+    <path d='M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783' />
   </svg>
 );
 
 const VocabIcon = ({ isActive }) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
-    className='h-6 w-6'
-    fill='none'
-    viewBox='0 0 24 24'
-    stroke='currentColor'
-    strokeWidth={isActive ? 2.5 : 2}
+    width='24'
+    height='24'
+    fill='currentColor'
+    viewBox='0 0 16 16'
   >
-    <path
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
-    />
+    <path d='M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z' />
+    <path d='M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8m0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5' />
   </svg>
 );
 
@@ -70,8 +61,8 @@ const NavItem = ({ to, icon: Icon, label }) => {
 const BottomNavigationBar = () => {
   return (
     <nav className='bottom-navigation-bar'>
-      <NavItem to='/' icon={LessonsIcon} label='Lecciones' />
       <NavItem to='/vocab-trainer' icon={VocabIcon} label='Vocabulario' />
+      <NavItem to='/' icon={LessonsIcon} label='Lecciones' />
     </nav>
   );
 };
