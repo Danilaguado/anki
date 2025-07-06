@@ -1,5 +1,6 @@
 /* src/lesson/PrincipalPageLessons.css */
 
+/* Contenedor principal que ocupa toda la pantalla */
 .lesson-detail-page-wrapper {
   position: fixed;
   top: 0;
@@ -10,10 +11,10 @@
   flex-direction: column;
   background-color: var(--system-background);
   z-index: 10;
-  padding: 10px 10px 90px 10px; /* Espacio para la nav bar */
   box-sizing: border-box;
 }
 
+/* El contenido de la lección (el componente LessonCard) */
 .lesson-detail-view-content {
   flex-grow: 1;
   display: flex;
@@ -22,12 +23,16 @@
   border-radius: var(--border-radius);
   box-shadow: 0 8px 32px var(--shadow-color);
   overflow: hidden;
+  /* Se añade margen para crear el espacio con los bordes */
+  margin: 10px 10px 90px 10px;
 }
 
+/* Botón de cerrar (X) */
 .close-lesson-button {
   position: absolute;
+  /* CAMBIO: Movido a la izquierda */
   top: 20px;
-  right: 20px;
+  left: 20px;
   width: 30px;
   height: 30px;
   border-radius: 50%;

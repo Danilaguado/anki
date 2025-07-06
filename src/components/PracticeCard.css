@@ -11,8 +11,8 @@
   flex-direction: column;
   background-color: var(--system-background);
   z-index: 10;
-  padding: 10px 10px 90px 10px; /* Espacio para la nav bar */
   box-sizing: border-box;
+  /* CAMBIO: Se elimina el padding de aquí para evitar el efecto de "doble card" */
 }
 
 /* Tarjeta principal que contiene el ejercicio */
@@ -26,6 +26,8 @@
   overflow: hidden;
   padding: 20px;
   gap: 20px;
+  /* CAMBIO: Se añade margen para crear el espacio con los bordes de la pantalla */
+  margin: 10px 10px 90px 10px;
 }
 
 /* Área de contenido para la pregunta y respuesta */
