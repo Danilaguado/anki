@@ -36,16 +36,12 @@ const LessonDisplayPage = () => {
       }
 
       try {
-        // CONSEJO DE DEPURACIÓN:
-        // Imprime en la consola para asegurarte de que la API devuelve lo que esperas.
         const response = await fetch("/api/lessons/get-all");
         if (!response.ok) {
+          // Captura el error 500 que se ve en tu screenshot
           throw new Error(`Error HTTP: ${response.status}`);
         }
         const result = await response.json();
-
-        // Imprime la respuesta para ver su estructura
-        console.log("Respuesta de la API:", result);
 
         if (result.success && result.lessons) {
           const foundLesson = result.lessons.find(
@@ -54,7 +50,7 @@ const LessonDisplayPage = () => {
           if (foundLesson) {
             setLesson(foundLesson);
             setAppMessage(`Lección "${foundLesson.Title}" cargada.`);
-            setError(null); // Limpiar errores anteriores
+            setError(null);
           } else {
             setError(`Lección con ID "${lessonId}" no encontrada.`);
             setAppMessage("Lección no encontrada.");
@@ -74,7 +70,10 @@ const LessonDisplayPage = () => {
     };
 
     fetchLesson();
-  }, [lessonId, setAppMessage, setAppIsLoading]);
+    // ✅ CAMBIO CLAVE: Se eliminan setAppMessage y setAppIsLoading de las dependencias.
+    // Este efecto SÓLO debe depender del ID de la lección que se muestra.
+    // Las funciones de seteo de estado del contexto son estables y no necesitan estar aquí.
+  }, [lessonId]);
 
   const handleBackToList = () => {
     navigate("/lessons");
@@ -89,13 +88,11 @@ const LessonDisplayPage = () => {
     setNotesContent("");
   };
 
-  // --- LÓGICA DE RENDERIZADO MEJORADA ---
   const renderContent = () => {
     if (isLoadingLesson) {
       return <p className='info-text'>Cargando lección...</p>;
     }
 
-    // CAMBIO CLAVE: Si la carga terminó y hay un error, muéstralo prominentemente.
     if (error) {
       return (
         <div className='message-box error-box' role='alert'>
@@ -115,7 +112,6 @@ const LessonDisplayPage = () => {
       return <LessonCard lesson={lesson} onShowNotes={handleShowNotes} />;
     }
 
-    // Caso de respaldo por si algo más falla
     return <p className='info-text'>No hay contenido para mostrar.</p>;
   };
 
@@ -151,13 +147,11 @@ const LessonDisplayPage = () => {
         </div>
       )}
 
-      {/* El MessageDisplay sigue siendo útil para mensajes globales como "Cargando audio..." */}
       <MessageDisplay
         message={appGlobalMessage}
         isLoading={appIsLoading || isLoadingLesson}
       />
 
-      {/* El contenido principal se renderiza aquí */}
       {renderContent()}
     </div>
   );
