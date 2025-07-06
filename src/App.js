@@ -1,6 +1,7 @@
 // src/App.js
 
-import React, { useState, useEffect, useRef } from "react";
+// CAMBIO 1: Importa useMemo
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -10,21 +11,13 @@ import {
 } from "react-router-dom";
 import "./index.css";
 
-// Importa el contexto
 import AppContext from "./context/AppContext";
-
-// Importa tus secciones principales
 import MainVocabSection from "./MainVocabSection";
 import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
 import LessonDisplayPage from "./lesson/LessonDisplayPage";
-
-// Importar utilidades de audio
 import { playAudio, b64toBlob } from "./utils/audioUtils";
-
-// Importa la barra de navegación inferior
 import BottomNavigationBar from "./components/BottomNavigationBar";
 
-// Componente de ejemplo para la pantalla principal o "Home"
 const HomeScreen = () => {
   return (
     <div className='home-screen-wrapper'>
@@ -45,12 +38,10 @@ const HomeScreen = () => {
 };
 
 const App = () => {
-  // Estados globales gestionados por App.js
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const audioCache = useRef(new Map());
 
-  // Función para envolver playAudio con sus dependencias globales
   const wrappedPlayAudio = React.useCallback((text, lang) => {
     playAudio(
       text,
@@ -62,7 +53,6 @@ const App = () => {
     );
   }, []);
 
-  // Asegurarse de limpiar los URLs de Blob del caché cuando el componente App se desmonte
   useEffect(() => {
     return () => {
       audioCache.current.forEach((url) => URL.revokeObjectURL(url));
@@ -70,28 +60,31 @@ const App = () => {
     };
   }, []);
 
-  // Objeto de valores que se proporcionarán a través del Contexto
-  const contextValue = {
-    appGlobalMessage: message,
-    appIsLoading: isLoading,
-    onPlayAudio: wrappedPlayAudio,
-    setAppMessage: setMessage,
-    setAppIsLoading: setIsLoading,
-  };
+  // CAMBIO 2: Envuelve la creación del objeto de contexto en useMemo
+  // Esto asegura que el objeto contextValue solo se cree de nuevo si
+  // message, isLoading, o wrappedPlayAudio cambian.
+  const contextValue = useMemo(
+    () => ({
+      appGlobalMessage: message,
+      appIsLoading: isLoading,
+      onPlayAudio: wrappedPlayAudio,
+      setAppMessage: setMessage,
+      setAppIsLoading: setIsLoading,
+    }),
+    [message, isLoading, wrappedPlayAudio] // Dependencias de useMemo
+  );
 
   return (
     <Router>
+      {/* El proveedor ahora usa el valor memorizado, rompiendo el bucle */}
       <AppContext.Provider value={contextValue}>
         <div className='app-container'>
           <Routes>
             <Route path='/' element={<HomeScreen />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
-            {/* Ruta dinámica para mostrar una lección específica por su ID */}
             <Route path='/lessons/:lessonId' element={<LessonDisplayPage />} />
           </Routes>
-
-          {/* Renderiza la barra de navegación inferior condicionalmente */}
           <ConditionalBottomNavigationBar />
         </div>
       </AppContext.Provider>
@@ -99,15 +92,12 @@ const App = () => {
   );
 };
 
-// Componente para envolver BottomNavigationBar y usar useLocation
 const ConditionalBottomNavigationBar = () => {
   const location = useLocation();
-  // Ocultar la barra de navegación solo en la página de una lección específica
   const shouldShowBottomNav = !(
     location.pathname.startsWith("/lessons/") &&
     location.pathname !== "/lessons"
   );
-
   return shouldShowBottomNav ? <BottomNavigationBar /> : null;
 };
 
