@@ -12,19 +12,12 @@ const ChatbotLessonRawDisplay = ({
 }) => {
   const [displayedExercises, setDisplayedExercises] = useState([]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(-1);
-
-  // Estados para el ejercicio *actualmente activo*
   const [currentUserInput, setCurrentUserInput] = useState("");
-  const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
-
-  // Almacena el estado final de cada ejercicio
+  const [matchFeedback, setMatchFeedback] = useState(null);
   const [exerciseCompletionStates, setExerciseCompletionStates] = useState({});
-
-  // Ref para el contenedor del historial del chat
   const chatContainerRef = useRef(null);
   const actionButtonRef = useRef(null);
 
-  // Inicializar o reiniciar el chat
   useEffect(() => {
     setDisplayedExercises([]);
     setCurrentExerciseIndex(-1);
@@ -34,34 +27,27 @@ const ChatbotLessonRawDisplay = ({
     setAppMessage("Comienza la lección de chat.");
   }, [lessonExercises, setAppMessage]);
 
-  // CAMBIO: Lógica de scroll mejorada para apuntar siempre al final del contenedor
   useEffect(() => {
     const container = chatContainerRef.current;
     if (container) {
-      // El CSS 'scroll-behavior: smooth;' se encargará de la animación.
-      // Esto asegura que el scroll vaya hasta el fondo del todo.
       setTimeout(() => {
         container.scrollTop = container.scrollHeight;
-      }, 100); // Un pequeño delay para dar tiempo al DOM a renderizar el nuevo alto
+      }, 100);
     }
-  }, [displayedExercises]); // Se dispara cada vez que se añade un ejercicio al historial
+  }, [displayedExercises]);
 
-  // Función para verificar la respuesta del ejercicio actual
   const handleCheckAnswer = () => {
     if (!currentUserInput.trim()) {
       setAppMessage("Por favor, selecciona o escribe una respuesta.");
       return;
     }
-
     const currentExercise = lessonExercises[currentExerciseIndex];
     const normalizedUserAnswer = normalizeText(currentUserInput);
     const normalizedCorrectAnswer = normalizeText(
       currentExercise.AnswerEN || currentExercise.QuestionEN || ""
     );
     const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
-
     setMatchFeedback(isCorrect ? "correct" : "incorrect");
-
     setExerciseCompletionStates((prev) => ({
       ...prev,
       [currentExercise.ExerciseID]: {
@@ -72,19 +58,16 @@ const ChatbotLessonRawDisplay = ({
     }));
   };
 
-  // Función para mostrar el siguiente ejercicio
   const handleShowNextExercise = () => {
     const nextIndex = currentExerciseIndex + 1;
     if (lessonExercises && nextIndex < lessonExercises.length) {
       const newExercise = lessonExercises[nextIndex];
-      // Añade tanto la pregunta de la IA como la respuesta del usuario anterior (si existe)
       const previousExercise =
         displayedExercises[displayedExercises.length - 1];
       if (previousExercise) {
         const previousState =
           exerciseCompletionStates[previousExercise.ExerciseID];
         if (previousState) {
-          // Actualizamos el último ejercicio para añadir la respuesta del usuario
           setDisplayedExercises((prev) => {
             const updated = [...prev];
             updated[updated.length - 1] = {
@@ -100,9 +83,7 @@ const ChatbotLessonRawDisplay = ({
       } else {
         setDisplayedExercises([newExercise]);
       }
-
       setCurrentExerciseIndex(nextIndex);
-      // Reiniciar estados para el nuevo ejercicio
       setCurrentUserInput("");
       setMatchFeedback(null);
       setAppMessage("");
@@ -111,24 +92,17 @@ const ChatbotLessonRawDisplay = ({
     }
   };
 
-  // Lógica del botón principal: o verifica o continúa
   const handleMainActionClick = () => {
     if (matchFeedback) {
-      // Si ya hay feedback (correcto o incorrecto), continuar
       handleShowNextExercise();
     } else {
-      // Si no, verificar
       handleCheckAnswer();
     }
   };
 
-  // Renderiza el contenido interactivo de un ejercicio
   const renderInteractiveExerciseContent = (exercise) => {
     const exerciseState = exerciseCompletionStates[exercise.ExerciseID] || {};
-    const isAnswered = exerciseState.answered;
-
-    if (isAnswered) return null; // No mostrar inputs si ya se respondió
-
+    if (exerciseState.answered) return null;
     if (
       exercise.ExerciseID === lessonExercises[currentExerciseIndex]?.ExerciseID
     ) {
@@ -179,13 +153,32 @@ const ChatbotLessonRawDisplay = ({
             <div key={exercise.ExerciseID} className='chat-message-block'>
               <div className='chat-message ai'>
                 <div className='chat-bubble'>
-                  <p>{exercise.QuestionEN}</p>
+                  {/* CAMBIO: Contenedor para alinear texto y botón de play */}
+                  <div className='chat-text-with-audio'>
+                    <button
+                      className='chat-play-button'
+                      onClick={() => onPlayAudio(exercise.QuestionEN, "en-US")}
+                      disabled={appIsLoading}
+                      aria-label='Reproducir audio'
+                    >
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        width='16'
+                        height='16'
+                        fill='currentColor'
+                        viewBox='0 0 16 16'
+                      >
+                        <path d='M8 6.5a.5.5 0 0 0-1 0v3a.5.5 0 0 0 1 0v-3z' />
+                        <path d='M5.5 5.5A.5.5 0 0 1 6 6v4a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm9 0a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zM3 5.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm10 0a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5z' />
+                      </svg>
+                    </button>
+                    <p>{exercise.QuestionEN}</p>
+                  </div>
                   {exercise.QuestionES && (
                     <p className='chat-translation'>{exercise.QuestionES}</p>
                   )}
                 </div>
               </div>
-
               {exercise.userAnswer && (
                 <div className='chat-message user'>
                   <div
@@ -201,13 +194,11 @@ const ChatbotLessonRawDisplay = ({
           );
         })}
       </div>
-
       <div className='chatbot-footer'>
         {currentExerciseIndex >= 0 &&
           renderInteractiveExerciseContent(
             lessonExercises[currentExerciseIndex]
           )}
-
         <div ref={actionButtonRef} style={{ paddingTop: "10px" }}>
           <button
             onClick={

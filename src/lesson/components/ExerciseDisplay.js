@@ -32,7 +32,6 @@ const ExerciseDisplay = ({
     />
   );
 
-  // Determina si el footer debe mostrarse
   const showFooter = [
     "multiple_choice",
     "fill_in_the_blank",
@@ -43,7 +42,6 @@ const ExerciseDisplay = ({
   return (
     <>
       <div className='card-content-area'>
-        {/* Botón de notas (?) */}
         {currentExercise?.Notes && (
           <button
             className='notes-toggle-button'
@@ -65,13 +63,38 @@ const ExerciseDisplay = ({
           </button>
         )}
 
-        {/* Contenido principal (la pregunta) */}
         <div className='question-container'>
           <h2 className='question-text'>
             {currentExercise.Type === "multiple_choice"
               ? currentExercise.QuestionES
               : currentExercise.QuestionEN}
           </h2>
+
+          {/* CAMBIO: Botón de Play reintroducido aquí */}
+          <button
+            className='play-button-centered'
+            onClick={() =>
+              onPlayAudio(
+                currentExercise.Type === "multiple_choice"
+                  ? currentExercise.QuestionES
+                  : currentExercise.QuestionEN,
+                currentExercise.Type === "multiple_choice" ? "es" : "en-US"
+              )
+            }
+            disabled={appIsLoading}
+            aria-label='Reproducir audio de la pregunta'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='24'
+              height='24'
+              viewBox='0 0 24 24'
+              fill='currentColor'
+            >
+              <path d='M8 5v14l11-7z'></path>
+            </svg>
+          </button>
+
           {currentExercise.Type !== "multiple_choice" && (
             <p className='question-translation'>{currentExercise.QuestionES}</p>
           )}
@@ -82,7 +105,6 @@ const ExerciseDisplay = ({
         )}
       </div>
 
-      {/* NUEVO: Footer unificado para todos los elementos de acción */}
       {showFooter && (
         <div className='exercise-footer'>
           {currentExercise.Type === "multiple_choice" && (

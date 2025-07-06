@@ -12,7 +12,6 @@
   flex-grow: 1;
   overflow-y: auto;
   padding: 20px;
-  /* CAMBIO: Añadido para un scroll suave */
   scroll-behavior: smooth;
 }
 
@@ -23,7 +22,7 @@
 .chat-message {
   display: flex;
   flex-direction: column;
-  max-width: 75%;
+  max-width: 85%; /* Un poco más de ancho */
 }
 
 .chat-bubble {
@@ -31,6 +30,39 @@
   border-radius: 18px;
   line-height: 1.4;
   font-size: 17px;
+}
+
+/* NUEVO: Contenedor para alinear texto y botón de play */
+.chat-text-with-audio {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Espacio entre el botón y el texto */
+}
+.chat-text-with-audio p {
+  margin: 0; /* Eliminar margen por defecto del párrafo */
+}
+
+/* NUEVO: Estilos para el botón de play pequeño */
+.chat-play-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--system-gray-4);
+  color: var(--system-secondary-label);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0; /* Evita que el botón se encoja */
+  transition: background-color 0.2s ease;
+}
+.chat-play-button:hover {
+  background-color: var(--system-gray-2);
+}
+.chat-play-button svg {
+  width: 16px; /* Icono más pequeño */
+  height: 16px;
 }
 
 .chat-message.ai {
@@ -44,8 +76,8 @@
 .chat-translation {
   font-size: 15px;
   color: var(--system-secondary-label);
-  margin-top: 4px;
-  padding-top: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid var(--separator-color);
 }
 
@@ -85,7 +117,6 @@
   box-sizing: border-box;
 }
 
-/* Estilos para las opciones y el botón de verificar */
 .multiple-choice-options {
   display: grid;
   grid-template-columns: 1fr;
