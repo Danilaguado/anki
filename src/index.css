@@ -311,33 +311,6 @@ code {
   color: var(--error-color);
 }
 
-/* Estilo para el botón de notas (icono de pregunta) */
-.notes-toggle-button {
-  width: 40px; /* Pequeño y redondo */
-  height: 40px;
-  border-radius: 50%; /* Redondo */
-  background-color: var(--info-color); /* Color de información */
-  color: var(--text-color-light);
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5em; /* Tamaño del icono */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: absolute; /* Posicionamiento absoluto dentro de la card */
-  top: 15px; /* Ajustar posición */
-  right: 15px;
-  z-index: 5; /* Asegura que esté por encima del contenido */
-}
-.notes-toggle-button:hover {
-  background-color: #1976d2;
-  transform: scale(1.05);
-}
-.notes-toggle-button svg {
-  width: 20px;
-  height: 20px;
-}
-
 /* Animación de entrada para modales */
 @keyframes fadeInScale {
   from {
@@ -350,7 +323,7 @@ code {
   }
 }
 
-/* --- NUEVO: Estilo para el botón de cerrar la lección (icono X) --- */
+/* --- Estilo para el botón de cerrar la lección (icono X) --- */
 .close-lesson-button {
   position: absolute;
   top: 15px; /* Ajustar posición */
@@ -417,13 +390,6 @@ code {
   }
   .home-nav-buttons {
     flex-direction: column;
-  }
-  .notes-toggle-button {
-    width: 35px; /* Más pequeño en móvil */
-    height: 35px;
-    font-size: 1.3em;
-    top: 10px;
-    right: 10px;
   }
   .close-lesson-button {
     width: 35px;

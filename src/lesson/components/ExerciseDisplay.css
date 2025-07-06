@@ -1,0 +1,182 @@
+/* src/lesson/components/ExerciseDisplay.css */
+
+/* Contenedor principal de la tarjeta de ejercicio */
+.card-container.lesson-exercise-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 480px; /* Altura mínima para que el botón de "Continuar" pueda ir al fondo */
+  padding-bottom: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Área de contenido principal (el recuadro punteado) */
+.card-content-area.quiz-content-area {
+  position: relative; /* Necesario para posicionar el botón de notas */
+  flex-grow: 1; /* Hace que esta área ocupe el espacio disponible, empujando el botón hacia abajo */
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  border: 1px dashed var(--border-color);
+  border-radius: 10px;
+  margin: 15px;
+  transition: all 0.3s ease;
+}
+
+.card-content-area.match-correct {
+  border-color: var(--success-color);
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.3);
+}
+
+.card-content-area.match-incorrect {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 4px rgba(244, 67, 54, 0.3);
+}
+
+/* Contenedor para la pregunta y el botón de audio */
+.question-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  text-align: center;
+  padding: 0 30px;
+}
+
+.question-container .card-text.question {
+  margin: 0;
+  font-size: 1.6em;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+/* Botón de audio al lado del texto */
+.play-beside-text {
+  flex-shrink: 0;
+  background-color: var(--primary-color);
+  color: white;
+  width: 50px;
+  height: 50px;
+}
+
+/* Grupo de botones de navegación (Contiene "Comprobar" / "Continuar") */
+.navigation-buttons-group {
+  margin-top: auto; /* EMPUJA ESTE GRUPO AL FONDO DEL FLEX CONTAINER */
+  padding-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.check-continue-button {
+  width: 80%;
+  max-width: 300px;
+}
+
+/* Botón de notas (signo de interrogación) */
+.notes-toggle-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--info-color);
+  color: var(--text-color-light);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+/* Estilos para las opciones de Múltiple Choice */
+.multiple-choice-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.multiple-choice-button {
+  background-color: #f0f0f0;
+  color: var(--text-color-dark);
+  border: 2px solid var(--border-color);
+  width: 100%;
+  padding: 15px;
+  font-size: 1em;
+  transition: all 0.2s ease-in-out;
+}
+
+.multiple-choice-button:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  background-color: #e9e9ff;
+  transform: translateY(-2px);
+}
+
+.multiple-choice-button.selected-option {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.multiple-choice-button.correct-option {
+  background-color: var(--success-color) !important;
+  border-color: var(--success-color) !important;
+  color: white !important;
+}
+
+.multiple-choice-button.incorrect-selected-option {
+  background-color: var(--error-color) !important;
+  border-color: var(--error-color) !important;
+  color: white !important;
+  opacity: 0.7;
+}
+
+/* Estilos para los botones de micrófono y play (cuando están agrupados) */
+.microphone-play-buttons-group {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.audio-button-round {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.audio-button-round svg {
+  width: 24px;
+  height: 24px;
+}
+
+.recorded-text-display {
+  background-color: #f0f0f0;
+  color: var(--text-color-dark);
+  padding: 8px 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 1.1em;
+  text-align: center;
+  word-break: break-word;
+  display: inline-block;
+  width: auto;
+  margin: 10px auto;
+}
