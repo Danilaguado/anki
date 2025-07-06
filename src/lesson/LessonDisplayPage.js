@@ -135,14 +135,18 @@ const LessonDisplayPage = () => {
             className='notes-modal-content'
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              className='notes-modal-close-button'
-              onClick={handleCloseNotesModal}
-            >
-              &times;
-            </button>
+            {/* El botón 'X' que estaba aquí se elimina */}
+
             <h3>Notas del Ejercicio</h3>
             <p>{notesContent}</p>
+
+            {/* NUEVO: Botón de texto "Cerrar" en la parte inferior */}
+            <button
+              className='button notes-modal-close-button'
+              onClick={handleCloseNotesModal}
+            >
+              Cerrar
+            </button>
           </div>
         </div>
       )}
