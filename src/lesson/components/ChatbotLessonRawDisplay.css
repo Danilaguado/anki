@@ -12,6 +12,8 @@
   flex-grow: 1;
   overflow-y: auto;
   padding: 20px;
+  /* CAMBIO: Añadido para un scroll suave */
+  scroll-behavior: smooth;
 }
 
 .chat-message-block {
@@ -103,9 +105,5 @@
 
 .check-continue-button.correct {
   background-color: var(--system-green);
-  color: white;
-}
-.check-continue-button.incorrect {
-  background-color: var(--system-red);
   color: white;
 }
