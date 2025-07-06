@@ -10,6 +10,7 @@ import LessonCard from "./lessonCard";
 import AppContext from "../context/AppContext";
 
 const PrincipalPageLessons = () => {
+  const navigate = useNavigate(); // Hook para la navegación
   // Consumir valores del contexto
   const { setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
@@ -19,7 +20,8 @@ const PrincipalPageLessons = () => {
   const [message, setMessage] = useState(""); // Mensajes locales de este componente
   const [error, setError] = useState(null);
   const [availableLessons, setAvailableLessons] = useState([]); // Todas las lecciones cargadas/generadas
-  const [selectedLesson, setSelectedLesson] = useState(null); // La lección actualmente seleccionada para ver en detalle
+  // selectedLesson ya no se necesita aquí, la navegación lo gestiona
+  // const [selectedLesson, setSelectedLesson] = useState(null);
 
   // Efecto para cargar las lecciones existentes al montar el componente
   useEffect(() => {
@@ -42,6 +44,10 @@ const PrincipalPageLessons = () => {
         const result = await response.json();
         if (result.success) {
           setAvailableLessons(result.lessons);
+          console.log(
+            "DEBUG: PrincipalPageLessons - Lecciones cargadas del backend:",
+            result.lessons
+          ); // DEBUG
           setMessage("Lecciones cargadas.");
         } else {
           setError(result.error || "Error desconocido al cargar lecciones.");
@@ -56,32 +62,34 @@ const PrincipalPageLessons = () => {
     };
 
     fetchExistingLessons();
-  }, [setAppMessage, setAppIsLoading]);
+  }, [setAppMessage, setAppIsLoading]); // Dependencias para evitar alertas
 
   // Función para manejar la selección de una lección del listado
   const handleSelectLesson = (lessonId) => {
-    const lessonToView = availableLessons.find((l) => l.LessonID === lessonId);
-    setSelectedLesson(lessonToView); // ¡CORREGIDO! Establece la lección seleccionada
+    console.log(
+      "DEBUG: PrincipalPageLessons - Seleccionando lección con ID:",
+      lessonId
+    ); // DEBUG
+    // ¡CORREGIDO! Guardar el lessonId en localStorage antes de navegar
+    localStorage.setItem("currentLessonId", lessonId);
+    console.log(
+      "DEBUG: PrincipalPageLessons - lessonId guardado en localStorage:",
+      localStorage.getItem("currentLessonId")
+    ); // DEBUG
+    navigate(`/lessons/exercises`); // Navegar a la ruta fija
     setMessage(""); // Limpiar mensajes al cambiar de vista
     setError(null);
   };
 
-  // Función para volver a la lista de lecciones (se pasa a LessonCard)
-  const handleBackToLessonList = () => {
-    setSelectedLesson(null); // Limpia la lección seleccionada para volver a la lista
-    setMessage("");
-    setError(null);
-  };
+  // handleBackToLessonList ya no es necesario aquí, la navegación lo gestiona
+  // const handleBackToLessonList = () => {
+  //   setSelectedLesson(null);
+  //   setMessage("");
+  //   setError(null);
+  // };
 
   return (
     <div className='lessons-page-wrapper app-container'>
-      {/* El botón de volver a la pantalla principal se maneja con BottomNavigationBar */}
-      <h1 className='app-title'>Lecciones</h1>
-      <p className='info-text'>
-        Selecciona una lección para comenzar a aprender.
-      </p>
-
-      {/* Mostrar mensajes de carga o error */}
       <MessageDisplay message={message} isLoading={isLoading} />
       {error && (
         <div className='message-box error-box' role='alert'>
@@ -89,46 +97,33 @@ const PrincipalPageLessons = () => {
         </div>
       )}
 
-      {/* Renderizado condicional: Mostrar LessonCard si hay una lección seleccionada */}
-      {selectedLesson ? (
-        // Si hay una lección seleccionada, la mostramos con LessonCard
-        <LessonCard
-          lesson={selectedLesson}
-          onBack={handleBackToLessonList} // Pasa la función de volver a la lista
-          // onShowNotes no se pasa aquí, se gestiona dentro de LessonCard si es necesario
-        />
-      ) : (
-        // Si no hay lección seleccionada, mostrar la lista de lecciones disponibles
-        <>
-          <div className='section-container available-lessons-list'>
-            <h2 className='section-title'>Lecciones Disponibles</h2>
-            {isLoading && availableLessons.length === 0 ? (
-              <p className='info-text'>Cargando lecciones...</p>
-            ) : availableLessons.length === 0 ? (
-              <p className='info-text'>
-                No hay lecciones disponibles. Por favor, crea algunas en tu
-                Google Sheet.
-              </p>
-            ) : (
-              <div className='lessons-buttons-grid'>
-                {availableLessons.map((lesson) => (
-                  <button
-                    key={lesson.LessonID}
-                    onClick={() => handleSelectLesson(lesson.LessonID)}
-                    className='button lesson-list-button'
-                    title={lesson.Description}
-                  >
-                    {lesson.Title} ({lesson.Difficulty}) -{" "}
-                    {lesson.TypeModule === "chatbot_lesson"
-                      ? "Chatbot"
-                      : "Estándar"}
-                  </button>
-                ))}
-              </div>
-            )}
+      <div className='section-container available-lessons-list'>
+        <h2 className='section-title'>Lecciones Disponibles</h2>
+        {isLoading && availableLessons.length === 0 ? (
+          <p className='info-text'>Cargando lecciones...</p>
+        ) : availableLessons.length === 0 ? (
+          <p className='info-text'>
+            No hay lecciones disponibles. Por favor, crea algunas en tu Google
+            Sheet.
+          </p>
+        ) : (
+          <div className='lessons-buttons-grid'>
+            {availableLessons.map((lesson) => (
+              <button
+                key={lesson.LessonID}
+                onClick={() => handleSelectLesson(lesson.LessonID)}
+                className='button lesson-list-button'
+                title={lesson.Description}
+              >
+                {lesson.Title} ({lesson.Difficulty}) -{" "}
+                {lesson.TypeModule === "chatbot_lesson"
+                  ? "Chatbot"
+                  : "Estándar"}
+              </button>
+            ))}
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };

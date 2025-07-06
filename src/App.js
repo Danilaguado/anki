@@ -86,22 +86,16 @@ const App = () => {
 
   return (
     <Router>
-      {/* ¡CORREGIDO! useLocation se llama dentro del componente envuelto por Router */}
-      {/* Ahora, useLocation está en el ámbito correcto */}
-      {/* La lógica de shouldShowBottomNav se mueve dentro del renderizado */}
-      {/* const location = useLocation(); // ¡MOVIDO! */}
-
       <AppContext.Provider value={contextValue}>
         <div className='app-container'>
           <Routes>
             <Route path='/' element={<HomeScreen />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
-            {/* Ruta fija para la visualización de lecciones */}
+            {/* ¡CORREGIDO! Ruta fija para la visualización de lecciones */}
             <Route path='/lessons/exercises' element={<LessonDisplayPage />} />
           </Routes>
-          {/* ¡NUEVO! Renderiza la barra de navegación inferior condicionalmente */}
-          {/* Se crea un componente funcional anónimo para usar useLocation */}
+          {/* Renderiza la barra de navegación inferior condicionalmente */}
           <ConditionalBottomNavigationBar />
         </div>
       </AppContext.Provider>
@@ -109,7 +103,7 @@ const App = () => {
   );
 };
 
-// ¡NUEVO COMPONENTE! Para envolver BottomNavigationBar y usar useLocation
+// Componente para envolver BottomNavigationBar y usar useLocation
 const ConditionalBottomNavigationBar = () => {
   const location = useLocation(); // useLocation se llama aquí, dentro del Router
   const shouldShowBottomNav = location.pathname !== "/lessons/exercises";
