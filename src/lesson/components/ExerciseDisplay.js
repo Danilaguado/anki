@@ -64,36 +64,37 @@ const ExerciseDisplay = ({
         )}
 
         <div className='question-container'>
-          <h2 className='question-text'>
-            {currentExercise.Type === "multiple_choice"
-              ? currentExercise.QuestionES
-              : currentExercise.QuestionEN}
-          </h2>
-
-          {/* CAMBIO: Botón de Play reintroducido aquí */}
-          <button
-            className='play-button-centered'
-            onClick={() =>
-              onPlayAudio(
-                currentExercise.Type === "multiple_choice"
-                  ? currentExercise.QuestionES
-                  : currentExercise.QuestionEN,
-                currentExercise.Type === "multiple_choice" ? "es" : "en-US"
-              )
-            }
-            disabled={appIsLoading}
-            aria-label='Reproducir audio de la pregunta'
-          >
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              width='24'
-              height='24'
-              viewBox='0 0 24 24'
-              fill='currentColor'
+          {/* CAMBIO: Contenedor para alinear texto y botón horizontalmente */}
+          <div className='question-line'>
+            <h2 className='question-text'>
+              {currentExercise.Type === "multiple_choice"
+                ? currentExercise.QuestionES
+                : currentExercise.QuestionEN}
+            </h2>
+            <button
+              className='play-button-inline'
+              onClick={() =>
+                onPlayAudio(
+                  currentExercise.Type === "multiple_choice"
+                    ? currentExercise.QuestionES
+                    : currentExercise.QuestionEN,
+                  currentExercise.Type === "multiple_choice" ? "es" : "en-US"
+                )
+              }
+              disabled={appIsLoading}
+              aria-label='Reproducir audio de la pregunta'
             >
-              <path d='M8 5v14l11-7z'></path>
-            </svg>
-          </button>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='24'
+                height='24'
+                viewBox='0 0 24 24'
+                fill='currentColor'
+              >
+                <path d='M8 5v14l11-7z'></path>
+              </svg>
+            </button>
+          </div>
 
           {currentExercise.Type !== "multiple_choice" && (
             <p className='question-translation'>{currentExercise.QuestionES}</p>

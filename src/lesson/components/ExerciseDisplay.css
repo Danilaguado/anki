@@ -4,7 +4,7 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  padding: 0; /* Sin padding para que el footer se pegue abajo */
+  padding: 0;
   gap: 0;
 }
 
@@ -21,7 +21,6 @@
   box-sizing: border-box;
 }
 
-/* NUEVO: Footer unificado para acciones */
 .exercise-footer {
   padding: 16px;
   background-color: var(--system-secondary-background);
@@ -32,7 +31,6 @@
 }
 
 .navigation-buttons-group {
-  /* Este contenedor ahora solo envuelve el botón principal en el JSX de LessonCard */
   width: 100%;
 }
 
@@ -45,16 +43,27 @@
   width: 100%;
 }
 
-/* Estilos de texto */
 .question-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   text-align: center;
 }
+
+/* CAMBIO: Contenedor para la línea de pregunta y botón */
+.question-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
 .question-text {
   font-size: 32px;
   font-weight: 700;
   color: var(--system-label);
   margin: 0;
-  padding: 0 10px;
 }
 .question-translation {
   font-size: 20px;
@@ -67,7 +76,29 @@
   user-select: none;
 }
 
-/* Opciones de Múltiple Choice */
+/* CAMBIO: Estilos para el botón de Play al lado del texto */
+.play-button-inline {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%; /* 100% redondo */
+  background-color: var(--system-gray-6);
+  color: var(--system-label);
+  border: none; /* Sin borde */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+.play-button-inline:hover {
+  background-color: var(--system-gray-4);
+}
+.play-button-inline svg {
+  width: 18px;
+  height: 18px;
+}
+
 .multiple-choice-options {
   display: grid;
   grid-template-columns: 1fr;
@@ -93,7 +124,6 @@
   color: white !important;
 }
 
-/* NUEVO: Grupo para input con micrófono */
 .input-with-mic-group {
   display: flex;
   align-items: center;
@@ -112,7 +142,6 @@
   flex-shrink: 0;
 }
 
-/* Botón de notas (?) */
 .notes-toggle-button {
   position: absolute;
   top: 16px;

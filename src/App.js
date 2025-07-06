@@ -1,12 +1,10 @@
 // src/App.js
 
-// CAMBIO 1: Importa useMemo
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   BrowserRouter as Router,
   Route,
   Routes,
-  Link,
   useLocation,
 } from "react-router-dom";
 import "./index.css";
@@ -17,25 +15,6 @@ import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
 import LessonDisplayPage from "./lesson/LessonDisplayPage";
 import { playAudio, b64toBlob } from "./utils/audioUtils";
 import BottomNavigationBar from "./components/BottomNavigationBar";
-
-const HomeScreen = () => {
-  return (
-    <div className='home-screen-wrapper'>
-      <h1 className='app-title'>Bienvenido a Mi Aplicación de Idiomas</h1>
-      <p className='info-text'>
-        Esta es la pantalla principal. ¿Qué te gustaría hacer?
-      </p>
-      <nav className='home-nav-buttons'>
-        <Link to='/vocab-trainer' className='button primary-button'>
-          Ir al Entrenador de Vocabulario
-        </Link>
-        <Link to='/lessons' className='button primary-button'>
-          Lecciones
-        </Link>
-      </nav>
-    </div>
-  );
-};
 
 const App = () => {
   const [message, setMessage] = useState("");
@@ -53,6 +32,14 @@ const App = () => {
     );
   }, []);
 
+  // NUEVO: Función para generar feedback háptico (vibración)
+  const triggerHapticFeedback = (pattern = [5]) => {
+    // Un patrón de 5ms es muy sutil
+    if (navigator.vibrate) {
+      navigator.vibrate(pattern);
+    }
+  };
+
   useEffect(() => {
     return () => {
       audioCache.current.forEach((url) => URL.revokeObjectURL(url));
@@ -60,9 +47,6 @@ const App = () => {
     };
   }, []);
 
-  // CAMBIO 2: Envuelve la creación del objeto de contexto en useMemo
-  // Esto asegura que el objeto contextValue solo se cree de nuevo si
-  // message, isLoading, o wrappedPlayAudio cambian.
   const contextValue = useMemo(
     () => ({
       appGlobalMessage: message,
@@ -70,17 +54,18 @@ const App = () => {
       onPlayAudio: wrappedPlayAudio,
       setAppMessage: setMessage,
       setAppIsLoading: setIsLoading,
+      onVibrate: triggerHapticFeedback, // Se añade la función de vibración al contexto
     }),
-    [message, isLoading, wrappedPlayAudio] // Dependencias de useMemo
+    [message, isLoading, wrappedPlayAudio]
   );
 
   return (
     <Router>
-      {/* El proveedor ahora usa el valor memorizado, rompiendo el bucle */}
       <AppContext.Provider value={contextValue}>
         <div className='app-container'>
           <Routes>
-            <Route path='/' element={<HomeScreen />} />
+            {/* CAMBIO: La ruta principal ahora es la página de lecciones */}
+            <Route path='/' element={<PrincipalPageLessons />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
             <Route path='/lessons/:lessonId' element={<LessonDisplayPage />} />
