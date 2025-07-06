@@ -152,19 +152,6 @@ const LessonCard = ({ lesson, onBack, onShowNotes }) => {
 
   return (
     <div className='lesson-detail-view-content'>
-      {" "}
-      {/* Cambiado a un div de contenido para que LessonDisplayPage maneje el section-container */}
-      {/* El botón de cerrar para volver a la lista de lecciones ahora está en LessonDisplayPage */}
-      {/* Pop-up de Notas (Modal) - Ahora gestionado en LessonDisplayPage */}
-      {/* Título de la lección y meta info (ahora en LessonCard) */}
-      <h2 className='section-title'>{lesson.Title}</h2>
-      <p className='lesson-meta-info'>
-        <strong>Tema:</strong> {lesson.Topic} |<strong>Dificultad:</strong>{" "}
-        {lesson.Difficulty} |<strong>Fecha:</strong>{" "}
-        {new Date(lesson.GeneratedDate).toLocaleDateString()}
-      </p>
-      <p className='lesson-description'>{lesson.Description}</p>
-      {/* Renderizado condicional: Flujo de CHATBOT (RAW) vs. Flashcards Estándar */}
       {isChatbotLesson ? (
         // Si es una lección de chatbot, renderizamos el ChatbotLessonRawDisplay
         // y le pasamos TODOS los ejercicios para que los muestre en crudo.
@@ -182,7 +169,6 @@ const LessonCard = ({ lesson, onBack, onShowNotes }) => {
             matchFeedback ? `match-${matchFeedback}` : ""
           }`}
         >
-          {/* Botón de notas para flashcards */}
           {currentStandardExercise?.Notes && (
             <button
               className='notes-toggle-button'
