@@ -1,153 +1,42 @@
 /* src/lesson/PrincipalPageLessons.css */
 
-/* --- Estilos para la página de la lista de lecciones --- */
-
-.lessons-page-wrapper {
-  position: relative;
-}
-
-.available-lessons-list {
-  background-color: var(--text-color-light);
-  box-shadow: 0 4px 12px var(--shadow-color);
-  border-radius: var(--border-radius);
-}
-
-.lessons-buttons-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.lesson-list-button {
-  background-color: var(--secondary-color);
-  color: var(--text-color-light);
-  padding: 15px 10px;
-  font-size: 1.1em;
-  font-weight: 600;
-  text-align: center;
-  border-radius: var(--border-radius);
-  transition: background-color 0.3s ease, transform 0.2s ease,
-    box-shadow 0.3s ease;
-  white-space: normal;
-  word-break: break-word;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 80px;
-  box-shadow: 0 2px 4px var(--shadow-color);
-}
-
-.lesson-list-button:hover:not(:disabled) {
-  background-color: #512da8;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-}
-
-/* --- Estilos para la página de detalle de la lección (LA PARTE IMPORTANTE) --- */
-
-/* Contenedor principal que ocupa toda la pantalla */
 .lesson-detail-page-wrapper {
-  /* ¡CAMBIO CLAVE! Se usa position:fixed para sacar el contenedor del flujo
-     y pegarlo a los bordes de la ventana, ignorando el padding de su padre. */
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%; /* Con fixed, 100% se refiere al viewport */
+  height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: var(--background-light);
-  padding: 20px; /* Mantenemos un padding para que la card interna no se pegue a los bordes en desktop */
+  background-color: var(--system-background);
+  z-index: 10;
+  padding: 10px 10px 90px 10px; /* Espacio para la nav bar */
   box-sizing: border-box;
-  z-index: 10; /* Asegura que se muestre por encima de la página de lista */
 }
 
-/* El contenido de la lección (el componente LessonCard) */
 .lesson-detail-view-content {
-  flex-grow: 1; /* ¡CLAVE! Hace que este elemento ocupe todo el espacio vertical disponible */
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--text-color-light);
+  background-color: var(--system-secondary-background);
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 12px var(--shadow-color);
-  overflow: hidden; /* Previene cualquier desbordamiento interno */
+  box-shadow: 0 8px 32px var(--shadow-color);
+  overflow: hidden;
 }
 
-/* Contenedor de la tarjeta de ejercicio individual (dentro de LessonCard) */
-.card-container.lesson-exercise-card {
-  flex-grow: 1; /* Ocupa el espacio dentro de .lesson-detail-view-content */
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  gap: 20px;
-  /* Se eliminan fondos, bordes y sombras redundantes */
-}
-
-/* Botón de cerrar (X) */
 .close-lesson-button {
-  /* Ahora se posiciona relativo al wrapper de pantalla completa */
   position: absolute;
-  top: 15px;
-  left: 15px;
-  width: 40px;
-  height: 40px;
+  top: 20px;
+  right: 20px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid #bdbdbd;
-  color: var(--text-color-dark);
+  background-color: var(--system-gray-4);
+  color: var(--system-tertiary-label);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
   cursor: pointer;
-  z-index: 20; /* Por encima de la tarjeta de lección */
-  transition: all 0.2s ease;
-}
-
-.close-lesson-button:hover {
-  background-color: rgba(255, 255, 255, 1);
-  transform: scale(1.05);
-}
-
-.close-lesson-button svg {
-  width: 20px;
-  height: 20px;
-}
-
-/* --- Ajustes para el contenido del ejercicio --- */
-
-.card-content-area.quiz-content-area {
-  flex-grow: 1; /* Ocupa el espacio central, empujando el botón de acción hacia abajo */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: relative; /* Para el botón de notas (?) */
-}
-
-.navigation-buttons-group {
-  padding: 10px 0; /* Espacio arriba y abajo del botón */
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.check-continue-button {
-  width: 100%;
-  max-width: 400px;
-}
-
-/* --- Media Queries para Móviles --- */
-@media (max-width: 768px) {
-  .lesson-detail-page-wrapper {
-    padding: 0; /* Sin padding en móvil para un look de pantalla completa */
-  }
-
-  .lesson-detail-view-content {
-    border-radius: 0; /* Bordes rectos en móvil */
-  }
-
-  .lessons-buttons-grid {
-    grid-template-columns: 1fr;
-  }
+  z-index: 20;
 }

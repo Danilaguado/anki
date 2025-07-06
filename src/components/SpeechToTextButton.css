@@ -1,28 +1,19 @@
 /* src/components/SpeechToTextButton.css */
-
-/* Specific styles for SpeechToTextButton */
 .speech-to-text-button {
-  background-color: #e74c3c; /* Rojo para grabar */
-  color: white;
-  width: 60px; /* Tamaño del botón */
-  height: 60px;
+  background-color: var(--system-gray-6);
+  color: var(--system-red);
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  /* Eliminado: margin: 0 auto; para permitir que el flexbox padre lo posicione */
-  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--separator-color);
 }
-
 .speech-to-text-button.recording {
-  background-color: #c0392b;
-  transform: scale(1.05);
-  box-shadow: 0 0 0 5px rgba(231, 76, 60, 0.4);
+  background-color: var(--system-red);
+  color: white;
+  border: none;
 }
-
 .speech-to-text-button svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
 }

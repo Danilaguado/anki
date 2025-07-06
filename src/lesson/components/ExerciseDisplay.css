@@ -1,137 +1,84 @@
 /* src/lesson/components/ExerciseDisplay.css */
 
-/* Contenedor principal de la tarjeta de ejercicio */
 .card-container.lesson-exercise-card {
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   padding: 20px;
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
+  gap: 20px;
 }
 
-/* Área de contenido principal (el recuadro punteado) */
-.card-content-area.quiz-content-area {
-  position: relative;
+.card-content-area {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 20px;
-  border: 1px dashed var(--border-color);
-  border-radius: 10px;
-  width: 100%; /* ¡CAMBIO CLAVE! Ocupa todo el ancho disponible */
-  box-sizing: border-box; /* Asegura que el padding esté incluido en el ancho */
-  transition: all 0.3s ease;
-}
-
-/* ... (resto de los estilos de feedback .match-correct, .match-incorrect) */
-
-/* Contenedor para la pregunta y el botón de audio */
-.question-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  text-align: center;
+  position: relative;
+  gap: 24px;
   width: 100%;
 }
 
-.card-text.question {
-  margin: 0;
-  font-size: 1.6em;
-  font-weight: 700;
-  color: var(--primary-color);
-  flex-grow: 1;
-}
-
-/* Botón de audio al lado del texto */
-.play-beside-text {
-  flex-shrink: 0;
-}
-
-/* Grupo de botones de navegación (Contiene "Comprobar" / "Continuar") */
 .navigation-buttons-group {
-  padding-top: 20px;
+  padding: 16px;
+  background-color: rgba(120, 120, 128, 0.08);
+  border-top: 0.5px solid var(--separator-color);
+  margin: -20px; /* Extender al borde */
+  margin-top: 0;
+}
+
+.check-continue-button {
   width: 100%;
-  display: flex;
-  justify-content: center;
 }
 
-/* Botón de notas (?) */
-.notes-toggle-button {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  z-index: 5;
-  /* ... (otros estilos que ya tienes) */
+.question-container {
+  text-align: center;
+}
+.question-text {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--system-label);
+  margin: 0;
+}
+.card-text.answer.hidden {
+  filter: blur(5px);
+  user-select: none;
 }
 
-/* Estilos para el botón de "Mostrar/Ocultar Traducción" */
 .toggle-answer-button {
-  background-color: var(--accent-color);
-  color: var(--text-color-light);
-  width: auto; /* Ancho automático basado en el contenido */
-  max-width: 300px;
-  padding: 10px 20px;
-  margin-top: 10px;
+  background-color: var(--system-gray-6);
+  color: var(--system-blue);
+  font-weight: 500;
 }
 
-.toggle-answer-button:hover:not(:disabled) {
-  background-color: #0097a7; /* Tono más oscuro de accent */
+.multiple-choice-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
 }
-
-/* ... (resto de tus estilos para .multiple-choice-options, .microphone-play-buttons-group, etc.) */
+.multiple-choice-button {
+  background-color: var(--system-gray-6);
+  color: var(--system-label);
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+.multiple-choice-button.selected-option {
+  background-color: var(--system-blue);
+  color: white;
+}
+.multiple-choice-button.correct-option {
+  background-color: var(--system-green);
+  color: white;
+}
+.multiple-choice-button.incorrect-selected-option {
+  background-color: var(--system-red);
+  color: white;
+}
 
 .microphone-play-buttons-group {
   display: flex;
-  justify-content: center;
-  align-items: center;
   gap: 20px;
-  margin-bottom: 15px;
-}
-
-.audio-button-round {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  padding: 0;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
-  border: none;
-  cursor: pointer;
-}
-
-.recorded-text-display {
-  background-color: #f0f0f0;
-  color: var(--text-color-dark);
-  padding: 8px 15px;
-  border-radius: var(--border-radius);
-  margin-top: 10px;
-  font-size: 1.1em;
-  text-align: center;
-  word-break: break-word;
-}
-
-.card-text {
-  text-align: center;
-  width: 100%;
-}
-
-.card-text.answer {
-  color: #666;
-  font-weight: 400;
-  font-size: 1.4em;
-  filter: blur(0);
-  transition: filter 0.3s ease-in-out;
-}
-
-.card-text.answer.hidden {
-  filter: blur(4px);
-  user-select: none;
 }

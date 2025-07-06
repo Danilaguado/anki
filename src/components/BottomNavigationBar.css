@@ -1,56 +1,63 @@
-/* src/components/BottomNavigationBar.css */
+/* src/components/BottomNavigationBar.css (Rediseño Apple) */
 
 .bottom-navigation-bar {
-  position: fixed; /* Fija la barra en la pantalla */
-  bottom: 0; /* En la parte inferior */
+  position: fixed;
+  bottom: 0;
   left: 0;
-  width: 100%; /* Ocupa todo el ancho */
-  background-color: var(--primary-color); /* Color de fondo */
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15); /* Sombra superior */
+  right: 0;
+  height: 50px; /* Altura base del contenido */
+  padding-bottom: 34px; /* Espacio seguro para el "home indicator" en iPhones */
+  box-sizing: content-box;
+
   display: flex;
-  justify-content: space-around; /* Espacia los ítems uniformemente */
-  align-items: center;
-  padding: 10px 0;
-  z-index: 1000; /* Asegura que esté por encima de otros elementos */
-  border-top-left-radius: 12px; /* Pequeño redondeado en las esquinas superiores */
-  border-top-right-radius: 12px;
+  justify-content: space-around;
+  align-items: flex-start;
+  padding-top: 5px;
+
+  /* Efecto de Vidrio Esmerilado (Glassmorphism) */
+  background-color: rgba(247, 247, 247, 0.85);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+
+  border-top: 0.5px solid var(--separator-color);
+  z-index: 1000;
+}
+
+/* Soporte para Modo Oscuro */
+@media (prefers-color-scheme: dark) {
+  .bottom-navigation-bar {
+    background-color: rgba(28, 28, 30, 0.85);
+  }
 }
 
 .bottom-navigation-bar .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 2px;
   text-decoration: none;
-  color: var(--text-color-light); /* Color de texto blanco */
-  font-size: 0.75em; /* Tamaño de fuente más pequeño para móvil */
+  font-size: 10px;
   font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 8px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.bottom-navigation-bar .nav-item:hover,
-.bottom-navigation-bar .nav-item:focus {
-  background-color: rgba(
-    255,
-    255,
-    255,
-    0.15
-  ); /* Fondo ligeramente más claro al pasar el ratón/tocar */
-  color: var(--accent-color); /* Color de acento al interactuar */
+  letter-spacing: -0.2px;
+  color: var(--system-gray);
+  transition: color 0.2s ease;
+  padding: 0 10px;
 }
 
 .bottom-navigation-bar .nav-item svg {
-  width: 24px; /* Tamaño del icono */
+  width: 24px;
   height: 24px;
-  margin-bottom: 4px; /* Espacio entre icono y texto */
-  fill: currentColor; /* Usa el color del texto para el icono */
+  margin-bottom: 2px;
 }
 
-/* Ajustes para pantallas más grandes (opcional, si quieres que desaparezca o cambie de posición) */
-@media (min-width: 769px) {
-  /* Aquí podrías hacer que la barra se oculte o se mueva a un sidebar, por ejemplo */
-  /* .bottom-navigation-bar {
-        display: none;
-    } */
+/* Estilo para el ítem activo */
+.bottom-navigation-bar .nav-item.active {
+  color: var(--system-blue);
+}
+
+/* Efecto hover sutil para desktop */
+@media (hover: hover) {
+  .bottom-navigation-bar .nav-item:not(.active):hover {
+    color: var(--system-label);
+  }
 }
