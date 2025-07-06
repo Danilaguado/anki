@@ -105,6 +105,7 @@ body {
 .section-container {
   background-color: var(--system-secondary-background);
   border-radius: var(--border-radius);
+  margin: 0 16px 20px 16px;
   box-shadow: 0 4px 12px var(--shadow-color);
 }
 
