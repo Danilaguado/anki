@@ -49,14 +49,15 @@
   align-items: center;
   gap: 8px;
   text-align: center;
+  width: 100%; /* Asegura que el contenedor ocupe todo el ancho */
 }
 
-/* CAMBIO: Contenedor para la línea de pregunta y botón */
 .question-line {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
+  width: 100%; /* El contenedor de la línea ocupa todo el ancho */
+  justify-content: center; /* Centra el bloque (botón + texto) */
 }
 
 .question-text {
@@ -64,6 +65,9 @@
   font-weight: 700;
   color: var(--system-label);
   margin: 0;
+  /* CAMBIO: El texto ahora puede crecer para ocupar el espacio disponible */
+  flex-grow: 1;
+  text-align: left; /* El texto se alinea a la izquierda de su contenedor */
 }
 .question-translation {
   font-size: 20px;
@@ -76,14 +80,13 @@
   user-select: none;
 }
 
-/* CAMBIO: Estilos para el botón de Play al lado del texto */
 .play-button-inline {
   width: 36px;
   height: 36px;
-  border-radius: 50%; /* 100% redondo */
+  border-radius: 50%;
   background-color: var(--system-gray-6);
   color: var(--system-label);
-  border: none; /* Sin borde */
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;

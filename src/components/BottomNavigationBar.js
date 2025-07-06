@@ -61,8 +61,8 @@ const NavItem = ({ to, icon: Icon, label }) => {
 const BottomNavigationBar = () => {
   return (
     <nav className='bottom-navigation-bar'>
-      <NavItem to='/vocab-trainer' icon={VocabIcon} label='Vocabulario' />
       <NavItem to='/' icon={LessonsIcon} label='Lecciones' />
+      <NavItem to='/vocab-trainer' icon={VocabIcon} label='Vocabulario' />
     </nav>
   );
 };

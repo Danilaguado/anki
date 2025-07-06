@@ -64,13 +64,8 @@ const ExerciseDisplay = ({
         )}
 
         <div className='question-container'>
-          {/* CAMBIO: Contenedor para alinear texto y botón horizontalmente */}
           <div className='question-line'>
-            <h2 className='question-text'>
-              {currentExercise.Type === "multiple_choice"
-                ? currentExercise.QuestionES
-                : currentExercise.QuestionEN}
-            </h2>
+            {/* CAMBIO: Botón de Play movido a la izquierda del texto */}
             <button
               className='play-button-inline'
               onClick={() =>
@@ -94,6 +89,11 @@ const ExerciseDisplay = ({
                 <path d='M8 5v14l11-7z'></path>
               </svg>
             </button>
+            <h2 className='question-text'>
+              {currentExercise.Type === "multiple_choice"
+                ? currentExercise.QuestionES
+                : currentExercise.QuestionEN}
+            </h2>
           </div>
 
           {currentExercise.Type !== "multiple_choice" && (
