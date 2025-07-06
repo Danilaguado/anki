@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { normalizeText, renderClickableText } from "../../utils/textUtils";
 import SpeechToTextButton from "../../components/SpeechToTextButton";
 import AppContext from "../../context/AppContext";
-import "./ExerciseDisplay.css";
+import "./ExerciseDisplay.css"; // Importa la hoja de estilos modularizada
 
 const ExerciseDisplay = ({
   currentExercise,
@@ -17,7 +17,7 @@ const ExerciseDisplay = ({
   handleCheckAnswer,
   handleOptionClick,
   handleSpeechResultForListening,
-  onShowNotes, // Recibe la función para mostrar notas
+  onShowNotes,
 }) => {
   const { onPlayAudio, appIsLoading } = useContext(AppContext);
 
@@ -51,21 +51,12 @@ const ExerciseDisplay = ({
 
   return (
     <>
-      {/* El grupo superior ahora solo tiene el micrófono si es necesario */}
-      {currentExercise.Type === "listening" && (
-        <div className='microphone-play-buttons-group'>{microphoneButton}</div>
-      )}
-
-      {recordedMicrophoneText && (
-        <div className='recorded-text-display'>{recordedMicrophoneText}</div>
-      )}
-
       <div
         className={`card-content-area quiz-content-area ${
           matchFeedback ? `match-${matchFeedback}` : ""
         }`}
       >
-        {/* CAMBIO: Botón de notas renderizado aquí para posicionamiento absoluto */}
+        {/* Botón de notas (?) posicionado en la esquina superior derecha */}
         {currentExercise?.Notes && (
           <button
             className='notes-toggle-button'
@@ -87,21 +78,27 @@ const ExerciseDisplay = ({
           </button>
         )}
 
-        {/* Lógica para cada tipo de ejercicio */}
+        {/* --- RENDERIZADO CONDICIONAL PARA CADA TIPO DE EJERCICIO --- */}
 
         {currentExercise.Type === "translation" && (
           <>
-            {/* CAMBIO: Contenedor flex para pregunta y botón */}
-            <div className='question-container'>
-              <div id='question-text' className='card-text question'>
-                {renderClickableText(
-                  currentExercise.QuestionEN,
-                  "en-US",
-                  true,
-                  onPlayAudio
-                )}
-              </div>
+            {/* CAMBIO: Se añade el grupo de botones de audio y micrófono */}
+            <div className='microphone-play-buttons-group'>
               <PlayButton text={currentExercise.QuestionEN} lang='en-US' />
+              {microphoneButton}
+            </div>
+            {recordedMicrophoneText && (
+              <div className='recorded-text-display'>
+                {recordedMicrophoneText}
+              </div>
+            )}
+            <div id='question-text' className='card-text question'>
+              {renderClickableText(
+                currentExercise.QuestionEN,
+                "en-US",
+                true,
+                onPlayAudio
+              )}
             </div>
             <div
               id='answer-text'
@@ -118,9 +115,49 @@ const ExerciseDisplay = ({
           </>
         )}
 
+        {currentExercise.Type === "fill_in_the_blank" && (
+          <>
+            {/* CAMBIO: Se añade el grupo de botones de audio y micrófono */}
+            <div className='microphone-play-buttons-group'>
+              <PlayButton text={currentExercise.QuestionEN} lang='en-US' />
+              {microphoneButton}
+            </div>
+            {recordedMicrophoneText && (
+              <div className='recorded-text-display'>
+                {recordedMicrophoneText}
+              </div>
+            )}
+            <div className='card-text question'>
+              {currentExercise.QuestionEN.split("_______")[0]}
+              <input
+                type='text'
+                className='input-field quiz-answer-input-inline'
+                value={userTypedAnswer}
+                onChange={(e) => setUserTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCheckAnswer();
+                }}
+                disabled={matchFeedback !== null || appIsLoading}
+                autoFocus
+              />
+              {currentExercise.QuestionEN.split("_______")[1]}
+            </div>
+            <p className='fill-in-the-blank-translation'>
+              {currentExercise.QuestionES}
+            </p>
+            {showCorrectAnswer && matchFeedback !== "correct" && (
+              <p className='correct-answer-display'>
+                La respuesta correcta era:{" "}
+                <span className='correct-answer-text'>
+                  {currentExercise.AnswerEN}
+                </span>
+              </p>
+            )}
+          </>
+        )}
+
         {currentExercise.Type === "multiple_choice" && (
           <>
-            {/* CAMBIO: Contenedor flex para pregunta y botón */}
             <div className='question-container'>
               <div id='question-text' className='card-text question'>
                 {currentExercise.QuestionES}
@@ -157,7 +194,46 @@ const ExerciseDisplay = ({
           </>
         )}
 
-        {/* ... (resto de tus tipos de ejercicio como 'fill_in_the_blank', 'listening', etc.) */}
+        {currentExercise.Type === "listening" && (
+          <>
+            <div className='microphone-play-buttons-group'>
+              <PlayButton text={currentExercise.QuestionEN} lang='en-US' />
+              {microphoneButton}
+            </div>
+            {recordedMicrophoneText && (
+              <div className='recorded-text-display'>
+                {recordedMicrophoneText}
+              </div>
+            )}
+            <p className='listening-instruction'>
+              Escucha y escribe lo que oigas.
+            </p>
+            <p className='listening-translation-hint'>
+              {currentExercise.QuestionES}
+            </p>
+            <div className='quiz-input-group'>
+              <input
+                type='text'
+                className='input-field quiz-answer-input'
+                placeholder='Escribe lo que escuchaste aquí'
+                value={userTypedAnswer}
+                onChange={(e) => setUserTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCheckAnswer();
+                }}
+                disabled={matchFeedback !== null || appIsLoading}
+              />
+            </div>
+            {showCorrectAnswer && matchFeedback !== "correct" && (
+              <p className='correct-answer-display'>
+                La frase correcta era:{" "}
+                <span className='correct-answer-text'>
+                  {currentExercise.QuestionEN}
+                </span>
+              </p>
+            )}
+          </>
+        )}
       </div>
     </>
   );
