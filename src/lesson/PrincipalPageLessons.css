@@ -24,7 +24,6 @@
   box-shadow: 0 8px 32px var(--shadow-color);
   overflow: hidden;
   /* Se añade margen para crear el espacio con los bordes */
-  margin: 10px 10px 90px 10px;
 }
 
 /* Botón de cerrar (X) */
