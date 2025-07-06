@@ -1,166 +1,203 @@
-// src/lesson/LessonDisplayPage.js
+// src/lesson/lessonCard.js
 
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import MessageDisplay from "../components/MessageDisplay";
-import LessonCard from "./lessonCard";
+import "./PrincipalPageLessons.css";
+import { normalizeText } from "../utils/textUtils";
+import ExerciseDisplay from "./components/ExerciseDisplay";
+import ChatbotLessonRawDisplay from "./components/ChatbotLessonRawDisplay";
 import AppContext from "../context/AppContext";
 
-const LessonDisplayPage = () => {
-  const { lessonId } = useParams();
-  const navigate = useNavigate();
-  const { setAppMessage, setAppIsLoading, appIsLoading, appGlobalMessage } =
+const LessonCard = ({ lesson, onShowNotes }) => {
+  const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
     useContext(AppContext);
 
-  const [lesson, setLesson] = useState(null);
-  const [isLoadingLesson, setIsLoadingLesson] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [showNotesModal, setShowNotesModal] = useState(false);
-  const [notesContent, setNotesContent] = useState("");
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [isAnswerVisible, setIsAnswerVisible] = useState(false);
+  const [userTypedAnswer, setUserTypedAnswer] = useState("");
+  const [matchFeedback, setMatchFeedback] = useState(null);
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
+  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
 
   useEffect(() => {
-    const fetchLesson = async () => {
-      setIsLoadingLesson(true);
-      setAppIsLoading(true);
-      setAppMessage("Cargando lección...");
-      setError(null);
-      setLesson(null);
+    setIsAnswerVisible(false);
+    setUserTypedAnswer("");
+    setMatchFeedback(null);
+    setShowCorrectAnswer(false);
+    setRecordedMicrophoneText("");
+  }, [currentExerciseIndex, lesson]);
 
-      if (!lessonId) {
-        setError("Error: ID de lección no proporcionado.");
-        setAppMessage("Error: ID de lección no proporcionado.");
-        setIsLoadingLesson(false);
-        setAppIsLoading(false);
-        return;
-      }
+  // ✅ CAMBIO CLAVE: Se elimina setAppMessage de las dependencias.
+  // Este efecto debe reiniciarse solo cuando la lección ('lesson') cambie.
+  useEffect(() => {
+    setCurrentExerciseIndex(0);
+    setAppMessage("");
+  }, [lesson]);
 
-      try {
-        // CONSEJO DE DEPURACIÓN:
-        // Imprime en la consola para asegurarte de que la API devuelve lo que esperas.
-        const response = await fetch("/api/lessons/get-all");
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
-        }
-        const result = await response.json();
+  if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
+    return (
+      <p className='info-text'>
+        Esta lección no tiene ejercicios o no se ha podido cargar.
+      </p>
+    );
+  }
 
-        // Imprime la respuesta para ver su estructura
-        console.log("Respuesta de la API:", result);
+  const isChatbotLesson =
+    (lesson.TypeModule || "").toLowerCase().trim() === "chatbot_lesson";
 
-        if (result.success && result.lessons) {
-          const foundLesson = result.lessons.find(
-            (l) => String(l.LessonID) === lessonId
-          );
-          if (foundLesson) {
-            setLesson(foundLesson);
-            setAppMessage(`Lección "${foundLesson.Title}" cargada.`);
-            setError(null); // Limpiar errores anteriores
-          } else {
-            setError(`Lección con ID "${lessonId}" no encontrada.`);
-            setAppMessage("Lección no encontrada.");
-          }
-        } else {
-          setError(result.error || "Error al procesar las lecciones.");
-          setAppMessage("Error al procesar lección.");
-        }
-      } catch (err) {
-        console.error("Error al cargar la lección:", err);
-        setError(`Error al cargar la lección: ${err.message}.`);
-        setAppMessage(`Error: ${err.message}.`);
-      } finally {
-        setIsLoadingLesson(false);
-        setAppIsLoading(false);
-      }
-    };
+  const currentStandardExercise = lesson.exercises[currentExerciseIndex];
 
-    fetchLesson();
-  }, [lessonId, setAppMessage, setAppIsLoading]);
+  const handleCheckAnswer = () => {
+    if (
+      !userTypedAnswer.trim() &&
+      !["multiple_choice", "practice_multiple_choice"].includes(
+        currentStandardExercise.Type
+      )
+    ) {
+      setAppMessage("Por favor, escribe tu respuesta.");
+      setMatchFeedback(null);
+      return;
+    }
+    const normalizedUserAnswer = normalizeText(userTypedAnswer);
+    const currentExercise = lesson.exercises[currentExerciseIndex];
+    let normalizedCorrectAnswer;
 
-  const handleBackToList = () => {
-    navigate("/lessons");
-  };
-
-  const handleShowNotes = (content) => {
-    setNotesContent(content);
-    setShowNotesModal(true);
-  };
-  const handleCloseNotesModal = () => {
-    setShowNotesModal(false);
-    setNotesContent("");
-  };
-
-  // --- LÓGICA DE RENDERIZADO MEJORADA ---
-  const renderContent = () => {
-    if (isLoadingLesson) {
-      return <p className='info-text'>Cargando lección...</p>;
+    if (
+      currentExercise.Type === "fill_in_the_blank" ||
+      currentExercise.Type === "multiple_choice"
+    ) {
+      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || "");
+    } else if (currentExercise.Type === "listening") {
+      normalizedCorrectAnswer = normalizeText(currentExercise.QuestionEN || "");
+    } else {
+      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerES || "");
     }
 
-    // CAMBIO CLAVE: Si la carga terminó y hay un error, muéstralo prominentemente.
-    if (error) {
-      return (
-        <div className='message-box error-box' role='alert'>
-          <span className='message-text'>{error}</span>
-          <button
-            onClick={handleBackToList}
-            className='button primary-button'
-            style={{ marginTop: "1rem" }}
-          >
-            Volver a la lista
-          </button>
-        </div>
+    if (normalizedUserAnswer === normalizedCorrectAnswer) {
+      setMatchFeedback("correct");
+      setShowCorrectAnswer(true);
+    } else {
+      setMatchFeedback("incorrect");
+      setShowCorrectAnswer(true);
+      setAppMessage(
+        "Incorrecto. La respuesta esperada era: " +
+          (currentExercise.AnswerEN || currentExercise.QuestionEN)
       );
     }
+  };
 
-    if (lesson) {
-      return <LessonCard lesson={lesson} onShowNotes={handleShowNotes} />;
+  const handleOptionClick = (selectedOption) => {
+    if (matchFeedback !== null) return;
+    setUserTypedAnswer(selectedOption);
+  };
+
+  const handleSpeechResultForListening = (transcript) => {
+    setRecordedMicrophoneText(transcript);
+  };
+
+  const handleCheckOrContinue = () => {
+    if (matchFeedback === "correct" || matchFeedback === "incorrect") {
+      if (currentExerciseIndex < lesson.exercises.length - 1) {
+        setCurrentExerciseIndex((prev) => prev + 1);
+        setAppMessage("");
+      } else {
+        setAppMessage("¡Has completado esta lección!");
+      }
+    } else {
+      handleCheckAnswer();
     }
-
-    // Caso de respaldo por si algo más falla
-    return <p className='info-text'>No hay contenido para mostrar.</p>;
   };
 
   return (
-    <div className='lesson-detail-page-wrapper section-container'>
-      <button onClick={handleBackToList} className='close-lesson-button'>
-        <svg
-          xmlns='http://www.w3.org/2000/svg'
-          width='16'
-          height='16'
-          fill='currentColor'
-          viewBox='0 0 16 16'
+    <div className='lesson-detail-view-content'>
+      {isChatbotLesson ? (
+        <ChatbotLessonRawDisplay
+          lessonExercises={lesson.exercises}
+          onPlayAudio={onPlayAudio}
+          appIsLoading={appIsLoading}
+          setAppMessage={setAppMessage}
+          onShowNotes={onShowNotes}
+        />
+      ) : (
+        <div
+          className={`card-container lesson-exercise-card ${
+            matchFeedback ? `match-${matchFeedback}` : ""
+          }`}
         >
-          <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z' />
-        </svg>
-      </button>
-
-      {showNotesModal && (
-        <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
-          <div
-            className='notes-modal-content'
-            onClick={(e) => e.stopPropagation()}
-          >
+          {currentStandardExercise?.Notes && (
             <button
-              className='notes-modal-close-button'
-              onClick={handleCloseNotesModal}
+              className='notes-toggle-button'
+              onClick={() => onShowNotes(currentStandardExercise.Notes)}
             >
-              &times;
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='16'
+                height='16'
+                fill='currentColor'
+                viewBox='0 0 16 16'
+              >
+                <path
+                  fillRule='evenodd'
+                  d='M4.475 5.458c-.284 0-.514-.237-.47-.517C4.28 3.24 5.576 2 7.825 2c2.25 0 3.767 1.36 3.767 3.215 0 1.344-.665 2.288-1.79 2.973-1.1.659-1.414 1.118-1.414 2.01v.03a.5.5 0 0 1-.5.5h-.77a.5.5 0 0 1-.5-.495l-.003-.2c-.043-1.221.477-2.001 1.645-2.712 1.03-.632 1.397-1.135 1.397-2.028 0-.979-.758-1.698-1.926-1.698-1.009 0-1.71.529-1.938 1.402-.066.254-.278.461-.54.461h-.777ZM7.496 14c.622 0 1.095-.474 1.095-1.09 0-.618-.473-1.092-1.095-1.092-.606 0-1.087.474-1.087 1.091S6.89 14 7.496 14'
+                />
+              </svg>
             </button>
-            <h3>Notas del Ejercicio</h3>
-            <p>{notesContent}</p>
+          )}
+
+          {currentStandardExercise?.Image && (
+            <div className='exercise-image-container'>
+              <img
+                src={currentStandardExercise.Image}
+                alt={`Imagen para ${currentStandardExercise.Type} ejercicio`}
+                className='exercise-image'
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src =
+                    "https://placehold.co/300x200/cccccc/ffffff?text=No+Image";
+                }}
+              />
+            </div>
+          )}
+
+          <ExerciseDisplay
+            currentExercise={currentStandardExercise}
+            onPlayAudio={onPlayAudio}
+            setAppMessage={setAppMessage}
+            appIsLoading={appIsLoading}
+            isAnswerVisible={isAnswerVisible}
+            setIsAnswerVisible={setIsAnswerVisible}
+            userTypedAnswer={userTypedAnswer}
+            setUserTypedAnswer={setUserTypedAnswer}
+            matchFeedback={matchFeedback}
+            showCorrectAnswer={showCorrectAnswer}
+            recordedMicrophoneText={recordedMicrophoneText}
+            handleCheckAnswer={handleCheckAnswer}
+            handleOptionClick={handleOptionClick}
+            handleSpeechResultForListening={handleSpeechResultForListening}
+          />
+
+          <div className='navigation-buttons-group'>
+            <button
+              onClick={handleCheckOrContinue}
+              className={`button primary-button check-continue-button ${
+                matchFeedback === "correct" || matchFeedback === "incorrect"
+                  ? "continue"
+                  : "check"
+              }`}
+              disabled={
+                appIsLoading ||
+                (matchFeedback === "correct" &&
+                  currentExerciseIndex >= lesson.exercises.length - 1)
+              }
+            >
+              {matchFeedback === "correct" || matchFeedback === "incorrect"
+                ? "Continuar"
+                : "Comprobar"}
+            </button>
           </div>
         </div>
       )}
-
-      {/* El MessageDisplay sigue siendo útil para mensajes globales como "Cargando audio..." */}
-      <MessageDisplay
-        message={appGlobalMessage}
-        isLoading={appIsLoading || isLoadingLesson}
-      />
-
-      {/* El contenido principal se renderiza aquí */}
-      {renderContent()}
     </div>
   );
 };
 
-export default LessonDisplayPage;
+export default LessonCard;
