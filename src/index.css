@@ -100,7 +100,9 @@ body {
   text-transform: uppercase;
   margin: 20px 20px 8px 20px;
 }
-
+.margin-zero {
+  margin: 0 !important;
+}
 /* 5. Contenedores y Tarjetas */
 .section-container {
   background-color: var(--system-secondary-background);

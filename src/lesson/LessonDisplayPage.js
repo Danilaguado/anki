@@ -116,7 +116,7 @@ const LessonDisplayPage = () => {
   };
 
   return (
-    <div className='lesson-detail-page-wrapper section-container'>
+    <div className='lesson-detail-page-wrapper section-container margin-zero'>
       <button onClick={handleBackToList} className='close-lesson-button'>
         <svg
           xmlns='http://www.w3.org/2000/svg'
