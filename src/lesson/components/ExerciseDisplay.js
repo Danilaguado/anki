@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { normalizeText, renderClickableText } from "../../utils/textUtils";
 import SpeechToTextButton from "../../components/SpeechToTextButton";
 import AppContext from "../../context/AppContext";
-import "./ExerciseDisplay.css"; // Importa la hoja de estilos modularizada
+import "./ExerciseDisplay.css"; // Importa la hoja de estilos
 
 const ExerciseDisplay = ({
   currentExercise,
@@ -21,42 +21,29 @@ const ExerciseDisplay = ({
 }) => {
   const { onPlayAudio, appIsLoading } = useContext(AppContext);
 
-  // Componente reutilizable para el botón de Play
-  const PlayButton = ({ text, lang }) => (
-    <button
-      onClick={() => onPlayAudio(text, lang)}
-      className='audio-button-round play-beside-text'
-      disabled={appIsLoading}
-      aria-label='Reproducir audio'
-    >
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='24'
-        height='24'
-        viewBox='0 0 24 24'
-        fill='currentColor'
-      >
-        <path d='M8 5v14l11-7z'></path>
-      </svg>
-    </button>
-  );
-
   const microphoneButton = (
     <SpeechToTextButton
-      onResult={handleSpeechResultForListening}
+      onResult={(transcript) => {
+        setUserTypedAnswer(transcript);
+        handleSpeechResultForListening(transcript);
+      }}
       lang='en-US'
       disabled={matchFeedback !== null || appIsLoading}
     />
   );
 
+  // Determina si el footer debe mostrarse
+  const showFooter = [
+    "multiple_choice",
+    "fill_in_the_blank",
+    "listening",
+    "translation",
+  ].includes(currentExercise.Type);
+
   return (
     <>
-      <div
-        className={`card-content-area quiz-content-area ${
-          matchFeedback ? `match-${matchFeedback}` : ""
-        }`}
-      >
-        {/* Botón de notas (?) posicionado en la esquina superior derecha */}
+      <div className='card-content-area'>
+        {/* Botón de notas (?) */}
         {currentExercise?.Notes && (
           <button
             className='notes-toggle-button'
@@ -78,111 +65,33 @@ const ExerciseDisplay = ({
           </button>
         )}
 
-        {/* --- RENDERIZADO CONDICIONAL PARA CADA TIPO DE EJERCICIO --- */}
+        {/* Contenido principal (la pregunta) */}
+        <div className='question-container'>
+          <h2 className='question-text'>
+            {currentExercise.Type === "multiple_choice"
+              ? currentExercise.QuestionES
+              : currentExercise.QuestionEN}
+          </h2>
+          {currentExercise.Type !== "multiple_choice" && (
+            <p className='question-translation'>{currentExercise.QuestionES}</p>
+          )}
+        </div>
 
-        {currentExercise.Type === "translation" && (
-          <>
-            {/* CAMBIO: Se añade el grupo de botones de audio y micrófono */}
-            <div className='microphone-play-buttons-group'>
-              <PlayButton text={currentExercise.QuestionEN} lang='en-US' />
-              {microphoneButton}
-            </div>
-            {recordedMicrophoneText && (
-              <div className='recorded-text-display'>
-                {recordedMicrophoneText}
-              </div>
-            )}
-            <div id='question-text' className='card-text question'>
-              {renderClickableText(
-                currentExercise.QuestionEN,
-                "en-US",
-                true,
-                onPlayAudio
-              )}
-            </div>
-            <div
-              id='answer-text'
-              className={`card-text answer ${isAnswerVisible ? "" : "hidden"}`}
-            >
-              {currentExercise.QuestionES}
-            </div>
-            <button
-              onClick={() => setIsAnswerVisible(!isAnswerVisible)}
-              className='button toggle-answer-button'
-            >
-              {isAnswerVisible ? "Ocultar Traducción" : "Mostrar Traducción"}
-            </button>
-          </>
+        {recordedMicrophoneText && (
+          <div className='recorded-text-display'>{recordedMicrophoneText}</div>
         )}
+      </div>
 
-        {currentExercise.Type === "fill_in_the_blank" && (
-          <>
-            {/* CAMBIO: Se añade el grupo de botones de audio y micrófono */}
-            <div className='microphone-play-buttons-group'>
-              <PlayButton text={currentExercise.QuestionEN} lang='en-US' />
-              {microphoneButton}
-            </div>
-            {recordedMicrophoneText && (
-              <div className='recorded-text-display'>
-                {recordedMicrophoneText}
-              </div>
-            )}
-            <div className='card-text question'>
-              {currentExercise.QuestionEN.split("_______")[0]}
-              <input
-                type='text'
-                className='input-field quiz-answer-input-inline'
-                value={userTypedAnswer}
-                onChange={(e) => setUserTypedAnswer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleCheckAnswer();
-                }}
-                disabled={matchFeedback !== null || appIsLoading}
-                autoFocus
-              />
-              {currentExercise.QuestionEN.split("_______")[1]}
-            </div>
-            <p className='fill-in-the-blank-translation'>
-              {currentExercise.QuestionES}
-            </p>
-            {showCorrectAnswer && matchFeedback !== "correct" && (
-              <p className='correct-answer-display'>
-                La respuesta correcta era:{" "}
-                <span className='correct-answer-text'>
-                  {currentExercise.AnswerEN}
-                </span>
-              </p>
-            )}
-          </>
-        )}
-
-        {currentExercise.Type === "multiple_choice" && (
-          <>
-            <div className='question-container'>
-              <div id='question-text' className='card-text question'>
-                {currentExercise.QuestionES}
-              </div>
-              <PlayButton text={currentExercise.QuestionES} lang='es' />
-            </div>
+      {/* NUEVO: Footer unificado para todos los elementos de acción */}
+      {showFooter && (
+        <div className='exercise-footer'>
+          {currentExercise.Type === "multiple_choice" && (
             <div className='multiple-choice-options'>
               {currentExercise.OptionsEN.map((option, idx) => (
                 <button
                   key={idx}
-                  className={`button multiple-choice-button ${
-                    normalizeText(option) === normalizeText(userTypedAnswer)
-                      ? "selected-option"
-                      : ""
-                  } ${
-                    matchFeedback &&
-                    normalizeText(option) ===
-                      normalizeText(currentExercise.AnswerEN)
-                      ? "correct-option"
-                      : ""
-                  } ${
-                    matchFeedback === "incorrect" &&
-                    normalizeText(option) === normalizeText(userTypedAnswer)
-                      ? "incorrect-selected-option"
-                      : ""
+                  className={`button option-button ${
+                    userTypedAnswer === option ? "selected" : ""
                   }`}
                   onClick={() => handleOptionClick(option)}
                   disabled={matchFeedback !== null || appIsLoading}
@@ -191,50 +100,40 @@ const ExerciseDisplay = ({
                 </button>
               ))}
             </div>
-          </>
-        )}
+          )}
 
-        {currentExercise.Type === "listening" && (
-          <>
-            <div className='microphone-play-buttons-group'>
-              <PlayButton text={currentExercise.QuestionEN} lang='en-US' />
-              {microphoneButton}
-            </div>
-            {recordedMicrophoneText && (
-              <div className='recorded-text-display'>
-                {recordedMicrophoneText}
-              </div>
-            )}
-            <p className='listening-instruction'>
-              Escucha y escribe lo que oigas.
-            </p>
-            <p className='listening-translation-hint'>
-              {currentExercise.QuestionES}
-            </p>
-            <div className='quiz-input-group'>
+          {(currentExercise.Type === "fill_in_the_blank" ||
+            currentExercise.Type === "listening") && (
+            <div className='input-with-mic-group'>
               <input
                 type='text'
-                className='input-field quiz-answer-input'
-                placeholder='Escribe lo que escuchaste aquí'
+                className='input-field'
+                placeholder='Escribe tu respuesta...'
                 value={userTypedAnswer}
                 onChange={(e) => setUserTypedAnswer(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCheckAnswer();
                 }}
                 disabled={matchFeedback !== null || appIsLoading}
+                autoFocus
               />
+              {microphoneButton}
             </div>
-            {showCorrectAnswer && matchFeedback !== "correct" && (
-              <p className='correct-answer-display'>
-                La frase correcta era:{" "}
-                <span className='correct-answer-text'>
-                  {currentExercise.QuestionEN}
-                </span>
-              </p>
-            )}
-          </>
-        )}
-      </div>
+          )}
+
+          {currentExercise.Type === "translation" && (
+            <div className='input-with-mic-group'>
+              <button
+                onClick={() => setIsAnswerVisible(!isAnswerVisible)}
+                className='button toggle-answer-button'
+              >
+                {isAnswerVisible ? "Ocultar" : "Mostrar"} Traducción
+              </button>
+              {microphoneButton}
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 };
