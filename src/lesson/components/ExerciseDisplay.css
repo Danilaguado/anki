@@ -49,15 +49,15 @@
   align-items: center;
   gap: 8px;
   text-align: center;
-  width: 100%; /* Asegura que el contenedor ocupe todo el ancho */
+  width: 100%;
 }
 
 .question-line {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%; /* El contenedor de la línea ocupa todo el ancho */
-  justify-content: center; /* Centra el bloque (botón + texto) */
+  width: 100%;
+  justify-content: center;
 }
 
 .question-text {
@@ -65,9 +65,8 @@
   font-weight: 700;
   color: var(--system-label);
   margin: 0;
-  /* CAMBIO: El texto ahora puede crecer para ocupar el espacio disponible */
   flex-grow: 1;
-  text-align: left; /* El texto se alinea a la izquierda de su contenedor */
+  text-align: left;
 }
 .question-translation {
   font-size: 20px;
@@ -145,6 +144,7 @@
   flex-shrink: 0;
 }
 
+/* CAMBIO: Estilo del botón de ayuda actualizado */
 .notes-toggle-button {
   position: absolute;
   top: 16px;
@@ -153,11 +153,76 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background-color: var(--system-gray-4);
-  color: var(--system-secondary-label);
-  border: none;
+  background-color: transparent; /* Sin fondo */
+  color: var(--system-blue); /* Color azul */
+  border: none; /* Sin borde */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  padding: 0;
+}
+.notes-toggle-button svg {
+  width: 22px; /* Icono un poco más grande */
+  height: 22px;
+}
+
+/* --- NUEVO: Estilos para el Pop-up de Notas (Modal) --- */
+.notes-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.notes-modal-content {
+  background-color: var(--system-secondary-background);
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 12px 24px var(--shadow-color);
+  max-width: 320px;
+  width: 90%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-modal-content h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: var(--system-label);
+}
+
+.notes-modal-content p {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--system-secondary-label);
+  margin: 0 0 20px 0;
+}
+
+/* CAMBIO: Botón de cierre con estilo de texto */
+.notes-modal-close-button {
+  background: none;
+  border: none;
+  border-top: 0.5px solid var(--separator-color);
+  color: var(--system-blue);
+  font-size: 17px;
+  font-weight: 600;
+  padding: 12px 0 0 0;
+  margin: 0 -20px -20px -20px; /* Para que ocupe todo el ancho inferior */
+  border-radius: 0 0 14px 14px; /* Redondear esquinas inferiores */
+  cursor: pointer;
+  height: 44px;
+}
+.notes-modal-close-button:hover {
+  background-color: var(--system-gray-4);
 }
