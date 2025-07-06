@@ -12,10 +12,11 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* CAMBIO: Distribuye el contenido verticalmente en lugar de agruparlo en el centro */
+  justify-content: space-around;
   align-items: center;
   position: relative;
-  gap: 24px;
+  gap: 20px; /* Un poco menos de gap para un look más compacto */
   width: 100%;
 }
 
@@ -40,10 +41,12 @@
   text-align: center;
 }
 .question-text {
-  font-size: 28px;
+  /* CAMBIO: Tamaño de fuente más grande y legible */
+  font-size: 32px;
   font-weight: 700;
   color: var(--system-label);
   margin: 0;
+  padding: 0 10px; /* Evita que el texto largo toque los bordes */
 }
 .card-text.answer.hidden {
   filter: blur(5px);
@@ -61,7 +64,8 @@
   grid-template-columns: 1fr;
   gap: 12px;
   width: 100%;
-  max-width: 400px;
+  /* CAMBIO: Opciones un poco más anchas */
+  max-width: 480px;
 }
 .multiple-choice-button {
   background-color: var(--system-gray-6);
