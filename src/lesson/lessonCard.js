@@ -50,15 +50,10 @@ const LessonCard = ({ lesson, onBack, onShowNotes }) => {
   // Si no hay lección o ejercicios, mostrar mensaje
   if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
     return (
-      <div className='lesson-detail-view-content'>
-        {" "}
-        {/* Usar el div de contenido */}
-        <p className='info-text'>
-          No se ha seleccionado ninguna lección o esta lección no tiene
-          ejercicios.
-        </p>
-        {/* El botón de volver a la lista de lecciones se gestiona con el close-lesson-button */}
-      </div>
+      // ¡CORREGIDO! Devuelve solo el párrafo, ya que el contenedor está en LessonDisplayPage.
+      <p className='info-text'>
+        Esta lección no tiene ejercicios o no se ha podido cargar.
+      </p>
     );
   }
 

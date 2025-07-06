@@ -61,7 +61,8 @@ const LessonDisplayPage = () => {
         const result = await response.json();
         if (result.success && result.lessons) {
           const foundLesson = result.lessons.find(
-            (l) => l.LessonID === lessonId
+            // ¡CORREGIDO! Compara IDs como strings, ya que el ID de la URL es un string.
+            (l) => String(l.LessonID) === lessonId
           );
           if (foundLesson) {
             setLesson(foundLesson);
