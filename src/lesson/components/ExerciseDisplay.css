@@ -15,7 +15,6 @@
 .card-content-area.quiz-content-area {
   position: relative;
   flex-grow: 1;
-  padding: 25px;
   display: flex;
   flex-direction: column;
   justify-content: center;
