@@ -66,17 +66,9 @@ const PrincipalPageLessons = () => {
 
   // Función para manejar la selección de una lección del listado
   const handleSelectLesson = (lessonId) => {
-    console.log(
-      "DEBUG: PrincipalPageLessons - Seleccionando lección con ID:",
-      lessonId
-    ); // DEBUG
-    // ¡CORREGIDO! Guardar el lessonId en localStorage antes de navegar
-    localStorage.setItem("currentLessonId", lessonId);
-    console.log(
-      "DEBUG: PrincipalPageLessons - lessonId guardado en localStorage:",
-      localStorage.getItem("currentLessonId")
-    ); // DEBUG
-    navigate(`/lessons/exercises`); // Navegar a la ruta fija
+    // Navega a la página de la lección específica, pasando el ID en la URL.
+    // Ya no se usa localStorage para esto.
+    navigate(`/lessons/${lessonId}`);
     setMessage(""); // Limpiar mensajes al cambiar de vista
     setError(null);
   };

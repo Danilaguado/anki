@@ -11,8 +11,8 @@ import LessonCard from "./lessonCard"; // Importa el componente LessonCard
 import AppContext from "../context/AppContext";
 
 const LessonDisplayPage = () => {
-  const { lessonId } = useParams(); // Hook para obtener el LessonID de la URL
-  const navigate = useNavigate(); // Hook para la navegación programática
+  const { lessonId } = useParams();
+  const navigate = useNavigate();
   const {
     setAppMessage,
     setAppIsLoading,
@@ -38,7 +38,6 @@ const LessonDisplayPage = () => {
       setLesson(null);
 
       if (!lessonId) {
-        // Si no hay lessonId en el estado, es un error
         setError(
           "Error: ID de lección no proporcionado. Por favor, selecciona una lección de la lista."
         );
@@ -70,7 +69,6 @@ const LessonDisplayPage = () => {
           } else {
             setError("Lección no encontrada.");
             setAppMessage("Lección no encontrada.");
-            localStorage.removeItem("currentLessonId");
           }
         } else {
           setError(result.error || "Error al cargar lecciones.");
@@ -86,15 +84,13 @@ const LessonDisplayPage = () => {
       }
     };
 
-    fetchLesson(); // Llama a fetchLesson directamente
-  }, [lessonId, setAppMessage, setAppIsLoading]); // Dependencias: lessonId para recargar si cambia
+    fetchLesson();
+  }, [lessonId, setAppMessage, setAppIsLoading]);
 
-  // Función para volver a la lista de lecciones
   const handleBackToList = () => {
-    navigate("/lessons"); // Navega de vuelta a la página de lista de lecciones
+    navigate("/lessons");
   };
 
-  // Lógica para el Pop-up de Notas (pasada a LessonCard y ChatbotLessonRawDisplay)
   const handleShowNotes = (content) => {
     setNotesContent(content);
     setShowNotesModal(true);
@@ -105,10 +101,10 @@ const LessonDisplayPage = () => {
   };
 
   return (
-    <div className='lessons-page-wrapper app-container'>
+    <div className='lesson-detail-page-wrapper section-container'>
       {" "}
-      {/* Usa el wrapper de lecciones */}
-      {/* Botón de cerrar para volver a la lista de lecciones */}
+      {/* ¡CORREGIDO! Usa section-container directamente */}
+      {/* Botón de cerrar para volver a la lista de lecciones (dentro del section-container) */}
       <button onClick={handleBackToList} className='close-lesson-button'>
         <svg
           xmlns='http://www.w3.org/2000/svg'
@@ -120,7 +116,7 @@ const LessonDisplayPage = () => {
           <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z' />
         </svg>
       </button>
-      {/* Pop-up de Notas (Modal) - Ahora gestionado aquí */}
+      {/* Pop-up de Notas (Modal) */}
       {showNotesModal && (
         <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
           <div
@@ -151,12 +147,25 @@ const LessonDisplayPage = () => {
         <p className='info-text'>Cargando lección...</p>
       )}
       {lesson && (
-        // Renderiza LessonCard, que a su vez decide qué tipo de display usar
-        <LessonCard
-          lesson={lesson}
-          onBack={handleBackToList} // Pasa la función de volver a la lista
-          onShowNotes={handleShowNotes} // Pasa la función para mostrar notas
-        />
+        <>
+          {/* ¡ELIMINADO! Título de la lección y meta info duplicados */}
+          {/* <div className="lesson-detail-header-info section-container">
+            <h2 className="section-title">{lesson.Title}</h2>
+            <p className="lesson-meta-info">
+              <strong>Tema:</strong> {lesson.Topic} | 
+              <strong>Dificultad:</strong> {lesson.Difficulty} | 
+              <strong>Fecha:</strong> {new Date(lesson.GeneratedDate).toLocaleDateString()}
+            </p>
+            <p className="lesson-description">{lesson.Description}</p>
+          </div> */}
+
+          {/* El LessonCard ahora es el que contiene el contenido del ejercicio */}
+          <LessonCard
+            lesson={lesson}
+            onBack={handleBackToList} // Pasa la función de volver a la lista
+            onShowNotes={handleShowNotes} // Pasa la función para mostrar notas
+          />
+        </>
       )}
     </div>
   );
