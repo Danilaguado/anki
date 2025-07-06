@@ -1,248 +1,166 @@
-// import ExerciseNavigation from './components/ExerciseNavigation';
-// src/lesson/components/lessonCard.js
-import React, { useState, useEffect, useContext } from "react";
-import "./PrincipalPageLessons.css"; // Estilos compartidos para lecciones (mismo directorio)
-import { normalizeText, renderClickableText } from "../utils/textUtils"; // Utilidades de texto (sube un nivel)
-import ExerciseDisplay from "./components/ExerciseDisplay"; // En la misma carpeta
-// ExerciseNavigation ya no se importa ni se renderiza para ningún tipo de lección
-// import ExerciseNavigation from './components/ExerciseNavigation';
-import ChatbotLessonRawDisplay from "./components/ChatbotLessonRawDisplay"; // Componente para mostrar el chatbot en crudo
+// src/lesson/LessonDisplayPage.js
 
-// Importar el contexto (Sube dos niveles)
+import React, { useState, useEffect, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import MessageDisplay from "../components/MessageDisplay";
+import LessonCard from "./lessonCard";
 import AppContext from "../context/AppContext";
 
-const LessonCard = ({ lesson, onBack, onShowNotes }) => {
-  // ¡CORREGIDO! onShowNotes en props
-  // Consumir valores del contexto
-  const { onPlayAudio, setAppMessage, setAppIsLoading, appIsLoading } =
+const LessonDisplayPage = () => {
+  const { lessonId } = useParams();
+  const navigate = useNavigate();
+  const { setAppMessage, setAppIsLoading, appIsLoading, appGlobalMessage } =
     useContext(AppContext);
 
-  // --- ESTADOS DE INTERACCIÓN DE EJERCICIO ---
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [isAnswerVisible, setIsAnswerVisible] = useState(false); // Para traducción
-  const [userTypedAnswer, setUserTypedAnswer] = useState(""); // Input del usuario
-  const [matchFeedback, setMatchFeedback] = useState(null); // null, 'correct', 'incorrect'
-  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false); // Para mostrar la respuesta correcta
-  const [recordedMicrophoneText, setRecordedMicrophoneText] = useState("");
+  const [lesson, setLesson] = useState(null);
+  const [isLoadingLesson, setIsLoadingLesson] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Estados para el pop-up de notas (ya no son necesarios aquí, se gestionan en el padre LessonDisplayPage)
-  // const [showNotesModal, setShowNotesModal] = useState(false);
-  // const [notesContent, setNotesContent] = useState('');
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [notesContent, setNotesContent] = useState("");
 
-  // Restablecer estados al cambiar de ejercicio o lección
   useEffect(() => {
-    setIsAnswerVisible(false);
-    setUserTypedAnswer("");
-    setMatchFeedback(null);
-    setShowCorrectAnswer(false);
-    setRecordedMicrophoneText("");
-    // Al cambiar de ejercicio, ocultar el modal de notas si está abierto
-    // setShowNotesModal(false);
-    // setNotesContent('');
-  }, [currentExerciseIndex, lesson]); // Dependencia 'lesson' y 'currentExerciseIndex' para reinicio de estados
+    const fetchLesson = async () => {
+      setIsLoadingLesson(true);
+      setAppIsLoading(true);
+      setAppMessage("Cargando lección...");
+      setError(null);
+      setLesson(null);
 
-  // Resetear solo lo que depende de la lección (no del ejercicio actual)
-  useEffect(() => {
-    setCurrentExerciseIndex(0); // Al cargar una nueva lección, empezamos por el primer ejercicio
-    setAppMessage(""); // Limpiar mensaje global al cargar nueva lección
-  }, [lesson, setAppMessage]);
-
-  // Si no hay lección o ejercicios, mostrar mensaje
-  if (!lesson || !lesson.exercises || lesson.exercises.length === 0) {
-    return (
-      // ¡CORREGIDO! Devuelve solo el párrafo, ya que el contenedor está en LessonDisplayPage.
-      <p className='info-text'>
-        Esta lección no tiene ejercicios o no se ha podido cargar.
-      </p>
-    );
-  }
-
-  // Determinar si la lección actual es un módulo de chatbot
-  const isChatbotLesson =
-    (lesson.TypeModule || "").toLowerCase().trim() === "chatbot_lesson";
-
-  // El ejercicio actual para las lecciones estándar (flashcards)
-  // Solo se usa si !isChatbotLesson
-  const currentStandardExercise = lesson.exercises[currentExerciseIndex];
-
-  // --- Funciones de manejo de ejercicios (SOLO para lecciones estándar) ---
-  const handleCheckAnswer = () => {
-    /* Lógica de verificación para flashcards */
-    // Para multiple_choice, userTypedAnswer ya se establece al hacer clic en la opción
-    if (
-      !userTypedAnswer.trim() &&
-      !["multiple_choice", "practice_multiple_choice"].includes(
-        currentStandardExercise.Type
-      )
-    ) {
-      setAppMessage("Por favor, escribe tu respuesta.");
-      setMatchFeedback(null);
-      return;
-    }
-    const normalizedUserAnswer = normalizeText(userTypedAnswer);
-    const currentExercise = lesson.exercises[currentExerciseIndex];
-    let normalizedCorrectAnswer;
-
-    if (
-      currentExercise.Type === "fill_in_the_blank" ||
-      currentExercise.Type === "multiple_choice"
-    ) {
-      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerEN || "");
-    } else if (currentExercise.Type === "listening") {
-      normalizedCorrectAnswer = normalizeText(currentExercise.QuestionEN || "");
-    } else {
-      normalizedCorrectAnswer = normalizeText(currentExercise.AnswerES || "");
-    }
-    if (normalizedUserAnswer === normalizedCorrectAnswer) {
-      setMatchFeedback("correct");
-      setShowCorrectAnswer(true);
-      // setAppMessage('¡Correcto!'); // ¡ELIMINADO! Alerta de correcto
-    } else {
-      setMatchFeedback("incorrect");
-      setShowCorrectAnswer(true);
-      setAppMessage(
-        "Incorrecto. La respuesta esperada era: " +
-          (currentExercise.AnswerEN || currentExercise.QuestionEN)
-      ); // Mensaje de error
-    }
-  };
-
-  const handleOptionClick = (selectedOption) => {
-    /* Lógica para flashcards */
-    // ¡CORREGIDO! Solo establece la respuesta, no comprueba inmediatamente
-    if (matchFeedback !== null) return; // No permitir cambiar la selección si ya se comprobó
-    setUserTypedAnswer(selectedOption);
-    // setAppMessage(''); // Opcional: limpiar mensaje al seleccionar
-  };
-
-  const handleSpeechResultForListening = (transcript) => {
-    /* Lógica para flashcards */
-    setRecordedMicrophoneText(transcript);
-    // No se llama handleCheckAnswer aquí, se espera el botón "Comprobar"
-  };
-
-  // --- LÓGICA DE BOTÓN "COMPROBAR" / "CONTINUAR" ---
-  const handleCheckOrContinue = () => {
-    if (matchFeedback === "correct" || matchFeedback === "incorrect") {
-      // Si ya se comprobó (correcto o incorrecto), avanzar
-      // Si ya es correcto o incorrecto, avanzar al siguiente ejercicio
-      if (currentExerciseIndex < lesson.exercises.length - 1) {
-        setCurrentExerciseIndex((prev) => prev + 1);
-        setAppMessage(""); // Limpiar mensaje al avanzar
-      } else {
-        setAppMessage("¡Has completado esta lección!");
+      if (!lessonId) {
+        setError("Error: ID de lección no proporcionado.");
+        setAppMessage("Error: ID de lección no proporcionado.");
+        setIsLoadingLesson(false);
+        setAppIsLoading(false);
+        return;
       }
-    } else {
-      // Si no se ha comprobado, realizar la comprobación
-      handleCheckAnswer();
-    }
+
+      try {
+        // CONSEJO DE DEPURACIÓN:
+        // Imprime en la consola para asegurarte de que la API devuelve lo que esperas.
+        const response = await fetch("/api/lessons/get-all");
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+        const result = await response.json();
+
+        // Imprime la respuesta para ver su estructura
+        console.log("Respuesta de la API:", result);
+
+        if (result.success && result.lessons) {
+          const foundLesson = result.lessons.find(
+            (l) => String(l.LessonID) === lessonId
+          );
+          if (foundLesson) {
+            setLesson(foundLesson);
+            setAppMessage(`Lección "${foundLesson.Title}" cargada.`);
+            setError(null); // Limpiar errores anteriores
+          } else {
+            setError(`Lección con ID "${lessonId}" no encontrada.`);
+            setAppMessage("Lección no encontrada.");
+          }
+        } else {
+          setError(result.error || "Error al procesar las lecciones.");
+          setAppMessage("Error al procesar lección.");
+        }
+      } catch (err) {
+        console.error("Error al cargar la lección:", err);
+        setError(`Error al cargar la lección: ${err.message}.`);
+        setAppMessage(`Error: ${err.message}.`);
+      } finally {
+        setIsLoadingLesson(false);
+        setAppIsLoading(false);
+      }
+    };
+
+    fetchLesson();
+  }, [lessonId, setAppMessage, setAppIsLoading]);
+
+  const handleBackToList = () => {
+    navigate("/lessons");
   };
 
-  // Lógica para el Pop-up de Notas (ahora se pasa desde el padre LessonDisplayPage)
   const handleShowNotes = (content) => {
-    // ¡CORREGIDO! onShowNotes es una prop, no un estado local
-    onShowNotes(content); // Llama a la prop onShowNotes
+    setNotesContent(content);
+    setShowNotesModal(true);
   };
-  // handleCloseNotesModal ya no es necesario aquí
+  const handleCloseNotesModal = () => {
+    setShowNotesModal(false);
+    setNotesContent("");
+  };
+
+  // --- LÓGICA DE RENDERIZADO MEJORADA ---
+  const renderContent = () => {
+    if (isLoadingLesson) {
+      return <p className='info-text'>Cargando lección...</p>;
+    }
+
+    // CAMBIO CLAVE: Si la carga terminó y hay un error, muéstralo prominentemente.
+    if (error) {
+      return (
+        <div className='message-box error-box' role='alert'>
+          <span className='message-text'>{error}</span>
+          <button
+            onClick={handleBackToList}
+            className='button primary-button'
+            style={{ marginTop: "1rem" }}
+          >
+            Volver a la lista
+          </button>
+        </div>
+      );
+    }
+
+    if (lesson) {
+      return <LessonCard lesson={lesson} onShowNotes={handleShowNotes} />;
+    }
+
+    // Caso de respaldo por si algo más falla
+    return <p className='info-text'>No hay contenido para mostrar.</p>;
+  };
 
   return (
-    <div className='lesson-detail-view-content'>
-      {isChatbotLesson ? (
-        // Si es una lección de chatbot, renderizamos el ChatbotLessonRawDisplay
-        // y le pasamos TODOS los ejercicios para que los muestre en crudo.
-        <ChatbotLessonRawDisplay
-          lessonExercises={lesson.exercises} // Pasar TODOS los ejercicios de la lección
-          onPlayAudio={onPlayAudio} // Pasa onPlayAudio
-          appIsLoading={appIsLoading} // Pasa appIsLoading
-          setAppMessage={setAppMessage} // Pasa setAppMessage
-          onShowNotes={onShowNotes} // Pasa la función onShowNotes del padre
-        />
-      ) : (
-        // Si es una lección estándar (flashcards), el flujo es el mismo de antes
-        <div
-          className={`card-container lesson-exercise-card ${
-            matchFeedback ? `match-${matchFeedback}` : ""
-          }`}
+    <div className='lesson-detail-page-wrapper section-container'>
+      <button onClick={handleBackToList} className='close-lesson-button'>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          width='16'
+          height='16'
+          fill='currentColor'
+          viewBox='0 0 16 16'
         >
-          {currentStandardExercise?.Notes && (
+          <path d='M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z' />
+        </svg>
+      </button>
+
+      {showNotesModal && (
+        <div className='notes-modal-overlay' onClick={handleCloseNotesModal}>
+          <div
+            className='notes-modal-content'
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
-              className='notes-toggle-button'
-              onClick={() => onShowNotes(currentStandardExercise.Notes)}
+              className='notes-modal-close-button'
+              onClick={handleCloseNotesModal}
             >
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                width='16'
-                height='16'
-                fill='currentColor'
-                viewBox='0 0 16 16'
-              >
-                <path
-                  fillRule='evenodd'
-                  d='M4.475 5.458c-.284 0-.514-.237-.47-.517C4.28 3.24 5.576 2 7.825 2c2.25 0 3.767 1.36 3.767 3.215 0 1.344-.665 2.288-1.79 2.973-1.1.659-1.414 1.118-1.414 2.01v.03a.5.5 0 0 1-.5.5h-.77a.5.5 0 0 1-.5-.495l-.003-.2c-.043-1.221.477-2.001 1.645-2.712 1.03-.632 1.397-1.135 1.397-2.028 0-.979-.758-1.698-1.926-1.698-1.009 0-1.71.529-1.938 1.402-.066.254-.278.461-.54.461h-.777ZM7.496 14c.622 0 1.095-.474 1.095-1.09 0-.618-.473-1.092-1.095-1.092-.606 0-1.087.474-1.087 1.091S6.89 14 7.496 14'
-                />
-              </svg>
+              &times;
             </button>
-          )}
-
-          {/* Mostrar imagen para ejercicios estándar */}
-          {currentStandardExercise?.Image && (
-            <div className='exercise-image-container'>
-              <img
-                src={currentStandardExercise.Image}
-                alt={`Imagen para ${currentStandardExercise.Type} ejercicio`}
-                className='exercise-image'
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = `https://placehold.co/300x200/cccccc/ffffff?text=No+Image`;
-                }}
-              />
-            </div>
-          )}
-
-          {/* Componente para mostrar el ejercicio actual */}
-          <ExerciseDisplay
-            currentExercise={currentStandardExercise}
-            onPlayAudio={onPlayAudio}
-            setAppMessage={setAppMessage}
-            appIsLoading={appIsLoading}
-            isAnswerVisible={isAnswerVisible}
-            setIsAnswerVisible={setIsAnswerVisible}
-            userTypedAnswer={userTypedAnswer}
-            setUserTypedAnswer={setUserTypedAnswer}
-            matchFeedback={matchFeedback}
-            showCorrectAnswer={showCorrectAnswer}
-            recordedMicrophoneText={recordedMicrophoneText}
-            handleCheckAnswer={handleCheckAnswer}
-            handleOptionClick={handleOptionClick}
-            handleSpeechResultForListening={handleSpeechResultForListening}
-          />
-
-          {/* Botón Comprobar / Continuar */}
-          <div className='navigation-buttons-group'>
-            {" "}
-            {/* Reutiliza el grupo para el botón */}
-            <button
-              onClick={handleCheckOrContinue}
-              className={`button primary-button check-continue-button ${
-                matchFeedback === "correct" || matchFeedback === "incorrect"
-                  ? "continue"
-                  : "check"
-              }`}
-              disabled={
-                appIsLoading ||
-                (matchFeedback === "correct" &&
-                  currentExerciseIndex >= lesson.exercises.length - 1)
-              }
-            >
-              {matchFeedback === "correct" || matchFeedback === "incorrect"
-                ? "Continuar"
-                : "Comprobar"}
-            </button>
+            <h3>Notas del Ejercicio</h3>
+            <p>{notesContent}</p>
           </div>
         </div>
       )}
+
+      {/* El MessageDisplay sigue siendo útil para mensajes globales como "Cargando audio..." */}
+      <MessageDisplay
+        message={appGlobalMessage}
+        isLoading={appIsLoading || isLoadingLesson}
+      />
+
+      {/* El contenido principal se renderiza aquí */}
+      {renderContent()}
     </div>
   );
 };
 
-export default LessonCard;
+export default LessonDisplayPage;

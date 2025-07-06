@@ -1,7 +1,4 @@
 // src/App.js
-// Este es el archivo App.js principal que maneja el enrutamiento y la estructura general,
-// y ahora también los estados globales de carga, mensajes y audio,
-// proporcionados a través de React Context.
 
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -10,8 +7,8 @@ import {
   Routes,
   Link,
   useLocation,
-} from "react-router-dom"; // Importa useLocation
-import "./index.css"; // Importa los estilos globales para toda la aplicación
+} from "react-router-dom";
+import "./index.css";
 
 // Importa el contexto
 import AppContext from "./context/AppContext";
@@ -19,7 +16,6 @@ import AppContext from "./context/AppContext";
 // Importa tus secciones principales
 import MainVocabSection from "./MainVocabSection";
 import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
-// Importa la nueva página para mostrar lecciones
 import LessonDisplayPage from "./lesson/LessonDisplayPage";
 
 // Importar utilidades de audio
@@ -36,7 +32,6 @@ const HomeScreen = () => {
       <p className='info-text'>
         Esta es la pantalla principal. ¿Qué te gustaría hacer?
       </p>
-      {/* Botones de navegación principales (pueden ser reemplazados por la barra inferior en móvil) */}
       <nav className='home-nav-buttons'>
         <Link to='/vocab-trainer' className='button primary-button'>
           Ir al Entrenador de Vocabulario
@@ -52,8 +47,8 @@ const HomeScreen = () => {
 const App = () => {
   // Estados globales gestionados por App.js
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Estado de carga global
-  const audioCache = useRef(new Map()); // Caché de audio global
+  const [isLoading, setIsLoading] = useState(false);
+  const audioCache = useRef(new Map());
 
   // Función para envolver playAudio con sus dependencias globales
   const wrappedPlayAudio = React.useCallback((text, lang) => {
@@ -92,9 +87,10 @@ const App = () => {
             <Route path='/' element={<HomeScreen />} />
             <Route path='/vocab-trainer' element={<MainVocabSection />} />
             <Route path='/lessons' element={<PrincipalPageLessons />} />
-            {/* ¡CORREGIDO! Ruta fija para la visualización de lecciones */}
-            <Route path='/lessons/exercises' element={<LessonDisplayPage />} />
+            {/* Ruta dinámica para mostrar una lección específica por su ID */}
+            <Route path='/lessons/:lessonId' element={<LessonDisplayPage />} />
           </Routes>
+
           {/* Renderiza la barra de navegación inferior condicionalmente */}
           <ConditionalBottomNavigationBar />
         </div>
@@ -105,8 +101,13 @@ const App = () => {
 
 // Componente para envolver BottomNavigationBar y usar useLocation
 const ConditionalBottomNavigationBar = () => {
-  const location = useLocation(); // useLocation se llama aquí, dentro del Router
-  const shouldShowBottomNav = location.pathname !== "/lessons/exercises";
+  const location = useLocation();
+  // Ocultar la barra de navegación solo en la página de una lección específica
+  const shouldShowBottomNav = !(
+    location.pathname.startsWith("/lessons/") &&
+    location.pathname !== "/lessons"
+  );
+
   return shouldShowBottomNav ? <BottomNavigationBar /> : null;
 };
 
