@@ -4,27 +4,29 @@
 .card-container.lesson-exercise-card {
   display: flex;
   flex-direction: column;
-  min-height: 480px; /* Altura mínima para que el botón de "Continuar" pueda ir al fondo */
-  padding-bottom: 20px;
+  /* REMOVED: min-height: 480px; */ /* Esto causaba el espacio en blanco */
+  padding: 30px; /* Padding general */
+  margin: 20px auto; /* Centrar la tarjeta y dar algo de margen */
+  max-width: 600px; /* Ancho máximo */
   border: 1px solid var(--border-color);
   border-radius: 12px;
   background-color: #ffffff;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  position: relative; /* Para posicionar el botón de 'Comprobar' */
 }
 
 /* Área de contenido principal (el recuadro punteado) */
 .card-content-area.quiz-content-area {
-  position: relative; /* Necesario para posicionar el botón de notas */
-  flex-grow: 1; /* Hace que esta área ocupe el espacio disponible, empujando el botón hacia abajo */
+  position: relative;
   padding: 25px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: center; /* Centrar verticalmente el contenido principal */
   align-items: center;
   gap: 25px;
   border: 1px dashed var(--border-color);
   border-radius: 10px;
-  margin: 15px;
+  margin-bottom: 60px; /* Espacio para el botón de 'Comprobar' */
   transition: all 0.3s ease;
 }
 
@@ -60,21 +62,35 @@
   flex-shrink: 0;
   background-color: var(--primary-color);
   color: white;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.play-beside-text svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Grupo de botones de navegación (Contiene "Comprobar" / "Continuar") */
 .navigation-buttons-group {
-  margin-top: auto; /* EMPUJA ESTE GRUPO AL FONDO DEL FLEX CONTAINER */
-  padding-top: 20px;
-  display: flex;
-  justify-content: center;
+  position: absolute; /* Posicionar el botón */
+  bottom: 15px; /* Separación del borde inferior */
+  left: 50%; /* Centrar horizontalmente */
+  transform: translateX(-50%); /* Ajustar el centrado */
+  width: 90%; /* Ancho del botón */
+  max-width: 540px; /* Máximo ancho consistente con la tarjeta */
 }
 
 .check-continue-button {
-  width: 80%;
-  max-width: 300px;
+  /* Los estilos del botón primario ya están definidos en index.css */
+  /* width: 80%; */ /* Ya se define en el contenedor */
+  /* max-width: 300px; */ /* Ya se define en el contenedor */
 }
 
 /* Botón de notas (signo de interrogación) */
@@ -83,8 +99,8 @@
   top: 15px;
   right: 15px;
   z-index: 5;
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   background-color: var(--info-color);
   color: var(--text-color-light);
@@ -92,16 +108,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5em;
+  font-size: 1.3em;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: none;
+  cursor: pointer;
+}
+
+.notes-toggle-button:hover {
+  background-color: #1976d2;
+  transform: scale(1.05);
+}
+
+.notes-toggle-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* Estilos para las opciones de Múltiple Choice */
 .multiple-choice-options {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Adaptativo */
+  gap: 10px;
   width: 100%;
   margin-top: 15px;
 }
@@ -109,10 +136,11 @@
 .multiple-choice-button {
   background-color: #f0f0f0;
   color: var(--text-color-dark);
-  border: 2px solid var(--border-color);
-  width: 100%;
-  padding: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 12px 15px;
   font-size: 1em;
+  text-align: center;
   transition: all 0.2s ease-in-out;
 }
 
@@ -144,15 +172,16 @@
 /* Estilos para los botones de micrófono y play (cuando están agrupados) */
 .microphone-play-buttons-group {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center; /* Centrar los botones */
   align-items: center;
-  width: 100%;
+  gap: 20px; /* Espacio entre los botones */
+  width: auto; /* Ajustar el ancho al contenido */
   margin-bottom: 10px;
 }
 
 .audio-button-round {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   padding: 0;
   display: flex;
@@ -160,18 +189,21 @@
   justify-content: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
+  background-color: var(--primary-color);
+  color: white;
+  cursor: pointer;
 }
 
 .audio-button-round svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 .recorded-text-display {
   background-color: #f0f0f0;
   color: var(--text-color-dark);
   padding: 8px 15px;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   margin-top: 10px;
   font-size: 1.1em;
   text-align: center;
