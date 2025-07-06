@@ -48,21 +48,26 @@
 
 /* Contenedor principal que ocupa toda la pantalla */
 .lesson-detail-page-wrapper {
-  display: flex; /* Habilita Flexbox */
-  flex-direction: column; /* Organiza los hijos verticalmente */
+  /* ¡CAMBIO CLAVE! Se usa position:fixed para sacar el contenedor del flujo
+     y pegarlo a los bordes de la ventana, ignorando el padding de su padre. */
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100vh; /* Ocupa el 100% de la altura de la pantalla */
-  background-color: var(--background-light); /* Fondo general */
-  padding: 20px; /* Un poco de espacio en los bordes */
+  height: 100%; /* Con fixed, 100% se refiere al viewport */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background-light);
+  padding: 20px; /* Mantenemos un padding para que la card interna no se pegue a los bordes en desktop */
   box-sizing: border-box;
-  position: relative; /* Para el botón de cerrar */
+  z-index: 10; /* Asegura que se muestre por encima de la página de lista */
 }
 
 /* El contenido de la lección (el componente LessonCard) */
 .lesson-detail-view-content {
   flex-grow: 1; /* ¡CLAVE! Hace que este elemento ocupe todo el espacio vertical disponible */
-  display: flex; /* Lo convierte en flex para organizar su propio contenido */
-  flex-direction: column; /* Sus hijos se apilarán verticalmente */
+  display: flex;
+  flex-direction: column;
   background-color: var(--text-color-light);
   border-radius: var(--border-radius);
   box-shadow: 0 4px 12px var(--shadow-color);
@@ -81,25 +86,26 @@
 
 /* Botón de cerrar (X) */
 .close-lesson-button {
+  /* Ahora se posiciona relativo al wrapper de pantalla completa */
   position: absolute;
   top: 15px;
   left: 15px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid #bdbdbd;
   color: var(--text-color-dark);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 10; /* Asegura que esté por encima del contenido */
+  z-index: 20; /* Por encima de la tarjeta de lección */
   transition: all 0.2s ease;
 }
 
 .close-lesson-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 1);
   transform: scale(1.05);
 }
 
@@ -109,7 +115,6 @@
 }
 
 /* --- Ajustes para el contenido del ejercicio --- */
-/* (Estos estilos ya los tienes en ExerciseDisplay.css, pero se aseguran aquí) */
 
 .card-content-area.quiz-content-area {
   flex-grow: 1; /* Ocupa el espacio central, empujando el botón de acción hacia abajo */
@@ -136,7 +141,6 @@
 @media (max-width: 768px) {
   .lesson-detail-page-wrapper {
     padding: 0; /* Sin padding en móvil para un look de pantalla completa */
-    height: 100vh;
   }
 
   .lesson-detail-view-content {
