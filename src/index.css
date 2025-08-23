@@ -214,3 +214,13 @@ body {
   color: #9ca3af; /* gris claro */
   margin-top: 2rem;
 }
+
+.upload-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.success-icon {
+  width: 24px;
+  height: 24px;
+}
