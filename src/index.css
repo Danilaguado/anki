@@ -141,13 +141,17 @@ body {
   background-color: #f3f4f6; /* gris un poco más oscuro */
 }
 
+.file-upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .upload-icon {
   width: 24px;
   height: 24px;
   margin-bottom: 12px;
   color: #6b7280; /* gris medio */
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .file-upload-content p {
