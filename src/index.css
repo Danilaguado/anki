@@ -1,175 +1,216 @@
-/* src/index.css */
+/* ===== /src/index.css ===== */
+/* Este archivo contiene todos los estilos para la aplicación. */
 
-/* 1. Variables de Color (Paleta Apple) y Tipografía */
-:root {
-  /* Fuentes */
-  --font-family-apple: -apple-system, BlinkMacSystemFont, "system-ui", "Roboto",
-    "Helvetica Neue", sans-serif;
-
-  /* Fondos (Modo Claro) */
-  --system-background: #f2f2f7;
-  --system-secondary-background: #ffffff;
-
-  /* Texto (Modo Claro) */
-  --system-label: #000000;
-  --system-secondary-label: rgba(60, 60, 67, 0.6);
-  --system-tertiary-label: rgba(60, 60, 67, 0.3);
-
-  /* Colores de Acento */
-  --system-blue: #007aff;
-  --system-green: #34c759;
-  --system-red: #ff3b30;
-  --system-orange: #ff9500;
-  --system-indigo: #5856d6;
-
-  /* Grises (Modo Claro) */
-  --system-gray-4: #d1d1d6;
-  --system-gray-6: #f2f2f7;
-
-  /* Otros */
-  --separator-color: rgba(60, 60, 67, 0.29);
-  --shadow-color: rgba(0, 0, 0, 0.05);
-  --border-radius: 12px;
-}
-
-/* 2. Soporte para Modo Oscuro (Automático) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Fondos (Modo Oscuro) */
-    --system-background: #000000;
-    --system-secondary-background: #1c1c1e;
-
-    /* Texto (Modo Oscuro) */
-    --system-label: #ffffff;
-    --system-secondary-label: rgba(235, 235, 245, 0.6);
-    --system-tertiary-label: rgba(235, 235, 245, 0.3);
-
-    /* Colores de Acento (Modo Oscuro) */
-    --system-blue: #0a84ff;
-    --system-green: #30d158;
-    --system-red: #ff453a;
-    --system-orange: #ff9f0a;
-    --system-indigo: #5e5ce6;
-
-    /* Grises (Modo Oscuro) */
-    --system-gray-4: #3a3a3c;
-    --system-gray-6: #2c2c2e;
-
-    /* Otros */
-    --separator-color: rgba(84, 84, 88, 0.65);
-    --shadow-color: rgba(0, 0, 0, 0.2);
-  }
-}
-
-/* 3. Estilos Base */
+/* --- Estilos Globales y de Base --- */
 body {
   margin: 0;
-  font-family: var(--font-family-apple);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--system-background);
-  color: var(--system-label);
+  background-color: #f3f4f6; /* gris claro */
+  color: #1f2937; /* gris oscuro */
 }
 
 .app-container {
-  width: 100%;
   min-height: 100vh;
-  box-sizing: border-box;
-}
-
-/* 4. Títulos Estilo Apple */
-.app-title {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-align: left;
-  padding: 20px;
-  margin: 0;
-}
-
-.section-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 20px 20px 10px 20px;
-}
-
-.subsection-title {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--system-secondary-label);
-  text-transform: uppercase;
-  margin: 20px 20px 8px 20px;
-}
-.margin-zero {
-  margin: 0 !important;
-}
-/* 5. Contenedores y Tarjetas */
-.section-container {
-  background-color: var(--system-secondary-background);
-  border-radius: var(--border-radius);
-  margin: 0 16px 20px 16px;
-  box-shadow: 0 4px 12px var(--shadow-color);
-}
-
-/* 6. Alertas con Efecto de Desenfoque */
-.message-box {
-  position: fixed;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 20px;
-  border-radius: 20px;
-  font-size: 15px;
-  font-weight: 600;
-  z-index: 1000;
-
-  background-color: rgba(230, 230, 230, 0.6);
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--system-label);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  .message-box {
-    background-color: rgba(50, 50, 52, 0.7);
-    border: 1px solid rgba(80, 80, 80, 0.5);
-  }
-}
-
-/* 7. Estilos de Botones Base (Estilo iOS) */
-.button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
+}
+
+/* --- Contenedor Principal de Pantalla (La "Tarjeta") --- */
+.screen-container {
+  width: 100%;
+  max-width: 32rem; /* 512px */
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 1rem; /* 16px */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 2rem; /* 32px */
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.screen-container.text-center {
+  text-align: center;
+}
+
+/* --- Tipografía --- */
+.screen-container h1 {
+  font-size: 1.875rem; /* 30px */
+  font-weight: 700;
+  text-align: center;
+  color: #111827; /* gris más oscuro */
+  margin-top: 0;
+  margin-bottom: 0.5rem; /* 8px */
+}
+
+.screen-container .subtitle {
+  text-align: center;
+  color: #6b7280; /* gris medio */
+  margin-top: 0;
+  margin-bottom: 2rem; /* 32px */
+}
+
+.screen-container label {
+  display: block;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  color: #374151; /* gris */
+  margin-bottom: 0.25rem; /* 4px */
+}
+
+/* --- Formularios y Botones --- */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* 24px */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-field {
+  width: 100%;
+  border: 1px solid #d1d5db; /* gris claro */
+  border-radius: 0.5rem; /* 8px */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  padding: 0.75rem; /* 12px */
+  box-sizing: border-box; /* Asegura que el padding no afecte el ancho */
+  font-size: 1rem;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #3b82f6; /* azul */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.button {
+  width: 100%;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem; /* 12px 24px */
+  border-radius: 0.5rem; /* 8px */
   border: none;
-  border-radius: var(--border-radius);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.4px;
   cursor: pointer;
-  transition: transform 0.1s ease-out, background-color 0.2s ease;
-  padding: 14px 20px;
-  text-decoration: none;
-  min-height: 44px; /* Altura mínima táctil de Apple */
+  transition: background-color 0.2s, transform 0.1s;
+  font-size: 1rem;
 }
-.button:active {
-  transform: scale(0.97); /* Efecto de "presionar" */
+
+.button:hover {
+  transform: scale(1.02);
 }
+
 .button:disabled {
-  background-color: var(--system-gray-4) !important;
-  color: var(--system-gray-6) !important;
+  background-color: #9ca3af; /* gris para deshabilitado */
   cursor: not-allowed;
   transform: none;
 }
 
-.primary-button {
-  background-color: var(--system-blue);
-  color: #ffffff;
+.button-primary {
+  background-color: #2563eb; /* azul oscuro */
+  color: white;
 }
 
-.secondary-button {
-  background-color: var(--system-gray-6);
-  color: var(--system-blue);
+.button-primary:hover:not(:disabled) {
+  background-color: #1d4ed8; /* azul más oscuro */
+}
+
+/* --- Área de Subida de Archivos --- */
+.file-upload-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 1.5rem; /* 24px */
+  border: 2px dashed #d1d5db; /* gris claro */
+  border-radius: 0.5rem; /* 8px */
+  cursor: pointer;
+  background-color: #f9fafb; /* gris muy claro */
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.file-upload-area:hover {
+  background-color: #f3f4f6; /* gris un poco más oscuro */
+}
+
+.file-upload-content .upload-icon {
+  width: 2rem; /* 32px */
+  height: 2rem; /* 32px */
+  margin-bottom: 1rem; /* 16px */
+  color: #6b7280; /* gris medio */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.file-upload-content p {
+  margin: 0;
+  font-size: 0.875rem; /* 14px */
+  color: #6b7280;
+}
+
+.file-upload-content .font-semibold {
+  font-weight: 600;
+}
+
+.file-upload-content .file-name {
+  color: #2563eb; /* azul */
+  font-weight: 600;
+  margin-top: 0.5rem;
+  font-size: 0.75rem; /* 12px */
+}
+
+.file-upload-content .words-loaded {
+  color: #16a34a; /* verde */
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.hidden-input {
+  display: none;
+}
+
+/* --- Mensajes de Estado --- */
+.error-message {
+  color: #dc2626; /* rojo */
+  font-size: 0.875rem; /* 14px */
+  text-align: center;
+}
+
+/* --- Dashboard Placeholder --- */
+.success-icon {
+  width: 3rem; /* 48px */
+  height: 3rem; /* 48px */
+  color: #22c55e; /* verde */
+  margin: 0 auto;
+}
+
+.info-box {
+  background-color: #f9fafb; /* gris muy claro */
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.info-box-label {
+  font-size: 0.875rem; /* 14px */
+  color: #6b7280; /* gris medio */
+}
+
+.info-box-value {
+  font-weight: 600;
+  color: #1f2937; /* gris oscuro */
+}
+
+.next-step-info {
+  font-size: 0.75rem; /* 12px */
+  color: #9ca3af; /* gris claro */
+  margin-top: 2rem;
 }
