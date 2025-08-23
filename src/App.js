@@ -1,89 +1,69 @@
-// src/App.js
+import React, { useState } from "react";
+import SetupScreen from "./components/SetupScreen";
+import DashboardPlaceholder from "./components/DashboardPlaceholder"; // Usaremos un placeholder por ahora
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
-import "./index.css";
-
-import AppContext from "./context/AppContext";
-import MainVocabSection from "./MainVocabSection";
-import PrincipalPageLessons from "./lesson/PrincipalPageLessons";
-import LessonDisplayPage from "./lesson/LessonDisplayPage";
-import { playAudio, b64toBlob } from "./utils/audioUtils";
-import BottomNavigationBar from "./components/BottomNavigationBar";
-
-const App = () => {
-  const [message, setMessage] = useState("");
+function App() {
+  const [appState, setAppState] = useState("setup");
+  const [userEmail, setUserEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const audioCache = useRef(new Map());
+  const [error, setError] = useState("");
 
-  const wrappedPlayAudio = React.useCallback((text, lang) => {
-    playAudio(
-      text,
-      lang,
-      audioCache.current,
-      b64toBlob,
-      setMessage,
-      setIsLoading
-    );
-  }, []);
+  const handleSetupComplete = async (email, words) => {
+    setIsLoading(true);
+    setError("");
 
-  // NUEVO: Función para generar feedback háptico (vibración)
-  const triggerHapticFeedback = (pattern = [5]) => {
-    // Un patrón de 5ms es muy sutil
-    if (navigator.vibrate) {
-      navigator.vibrate(pattern);
+    try {
+      const response = await fetch("/api/setup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, masterWords: words }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Error en la configuración.");
+      }
+
+      setUserEmail(email);
+      setAppState("dashboard");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    return () => {
-      audioCache.current.forEach((url) => URL.revokeObjectURL(url));
-      audioCache.current.clear();
-    };
-  }, []);
-
-  const contextValue = useMemo(
-    () => ({
-      appGlobalMessage: message,
-      appIsLoading: isLoading,
-      onPlayAudio: wrappedPlayAudio,
-      setAppMessage: setMessage,
-      setAppIsLoading: setIsLoading,
-      onVibrate: triggerHapticFeedback, // Se añade la función de vibración al contexto
-    }),
-    [message, isLoading, wrappedPlayAudio]
-  );
+  const renderCurrentState = () => {
+    switch (appState) {
+      case "setup":
+        return (
+          <SetupScreen
+            onSetupComplete={handleSetupComplete}
+            isLoading={isLoading}
+            error={error}
+          />
+        );
+      case "dashboard":
+        return <DashboardPlaceholder email={userEmail} />;
+      default:
+        return (
+          <SetupScreen
+            onSetupComplete={handleSetupComplete}
+            isLoading={isLoading}
+            error={error}
+          />
+        );
+    }
+  };
 
   return (
-    <Router>
-      <AppContext.Provider value={contextValue}>
-        <div className='app-container'>
-          <Routes>
-            {/* CAMBIO: La ruta principal ahora es la página de lecciones */}
-            <Route path='/' element={<PrincipalPageLessons />} />
-            <Route path='/vocab-trainer' element={<MainVocabSection />} />
-            <Route path='/lessons' element={<PrincipalPageLessons />} />
-            <Route path='/lessons/:lessonId' element={<LessonDisplayPage />} />
-          </Routes>
-          <ConditionalBottomNavigationBar />
-        </div>
-      </AppContext.Provider>
-    </Router>
+    <div className='bg-gray-100 min-h-screen flex items-center justify-center p-4 font-sans'>
+      {renderCurrentState()}
+    </div>
   );
-};
-
-const ConditionalBottomNavigationBar = () => {
-  const location = useLocation();
-  const shouldShowBottomNav = !(
-    location.pathname.startsWith("/lessons/") &&
-    location.pathname !== "/lessons"
-  );
-  return shouldShowBottomNav ? <BottomNavigationBar /> : null;
-};
+}
 
 export default App;
