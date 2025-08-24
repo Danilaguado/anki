@@ -1,5 +1,5 @@
 // ===== /api/setup.js =====
-// Lógica mejorada para manejar errores y la creación de hojas de forma más segura.
+// Ahora crea la estructura de hojas normalizada.
 
 import { google } from "googleapis";
 
@@ -9,16 +9,11 @@ export default async function handler(req, res) {
       .status(405)
       .json({ success: false, message: "Method Not Allowed" });
   }
-
   const { email, masterWords } = req.body;
-
-  if (!email || !masterWords || masterWords.length === 0) {
+  if (!email || !masterWords) {
     return res
       .status(400)
-      .json({
-        success: false,
-        message: "Email y lista de palabras son requeridos.",
-      });
+      .json({ success: false, message: "Email and words are required." });
   }
 
   try {
@@ -29,7 +24,6 @@ export default async function handler(req, res) {
       },
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
-
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
@@ -134,6 +128,7 @@ export default async function handler(req, res) {
         values: [masterWordsHeaders, ...masterWordsRows],
       });
 
+      // Escribir encabezados en las nuevas hojas
       sheetsToEnsure.forEach((sheet) => {
         if (
           sheet.title !== "Master_Palabras" &&
@@ -159,11 +154,13 @@ export default async function handler(req, res) {
         message: "Google Sheet configurado exitosamente.",
       });
   } catch (error) {
-    console.error("Error detallado en /api/setup:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error del servidor al configurar la hoja de cálculo.",
-      error: error.message, // Devuelve un mensaje de error más específico
-    });
+    console.error("Error al configurar Google Sheet:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error del servidor al configurar la hoja de cálculo.",
+        error: error.message,
+      });
   }
 }
