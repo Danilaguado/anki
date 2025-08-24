@@ -58,7 +58,7 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
 
         // CORRECCIÓN CLAVE:
         // Las palabras que fallaste ('isCorrect' es false) son las que están 'Por Aprender'.
-        // Las que acertaste ya se consideran 'Dominadas'.
+        // Las que acertaste ya se consideran 'Dominadas' y no se usarán para crear mazos.
         const initialStatus = wasCorrect ? "Dominada" : "Por Aprender";
 
         return {
