@@ -16,7 +16,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Autenticación con Google
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -28,7 +27,6 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    // 2. Definir la estructura de las hojas
     const sheetsToCreate = [
       { title: "Dashboard", headers: [] },
       { title: "Configuración", headers: ["Clave", "Valor"] },
@@ -73,13 +71,10 @@ export default async function handler(req, res) {
       },
     ];
 
-    // 3. Crear las hojas en la hoja de cálculo
     const requests = sheetsToCreate.map((sheet) => ({
       addSheet: { properties: { title: sheet.title } },
     }));
 
-    // Primero, borramos la hoja por defecto "Hoja 1" si existe
-    // NOTA: Esto podría fallar si la hoja tiene otro nombre. Es una mejora para el futuro.
     try {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
@@ -94,10 +89,7 @@ export default async function handler(req, res) {
       resource: { requests },
     });
 
-    // 4. Poblar las hojas con encabezados y datos iniciales
     const dataToWrite = [];
-
-    // Hoja de Configuración
     dataToWrite.push({
       range: "Configuración!A1",
       values: [
@@ -106,8 +98,6 @@ export default async function handler(req, res) {
         ["Próximo ID de Mazo", 1],
       ],
     });
-
-    // Hoja Master_Palabras
     const masterWordsHeaders = sheetsToCreate.find(
       (s) => s.title === "Master_Palabras"
     ).headers;
@@ -130,7 +120,6 @@ export default async function handler(req, res) {
       values: [masterWordsHeaders, ...masterWordsRows],
     });
 
-    // Escribir todos los datos en una sola llamada
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId,
       resource: {
