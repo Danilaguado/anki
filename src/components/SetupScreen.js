@@ -1,5 +1,5 @@
 // ===== /src/components/SetupScreen.js =====
-// Lógica corregida para interpretar el CSV inicial y asignar el estado correcto.
+// AHORA ACEPTA ARCHIVOS .CSV, .XLS Y .XLSX
 
 import React, { useState, useRef } from "react";
 
@@ -29,42 +29,30 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef(null);
 
-  const parseQuizResultsCSV = (csvText) => {
-    const lines = csvText.trim().split("\n");
-    if (lines.length < 2) {
-      setInternalError("El archivo CSV está vacío o no tiene datos.");
-      return;
-    }
-    const headers = lines[0]
-      .trim()
-      .toLowerCase()
-      .split(",")
-      .map((h) => h.replace(/"/g, ""));
+  const processDataArray = (dataArray) => {
+    // Esta función procesa los datos una vez que están en formato de array de objetos
     const requiredHeaders = ["english", "correctanswer", "iscorrect"];
-    if (!requiredHeaders.every((rh) => headers.includes(rh))) {
+    const firstItemKeys =
+      dataArray.length > 0
+        ? Object.keys(dataArray[0]).map((k) => k.toLowerCase())
+        : [];
+
+    if (!requiredHeaders.every((rh) => firstItemKeys.includes(rh))) {
       setInternalError(
-        `El archivo CSV no tiene las columnas requeridas: english, correctAnswer, isCorrect`
+        `El archivo no tiene las columnas requeridas: english, correctAnswer, isCorrect`
       );
       return;
     }
-    const englishIndex = headers.indexOf("english");
-    const spanishIndex = headers.indexOf("correctanswer");
-    const resultIndex = headers.indexOf("iscorrect");
-    const parsedWords = lines
-      .slice(1)
-      .map((line, index) => {
-        const data = line.split(",").map((d) => d.replace(/"/g, "").trim());
-        const wasCorrect = data[resultIndex].toLowerCase() === "true";
 
-        // CORRECCIÓN CLAVE:
-        // Las palabras que fallaste ('isCorrect' es false) son las que están 'Por Aprender'.
-        // Las que acertaste ya se consideran 'Dominadas' y no se usarán para crear mazos.
+    const parsedWords = dataArray
+      .map((row, index) => {
+        const wasCorrect = String(row.isCorrect).toLowerCase() === "true";
         const initialStatus = wasCorrect ? "Dominada" : "Por Aprender";
 
         return {
           id: index + 1,
-          english: data[englishIndex],
-          spanish: data[spanishIndex],
+          english: row.english,
+          spanish: row.correctAnswer,
           status: initialStatus,
         };
       })
@@ -74,33 +62,76 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
       setMasterWords(parsedWords);
       setInternalError("");
     } else {
-      setInternalError(
-        "No se pudieron extraer palabras válidas del archivo CSV."
-      );
+      setInternalError("No se pudieron extraer palabras válidas del archivo.");
     }
   };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
+
     setIsParsingFile(true);
     setInternalError("");
     setFileName(file.name);
+
+    const reader = new FileReader();
+
     if (file.name.endsWith(".csv")) {
-      const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          parseQuizResultsCSV(e.target.result);
+          // Convertir CSV a array de objetos
+          const text = e.target.result;
+          const lines = text.trim().split("\n");
+          const headers = lines[0]
+            .trim()
+            .toLowerCase()
+            .split(",")
+            .map((h) => h.replace(/"/g, ""));
+          const data = lines.slice(1).map((line) => {
+            const values = line.split(",");
+            const obj = {};
+            headers.forEach((header, i) => {
+              obj[header] = values[i].replace(/"/g, "").trim();
+            });
+            return obj;
+          });
+          processDataArray(data);
         } catch (err) {
-          setInternalError("Ocurrió un error al procesar el archivo.");
-          console.error(err);
+          setInternalError("Ocurrió un error al procesar el archivo CSV.");
         } finally {
           setIsParsingFile(false);
         }
       };
       reader.readAsText(file);
+    } else if (file.name.endsWith(".xls") || file.name.endsWith(".xlsx")) {
+      if (typeof XLSX === "undefined") {
+        setInternalError(
+          "La biblioteca para leer Excel no está cargada. Asegúrate de añadir el script a tu HTML."
+        );
+        setIsParsingFile(false);
+        return;
+      }
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, {
+            // Renombrar cabeceras para que coincidan con el CSV
+            header: ["english", "correctAnswer", "isCorrect"],
+            range: 1, // Empezar a leer desde la segunda fila (saltar encabezados)
+          });
+          processDataArray(json);
+        } catch (err) {
+          setInternalError("Ocurrió un error al procesar el archivo Excel.");
+        } finally {
+          setIsParsingFile(false);
+        }
+      };
+      reader.readAsArrayBuffer(file);
     } else {
-      setInternalError("Por favor, sube un archivo .csv generado por el quiz.");
+      setInternalError("Por favor, sube un archivo .csv o .xls/.xlsx");
       setIsParsingFile(false);
     }
   };
@@ -112,7 +143,7 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
     }
     if (masterWords.length === 0) {
       setInternalError(
-        "Por favor, sube el archivo CSV con los resultados de tu quiz."
+        "Por favor, sube el archivo con los resultados de tu quiz."
       );
       return;
     }
@@ -136,7 +167,7 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
           />
         </div>
         <div className='form-group'>
-          <label>2. Archivo de Resultados (.csv)</label>
+          <label>2. Archivo de Resultados (.csv, .xls, .xlsx)</label>
           <div
             className='file-upload-area'
             onClick={() => !isParsingFile && fileInputRef.current.click()}
@@ -162,7 +193,7 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
             <input
               ref={fileInputRef}
               type='file'
-              accept='.csv'
+              accept='.csv,.xls,.xlsx'
               className='hidden-input'
               onChange={handleFileChange}
               disabled={isParsingFile}
