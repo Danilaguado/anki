@@ -1,3 +1,6 @@
+// ===== /api/create-deck.js =====
+// Ahora actualiza el estado 'Aprendiendo' en la hoja específica del usuario y registra el mazo.
+
 import { google } from "googleapis";
 
 export default async function handler(req, res) {
@@ -27,7 +30,28 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    const userSheetRange = `${userId}!A:B`; // Columnas ID_Palabra y Estado
+    const decksRange = "Decks!A:A";
+    const decksResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: decksRange,
+    });
+    const nextDeckIdNum = (decksResponse.data.values || []).length;
+    const newDeckId = `Mazo-${nextDeckIdNum}`;
+
+    const newDeckRow = [
+      newDeckId,
+      userId,
+      new Date().toISOString(),
+      wordIds.length,
+    ];
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Decks!A:D",
+      valueInputOption: "USER_ENTERED",
+      resource: { values: [newDeckRow] },
+    });
+
+    const userSheetRange = `${userId}!A:B`;
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: userSheetRange,
@@ -55,7 +79,7 @@ export default async function handler(req, res) {
       .status(200)
       .json({
         success: true,
-        message: `${dataToUpdate.length} palabras actualizadas a 'Aprendiendo'.`,
+        message: `${newDeckId} creado con ${wordIds.length} palabras.`,
       });
   } catch (error) {
     console.error("Error al crear el mazo:", error);

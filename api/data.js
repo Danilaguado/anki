@@ -1,3 +1,6 @@
+// ===== /api/data.js =====
+// Ahora lee los datos de la hoja específica del usuario y de Master_Palabras.
+
 import { google } from "googleapis";
 
 export default async function handler(req, res) {
@@ -33,7 +36,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, userExists: false });
     }
 
-    const ranges = [`Master_Palabras!A:C`, `${userId}!A:G`]; // Rango para la hoja del usuario
+    const ranges = [`Master_Palabras!A:C`, `${userId}!A:G`];
     const response = await sheets.spreadsheets.values.batchGet({
       spreadsheetId,
       ranges,
@@ -54,7 +57,6 @@ export default async function handler(req, res) {
       userProgressHeaders.forEach(
         (header, i) => (progressObj[header] = progressRow[i])
       );
-
       const masterWord = masterWords.find(
         (mw) => mw.ID_Palabra === progressObj.ID_Palabra
       );

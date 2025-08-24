@@ -1,6 +1,8 @@
+// ===== /api/update.js =====
+// Actualiza los datos de SRS en la hoja específica del usuario y registra la sesión.
+
 import { google } from "googleapis";
 
-// ... (La función calculateNextReview no cambia)
 function calculateNextReview(word, srsFeedback) {
   let interval = parseInt(word.Intervalo_SRS, 10) || 1;
   let easeFactor = parseFloat(word.Factor_Facilidad) || 2.5;
@@ -54,12 +56,42 @@ export default async function handler(req, res) {
     });
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    const sessionId = `Sesion-${Date.now()}`;
 
-    // El logging a tablas compartidas sigue funcionando igual
-    // ...
+    const sessionRow = [
+      sessionId,
+      sessionInfo.deckId || "Custom",
+      userId,
+      sessionInfo.startTime,
+      new Date().toISOString(),
+      sessionInfo.duration,
+      sessionInfo.status,
+      sentiment,
+    ];
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Study_Sessions!A:H",
+      valueInputOption: "USER_ENTERED",
+      resource: { values: [sessionRow] },
+    });
 
-    // Actualizar la hoja del usuario
-    const userSheetRange = `${userId}!A:H`;
+    const logRows = results.map((r) => [
+      sessionId,
+      r.wordId,
+      r.isCorrect ? "Correcto" : "Incorrecto",
+      r.responseTime,
+      r.srsFeedback,
+    ]);
+    if (logRows.length > 0) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: "Log_Estudio!A:E",
+        valueInputOption: "USER_ENTERED",
+        resource: { values: logRows },
+      });
+    }
+
+    const userSheetRange = `${userId}!A:G`;
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: userSheetRange,

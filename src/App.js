@@ -1,5 +1,5 @@
 // ===== /src/App.js =====
-// Lógica principal completamente reescrita para la nueva estructura.
+// Reescrito para usar el nuevo flujo de datos y el UserID corto.
 
 import React, { useState, useEffect } from "react";
 import SetupScreen from "./components/SetupScreen";
@@ -11,29 +11,24 @@ import "./index.css";
 function App() {
   const [appState, setAppState] = useState("loading");
   const [userId, setUserId] = useState(null);
-  const [userData, setUserData] = useState({
-    words: [],
-    decks: [],
-    sessions: [],
-  });
+  const [userData, setUserData] = useState({ words: [] });
   const [studyDeck, setStudyDeck] = useState([]);
   const [sessionInfo, setSessionInfo] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // 1. Comprobar si hay un UserID guardado localmente
     let localUserId = localStorage.getItem("ankiUserId");
     if (!localUserId) {
-      localUserId = `user-${Date.now()}-${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
+      const timestampPart = (Date.now() % 1000000).toString(36);
+      const randomPart = Math.random().toString(36).substr(2, 5);
+      localUserId = `user-${timestampPart}${randomPart}`;
       localStorage.setItem("ankiUserId", localUserId);
     }
     setUserId(localUserId);
 
-    // 2. Cargar los datos del usuario desde el backend
     const fetchData = async () => {
+      if (!localUserId) return;
       try {
         const response = await fetch(`/api/data?userId=${localUserId}`);
         if (!response.ok) {
@@ -52,7 +47,7 @@ function App() {
       }
     };
     fetchData();
-  }, []);
+  }, [userId]);
 
   const handleSetupComplete = async (email, words) => {
     setIsLoading(true);
@@ -66,7 +61,20 @@ function App() {
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.message || "Error en la configuración.");
-      setUserData({ words, decks: [], sessions: [] });
+
+      const initialUserData = {
+        words: words.map((w) => ({
+          ...w,
+          UserID: userId,
+          Estado: w.status,
+          Intervalo_SRS: 1,
+          Fecha_Proximo_Repaso: null,
+          Factor_Facilidad: 2.5,
+          Total_Aciertos: 0,
+          Total_Errores: 0,
+        })),
+      };
+      setUserData(initialUserData);
       setAppState("dashboard");
     } catch (err) {
       setError(err.message);
@@ -90,22 +98,19 @@ function App() {
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/create-deck", {
+      await fetch("/api/create-deck", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          wordIds: wordIdsToAdd,
-          deckSize: wordsToAdd.length,
-        }),
+        body: JSON.stringify({ userId, wordIds: wordIdsToAdd }),
       });
-      if (!response.ok)
-        throw new Error("No se pudo crear el mazo en el servidor.");
 
-      // Recargar datos para ver el nuevo mazo y los estados actualizados
-      const dataRes = await fetch(`/api/data?userId=${userId}`);
-      const data = await dataRes.json();
-      if (data.success) setUserData(data.data);
+      const updatedWords = userData.words.map((word) =>
+        wordIdsToAdd.includes(word.ID_Palabra)
+          ? { ...word, Estado: "Aprendiendo" }
+          : word
+      );
+      setUserData((prev) => ({ ...prev, words: updatedWords }));
+      alert(`${wordsToAdd.length} nuevas palabras añadidas a tu estudio.`);
     } catch (err) {
       alert(`Error al crear el mazo: ${err.message}`);
     } finally {
@@ -137,10 +142,7 @@ function App() {
     }
     const shuffledDeck = [...deckForQuiz].sort(() => Math.random() - 0.5);
     setStudyDeck(shuffledDeck);
-    setSessionInfo({
-      deckId: "Custom",
-      startTime: new Date().toISOString(),
-    });
+    setSessionInfo({ startTime: new Date().toISOString() });
     setAppState("quiz");
   };
 
