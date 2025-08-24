@@ -1,6 +1,3 @@
-// ===== /src/components/SetupScreen.js =====
-// Lógica corregida para interpretar el CSV inicial.
-
 import React, { useState, useRef } from "react";
 
 const UploadIcon = () => (
