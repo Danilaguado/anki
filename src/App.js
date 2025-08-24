@@ -1,3 +1,6 @@
+// ===== /src/App.js =====
+// Lógica principal actualizada para manejar el estado y las llamadas a la API correctamente.
+
 import React, { useState, useEffect } from "react";
 import SetupScreen from "./components/SetupScreen";
 import Dashboard from "./components/Dashboard";
@@ -13,13 +16,11 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Al cargar la app, intenta obtener los datos de Google Sheets
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch("/api/data");
-        if (response.status === 404 || response.status === 500) {
-          // Asume que no está configurado si hay un error al obtener datos
+        if (!response.ok) {
           setAppState("setup");
           return;
         }
@@ -51,7 +52,7 @@ function App() {
       if (!response.ok)
         throw new Error(data.message || "Error en la configuración.");
       setUserEmail(email);
-      setMasterWords(words); // Usamos las palabras procesadas localmente
+      setMasterWords(words);
       setAppState("dashboard");
     } catch (err) {
       setError(err.message);
@@ -60,23 +61,44 @@ function App() {
     }
   };
 
-  const handleCreateDeck = (amount) => {
-    // Lógica para registrar esta decisión (futuro)
-    const newWords = masterWords
-      .filter((word) => word.Estado === "Por Aprender")
-      .slice(0, amount);
-    if (newWords.length === 0) {
-      alert("¡Felicidades! No hay palabras nuevas por aprender.");
+  const handleCreateDeck = async (amount) => {
+    // CORRECCIÓN: Ahora filtramos por las palabras que están listas para aprender
+    const wordsToLearn = masterWords.filter(
+      (word) => word.Estado === "Por Aprender"
+    );
+    if (wordsToLearn.length === 0) {
+      alert(
+        "¡Felicidades! Has añadido todas las palabras a tu mazo de estudio."
+      );
       return;
     }
-    const updatedMasterWords = masterWords.map((word) =>
-      newWords.find((nw) => nw.ID_Palabra === word.ID_Palabra)
-        ? { ...word, Estado: "Aprendiendo" }
-        : word
-    );
-    setMasterWords(updatedMasterWords);
-    // TODO: Enviar esta actualización a Google Sheets
-    alert(`${newWords.length} nuevas palabras añadidas a tu estudio.`);
+
+    const wordsToAdd = wordsToLearn.slice(0, amount);
+    const wordIdsToAdd = wordsToAdd.map((w) => w.ID_Palabra);
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/create-deck", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wordIds: wordIdsToAdd }),
+      });
+      if (!response.ok)
+        throw new Error("No se pudo crear el mazo en el servidor.");
+
+      // Actualizar el estado local para reflejar el cambio inmediatamente
+      const updatedMasterWords = masterWords.map((word) =>
+        wordIdsToAdd.includes(word.ID_Palabra)
+          ? { ...word, Estado: "Aprendiendo" }
+          : word
+      );
+      setMasterWords(updatedMasterWords);
+      alert(`${wordsToAdd.length} nuevas palabras añadidas a tu estudio.`);
+    } catch (err) {
+      alert(`Error al crear el mazo: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleStartQuiz = () => {
@@ -99,7 +121,6 @@ function App() {
 
   const handleQuizComplete = async (results, sentiment) => {
     setIsLoading(true);
-    // TODO: Actualizar el estado local de masterWords con los resultados del SRS
     setLastResults(results);
     try {
       await fetch("/api/update", {
@@ -107,12 +128,22 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ results, sentiment }),
       });
+      // Volver a cargar los datos para reflejar las actualizaciones del SRS
+      const response = await fetch("/api/data");
+      const data = await response.json();
+      if (data.success) {
+        setMasterWords(data.words);
+      }
     } catch (err) {
       console.error("Error al guardar los resultados:", err);
     } finally {
       setIsLoading(false);
       setAppState("results");
     }
+  };
+
+  const handleBackToDashboard = () => {
+    setAppState("dashboard");
   };
 
   const renderCurrentState = () => {
@@ -141,20 +172,16 @@ function App() {
         return (
           <ResultsScreen
             results={lastResults}
-            onBackToDashboard={() => setAppState("dashboard")}
+            onBackToDashboard={handleBackToDashboard}
           />
         );
       case "loading":
       default:
-        return <div>Cargando...</div>;
+        return <div className='loading-spinner'>Cargando...</div>;
     }
   };
 
-  return (
-    <div className='bg-gray-100 min-h-screen flex items-center justify-center p-4 font-sans'>
-      {renderCurrentState()}
-    </div>
-  );
+  return <div className='app-container'>{renderCurrentState()}</div>;
 }
 
 export default App;

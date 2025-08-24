@@ -2,7 +2,7 @@ import React from "react";
 
 const StudyIcon = () => (
   <svg
-    className='w-6 h-6 mr-2'
+    className='icon'
     xmlns='http://www.w3.org/2000/svg'
     fill='none'
     viewBox='0 0 24 24'
@@ -18,7 +18,7 @@ const StudyIcon = () => (
 );
 const AddIcon = () => (
   <svg
-    className='w-6 h-6 mr-2'
+    className='icon'
     xmlns='http://www.w3.org/2000/svg'
     fill='none'
     viewBox='0 0 24 24'
@@ -34,6 +34,7 @@ const AddIcon = () => (
 );
 
 const Dashboard = ({ masterWords, onStartQuiz, onCreateDeck }) => {
+  // CORRECCIÓN: Se calcula sobre las palabras con estado 'Aprendiendo'
   const wordsInStudy = masterWords.filter(
     (w) => w.Estado === "Aprendiendo"
   ).length;
@@ -43,6 +44,7 @@ const Dashboard = ({ masterWords, onStartQuiz, onCreateDeck }) => {
       w.Estado === "Aprendiendo" &&
       (!w.Fecha_Proximo_Repaso || w.Fecha_Proximo_Repaso <= today)
   ).length;
+  // CORRECCIÓN: La cantidad disponible son las que están 'Por Aprender'
   const wordsToLearn = masterWords.filter(
     (w) => w.Estado === "Por Aprender"
   ).length;
@@ -56,48 +58,43 @@ const Dashboard = ({ masterWords, onStartQuiz, onCreateDeck }) => {
     if (!isNaN(amount) && amount > 0) {
       onCreateDeck(amount);
     } else if (amountStr !== null) {
+      // Evita la alerta si el usuario cancela
       alert("Por favor, introduce un número válido.");
     }
   };
 
   return (
-    <div className='w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8'>
-      <h1 className='text-3xl font-bold text-center text-gray-900 mb-2'>
-        Panel de Aprendizaje
-      </h1>
-      <p className='text-center text-gray-500 mb-8'>
-        ¡Bienvenido de nuevo! Aquí está tu progreso.
-      </p>
+    <div className='screen-container'>
+      <h1>Panel de Aprendizaje</h1>
+      <p className='subtitle'>¡Bienvenido de nuevo! Aquí está tu progreso.</p>
 
-      <div className='grid grid-cols-2 gap-4 text-center mb-8'>
-        <div className='bg-blue-50 p-4 rounded-lg'>
-          <p className='text-3xl font-bold text-blue-600'>{wordsInStudy}</p>
-          <p className='text-sm text-blue-800'>Palabras en Estudio</p>
+      <div className='stats-grid'>
+        <div className='stat-card'>
+          <p className='stat-number-blue'>{wordsInStudy}</p>
+          <p className='stat-label'>Palabras en Estudio</p>
         </div>
-        <div className='bg-green-50 p-4 rounded-lg'>
-          <p className='text-3xl font-bold text-green-600'>
-            {wordsToReviewToday}
-          </p>
-          <p className='text-sm text-green-800'>Para Repasar Hoy</p>
+        <div className='stat-card'>
+          <p className='stat-number-green'>{wordsToReviewToday}</p>
+          <p className='stat-label'>Para Repasar Hoy</p>
         </div>
       </div>
 
-      <div className='space-y-4'>
+      <div className='button-group'>
         <button
           onClick={onStartQuiz}
           disabled={wordsToReviewToday === 0}
-          className='w-full flex items-center justify-center bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition disabled:bg-gray-400 disabled:cursor-not-allowed'
+          className='button button-green'
         >
           <StudyIcon />
-          Iniciar Repaso Diario ({wordsToReviewToday} palabras)
+          Iniciar Repaso Diario ({wordsToReviewToday})
         </button>
         <button
           onClick={handleCreateDeck}
           disabled={wordsToLearn === 0}
-          className='w-full flex items-center justify-center bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-300 transition disabled:bg-gray-400 disabled:cursor-not-allowed'
+          className='button button-secondary'
         >
           <AddIcon />
-          Crear Nuevo Mazo
+          Añadir Nuevo Mazo ({wordsToLearn})
         </button>
       </div>
     </div>

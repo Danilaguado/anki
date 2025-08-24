@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 
 const PlayIcon = () => (
   <svg
+    className='icon-play'
     xmlns='http://www.w3.org/2000/svg'
-    className='h-6 w-6'
     fill='none'
     viewBox='0 0 24 24'
     stroke='currentColor'
@@ -56,93 +56,119 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
       isCorrect: isCorrect,
       responseTime: responseTime,
       timestamp: new Date().toISOString(),
+      srsFeedback: null, // Se llenará en el siguiente paso
     };
-    setSessionResults((prev) => [...prev, result]);
+    // No lo añadimos a sessionResults todavía, esperamos el feedback del SRS
+    // Guardamos el resultado temporalmente
+    inputRef.current.tempResult = result;
   };
 
-  const handleNext = () => {
+  const handleSrsFeedback = (srsLevel) => {
+    const tempResult = inputRef.current.tempResult;
+    tempResult.srsFeedback = srsLevel; // Añadimos el feedback del SRS
+    setSessionResults((prev) => [...prev, tempResult]);
+
+    // Avanzar a la siguiente tarjeta
     setFeedback(null);
     setUserAnswer("");
     if (currentIndex < deck.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      onQuizComplete(sessionResults);
+      onQuizComplete([...sessionResults, tempResult]);
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      if (feedback) handleNext();
-      else handleCheckAnswer();
+    if (e.key === "Enter" && !feedback) {
+      handleCheckAnswer();
     }
   };
 
   return (
-    <div className='w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8'>
-      <div className='flex justify-between items-center mb-4'>
-        <h2 className='text-xl font-bold'>Sesión de Repaso</h2>
-        <span className='text-sm font-medium text-gray-500'>
+    <div className='screen-container'>
+      <div className='quiz-header'>
+        <h2>Sesión de Repaso</h2>
+        <span>
           {currentIndex + 1} / {deck.length}
         </span>
       </div>
       <div
-        className={`text-center p-8 rounded-lg mb-6 transition-colors duration-300 ${
+        className={`quiz-card ${
           feedback === "correct"
-            ? "bg-green-100"
+            ? "correct"
             : feedback === "incorrect"
-            ? "bg-red-100"
-            : "bg-gray-100"
+            ? "incorrect"
+            : ""
         }`}
       >
-        <h3 className='text-4xl font-bold text-gray-800'>
-          {currentCard.Inglés}
-        </h3>
+        <h3>{currentCard.Inglés}</h3>
         <button
           onClick={() => playAudio(currentCard.Inglés)}
-          className='mt-2 text-blue-500 hover:text-blue-700'
+          className='button-play'
         >
           <PlayIcon />
         </button>
       </div>
-      {feedback && (
-        <div className='text-center mb-4 p-3 rounded-lg bg-gray-50'>
-          {feedback === "correct" ? (
-            <p className='font-semibold text-green-700'>¡Correcto!</p>
-          ) : (
-            <p className='font-semibold text-red-700'>
-              Respuesta correcta:{" "}
-              <span className='font-bold'>{currentCard.Español}</span>
-            </p>
-          )}
-        </div>
-      )}
-      <div className='space-y-4'>
-        <input
-          ref={inputRef}
-          type='text'
-          value={userAnswer}
-          onChange={(e) => setUserAnswer(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder='Escribe la traducción aquí...'
-          className='w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-3 text-lg text-center'
-          disabled={!!feedback}
-        />
-        {feedback ? (
-          <button
-            onClick={handleNext}
-            className='w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700'
-          >
-            {currentIndex < deck.length - 1 ? "Siguiente" : "Finalizar"}
-          </button>
-        ) : (
-          <button
-            onClick={handleCheckAnswer}
-            className='w-full bg-gray-800 text-white font-bold py-3 rounded-lg hover:bg-gray-900'
-          >
+
+      {!feedback ? (
+        <div className='quiz-actions'>
+          <input
+            ref={inputRef}
+            type='text'
+            value={userAnswer}
+            onChange={(e) => setUserAnswer(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder='Escribe la traducción aquí...'
+            className='input-field'
+          />
+          <button onClick={handleCheckAnswer} className='button button-dark'>
             Revisar
           </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className='feedback-container'>
+          <div className='feedback-result'>
+            {feedback === "correct" ? (
+              <p className='correct-text'>¡Correcto!</p>
+            ) : (
+              <p className='incorrect-text'>
+                Respuesta correcta: <strong>{currentCard.Español}</strong>
+              </p>
+            )}
+          </div>
+          <p className='srs-prompt'>¿Qué tan bien la recordabas?</p>
+          <div className='srs-buttons'>
+            <button
+              onClick={() => handleSrsFeedback("again")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>😭</span>
+              <span className='srs-text'>Mal</span>
+            </button>
+            <button
+              onClick={() => handleSrsFeedback("hard")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>🤔</span>
+              <span className='srs-text'>Difícil</span>
+            </button>
+            <button
+              onClick={() => handleSrsFeedback("good")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>🙂</span>
+              <span className='srs-text'>Bien</span>
+            </button>
+            <button
+              onClick={() => handleSrsFeedback("easy")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>😎</span>
+              <span className='srs-text'>Fácil</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

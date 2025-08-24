@@ -12,35 +12,30 @@ const ResultsScreen = ({ results, onBackToDashboard }) => {
       alert("Por favor, selecciona cómo te sientes antes de continuar.");
       return;
     }
+    // Pasamos los resultados Y el sentimiento
     onBackToDashboard(results, sentiment);
   };
 
   return (
-    <div className='w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8 text-center'>
-      <h1 className='text-3xl font-bold text-gray-900 mb-2'>
-        ¡Sesión Completada!
-      </h1>
-      <p className='text-gray-500 mb-6'>Aquí está tu resumen.</p>
-      <div className='bg-gray-50 rounded-xl p-6 mb-8'>
-        <p className='text-lg font-semibold text-gray-700'>Precisión</p>
-        <p className='text-6xl font-bold text-blue-600 my-2'>{accuracy}%</p>
-        <p className='text-gray-500'>
+    <div className='screen-container text-center'>
+      <h1>¡Sesión Completada!</h1>
+      <p className='subtitle'>Aquí está tu resumen.</p>
+      <div className='stat-card'>
+        <p className='stat-label'>Precisión</p>
+        <p className='stat-number-blue large'>{accuracy}%</p>
+        <p className='stat-sublabel'>
           {correctCount} de {totalCount} correctas
         </p>
       </div>
-      <div className='mb-8 p-4 bg-gray-100 rounded-lg'>
-        <label className='block text-sm font-medium text-gray-700 mb-2'>
-          ¿Cómo te sientes después de esta sesión?
-        </label>
-        <div className='flex justify-center space-x-2'>
+      <div className='sentiment-box'>
+        <label>¿Cómo te sientes después de esta sesión?</label>
+        <div className='sentiment-buttons'>
           {[1, 2, 3, 4, 5].map((level) => (
             <button
               key={level}
               onClick={() => setSentiment(level)}
-              className={`text-3xl p-2 rounded-full transition ${
-                sentiment === level
-                  ? "bg-blue-200 scale-125"
-                  : "hover:bg-gray-300"
+              className={`sentiment-button ${
+                sentiment === level ? "selected" : ""
               }`}
             >
               {["😩", "😕", "😐", "🙂", "😁"][level - 1]}
@@ -48,10 +43,7 @@ const ResultsScreen = ({ results, onBackToDashboard }) => {
           ))}
         </div>
       </div>
-      <button
-        onClick={handleFinish}
-        className='w-full bg-gray-800 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-900'
-      >
+      <button onClick={handleFinish} className='button button-dark'>
         Guardar y Volver al Panel
       </button>
     </div>
