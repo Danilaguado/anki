@@ -6,13 +6,13 @@ export default async function handler(req, res) {
       .status(405)
       .json({ success: false, message: "Method Not Allowed" });
   }
-  const { userId, wordIds, deckSize } = req.body;
-  if (!userId || !wordIds || !deckSize) {
+  const { userId, wordIds } = req.body;
+  if (!userId || !wordIds) {
     return res
       .status(400)
       .json({
         success: false,
-        message: "UserID, IDs de palabras y tamaño del mazo son requeridos.",
+        message: "UserID y IDs de palabras son requeridos.",
       });
   }
 
@@ -27,33 +27,18 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    const decksRange = "Decks!A:A";
-    const decksResponse = await sheets.spreadsheets.values.get({
+    const userSheetRange = `${userId}!A:B`; // Columnas ID_Palabra y Estado
+    const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: decksRange,
+      range: userSheetRange,
     });
-    const nextDeckIdNum = (decksResponse.data.values || []).length;
-    const newDeckId = `Mazo-${nextDeckIdNum}`;
+    const rows = response.data.values || [];
 
-    const newDeckRow = [newDeckId, userId, new Date().toISOString(), deckSize];
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: "Decks!A:D",
-      valueInputOption: "USER_ENTERED",
-      resource: { values: [newDeckRow] },
-    });
-
-    const userWordsRange = "User_Words!A:C";
-    const userWordsResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: userWordsRange,
-    });
-    const userWordsRows = userWordsResponse.data.values || [];
     const dataToUpdate = [];
-    userWordsRows.forEach((row, index) => {
-      if (row[0] === userId && wordIds.includes(row[1])) {
+    rows.forEach((row, index) => {
+      if (wordIds.includes(row[0])) {
         dataToUpdate.push({
-          range: `User_Words!C${index + 1}`,
+          range: `${userId}!B${index + 1}`,
           values: [["Aprendiendo"]],
         });
       }
@@ -70,7 +55,7 @@ export default async function handler(req, res) {
       .status(200)
       .json({
         success: true,
-        message: `${newDeckId} creado con ${deckSize} palabras.`,
+        message: `${dataToUpdate.length} palabras actualizadas a 'Aprendiendo'.`,
       });
   } catch (error) {
     console.error("Error al crear el mazo:", error);

@@ -1,5 +1,5 @@
 // ===== /api/setup.js =====
-// Ahora crea la estructura de hojas completamente normalizada.
+// Reescrito para crear una hoja nueva por cada usuario.
 
 import { google } from "googleapis";
 
@@ -30,101 +30,24 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    const sheetsToEnsure = [
-      { title: "Users", headers: ["UserID", "Email", "Fecha_Creacion"] },
-      {
-        title: "Master_Palabras",
-        headers: ["ID_Palabra", "Inglés", "Español"],
-      },
-      {
-        title: "User_Words",
-        headers: [
-          "UserID",
-          "ID_Palabra",
-          "Estado",
-          "Intervalo_SRS",
-          "Fecha_Proximo_Repaso",
-          "Factor_Facilidad",
-          "Total_Aciertos",
-          "Total_Errores",
-        ],
-      },
-      {
-        title: "Decks",
-        headers: ["ID_Mazo", "UserID", "Fecha_Creacion", "Cantidad_Palabras"],
-      },
-      {
-        title: "Study_Sessions",
-        headers: [
-          "ID_Sesion",
-          "ID_Mazo",
-          "UserID",
-          "Timestamp_Inicio",
-          "Timestamp_Fin",
-          "Duracion_Total_ms",
-          "Estado_Final",
-          "Sentimiento_Reportado",
-        ],
-      },
-      {
-        title: "Log_Estudio",
-        headers: [
-          "ID_Sesion",
-          "ID_Palabra",
-          "Resultado",
-          "Tiempo_Respuesta_ms",
-          "SRS_Feedback",
-        ],
-      },
+    // 1. Crear una nueva hoja con el nombre del UserID
+    const addSheetRequest = { addSheet: { properties: { title: userId } } };
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      resource: { requests: [addSheetRequest] },
+    });
+
+    // 2. Preparar los datos para la nueva hoja del usuario
+    const userSheetHeaders = [
+      "ID_Palabra",
+      "Estado",
+      "Intervalo_SRS",
+      "Fecha_Proximo_Repaso",
+      "Factor_Facilidad",
+      "Total_Aciertos",
+      "Total_Errores",
     ];
-
-    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
-    const existingSheets = spreadsheetInfo.data.sheets.map(
-      (s) => s.properties.title
-    );
-    const newSheetsToCreate = sheetsToEnsure.filter(
-      (s) => !existingSheets.includes(s.title)
-    );
-    if (newSheetsToCreate.length > 0) {
-      const requests = newSheetsToCreate.map((sheet) => ({
-        addSheet: { properties: { title: sheet.title } },
-      }));
-      await sheets.spreadsheets.batchUpdate({
-        spreadsheetId,
-        resource: { requests },
-      });
-      const dataToWrite = newSheetsToCreate.map((sheet) => ({
-        range: `${sheet.title}!A1`,
-        values: [sheet.headers],
-      }));
-      await sheets.spreadsheets.values.batchUpdate({
-        spreadsheetId,
-        resource: { valueInputOption: "USER_ENTERED", data: dataToWrite },
-      });
-    }
-
-    const userRow = [userId, email, new Date().toISOString()];
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: "Users!A:C",
-      valueInputOption: "USER_ENTERED",
-      resource: { values: [userRow] },
-    });
-
-    const masterWordsRows = masterWords.map((word) => [
-      word.id,
-      word.english,
-      word.spanish,
-    ]);
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: "Master_Palabras!A:C",
-      valueInputOption: "USER_ENTERED",
-      resource: { values: masterWordsRows },
-    });
-
-    const userWordsRows = masterWords.map((word) => [
-      userId,
+    const userSheetRows = masterWords.map((word) => [
       word.id,
       word.status,
       1,
@@ -133,26 +56,46 @@ export default async function handler(req, res) {
       0,
       0,
     ]);
-    await sheets.spreadsheets.values.append({
+
+    // 3. Escribir los encabezados y las 1000 filas de estado inicial en la hoja del usuario
+    await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: "User_Words!A:H",
+      range: `${userId}!A1`,
       valueInputOption: "USER_ENTERED",
-      resource: { values: userWordsRows },
+      resource: {
+        values: [userSheetHeaders, ...userSheetRows],
+      },
     });
+
+    // 4. (Opcional) Registrar al usuario en una hoja 'Users' para referencia
+    const userRow = [userId, email, new Date().toISOString()];
+    try {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: "Users!A:C",
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [userRow] },
+      });
+    } catch (e) {
+      console.log("No 'Users' sheet found, skipping user registration log.");
+    }
 
     res
       .status(200)
       .json({
         success: true,
-        message: "Google Sheet configurado exitosamente.",
+        message: `Hoja para el usuario ${userId} creada exitosamente.`,
       });
   } catch (error) {
-    console.error("Error al configurar Google Sheet:", error);
+    console.error(
+      `Error al configurar la hoja para el usuario ${userId}:`,
+      error
+    );
     res
       .status(500)
       .json({
         success: false,
-        message: "Error del servidor al configurar la hoja de cálculo.",
+        message: "Error del servidor al configurar la hoja del usuario.",
         error: error.message,
       });
   }
