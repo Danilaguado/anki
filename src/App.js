@@ -6,6 +6,7 @@ import SetupScreen from "./components/SetupScreen";
 import Dashboard from "./components/Dashboard";
 import QuizScreen from "./components/QuizScreen";
 import ResultsScreen from "./components/ResultsScreen";
+import "./index.css"; // Asegúrate de importar los estilos
 
 function App() {
   const [appState, setAppState] = useState("loading"); // loading, setup, dashboard, quiz, results
@@ -16,6 +17,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Al cargar la app, intenta obtener los datos de Google Sheets
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -25,7 +27,7 @@ function App() {
           return;
         }
         const data = await response.json();
-        if (data.success) {
+        if (data.success && data.words.length > 0) {
           setUserEmail(data.config["Email de Usuario"]);
           setMasterWords(data.words);
           setAppState("dashboard");
@@ -43,6 +45,8 @@ function App() {
     setIsLoading(true);
     setError("");
     try {
+      // CORRECCIÓN: La lógica de qué palabras están 'Por Aprender' vs 'Aprendiendo'
+      // ahora se basa en el CSV de resultados.
       const response = await fetch("/api/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,6 +55,7 @@ function App() {
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.message || "Error en la configuración.");
+
       setUserEmail(email);
       setMasterWords(words);
       setAppState("dashboard");
@@ -62,7 +67,7 @@ function App() {
   };
 
   const handleCreateDeck = async (amount) => {
-    // CORRECCIÓN: Ahora filtramos por las palabras que están listas para aprender
+    // CORRECCIÓN: Ahora se toma de las palabras que el usuario aún no ha estudiado.
     const wordsToLearn = masterWords.filter(
       (word) => word.Estado === "Por Aprender"
     );
@@ -110,7 +115,7 @@ function App() {
     );
     if (deckForQuiz.length === 0) {
       alert(
-        "No tienes palabras para repasar hoy. ¡Crea un nuevo mazo o espera a mañana!"
+        "No tienes palabras para repasar hoy. ¡Añade un nuevo mazo para empezar!"
       );
       return;
     }
@@ -119,9 +124,13 @@ function App() {
     setAppState("quiz");
   };
 
-  const handleQuizComplete = async (results, sentiment) => {
-    setIsLoading(true);
+  const handleQuizComplete = (results) => {
     setLastResults(results);
+    setAppState("results");
+  };
+
+  const handleBackToDashboard = async (results, sentiment) => {
+    setIsLoading(true);
     try {
       await fetch("/api/update", {
         method: "POST",
@@ -138,12 +147,8 @@ function App() {
       console.error("Error al guardar los resultados:", err);
     } finally {
       setIsLoading(false);
-      setAppState("results");
+      setAppState("dashboard");
     }
-  };
-
-  const handleBackToDashboard = () => {
-    setAppState("dashboard");
   };
 
   const renderCurrentState = () => {

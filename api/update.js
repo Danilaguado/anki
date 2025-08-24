@@ -1,4 +1,38 @@
+// ===== /api/update.js =====
+// Propósito: Guardar los resultados del quiz y actualizar las palabras con la lógica de repetición espaciada.
+
 import { google } from "googleapis";
+
+// --- Lógica del Algoritmo de Repetición Espaciada (SRS) ---
+function calculateNextReview(word, srsFeedback) {
+  let interval = parseInt(word.Intervalo_SRS, 10) || 1;
+  let easeFactor = parseFloat(word.Factor_Facilidad) || 2.5;
+
+  if (srsFeedback === "again") {
+    interval = 1; // Reiniciar el intervalo
+  } else {
+    if (srsFeedback === "hard") {
+      easeFactor -= 0.15;
+    } else if (srsFeedback === "easy") {
+      easeFactor += 0.15;
+    }
+    // 'good' no cambia el factor de facilidad
+
+    interval = Math.round(interval * easeFactor);
+  }
+
+  // Asegurarse de que el factor de facilidad no sea menor a 1.3
+  easeFactor = Math.max(1.3, easeFactor);
+
+  const nextReviewDate = new Date();
+  nextReviewDate.setDate(nextReviewDate.getDate() + interval);
+
+  return {
+    newInterval: interval,
+    newEaseFactor: easeFactor.toFixed(2),
+    nextReviewDate: nextReviewDate.toISOString().split("T")[0],
+  };
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -35,7 +69,7 @@ export default async function handler(req, res) {
       r.isCorrect ? "Correcto" : "Incorrecto",
       r.responseTime,
       sentiment,
-      "", // Placeholder para dificultad
+      r.srsFeedback,
     ]);
 
     await sheets.spreadsheets.values.append({
@@ -45,13 +79,79 @@ export default async function handler(req, res) {
       resource: { values: logRows },
     });
 
-    // 2. Actualizar la hoja Master_Palabras (esto es más complejo y se puede optimizar)
-    // Por ahora, solo es un placeholder para la lógica de actualización del SRS.
-    // En una implementación real, se leería la hoja, se modificarían los valores y se volverían a escribir.
+    // 2. Actualizar la hoja Master_Palabras con la nueva lógica SRS
+    const range = "Master_Palabras!A:L";
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
+    const rows = response.data.values || [];
+    const headers = rows[0];
+
+    const dataToUpdate = [];
+    const today = new Date().toISOString().split("T")[0];
+
+    results.forEach((result) => {
+      const rowIndex = rows.findIndex(
+        (row) => row[headers.indexOf("ID_Palabra")] === result.wordId
+      );
+      if (rowIndex > -1) {
+        const wordData = {};
+        headers.forEach((header, i) => (wordData[header] = rows[rowIndex][i]));
+
+        const { newInterval, newEaseFactor, nextReviewDate } =
+          calculateNextReview(wordData, result.srsFeedback);
+
+        // Preparamos las actualizaciones para esta fila
+        dataToUpdate.push({
+          range: `Master_Palabras!F${rowIndex + 1}`, // Intervalo_SRS
+          values: [[newInterval]],
+        });
+        dataToUpdate.push({
+          range: `Master_Palabras!G${rowIndex + 1}`, // Fecha_Proximo_Repaso
+          values: [[nextReviewDate]],
+        });
+        dataToUpdate.push({
+          range: `Master_Palabras!H${rowIndex + 1}`, // Factor_Facilidad
+          values: [[newEaseFactor]],
+        });
+        dataToUpdate.push({
+          range: `Master_Palabras!I${rowIndex + 1}`, // Fecha_Ultimo_Repaso
+          values: [[today]],
+        });
+
+        const currentAciertos = parseInt(wordData.Total_Aciertos, 10) || 0;
+        const currentErrores = parseInt(wordData.Total_Errores, 10) || 0;
+        if (result.isCorrect) {
+          dataToUpdate.push({
+            range: `Master_Palabras!J${rowIndex + 1}`,
+            values: [[currentAciertos + 1]],
+          });
+        } else {
+          dataToUpdate.push({
+            range: `Master_Palabras!K${rowIndex + 1}`,
+            values: [[currentErrores + 1]],
+          });
+        }
+      }
+    });
+
+    if (dataToUpdate.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        resource: {
+          valueInputOption: "USER_ENTERED",
+          data: dataToUpdate,
+        },
+      });
+    }
 
     res
       .status(200)
-      .json({ success: true, message: "Resultados guardados exitosamente." });
+      .json({
+        success: true,
+        message: "Resultados guardados y SRS actualizado.",
+      });
   } catch (error) {
     console.error("Error al actualizar Google Sheet:", error);
     res
