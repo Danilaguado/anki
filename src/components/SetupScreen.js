@@ -25,9 +25,7 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
   const [fileName, setFileName] = useState("");
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef(null);
-
   const parseQuizResultsCSV = (csvText) => {
-    // ... (código de parseo de CSV, sin cambios)
     const lines = csvText.trim().split("\n");
     if (lines.length < 2) {
       setInternalError("El archivo CSV está vacío o no tiene datos.");
@@ -80,7 +78,6 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
       );
     }
   };
-
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -105,7 +102,6 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
       setIsParsingFile(false);
     }
   };
-
   const handleSubmit = () => {
     if (!email.includes("@")) {
       setInternalError("Por favor, introduce un email válido.");
@@ -119,7 +115,6 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
     }
     onSetupComplete(email, masterWords);
   };
-
   return (
     <div className='w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8'>
       <h1 className='text-3xl font-bold text-center text-gray-900 mb-2'>
@@ -201,5 +196,4 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
     </div>
   );
 };
-
 export default SetupScreen;

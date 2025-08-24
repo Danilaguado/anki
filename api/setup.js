@@ -6,15 +6,12 @@ export default async function handler(req, res) {
       .status(405)
       .json({ success: false, message: "Method Not Allowed" });
   }
-
   const { email, masterWords } = req.body;
-
   if (!email || !masterWords || masterWords.length === 0) {
     return res
       .status(400)
       .json({ success: false, message: "Email and words are required." });
   }
-
   try {
     const auth = new google.auth.GoogleAuth({
       credentials: {
@@ -23,11 +20,13 @@ export default async function handler(req, res) {
       },
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
-
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
-
-    const sheetsToCreate = [
+    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
+    const existingSheets = spreadsheetInfo.data.sheets.map(
+      (s) => s.properties.title
+    );
+    const sheetsToEnsure = [
       { title: "Dashboard", headers: [] },
       { title: "Configuración", headers: ["Clave", "Valor"] },
       {
@@ -70,64 +69,54 @@ export default async function handler(req, res) {
         ],
       },
     ];
-
-    const requests = sheetsToCreate.map((sheet) => ({
-      addSheet: { properties: { title: sheet.title } },
-    }));
-
-    try {
+    const newSheetsToCreate = sheetsToEnsure.filter(
+      (s) => !existingSheets.includes(s.title)
+    );
+    if (newSheetsToCreate.length > 0) {
+      const requests = newSheetsToCreate.map((sheet) => ({
+        addSheet: { properties: { title: sheet.title } },
+      }));
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
-        resource: { requests: [{ deleteSheet: { sheetId: 0 } }] },
+        resource: { requests },
       });
-    } catch (e) {
-      console.log("No default sheet to delete, continuing.");
     }
-
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      resource: { requests },
-    });
-
-    const dataToWrite = [];
-    dataToWrite.push({
-      range: "Configuración!A1",
-      values: [
-        ["Clave", "Valor"],
-        ["Email de Usuario", email],
-        ["Próximo ID de Mazo", 1],
-      ],
-    });
-    const masterWordsHeaders = sheetsToCreate.find(
-      (s) => s.title === "Master_Palabras"
-    ).headers;
-    const masterWordsRows = masterWords.map((word) => [
-      word.id,
-      word.english,
-      word.spanish,
-      "",
-      word.status,
-      word.srsInterval,
-      word.srsNextReview,
-      word.srsEaseFactor,
-      "",
-      word.totalCorrect,
-      word.totalIncorrect,
-      "",
-    ]);
-    dataToWrite.push({
-      range: "Master_Palabras!A1",
-      values: [masterWordsHeaders, ...masterWordsRows],
-    });
-
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId,
-      resource: {
-        valueInputOption: "USER_ENTERED",
-        data: dataToWrite,
-      },
-    });
-
+    if (!existingSheets.includes("Configuración")) {
+      const dataToWrite = [];
+      dataToWrite.push({
+        range: "Configuración!A1",
+        values: [
+          ["Clave", "Valor"],
+          ["Email de Usuario", email],
+          ["Próximo ID de Mazo", 1],
+        ],
+      });
+      const masterWordsHeaders = sheetsToEnsure.find(
+        (s) => s.title === "Master_Palabras"
+      ).headers;
+      const masterWordsRows = masterWords.map((word) => [
+        word.id,
+        word.english,
+        word.spanish,
+        "",
+        word.status,
+        word.srsInterval,
+        word.srsNextReview,
+        word.srsEaseFactor,
+        "",
+        word.totalCorrect,
+        word.totalIncorrect,
+        "",
+      ]);
+      dataToWrite.push({
+        range: "Master_Palabras!A1",
+        values: [masterWordsHeaders, ...masterWordsRows],
+      });
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        resource: { valueInputOption: "USER_ENTERED", data: dataToWrite },
+      });
+    }
     res
       .status(200)
       .json({
