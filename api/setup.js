@@ -1,5 +1,5 @@
 // ===== /api/setup.js =====
-// Ahora crea la estructura de hojas normalizada.
+// Reescrito para crear la nueva estructura de hojas normalizada.
 
 import { google } from "googleapis";
 
@@ -9,11 +9,14 @@ export default async function handler(req, res) {
       .status(405)
       .json({ success: false, message: "Method Not Allowed" });
   }
-  const { email, masterWords } = req.body;
-  if (!email || !masterWords) {
+  const { email, masterWords, userId } = req.body;
+  if (!email || !masterWords || !userId) {
     return res
       .status(400)
-      .json({ success: false, message: "Email and words are required." });
+      .json({
+        success: false,
+        message: "Email, words, and userId are required.",
+      });
   }
 
   try {
@@ -27,42 +30,34 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
-    const existingSheets = spreadsheetInfo.data.sheets.map(
-      (s) => s.properties.title
-    );
-
+    // 1. Definir y crear las hojas si no existen
     const sheetsToEnsure = [
+      { title: "Users", headers: ["UserID", "Email", "Fecha_Creacion"] },
       {
         title: "Master_Palabras",
+        headers: ["ID_Palabra", "Inglés", "Español"],
+      },
+      {
+        title: "User_Words",
         headers: [
+          "UserID",
           "ID_Palabra",
-          "Inglés",
-          "Español",
           "Estado",
           "Intervalo_SRS",
           "Fecha_Proximo_Repaso",
           "Factor_Facilidad",
-          "Fecha_Ultimo_Repaso",
-          "Total_Aciertos",
-          "Total_Errores",
-          "Tiempo_Respuesta_Promedio_ms",
         ],
       },
       {
         title: "Decks",
-        headers: [
-          "ID_Mazo",
-          "Fecha_Creacion",
-          "Cantidad_Palabras",
-          "Palabras_IDs",
-        ],
+        headers: ["ID_Mazo", "UserID", "Fecha_Creacion", "Cantidad_Palabras"],
       },
       {
         title: "Study_Sessions",
         headers: [
           "ID_Sesion",
           "ID_Mazo",
+          "UserID",
           "Timestamp_Inicio",
           "Timestamp_Fin",
           "Duracion_Total_ms",
@@ -80,9 +75,12 @@ export default async function handler(req, res) {
           "SRS_Feedback",
         ],
       },
-      { title: "Configuración", headers: ["Clave", "Valor"] },
     ];
 
+    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
+    const existingSheets = spreadsheetInfo.data.sheets.map(
+      (s) => s.properties.title
+    );
     const newSheetsToCreate = sheetsToEnsure.filter(
       (s) => !existingSheets.includes(s.title)
     );
@@ -94,58 +92,52 @@ export default async function handler(req, res) {
         spreadsheetId,
         resource: { requests },
       });
-    }
-
-    if (!existingSheets.includes("Configuración")) {
-      const dataToWrite = [];
-      dataToWrite.push({
-        range: "Configuración!A1",
-        values: [
-          ["Clave", "Valor"],
-          ["Email de Usuario", email],
-          ["Próximo ID de Mazo", 1],
-        ],
-      });
-
-      const masterWordsHeaders = sheetsToEnsure.find(
-        (s) => s.title === "Master_Palabras"
-      ).headers;
-      const masterWordsRows = masterWords.map((word) => [
-        word.id,
-        word.english,
-        word.spanish,
-        word.status,
-        1,
-        null,
-        2.5,
-        null,
-        0,
-        0,
-        null,
-      ]);
-      dataToWrite.push({
-        range: "Master_Palabras!A1",
-        values: [masterWordsHeaders, ...masterWordsRows],
-      });
-
-      // Escribir encabezados en las nuevas hojas
-      sheetsToEnsure.forEach((sheet) => {
-        if (
-          sheet.title !== "Master_Palabras" &&
-          sheet.title !== "Configuración"
-        ) {
-          dataToWrite.push({
-            range: `${sheet.title}!A1`,
-            values: [sheet.headers],
-          });
-        }
-      });
-
+      // Escribir encabezados en las hojas recién creadas
+      const dataToWrite = newSheetsToCreate.map((sheet) => ({
+        range: `${sheet.title}!A1`,
+        values: [sheet.headers],
+      }));
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId,
         resource: { valueInputOption: "USER_ENTERED", data: dataToWrite },
       });
     }
+
+    // 2. Poblar las tablas
+    const userRow = [userId, email, new Date().toISOString()];
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Users!A:C",
+      valueInputOption: "USER_ENTERED",
+      resource: { values: [userRow] },
+    });
+
+    const masterWordsRows = masterWords.map((word) => [
+      word.id,
+      word.english,
+      word.spanish,
+    ]);
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Master_Palabras!A:C",
+      valueInputOption: "USER_ENTERED",
+      resource: { values: masterWordsRows },
+    });
+
+    const userWordsRows = masterWords.map((word) => [
+      userId,
+      word.id,
+      word.status,
+      1,
+      null,
+      2.5,
+    ]);
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "User_Words!A:F",
+      valueInputOption: "USER_ENTERED",
+      resource: { values: userWordsRows },
+    });
 
     res
       .status(200)

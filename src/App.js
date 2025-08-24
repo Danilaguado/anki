@@ -1,5 +1,5 @@
 // ===== /src/App.js =====
-// Lógica principal actualizada para la nueva estructura de datos.
+// Lógica principal completamente reescrita para la nueva estructura.
 
 import React, { useState, useEffect } from "react";
 import SetupScreen from "./components/SetupScreen";
@@ -10,26 +10,39 @@ import "./index.css";
 
 function App() {
   const [appState, setAppState] = useState("loading");
-  const [userEmail, setUserEmail] = useState("");
-  const [masterWords, setMasterWords] = useState([]);
+  const [userId, setUserId] = useState(null);
+  const [userData, setUserData] = useState({
+    words: [],
+    decks: [],
+    sessions: [],
+  });
   const [studyDeck, setStudyDeck] = useState([]);
-  const [lastResults, setLastResults] = useState([]);
   const [sessionInfo, setSessionInfo] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // 1. Comprobar si hay un UserID guardado localmente
+    let localUserId = localStorage.getItem("ankiUserId");
+    if (!localUserId) {
+      localUserId = `user-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+      localStorage.setItem("ankiUserId", localUserId);
+    }
+    setUserId(localUserId);
+
+    // 2. Cargar los datos del usuario desde el backend
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/data");
+        const response = await fetch(`/api/data?userId=${localUserId}`);
         if (!response.ok) {
           setAppState("setup");
           return;
         }
         const data = await response.json();
-        if (data.success && data.words.length > 0) {
-          setUserEmail(data.config["Email de Usuario"]);
-          setMasterWords(data.words);
+        if (data.success && data.userExists) {
+          setUserData(data.data);
           setAppState("dashboard");
         } else {
           setAppState("setup");
@@ -48,13 +61,12 @@ function App() {
       const response = await fetch("/api/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, masterWords: words }),
+        body: JSON.stringify({ email, masterWords: words, userId }),
       });
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.message || "Error en la configuración.");
-      setUserEmail(email);
-      setMasterWords(words);
+      setUserData({ words, decks: [], sessions: [] });
       setAppState("dashboard");
     } catch (err) {
       setError(err.message);
@@ -64,7 +76,7 @@ function App() {
   };
 
   const handleCreateDeck = async (amount) => {
-    const wordsToLearn = masterWords.filter(
+    const wordsToLearn = userData.words.filter(
       (word) => word.Estado === "Por Aprender"
     );
     if (wordsToLearn.length === 0) {
@@ -82,19 +94,18 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId,
           wordIds: wordIdsToAdd,
           deckSize: wordsToAdd.length,
         }),
       });
       if (!response.ok)
         throw new Error("No se pudo crear el mazo en el servidor.");
-      const updatedMasterWords = masterWords.map((word) =>
-        wordIdsToAdd.includes(word.ID_Palabra)
-          ? { ...word, Estado: "Aprendiendo" }
-          : word
-      );
-      setMasterWords(updatedMasterWords);
-      alert(`${wordsToAdd.length} nuevas palabras añadidas a tu estudio.`);
+
+      // Recargar datos para ver el nuevo mazo y los estados actualizados
+      const dataRes = await fetch(`/api/data?userId=${userId}`);
+      const data = await dataRes.json();
+      if (data.success) setUserData(data.data);
     } catch (err) {
       alert(`Error al crear el mazo: ${err.message}`);
     } finally {
@@ -105,19 +116,17 @@ function App() {
   const handleStartQuiz = (isPracticeMode = false) => {
     const today = new Date().toISOString().split("T")[0];
     let deckForQuiz;
-
     if (isPracticeMode) {
-      // Modo Práctica: Todas las palabras en estudio, sin importar la fecha de repaso.
-      deckForQuiz = masterWords.filter((word) => word.Estado === "Aprendiendo");
+      deckForQuiz = userData.words.filter(
+        (word) => word.Estado === "Aprendiendo"
+      );
     } else {
-      // Modo Repaso Diario: Solo las que tocan hoy.
-      deckForQuiz = masterWords.filter(
+      deckForQuiz = userData.words.filter(
         (word) =>
           word.Estado === "Aprendiendo" &&
           (!word.Fecha_Proximo_Repaso || word.Fecha_Proximo_Repaso <= today)
       );
     }
-
     if (deckForQuiz.length === 0) {
       alert(
         isPracticeMode
@@ -129,22 +138,22 @@ function App() {
     const shuffledDeck = [...deckForQuiz].sort(() => Math.random() - 0.5);
     setStudyDeck(shuffledDeck);
     setSessionInfo({
-      deckId: "Custom", // En un futuro, se podría asociar a un ID de mazo específico
+      deckId: "Custom",
       startTime: new Date().toISOString(),
     });
     setAppState("quiz");
   };
 
   const handleQuizComplete = (results) => {
-    setLastResults(results);
+    setSessionInfo((prev) => ({ ...prev, results }));
     setAppState("results");
   };
 
-  const handleBackToDashboard = async (results, sentiment) => {
+  const handleBackToDashboard = async (sentiment) => {
     setIsLoading(true);
     const finalSessionInfo = {
       ...sessionInfo,
-      status: "Completada", // Asumimos que se completa
+      status: "Completada",
       duration: Date.now() - new Date(sessionInfo.startTime).getTime(),
     };
     try {
@@ -152,15 +161,16 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          results,
+          userId,
+          results: sessionInfo.results,
           sentiment,
           sessionInfo: finalSessionInfo,
         }),
       });
-      const response = await fetch("/api/data");
+      const response = await fetch(`/api/data?userId=${userId}`);
       const data = await response.json();
       if (data.success) {
-        setMasterWords(data.words);
+        setUserData(data.data);
       }
     } catch (err) {
       console.error("Error al guardar los resultados:", err);
@@ -183,7 +193,7 @@ function App() {
       case "dashboard":
         return (
           <Dashboard
-            masterWords={masterWords}
+            userData={userData}
             onStartQuiz={handleStartQuiz}
             onCreateDeck={handleCreateDeck}
           />
@@ -195,7 +205,7 @@ function App() {
       case "results":
         return (
           <ResultsScreen
-            results={lastResults}
+            results={sessionInfo.results || []}
             onBackToDashboard={handleBackToDashboard}
           />
         );
