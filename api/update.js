@@ -9,19 +9,20 @@ function calculateNextReview(word, srsFeedback) {
   let easeFactor = parseFloat(word.Factor_Facilidad) || 2.5;
 
   if (srsFeedback === "again") {
-    interval = 1; // Reiniciar el intervalo
+    interval = 1; // Reiniciar el intervalo si la respuesta es 'Mal'
+    easeFactor -= 0.2; // Reducir ligeramente la facilidad
   } else {
     if (srsFeedback === "hard") {
+      interval = Math.round(interval * 1.2);
       easeFactor -= 0.15;
+    } else if (srsFeedback === "good") {
+      interval = Math.round(interval * easeFactor);
     } else if (srsFeedback === "easy") {
+      interval = Math.round(interval * easeFactor * 1.3);
       easeFactor += 0.15;
     }
-    // 'good' no cambia el factor de facilidad
-
-    interval = Math.round(interval * easeFactor);
   }
 
-  // Asegurarse de que el factor de facilidad no sea menor a 1.3
   easeFactor = Math.max(1.3, easeFactor);
 
   const nextReviewDate = new Date();
@@ -102,21 +103,20 @@ export default async function handler(req, res) {
         const { newInterval, newEaseFactor, nextReviewDate } =
           calculateNextReview(wordData, result.srsFeedback);
 
-        // Preparamos las actualizaciones para esta fila
         dataToUpdate.push({
-          range: `Master_Palabras!F${rowIndex + 1}`, // Intervalo_SRS
+          range: `Master_Palabras!F${rowIndex + 1}`,
           values: [[newInterval]],
         });
         dataToUpdate.push({
-          range: `Master_Palabras!G${rowIndex + 1}`, // Fecha_Proximo_Repaso
+          range: `Master_Palabras!G${rowIndex + 1}`,
           values: [[nextReviewDate]],
         });
         dataToUpdate.push({
-          range: `Master_Palabras!H${rowIndex + 1}`, // Factor_Facilidad
+          range: `Master_Palabras!H${rowIndex + 1}`,
           values: [[newEaseFactor]],
         });
         dataToUpdate.push({
-          range: `Master_Palabras!I${rowIndex + 1}`, // Fecha_Ultimo_Repaso
+          range: `Master_Palabras!I${rowIndex + 1}`,
           values: [[today]],
         });
 

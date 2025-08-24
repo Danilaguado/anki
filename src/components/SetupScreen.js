@@ -1,8 +1,11 @@
+// ===== /src/components/SetupScreen.js =====
+// Lógica corregida para interpretar el CSV inicial.
+
 import React, { useState, useRef } from "react";
 
 const UploadIcon = () => (
   <svg
-    className='w-8 h-8 mb-4 text-gray-500'
+    className='upload-icon'
     aria-hidden='true'
     xmlns='http://www.w3.org/2000/svg'
     fill='none'
@@ -25,6 +28,7 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
   const [fileName, setFileName] = useState("");
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef(null);
+
   const parseQuizResultsCSV = (csvText) => {
     const lines = csvText.trim().split("\n");
     if (lines.length < 2) {
@@ -51,24 +55,21 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
       .map((line, index) => {
         const data = line.split(",").map((d) => d.replace(/"/g, "").trim());
         const wasCorrect = data[resultIndex] === "true";
-        const initialStatus = wasCorrect ? "Por Aprender" : "Aprendiendo";
+
+        // CORRECCIÓN CLAVE:
+        // Las palabras que fallaste ('isCorrect' es false) son las que están 'Por Aprender'.
+        // Las que acertaste ya se consideran 'Dominadas'.
+        const initialStatus = wasCorrect ? "Dominada" : "Por Aprender";
+
         return {
           id: index + 1,
           english: data[englishIndex],
           spanish: data[spanishIndex],
           status: initialStatus,
-          srsInterval: 1,
-          srsNextReview: wasCorrect
-            ? null
-            : new Date().toISOString().split("T")[0],
-          srsEaseFactor: 2.5,
-          lastReviewDate: null,
-          totalCorrect: wasCorrect ? 1 : 0,
-          totalIncorrect: wasCorrect ? 0 : 1,
-          avgResponseTime: null,
         };
       })
       .filter((word) => word && word.english && word.spanish);
+
     if (parsedWords.length > 0) {
       setMasterWords(parsedWords);
       setInternalError("");
@@ -78,6 +79,7 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
       );
     }
   };
+
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -102,6 +104,7 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
       setIsParsingFile(false);
     }
   };
+
   const handleSubmit = () => {
     if (!email.includes("@")) {
       setInternalError("Por favor, introduce un email válido.");
@@ -115,40 +118,30 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
     }
     onSetupComplete(email, masterWords);
   };
+
   return (
-    <div className='w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8'>
-      <h1 className='text-3xl font-bold text-center text-gray-900 mb-2'>
-        Configuración de la App
-      </h1>
-      <p className='text-center text-gray-500 mb-8'>
-        Importa tus resultados para empezar.
-      </p>
-      <div className='space-y-6'>
-        <div>
-          <label
-            htmlFor='email'
-            className='block text-sm font-medium text-gray-700 mb-1'
-          >
-            1. Tu Correo Electrónico
-          </label>
+    <div className='screen-container'>
+      <h1>Configuración de la App</h1>
+      <p className='subtitle'>Importa tus resultados para empezar.</p>
+      <div className='form-container'>
+        <div className='form-group'>
+          <label htmlFor='email'>1. Tu Correo Electrónico</label>
           <input
             type='email'
             id='email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder='Para notificaciones y encuestas'
-            className='w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-3'
+            className='input-field'
           />
         </div>
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            2. Archivo de Resultados (.csv)
-          </label>
+        <div className='form-group'>
+          <label>2. Archivo de Resultados (.csv)</label>
           <div
-            className='flex justify-center items-center w-full p-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100'
+            className='file-upload-area'
             onClick={() => !isParsingFile && fileInputRef.current.click()}
           >
-            <div className='text-center'>
+            <div className='file-upload-content'>
               {isParsingFile ? (
                 <p>Procesando...</p>
               ) : (
@@ -159,13 +152,9 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
                   </p>
                 </>
               )}
-              {fileName && (
-                <p className='text-blue-600 font-semibold mt-2 text-xs'>
-                  {fileName}
-                </p>
-              )}
+              {fileName && <p className='file-name'>{fileName}</p>}
               {masterWords.length > 0 && (
-                <p className='text-green-600 font-semibold mt-2'>
+                <p className='words-loaded'>
                   {masterWords.length} palabras cargadas.
                 </p>
               )}
@@ -174,20 +163,18 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
               ref={fileInputRef}
               type='file'
               accept='.csv'
-              className='hidden'
+              className='hidden-input'
               onChange={handleFileChange}
               disabled={isParsingFile}
             />
           </div>
         </div>
         {(internalError || apiError) && (
-          <p className='text-red-500 text-sm text-center'>
-            {internalError || apiError}
-          </p>
+          <p className='error-message'>{internalError || apiError}</p>
         )}
         <button
           onClick={handleSubmit}
-          className='w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400'
+          className='button button-primary'
           disabled={isParsingFile || isLoading}
         >
           {isLoading ? "Configurando..." : "Finalizar Configuración"}

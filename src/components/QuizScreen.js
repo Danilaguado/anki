@@ -1,3 +1,6 @@
+// ===== /src/components/QuizScreen.js =====
+// Corregido el orden de los emojis y la lógica de avance de tarjeta.
+
 import React, { useState, useEffect, useRef } from "react";
 
 const PlayIcon = () => (
@@ -30,6 +33,7 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
   const [sessionResults, setSessionResults] = useState([]);
   const [startTime, setStartTime] = useState(Date.now());
   const inputRef = useRef(null);
+  const tempResultRef = useRef(null);
   const currentCard = deck[currentIndex];
 
   useEffect(() => {
@@ -51,30 +55,28 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
       userAnswer.trim().toLowerCase() === currentCard.Español.toLowerCase();
     setFeedback(isCorrect ? "correct" : "incorrect");
 
-    const result = {
+    tempResultRef.current = {
       wordId: currentCard.ID_Palabra,
       isCorrect: isCorrect,
       responseTime: responseTime,
       timestamp: new Date().toISOString(),
-      srsFeedback: null, // Se llenará en el siguiente paso
+      srsFeedback: null,
     };
-    // No lo añadimos a sessionResults todavía, esperamos el feedback del SRS
-    // Guardamos el resultado temporalmente
-    inputRef.current.tempResult = result;
   };
 
   const handleSrsFeedback = (srsLevel) => {
-    const tempResult = inputRef.current.tempResult;
-    tempResult.srsFeedback = srsLevel; // Añadimos el feedback del SRS
-    setSessionResults((prev) => [...prev, tempResult]);
+    const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
+    const updatedResults = [...sessionResults, finalResult];
 
-    // Avanzar a la siguiente tarjeta
-    setFeedback(null);
-    setUserAnswer("");
+    // CORRECCIÓN: Lógica para avanzar o finalizar
     if (currentIndex < deck.length - 1) {
+      setSessionResults(updatedResults);
+      setFeedback(null);
+      setUserAnswer("");
       setCurrentIndex(currentIndex + 1);
     } else {
-      onQuizComplete([...sessionResults, tempResult]);
+      // Asegúrate de incluir el último resultado antes de finalizar
+      onQuizComplete(updatedResults);
     }
   };
 
@@ -137,20 +139,14 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
             )}
           </div>
           <p className='srs-prompt'>¿Qué tan bien la recordabas?</p>
+          {/* CORRECCIÓN: Orden de los emojis invertido */}
           <div className='srs-buttons'>
             <button
-              onClick={() => handleSrsFeedback("again")}
+              onClick={() => handleSrsFeedback("easy")}
               className='srs-button'
             >
-              <span className='srs-emoji'>😭</span>
-              <span className='srs-text'>Mal</span>
-            </button>
-            <button
-              onClick={() => handleSrsFeedback("hard")}
-              className='srs-button'
-            >
-              <span className='srs-emoji'>🤔</span>
-              <span className='srs-text'>Difícil</span>
+              <span className='srs-emoji'>😎</span>
+              <span className='srs-text'>Fácil</span>
             </button>
             <button
               onClick={() => handleSrsFeedback("good")}
@@ -160,11 +156,18 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
               <span className='srs-text'>Bien</span>
             </button>
             <button
-              onClick={() => handleSrsFeedback("easy")}
+              onClick={() => handleSrsFeedback("hard")}
               className='srs-button'
             >
-              <span className='srs-emoji'>😎</span>
-              <span className='srs-text'>Fácil</span>
+              <span className='srs-emoji'>🤔</span>
+              <span className='srs-text'>Difícil</span>
+            </button>
+            <button
+              onClick={() => handleSrsFeedback("again")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>😭</span>
+              <span className='srs-text'>Mal</span>
             </button>
           </div>
         </div>
