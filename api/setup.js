@@ -1,5 +1,5 @@
 // ===== /api/setup.js =====
-// Reescrito para crear la nueva estructura de hojas normalizada.
+// Ahora crea la estructura de hojas completamente normalizada.
 
 import { google } from "googleapis";
 
@@ -30,7 +30,6 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    // 1. Definir y crear las hojas si no existen
     const sheetsToEnsure = [
       { title: "Users", headers: ["UserID", "Email", "Fecha_Creacion"] },
       {
@@ -46,6 +45,8 @@ export default async function handler(req, res) {
           "Intervalo_SRS",
           "Fecha_Proximo_Repaso",
           "Factor_Facilidad",
+          "Total_Aciertos",
+          "Total_Errores",
         ],
       },
       {
@@ -92,7 +93,6 @@ export default async function handler(req, res) {
         spreadsheetId,
         resource: { requests },
       });
-      // Escribir encabezados en las hojas recién creadas
       const dataToWrite = newSheetsToCreate.map((sheet) => ({
         range: `${sheet.title}!A1`,
         values: [sheet.headers],
@@ -103,7 +103,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Poblar las tablas
     const userRow = [userId, email, new Date().toISOString()];
     await sheets.spreadsheets.values.append({
       spreadsheetId,
@@ -131,10 +130,12 @@ export default async function handler(req, res) {
       1,
       null,
       2.5,
+      0,
+      0,
     ]);
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: "User_Words!A:F",
+      range: "User_Words!A:H",
       valueInputOption: "USER_ENTERED",
       resource: { values: userWordsRows },
     });

@@ -1,6 +1,3 @@
-// ===== /api/create-deck.js =====
-// Ahora crea una entrada en la nueva hoja 'Decks'.
-
 import { google } from "googleapis";
 
 export default async function handler(req, res) {
@@ -9,13 +6,13 @@ export default async function handler(req, res) {
       .status(405)
       .json({ success: false, message: "Method Not Allowed" });
   }
-  const { wordIds, deckSize } = req.body;
-  if (!wordIds || !deckSize) {
+  const { userId, wordIds, deckSize } = req.body;
+  if (!userId || !wordIds || !deckSize) {
     return res
       .status(400)
       .json({
         success: false,
-        message: "IDs de palabras y tamaño del mazo son requeridos.",
+        message: "UserID, IDs de palabras y tamaño del mazo son requeridos.",
       });
   }
 
@@ -30,23 +27,15 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    // 1. Obtener el próximo ID de Mazo desde 'Configuración'
-    const configRange = "Configuración!B2";
-    const configResponse = await sheets.spreadsheets.values.get({
+    const decksRange = "Decks!A:A";
+    const decksResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: configRange,
+      range: decksRange,
     });
-    const nextDeckIdNum = parseInt(configResponse.data.values[0][0], 10);
+    const nextDeckIdNum = (decksResponse.data.values || []).length;
     const newDeckId = `Mazo-${nextDeckIdNum}`;
 
-    // 2. Crear la nueva fila para la hoja 'Decks'
-    const newDeckRow = [
-      newDeckId,
-      new Date().toISOString(),
-      deckSize,
-      wordIds.join(","),
-    ];
-
+    const newDeckRow = [newDeckId, userId, new Date().toISOString(), deckSize];
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: "Decks!A:D",
@@ -54,19 +43,17 @@ export default async function handler(req, res) {
       resource: { values: [newDeckRow] },
     });
 
-    // 3. Actualizar el estado de las palabras en 'Master_Palabras'
-    const masterRange = "Master_Palabras!A:D";
-    const masterResponse = await sheets.spreadsheets.values.get({
+    const userWordsRange = "User_Words!A:C";
+    const userWordsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: masterRange,
+      range: userWordsRange,
     });
-    const masterRows = masterResponse.data.values || [];
+    const userWordsRows = userWordsResponse.data.values || [];
     const dataToUpdate = [];
-    masterRows.forEach((row, index) => {
-      if (wordIds.includes(row[0])) {
-        // Compara con ID_Palabra en columna A
+    userWordsRows.forEach((row, index) => {
+      if (row[0] === userId && wordIds.includes(row[1])) {
         dataToUpdate.push({
-          range: `Master_Palabras!D${index + 1}`,
+          range: `User_Words!C${index + 1}`,
           values: [["Aprendiendo"]],
         });
       }
@@ -78,14 +65,6 @@ export default async function handler(req, res) {
         resource: { valueInputOption: "USER_ENTERED", data: dataToUpdate },
       });
     }
-
-    // 4. Incrementar el 'Próximo ID de Mazo' en 'Configuración'
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: configRange,
-      valueInputOption: "USER_ENTERED",
-      resource: { values: [[nextDeckIdNum + 1]] },
-    });
 
     res
       .status(200)

@@ -1,6 +1,3 @@
-// ===== /api/update.js =====
-// Lógica SRS movida aquí. Ahora también guarda en Study_Sessions y Log_Estudio.
-
 import { google } from "googleapis";
 
 function calculateNextReview(word, srsFeedback) {
@@ -36,13 +33,13 @@ export default async function handler(req, res) {
       .status(405)
       .json({ success: false, message: "Method Not Allowed" });
   }
-  const { results, sentiment, sessionInfo } = req.body;
-  if (!results || !sessionInfo) {
+  const { userId, results, sentiment, sessionInfo } = req.body;
+  if (!userId || !results || !sessionInfo) {
     return res
       .status(400)
       .json({
         success: false,
-        message: "Results and session info are required.",
+        message: "UserID, results y session info son requeridos.",
       });
   }
 
@@ -58,10 +55,10 @@ export default async function handler(req, res) {
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sessionId = `Sesion-${Date.now()}`;
 
-    // 1. Guardar la sesión en 'Study_Sessions'
     const sessionRow = [
       sessionId,
       sessionInfo.deckId,
+      userId,
       sessionInfo.startTime,
       new Date().toISOString(),
       sessionInfo.duration,
@@ -70,12 +67,11 @@ export default async function handler(req, res) {
     ];
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: "Study_Sessions!A:G",
+      range: "Study_Sessions!A:H",
       valueInputOption: "USER_ENTERED",
       resource: { values: [sessionRow] },
     });
 
-    // 2. Guardar cada respuesta en 'Log_Estudio'
     const logRows = results.map((r) => [
       sessionId,
       r.wordId,
@@ -92,11 +88,10 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. Actualizar 'Master_Palabras' con SRS y estadísticas
-    const masterRange = "Master_Palabras!A:L";
+    const userWordsRange = "User_Words!A:H";
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: masterRange,
+      range: userWordsRange,
     });
     const rows = response.data.values || [];
     const headers = rows[0];
@@ -105,7 +100,9 @@ export default async function handler(req, res) {
 
     results.forEach((result) => {
       const rowIndex = rows.findIndex(
-        (row) => row[headers.indexOf("ID_Palabra")] === result.wordId
+        (row) =>
+          row[headers.indexOf("UserID")] === userId &&
+          row[headers.indexOf("ID_Palabra")] === result.wordId
       );
       if (rowIndex > -1) {
         const wordData = {};
@@ -114,32 +111,28 @@ export default async function handler(req, res) {
           calculateNextReview(wordData, result.srsFeedback);
 
         dataToUpdate.push({
-          range: `Master_Palabras!E${rowIndex + 1}`,
+          range: `User_Words!D${rowIndex + 1}`,
           values: [[newInterval]],
         });
         dataToUpdate.push({
-          range: `Master_Palabras!F${rowIndex + 1}`,
+          range: `User_Words!E${rowIndex + 1}`,
           values: [[nextReviewDate]],
         });
         dataToUpdate.push({
-          range: `Master_Palabras!G${rowIndex + 1}`,
+          range: `User_Words!F${rowIndex + 1}`,
           values: [[newEaseFactor]],
-        });
-        dataToUpdate.push({
-          range: `Master_Palabras!H${rowIndex + 1}`,
-          values: [[today]],
         });
 
         const currentAciertos = parseInt(wordData.Total_Aciertos, 10) || 0;
         const currentErrores = parseInt(wordData.Total_Errores, 10) || 0;
         if (result.isCorrect) {
           dataToUpdate.push({
-            range: `Master_Palabras!I${rowIndex + 1}`,
+            range: `User_Words!G${rowIndex + 1}`,
             values: [[currentAciertos + 1]],
           });
         } else {
           dataToUpdate.push({
-            range: `Master_Palabras!J${rowIndex + 1}`,
+            range: `User_Words!H${rowIndex + 1}`,
             values: [[currentErrores + 1]],
           });
         }
