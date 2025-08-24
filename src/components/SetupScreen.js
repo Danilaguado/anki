@@ -56,9 +56,9 @@ const SetupScreen = ({ onSetupComplete, isLoading, error: apiError }) => {
         const data = line.split(",").map((d) => d.replace(/"/g, "").trim());
         const wasCorrect = data[resultIndex].toLowerCase() === "true";
 
-        // CORRECCIÓN DEFINITIVA DE LA LÓGICA:
-        // Si la palabra fue correcta, ya está 'Dominada'.
-        // Si fue incorrecta, está 'Por Aprender' y es la única que se usará para crear mazos.
+        // CORRECCIÓN CLAVE:
+        // Las palabras que fallaste ('isCorrect' es false) son las que están 'Por Aprender'.
+        // Las que acertaste ya se consideran 'Dominadas' y no se usarán para crear mazos.
         const initialStatus = wasCorrect ? "Dominada" : "Por Aprender";
 
         return {

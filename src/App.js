@@ -1,23 +1,23 @@
 // ===== /src/App.js =====
-// Lógica principal actualizada para manejar el estado y las llamadas a la API correctamente.
+// Lógica principal actualizada para la nueva estructura de datos.
 
 import React, { useState, useEffect } from "react";
 import SetupScreen from "./components/SetupScreen";
 import Dashboard from "./components/Dashboard";
 import QuizScreen from "./components/QuizScreen";
 import ResultsScreen from "./components/ResultsScreen";
-import "./index.css"; // Asegúrate de importar los estilos
+import "./index.css";
 
 function App() {
-  const [appState, setAppState] = useState("loading"); // loading, setup, dashboard, quiz, results
+  const [appState, setAppState] = useState("loading");
   const [userEmail, setUserEmail] = useState("");
   const [masterWords, setMasterWords] = useState([]);
   const [studyDeck, setStudyDeck] = useState([]);
   const [lastResults, setLastResults] = useState([]);
+  const [sessionInfo, setSessionInfo] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Al cargar la app, intenta obtener los datos de Google Sheets
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -45,8 +45,6 @@ function App() {
     setIsLoading(true);
     setError("");
     try {
-      // CORRECCIÓN: La lógica de qué palabras están 'Por Aprender' vs 'Aprendiendo'
-      // ahora se basa en el CSV de resultados.
       const response = await fetch("/api/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,7 +53,6 @@ function App() {
       const data = await response.json();
       if (!response.ok)
         throw new Error(data.message || "Error en la configuración.");
-
       setUserEmail(email);
       setMasterWords(words);
       setAppState("dashboard");
@@ -67,7 +64,6 @@ function App() {
   };
 
   const handleCreateDeck = async (amount) => {
-    // CORRECCIÓN: Ahora se toma de las palabras que el usuario aún no ha estudiado.
     const wordsToLearn = masterWords.filter(
       (word) => word.Estado === "Por Aprender"
     );
@@ -77,7 +73,6 @@ function App() {
       );
       return;
     }
-
     const wordsToAdd = wordsToLearn.slice(0, amount);
     const wordIdsToAdd = wordsToAdd.map((w) => w.ID_Palabra);
 
@@ -86,12 +81,13 @@ function App() {
       const response = await fetch("/api/create-deck", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wordIds: wordIdsToAdd }),
+        body: JSON.stringify({
+          wordIds: wordIdsToAdd,
+          deckSize: wordsToAdd.length,
+        }),
       });
       if (!response.ok)
         throw new Error("No se pudo crear el mazo en el servidor.");
-
-      // Actualizar el estado local para reflejar el cambio inmediatamente
       const updatedMasterWords = masterWords.map((word) =>
         wordIdsToAdd.includes(word.ID_Palabra)
           ? { ...word, Estado: "Aprendiendo" }
@@ -106,21 +102,36 @@ function App() {
     }
   };
 
-  const handleStartQuiz = () => {
+  const handleStartQuiz = (isPracticeMode = false) => {
     const today = new Date().toISOString().split("T")[0];
-    const deckForQuiz = masterWords.filter(
-      (word) =>
-        word.Estado === "Aprendiendo" &&
-        (!word.Fecha_Proximo_Repaso || word.Fecha_Proximo_Repaso <= today)
-    );
+    let deckForQuiz;
+
+    if (isPracticeMode) {
+      // Modo Práctica: Todas las palabras en estudio, sin importar la fecha de repaso.
+      deckForQuiz = masterWords.filter((word) => word.Estado === "Aprendiendo");
+    } else {
+      // Modo Repaso Diario: Solo las que tocan hoy.
+      deckForQuiz = masterWords.filter(
+        (word) =>
+          word.Estado === "Aprendiendo" &&
+          (!word.Fecha_Proximo_Repaso || word.Fecha_Proximo_Repaso <= today)
+      );
+    }
+
     if (deckForQuiz.length === 0) {
       alert(
-        "No tienes palabras para repasar hoy. ¡Añade un nuevo mazo para empezar!"
+        isPracticeMode
+          ? "No tienes palabras en estudio para practicar."
+          : "No tienes palabras para repasar hoy."
       );
       return;
     }
     const shuffledDeck = [...deckForQuiz].sort(() => Math.random() - 0.5);
     setStudyDeck(shuffledDeck);
+    setSessionInfo({
+      deckId: "Custom", // En un futuro, se podría asociar a un ID de mazo específico
+      startTime: new Date().toISOString(),
+    });
     setAppState("quiz");
   };
 
@@ -131,13 +142,21 @@ function App() {
 
   const handleBackToDashboard = async (results, sentiment) => {
     setIsLoading(true);
+    const finalSessionInfo = {
+      ...sessionInfo,
+      status: "Completada", // Asumimos que se completa
+      duration: Date.now() - new Date(sessionInfo.startTime).getTime(),
+    };
     try {
       await fetch("/api/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ results, sentiment }),
+        body: JSON.stringify({
+          results,
+          sentiment,
+          sessionInfo: finalSessionInfo,
+        }),
       });
-      // Volver a cargar los datos para reflejar las actualizaciones del SRS
       const response = await fetch("/api/data");
       const data = await response.json();
       if (data.success) {

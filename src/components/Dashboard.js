@@ -32,9 +32,24 @@ const AddIcon = () => (
     />
   </svg>
 );
+const PracticeIcon = () => (
+  <svg
+    className='icon'
+    xmlns='http://www.w3.org/2000/svg'
+    fill='none'
+    viewBox='0 0 24 24'
+    strokeWidth={1.5}
+    stroke='currentColor'
+  >
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      d='M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691L7.985 5.982m11.667 0L19.015 4.982m-4.991 2.691L12 12.691'
+    />
+  </svg>
+);
 
 const Dashboard = ({ masterWords, onStartQuiz, onCreateDeck }) => {
-  // CORRECCIÓN: Se calcula sobre las palabras con estado 'Aprendiendo'
   const wordsInStudy = masterWords.filter(
     (w) => w.Estado === "Aprendiendo"
   ).length;
@@ -44,7 +59,6 @@ const Dashboard = ({ masterWords, onStartQuiz, onCreateDeck }) => {
       w.Estado === "Aprendiendo" &&
       (!w.Fecha_Proximo_Repaso || w.Fecha_Proximo_Repaso <= today)
   ).length;
-  // CORRECCIÓN: La cantidad disponible son las que están 'Por Aprender'
   const wordsToLearn = masterWords.filter(
     (w) => w.Estado === "Por Aprender"
   ).length;
@@ -58,7 +72,6 @@ const Dashboard = ({ masterWords, onStartQuiz, onCreateDeck }) => {
     if (!isNaN(amount) && amount > 0) {
       onCreateDeck(amount);
     } else if (amountStr !== null) {
-      // Evita la alerta si el usuario cancela
       alert("Por favor, introduce un número válido.");
     }
   };
@@ -81,12 +94,20 @@ const Dashboard = ({ masterWords, onStartQuiz, onCreateDeck }) => {
 
       <div className='button-group'>
         <button
-          onClick={onStartQuiz}
+          onClick={() => onStartQuiz(false)}
           disabled={wordsToReviewToday === 0}
           className='button button-green'
         >
           <StudyIcon />
-          Iniciar Repaso Diario ({wordsToReviewToday})
+          Repaso Diario ({wordsToReviewToday})
+        </button>
+        <button
+          onClick={() => onStartQuiz(true)}
+          disabled={wordsInStudy === 0}
+          className='button button-blue'
+        >
+          <PracticeIcon />
+          Modo Práctica ({wordsInStudy})
         </button>
         <button
           onClick={handleCreateDeck}
