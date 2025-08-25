@@ -1,5 +1,5 @@
 // ===== /src/components/QuizScreen.js =====
-// Corregido para evitar la pantalla en blanco si no hay tarjetas.
+// Ahora registra los intentos de voz y los pasa al finalizar.
 
 import React, { useState, useEffect, useRef } from "react";
 import SpeechToTextButton from "./SpeechToTextButton";
@@ -33,12 +33,12 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [sessionResults, setSessionResults] = useState([]);
+  const [voiceResults, setVoiceResults] = useState([]); // Nuevo estado para resultados de voz
   const [startTime, setStartTime] = useState(Date.now());
   const [isAnswerBlurred, setIsAnswerBlurred] = useState(true);
   const inputRef = useRef(null);
   const tempResultRef = useRef(null);
 
-  // --- CORRECCIÓN CLAVE: Protección contra mazo vacío ---
   if (!deck || deck.length === 0) {
     return (
       <div className='screen-container text-center'>
@@ -46,7 +46,6 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
         <p className='subtitle'>
           No hay tarjetas disponibles en este mazo para estudiar.
         </p>
-        {/* Usamos window.location.href para forzar un refresco completo y volver al dashboard */}
         <button
           onClick={() => (window.location.href = "/")}
           className='button button-secondary'
@@ -78,8 +77,15 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
   const handleSpeechResult = (transcript) => {
     const spokenText = transcript.trim().toLowerCase();
     const correctText = currentCard.Inglés.trim().toLowerCase();
+    const isCorrect = spokenText === correctText;
 
-    if (spokenText === correctText) {
+    // Registrar el resultado del intento de voz
+    setVoiceResults((prev) => [
+      ...prev,
+      { wordId: currentCard.ID_Palabra, isCorrect },
+    ]);
+
+    if (isCorrect) {
       alert(`¡Coincidencia exacta! Dijiste: "${transcript}"`);
     } else {
       alert(
@@ -90,8 +96,13 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
 
   const handleCheckAnswer = () => {
     const responseTime = Date.now() - startTime;
-    const isCorrect =
-      userAnswer.trim().toLowerCase() === currentCard.Español.toLowerCase();
+
+    const userCleanAnswer = userAnswer.trim().toLowerCase();
+    const correctAnswers = currentCard.Español.split("/").map((ans) =>
+      ans.trim().toLowerCase()
+    );
+    const isCorrect = correctAnswers.includes(userCleanAnswer);
+
     setFeedback(isCorrect ? "correct" : "incorrect");
 
     tempResultRef.current = {
@@ -113,7 +124,8 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
       setUserAnswer("");
       setCurrentIndex(currentIndex + 1);
     } else {
-      onQuizComplete(updatedResults);
+      // Al finalizar, pasar ambos tipos de resultados
+      onQuizComplete(updatedResults, voiceResults);
     }
   };
 

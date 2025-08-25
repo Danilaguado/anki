@@ -1,5 +1,5 @@
 // ===== /src/App.js =====
-// Reescrito para usar el nuevo flujo de datos y el UserID corto.
+// Ahora envía los resultados de voz al backend al finalizar la sesión.
 
 import React, { useState, useEffect } from "react";
 import SetupScreen from "./components/SetupScreen";
@@ -72,6 +72,8 @@ function App() {
           Factor_Facilidad: 2.5,
           Total_Aciertos: 0,
           Total_Errores: 0,
+          Total_Voz_Aciertos: 0, // Añadido para consistencia
+          Total_Voz_Errores: 0, // Añadido para consistencia
         })),
       };
       setUserData(initialUserData);
@@ -146,8 +148,9 @@ function App() {
     setAppState("quiz");
   };
 
-  const handleQuizComplete = (results) => {
-    setSessionInfo((prev) => ({ ...prev, results }));
+  // --- CORRECCIÓN: Ahora recibe voiceResults del QuizScreen ---
+  const handleQuizComplete = (results, voiceResults) => {
+    setSessionInfo((prev) => ({ ...prev, results, voiceResults }));
     setAppState("results");
   };
 
@@ -162,9 +165,11 @@ function App() {
       await fetch("/api/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // --- CORRECCIÓN: Se envían los resultados de voz al backend ---
         body: JSON.stringify({
           userId,
           results: sessionInfo.results,
+          voiceResults: sessionInfo.voiceResults, // Nuevo
           sentiment,
           sessionInfo: finalSessionInfo,
         }),

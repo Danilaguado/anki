@@ -1,5 +1,5 @@
 // ===== /api/setup.js =====
-// Reescrito para crear TODAS las hojas necesarias, incluyendo la hoja personal del usuario.
+// Actualizado para incluir las nuevas columnas de registro de voz.
 
 import { google } from "googleapis";
 
@@ -11,12 +11,10 @@ export default async function handler(req, res) {
   }
   const { email, masterWords, userId } = req.body;
   if (!email || !masterWords || !userId) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Email, words, and userId are required.",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Email, words, and userId are required.",
+    });
   }
 
   try {
@@ -71,6 +69,7 @@ export default async function handler(req, res) {
       { title: "Users", headers: ["UserID", "Email", "Fecha_Creacion"] },
       {
         title: userId,
+        // --- CORRECCIÓN: Añadidas las nuevas columnas aquí ---
         headers: [
           "ID_Palabra",
           "Estado",
@@ -79,6 +78,8 @@ export default async function handler(req, res) {
           "Factor_Facilidad",
           "Total_Aciertos",
           "Total_Errores",
+          "Total_Voz_Aciertos",
+          "Total_Voz_Errores",
         ],
       },
     ];
@@ -136,28 +137,28 @@ export default async function handler(req, res) {
       2.5,
       0,
       0,
+      // --- CORRECCIÓN: Añadidos los valores iniciales para las nuevas columnas ---
+      0, // Total_Voz_Aciertos
+      0, // Total_Voz_Errores
     ]);
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${userId}!A:G`,
+      // --- CORRECCIÓN: Ampliado el rango para incluir las nuevas columnas ---
+      range: `${userId}!A:I`,
       valueInputOption: "USER_ENTERED",
       resource: { values: userSheetRows },
     });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Google Sheet configurado exitosamente.",
-      });
+    res.status(200).json({
+      success: true,
+      message: "Google Sheet configurado exitosamente.",
+    });
   } catch (error) {
     console.error("Error al configurar Google Sheet:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error del servidor al configurar la hoja de cálculo.",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error del servidor al configurar la hoja de cálculo.",
+      error: error.message,
+    });
   }
 }
