@@ -46,7 +46,7 @@
   color: #6b7280;
   font-style: italic;
 }
-.blurred-answer:hover,
+/* CORRECCIÓN: Se elimina el :hover para que solo funcione con el clic (clase .revealed) */
 .blurred-answer.revealed {
   filter: blur(0);
 }
