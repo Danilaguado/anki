@@ -1,76 +1,224 @@
-// ===== /src/components/SpeechToTextButton.js =====
-// Componente para el botón de reconocimiento de voz.
+// ===== /src/components/QuizScreen.js =====
+// Corregido para evitar la pantalla en blanco si no hay tarjetas.
 
 import React, { useState, useEffect, useRef } from "react";
+import SpeechToTextButton from "./SpeechToTextButton";
+import "./QuizScreen.css";
 
-const MicIcon = ({ isListening }) => (
+const PlayIcon = () => (
   <svg
-    className={`mic-icon ${isListening ? "listening" : ""}`}
-    viewBox='0 0 24 24'
+    className='icon-play'
     xmlns='http://www.w3.org/2000/svg'
+    fill='none'
+    viewBox='0 0 24 24'
+    stroke='currentColor'
   >
-    <path d='M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z' />
-    <path d='M19 10v2a7 7 0 0 1-14 0v-2h2v2a5 5 0 0 0 10 0v-2z' />
-    <path d='M12 19a1 1 0 0 1-1-1v-2a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1z' />
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth='2'
+      d='M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z'
+    />
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth='2'
+      d='M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+    />
   </svg>
 );
 
-const SpeechToTextButton = ({ onResult, lang = "en-US" }) => {
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef(null);
+const QuizScreen = ({ deck, onQuizComplete }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [sessionResults, setSessionResults] = useState([]);
+  const [startTime, setStartTime] = useState(Date.now());
+  const [isAnswerBlurred, setIsAnswerBlurred] = useState(true);
+  const inputRef = useRef(null);
+  const tempResultRef = useRef(null);
+
+  // --- CORRECCIÓN CLAVE: Protección contra mazo vacío ---
+  if (!deck || deck.length === 0) {
+    return (
+      <div className='screen-container text-center'>
+        <h1>Error</h1>
+        <p className='subtitle'>
+          No hay tarjetas disponibles en este mazo para estudiar.
+        </p>
+        {/* Usamos window.location.href para forzar un refresco completo y volver al dashboard */}
+        <button
+          onClick={() => (window.location.href = "/")}
+          className='button button-secondary'
+        >
+          Volver al Panel
+        </button>
+      </div>
+    );
+  }
+
+  const currentCard = deck[currentIndex];
 
   useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.error("Speech Recognition not supported in this browser.");
-      return;
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
+    setStartTime(Date.now());
+    setIsAnswerBlurred(true);
+  }, [currentIndex]);
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = lang;
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = (event) => {
-      console.error("Speech recognition error:", event.error);
-      setIsListening(false);
-    };
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      onResult(transcript);
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      recognition.stop();
-    };
-  }, [lang, onResult]);
-
-  const handleToggleListen = () => {
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.start();
+  const playAudio = (text, lang = "en-US") => {
+    if ("speechSynthesis" in window && text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      window.speechSynthesis.speak(utterance);
     }
   };
 
-  if (!recognitionRef.current) {
-    return null; // No renderizar el botón si la API no es compatible
-  }
+  const handleSpeechResult = (transcript) => {
+    const spokenText = transcript.trim().toLowerCase();
+    const correctText = currentCard.Inglés.trim().toLowerCase();
+
+    if (spokenText === correctText) {
+      alert(`¡Coincidencia exacta! Dijiste: "${transcript}"`);
+    } else {
+      alert(
+        `Casi... Dijiste: "${transcript}". La palabra correcta es: "${currentCard.Inglés}"`
+      );
+    }
+  };
+
+  const handleCheckAnswer = () => {
+    const responseTime = Date.now() - startTime;
+    const isCorrect =
+      userAnswer.trim().toLowerCase() === currentCard.Español.toLowerCase();
+    setFeedback(isCorrect ? "correct" : "incorrect");
+
+    tempResultRef.current = {
+      wordId: currentCard.ID_Palabra,
+      isCorrect: isCorrect,
+      responseTime: responseTime,
+      timestamp: new Date().toISOString(),
+      srsFeedback: null,
+    };
+  };
+
+  const handleSrsFeedback = (srsLevel) => {
+    const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
+    const updatedResults = [...sessionResults, finalResult];
+
+    if (currentIndex < deck.length - 1) {
+      setSessionResults(updatedResults);
+      setFeedback(null);
+      setUserAnswer("");
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      onQuizComplete(updatedResults);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !feedback) {
+      handleCheckAnswer();
+    }
+  };
 
   return (
-    <button
-      onClick={handleToggleListen}
-      className='button-speech'
-      aria-label='Grabar voz'
-    >
-      <MicIcon isListening={isListening} />
-    </button>
+    <div className='screen-container'>
+      <div className='quiz-header'>
+        <h2>Sesión de Repaso</h2>
+        <span>
+          {currentIndex + 1} / {deck.length}
+        </span>
+      </div>
+      <div
+        className={`quiz-card ${
+          feedback === "correct"
+            ? "correct"
+            : feedback === "incorrect"
+            ? "incorrect"
+            : ""
+        }`}
+      >
+        <h3>{currentCard.Inglés}</h3>
+        <p
+          className={`blurred-answer ${!isAnswerBlurred ? "revealed" : ""}`}
+          onClick={() => setIsAnswerBlurred(false)}
+        >
+          {currentCard.Español}
+        </p>
+        <div className='audio-controls'>
+          <button
+            onClick={() => playAudio(currentCard.Inglés)}
+            className='button-play'
+          >
+            <PlayIcon />
+          </button>
+          <SpeechToTextButton onResult={handleSpeechResult} lang='en-US' />
+        </div>
+      </div>
+
+      {!feedback ? (
+        <div className='quiz-actions'>
+          <input
+            ref={inputRef}
+            type='text'
+            value={userAnswer}
+            onChange={(e) => setUserAnswer(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder='Escribe la traducción aquí...'
+            className='input-field'
+          />
+          <button onClick={handleCheckAnswer} className='button button-dark'>
+            Revisar
+          </button>
+        </div>
+      ) : (
+        <div className='feedback-container'>
+          <div className='feedback-result'>
+            {feedback === "correct" ? (
+              <p className='correct-text'>¡Correcto!</p>
+            ) : (
+              <p className='incorrect-text'>
+                Respuesta correcta: <strong>{currentCard.Español}</strong>
+              </p>
+            )}
+          </div>
+          <p className='srs-prompt'>¿Qué tan bien la recordabas?</p>
+          <div className='srs-buttons'>
+            <button
+              onClick={() => handleSrsFeedback("easy")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>😎</span>
+              <span className='srs-text'>Fácil</span>
+            </button>
+            <button
+              onClick={() => handleSrsFeedback("good")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>🙂</span>
+              <span className='srs-text'>Bien</span>
+            </button>
+            <button
+              onClick={() => handleSrsFeedback("hard")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>🤔</span>
+              <span className='srs-text'>Difícil</span>
+            </button>
+            <button
+              onClick={() => handleSrsFeedback("again")}
+              className='srs-button'
+            >
+              <span className='srs-emoji'>😭</span>
+              <span className='srs-text'>Mal</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
-export default SpeechToTextButton;
+export default QuizScreen;
