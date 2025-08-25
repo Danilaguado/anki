@@ -1,14 +1,16 @@
 // ===== /api/update.js =====
-// Actualiza los datos de SRS en la hoja específica del usuario y registra la sesión.
+// Lógica corregida para registrar sesiones, logs y actualizar el progreso del usuario.
 
 import { google } from "googleapis";
 
+// --- Lógica del Algoritmo de Repetición Espaciada (SRS) ---
 function calculateNextReview(word, srsFeedback) {
   let interval = parseInt(word.Intervalo_SRS, 10) || 1;
   let easeFactor = parseFloat(word.Factor_Facilidad) || 2.5;
+
   if (srsFeedback === "again") {
-    interval = 1;
-    easeFactor -= 0.2;
+    interval = 1; // Reiniciar el intervalo si la respuesta es 'Mal'
+    easeFactor -= 0.2; // Reducir ligeramente la facilidad
   } else {
     if (srsFeedback === "hard") {
       interval = Math.round(interval * 1.2);
@@ -20,9 +22,12 @@ function calculateNextReview(word, srsFeedback) {
       easeFactor += 0.15;
     }
   }
+
   easeFactor = Math.max(1.3, easeFactor);
+
   const nextReviewDate = new Date();
   nextReviewDate.setDate(nextReviewDate.getDate() + interval);
+
   return {
     newInterval: interval,
     newEaseFactor: easeFactor.toFixed(2),
@@ -58,6 +63,7 @@ export default async function handler(req, res) {
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sessionId = `Sesion-${Date.now()}`;
 
+    // 1. Guardar la sesión en 'Study_Sessions'
     const sessionRow = [
       sessionId,
       sessionInfo.deckId || "Custom",
@@ -75,6 +81,7 @@ export default async function handler(req, res) {
       resource: { values: [sessionRow] },
     });
 
+    // 2. Guardar cada respuesta en 'Log_Estudio'
     const logRows = results.map((r) => [
       sessionId,
       r.wordId,
@@ -91,6 +98,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // 3. Actualizar la hoja del usuario con el progreso
     const userSheetRange = `${userId}!A:G`;
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -107,6 +115,7 @@ export default async function handler(req, res) {
       if (rowIndex > -1) {
         const wordData = {};
         headers.forEach((header, i) => (wordData[header] = rows[rowIndex][i]));
+
         const { newInterval, newEaseFactor, nextReviewDate } =
           calculateNextReview(wordData, result.srsFeedback);
 

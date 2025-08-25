@@ -1,0 +1,179 @@
+/* ===== /src/QuizScreen.css ===== */
+/* Estilos dedicados para la pantalla del quiz. */
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.quiz-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+.quiz-header span {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.quiz-card {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  transition: background-color 0.3s;
+  background-color: #f3f4f6;
+  position: relative;
+}
+.quiz-card.correct {
+  background-color: #dcfce7;
+}
+.quiz-card.incorrect {
+  background-color: #fee2e2;
+}
+.quiz-card h3 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.blurred-answer {
+  filter: blur(5px);
+  cursor: pointer;
+  transition: filter 0.3s ease-in-out;
+  margin-top: 0.5rem;
+  color: #6b7280;
+  font-style: italic;
+}
+.blurred-answer:hover,
+.blurred-answer.revealed {
+  filter: blur(0);
+}
+
+.quiz-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.input-field {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  box-sizing: border-box;
+  font-size: 1.125rem;
+  text-align: center;
+}
+
+.feedback-container {
+  text-align: center;
+}
+.feedback-result {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: #f9fafb;
+}
+.correct-text {
+  color: #16a34a;
+  font-weight: 600;
+}
+.incorrect-text {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.srs-prompt {
+  margin: 1.5rem 0 0.5rem 0;
+  font-weight: 500;
+  color: #4b5563;
+}
+.srs-buttons {
+  display: flex;
+  justify-content: space-around;
+  gap: 0.5rem;
+}
+.srs-button {
+  flex-grow: 1;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.srs-button:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+.srs-emoji {
+  font-size: 1.5rem;
+  display: block;
+}
+.srs-text {
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+/* --- Estilos del Botón de Voz --- */
+.audio-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.button-play {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #3b82f6;
+  padding: 0.5rem;
+}
+.icon-play {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.button-speech {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s, transform 0.2s;
+}
+.button-speech:hover {
+  background-color: #2563eb;
+}
+.mic-icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+.mic-icon.listening {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
