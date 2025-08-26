@@ -1,9 +1,8 @@
 // ===== /src/components/QuizScreen.js =====
-// Implementa la barra de progreso, botón de cerrar, blur al hacer clic, y múltiples respuestas.
+// Versión mejorada con X bien posicionada y estilos coherentes
 
 import React, { useState, useEffect, useRef } from "react";
 import SpeechToTextButton from "./SpeechToTextButton";
-import "./QuizScreen.css";
 
 const PlayIcon = () => (
   <svg
@@ -27,6 +26,7 @@ const PlayIcon = () => (
     />
   </svg>
 );
+
 const CloseIcon = () => (
   <svg
     className='icon-close'
@@ -57,14 +57,14 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
 
   if (!deck || deck.length === 0) {
     return (
-      <div className='screen-container text-center'>
-        <h1>Error</h1>
-        <p className='subtitle'>
-          No hay tarjetas disponibles en este mazo para estudiar.
-        </p>
-        <button onClick={onGoBack} className='button button-secondary'>
-          Volver al Panel
-        </button>
+      <div className='quiz-container'>
+        <div className='quiz-error'>
+          <h1>Error</h1>
+          <p>No hay tarjetas disponibles en este mazo para estudiar.</p>
+          <button onClick={onGoBack} className='quiz-button secondary'>
+            Volver al Panel
+          </button>
+        </div>
       </div>
     );
   }
@@ -148,14 +148,28 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
   };
 
   return (
-    <div className='screen-container quiz-mode'>
-      <div className='progress-bar-container'>
-        <div className='progress-bar' style={{ width: `${progress}%` }}></div>
+    <div className='quiz-container'>
+      {/* Barra de progreso */}
+      <div className='quiz-progress-bar'>
+        <div
+          className='quiz-progress-fill'
+          style={{ width: `${progress}%` }}
+        ></div>
       </div>
-      <button onClick={onGoBack} className='button-close'>
+
+      {/* Botón de cerrar */}
+      <button onClick={onGoBack} className='quiz-close-button'>
         <CloseIcon />
       </button>
 
+      {/* Header del quiz */}
+      <div className='quiz-header'>
+        <h2>
+          Pregunta {currentIndex + 1} de {deck.length}
+        </h2>
+      </div>
+
+      {/* Tarjeta principal */}
       <div
         className={`quiz-card ${
           feedback === "correct"
@@ -165,83 +179,113 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
             : ""
         }`}
       >
-        <h3>{currentCard.Inglés}</h3>
-        <p
-          className={`blurred-answer ${!isAnswerBlurred ? "revealed" : ""}`}
-          onClick={() => setIsAnswerBlurred(false)}
-        >
-          {currentCard.Español}
-        </p>
-        <div className='audio-controls'>
-          <button
-            onClick={() => playAudio(currentCard.Inglés)}
-            className='button-play'
+        <div className='quiz-word'>
+          <h3>{currentCard.Inglés}</h3>
+        </div>
+
+        <div className='quiz-answer-section'>
+          <p
+            className={`quiz-blurred-answer ${
+              !isAnswerBlurred ? "revealed" : ""
+            }`}
+            onClick={() => setIsAnswerBlurred(false)}
           >
-            <PlayIcon />
-          </button>
-          <SpeechToTextButton onResult={handleSpeechResult} lang='en-US' />
+            {currentCard.Español}
+          </p>
+
+          <div className='quiz-audio-controls'>
+            <button
+              onClick={() => playAudio(currentCard.Inglés)}
+              className='quiz-play-button'
+              title='Reproducir pronunciación'
+            >
+              <PlayIcon />
+            </button>
+            <SpeechToTextButton onResult={handleSpeechResult} lang='en-US' />
+          </div>
         </div>
       </div>
 
-      {!feedback ? (
-        <div className='quiz-actions'>
-          <input
-            ref={inputRef}
-            type='text'
-            value={userAnswer}
-            onChange={(e) => setUserAnswer(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder='Escribe la traducción aquí...'
-            className='input-field'
-          />
-          <button onClick={handleCheckAnswer} className='button button-dark'>
-            Revisar
-          </button>
-        </div>
-      ) : (
-        <div className='feedback-container'>
-          <div className='feedback-result'>
-            {feedback === "correct" ? (
-              <p className='correct-text'>¡Correcto!</p>
-            ) : (
-              <p className='incorrect-text'>
-                Respuesta correcta: <strong>{currentCard.Español}</strong>
+      {/* Sección de interacción */}
+      <div className='quiz-interaction'>
+        {!feedback ? (
+          <div className='quiz-input-section'>
+            <input
+              ref={inputRef}
+              type='text'
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder='Escribe la traducción aquí...'
+              className='quiz-input-field'
+            />
+            <button
+              onClick={handleCheckAnswer}
+              className='quiz-button primary'
+              disabled={!userAnswer.trim()}
+            >
+              Revisar Respuesta
+            </button>
+          </div>
+        ) : (
+          <div className='quiz-feedback-section'>
+            <div className='quiz-feedback-result'>
+              {feedback === "correct" ? (
+                <div className='quiz-feedback correct'>
+                  <span className='feedback-icon'>✅</span>
+                  <span className='feedback-text'>¡Correcto!</span>
+                </div>
+              ) : (
+                <div className='quiz-feedback incorrect'>
+                  <span className='feedback-icon'>❌</span>
+                  <div className='feedback-content'>
+                    <span className='feedback-text'>Respuesta correcta:</span>
+                    <strong className='correct-answer'>
+                      {currentCard.Español}
+                    </strong>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className='quiz-srs-section'>
+              <p className='srs-prompt'>
+                ¿Qué tan bien recordaste esta palabra?
               </p>
-            )}
+              <div className='quiz-srs-buttons'>
+                <button
+                  onClick={() => handleSrsFeedback("easy")}
+                  className='quiz-srs-button easy'
+                >
+                  <span className='srs-emoji'>😎</span>
+                  <span className='srs-text'>Fácil</span>
+                </button>
+                <button
+                  onClick={() => handleSrsFeedback("good")}
+                  className='quiz-srs-button good'
+                >
+                  <span className='srs-emoji'>🙂</span>
+                  <span className='srs-text'>Bien</span>
+                </button>
+                <button
+                  onClick={() => handleSrsFeedback("hard")}
+                  className='quiz-srs-button hard'
+                >
+                  <span className='srs-emoji'>🤔</span>
+                  <span className='srs-text'>Difícil</span>
+                </button>
+                <button
+                  onClick={() => handleSrsFeedback("again")}
+                  className='quiz-srs-button again'
+                >
+                  <span className='srs-emoji'>😭</span>
+                  <span className='srs-text'>Mal</span>
+                </button>
+              </div>
+            </div>
           </div>
-          <p className='srs-prompt'>¿Qué tan bien la recordabas?</p>
-          <div className='srs-buttons'>
-            <button
-              onClick={() => handleSrsFeedback("easy")}
-              className='srs-button'
-            >
-              <span className='srs-emoji'>😎</span>
-              <span className='srs-text'>Fácil</span>
-            </button>
-            <button
-              onClick={() => handleSrsFeedback("good")}
-              className='srs-button'
-            >
-              <span className='srs-emoji'>🙂</span>
-              <span className='srs-text'>Bien</span>
-            </button>
-            <button
-              onClick={() => handleSrsFeedback("hard")}
-              className='srs-button'
-            >
-              <span className='srs-emoji'>🤔</span>
-              <span className='srs-text'>Difícil</span>
-            </button>
-            <button
-              onClick={() => handleSrsFeedback("again")}
-              className='srs-button'
-            >
-              <span className='srs-emoji'>😭</span>
-              <span className='srs-text'>Mal</span>
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

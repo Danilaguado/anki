@@ -54,7 +54,7 @@ const QuizActivity = () => {
 const AppContent = () => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
-  const [userData, setUserData] = useState({ words: [] });
+  const [userData, setUserData] = useState({ words: [], decks: [] });
   const [studyDeck, setStudyDeck] = useState([]);
   const [sessionInfo, setSessionInfo] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +89,23 @@ const AppContent = () => {
       }
     };
     fetchData();
-  }, [userId]);
+  }, [userId, navigate]);
+
+  // Función para refrescar los datos del usuario
+  const refreshUserData = async () => {
+    if (!userId) return;
+    try {
+      const response = await fetch(`/api/data?userId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.userExists) {
+          setUserData(data.data);
+        }
+      }
+    } catch (err) {
+      console.error("Error al refrescar datos:", err);
+    }
+  };
 
   const handleSetupComplete = async (email, words) => {
     setIsLoading(true);
@@ -117,6 +133,7 @@ const AppContent = () => {
           Total_Voz_Aciertos: 0,
           Total_Voz_Errores: 0,
         })),
+        decks: [],
       };
       setUserData(initialUserData);
       navigate("/");
@@ -128,34 +145,72 @@ const AppContent = () => {
   };
 
   const handleCreateDeck = async (amount = 10) => {
+    // Filtrar palabras que están "Por Aprender" (no han sido añadidas a ningún mazo)
     const wordsToLearn = userData.words.filter(
       (word) => word.Estado === "Por Aprender"
     );
+
     if (wordsToLearn.length === 0) {
       alert(
-        "¡Felicidades! Has añadido todas las palabras a tu mazo de estudio."
+        "¡Felicidades! Has añadido todas las palabras disponibles a mazos de estudio."
       );
       return;
     }
-    const wordsToAdd = wordsToLearn.slice(0, amount);
-    const wordIdsToAdd = wordsToAdd.map((w) => w.ID_Palabra);
+
+    // Seleccionar palabras al azar
+    const shuffledWords = [...wordsToLearn].sort(() => Math.random() - 0.5);
+    const selectedWords = shuffledWords.slice(
+      0,
+      Math.min(amount, shuffledWords.length)
+    );
+    const wordIdsToAdd = selectedWords.map((w) => w.ID_Palabra);
 
     setIsLoading(true);
     try {
-      await fetch("/api/create-deck", {
+      const response = await fetch("/api/create-deck", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, wordIds: wordIdsToAdd }),
       });
 
-      const updatedWords = userData.words.map((word) =>
-        wordIdsToAdd.includes(word.ID_Palabra)
-          ? { ...word, Estado: "Aprendiendo" }
-          : word
-      );
-      setUserData((prev) => ({ ...prev, words: updatedWords }));
-      alert(`${wordsToAdd.length} nuevas palabras añadidas a tu estudio.`);
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Actualizar el estado local inmediatamente
+        const updatedWords = userData.words.map((word) =>
+          wordIdsToAdd.includes(word.ID_Palabra)
+            ? { ...word, Estado: "Aprendiendo" }
+            : word
+        );
+
+        // Crear el nuevo mazo localmente para actualización inmediata
+        const newDeck = {
+          ID_Mazo: result.deckId,
+          UserID: userId,
+          Fecha_Creacion: new Date().toISOString(),
+          Cantidad_Palabras: selectedWords.length,
+          Estado: "Activo",
+        };
+
+        setUserData((prev) => ({
+          ...prev,
+          words: updatedWords,
+          decks: [...(prev.decks || []), newDeck],
+        }));
+
+        alert(
+          `¡Éxito! Se creó "${result.deckId}" con ${selectedWords.length} palabras nuevas.`
+        );
+
+        // Refrescar datos del servidor para asegurar sincronización
+        setTimeout(() => {
+          refreshUserData();
+        }, 500);
+      } else {
+        throw new Error(result.message || "Error al crear el mazo");
+      }
     } catch (err) {
+      console.error("Error al crear el mazo:", err);
       alert(`Error al crear el mazo: ${err.message}`);
     } finally {
       setIsLoading(false);
@@ -214,11 +269,9 @@ const AppContent = () => {
           sessionInfo: finalSessionInfo,
         }),
       });
-      const response = await fetch(`/api/data?userId=${userId}`);
-      const data = await response.json();
-      if (data.success) {
-        setUserData(data.data);
-      }
+
+      // Refrescar datos después de completar quiz
+      await refreshUserData();
     } catch (err) {
       console.error("Error al guardar los resultados:", err);
     } finally {

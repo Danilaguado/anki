@@ -82,32 +82,57 @@ const CompleteIcon = () => (
   </svg>
 );
 
-const DeckModal = ({ deck, onClose }) => {
+const DeckModal = ({ deck, onClose, onDeckCompleted }) => {
   const navigate = useNavigate();
 
   const handleComplete = async () => {
-    if (
-      window.confirm(
-        `¿Estás seguro de que quieres marcar el ${deck.ID_Mazo} como completado?`
-      )
-    ) {
+    const confirmMessage = `¿Estás seguro de que quieres marcar "${deck.ID_Mazo}" como completado?\n\nEsto moverá el mazo a la sección de mazos aprendidos.`;
+
+    if (window.confirm(confirmMessage)) {
       try {
-        // Lógica para llamar a /api/decks/complete
         const response = await fetch("/api/decks/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: deck.UserID, deckId: deck.ID_Mazo }),
+          body: JSON.stringify({
+            userId: deck.UserID,
+            deckId: deck.ID_Mazo,
+          }),
         });
 
         if (response.ok) {
-          onClose(); // Cierra el modal
-          window.location.reload(); // Recarga para ver el cambio
+          const result = await response.json();
+
+          // Mostrar mensaje de éxito
+          alert(
+            `¡${deck.ID_Mazo} ha sido completado exitosamente! 🎉\n\nEl mazo se ha movido a la sección de mazos aprendidos.`
+          );
+
+          // Llamar al callback para notificar al componente padre
+          if (onDeckCompleted) {
+            onDeckCompleted();
+          }
+
+          // Cerrar el modal
+          onClose();
+
+          // Navegar de vuelta al dashboard
+          navigate("/");
+
+          // Forzar recarga para actualizar los datos
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
         } else {
-          alert("Error al completar el mazo");
+          const errorData = await response.json();
+          alert(
+            `Error al completar el mazo: ${
+              errorData.message || "Error desconocido"
+            }`
+          );
         }
       } catch (error) {
         console.error("Error:", error);
-        alert("Error al completar el mazo");
+        alert(`Error de conexión al completar el mazo: ${error.message}`);
       }
     }
   };
@@ -118,29 +143,54 @@ const DeckModal = ({ deck, onClose }) => {
         <button className='modal-close-button' onClick={onClose}>
           &times;
         </button>
+
         <h2>{deck.ID_Mazo}</h2>
-        <p>Selecciona una actividad</p>
+        <p>Selecciona una actividad para este mazo</p>
+        <div className='deck-info-summary'>
+          <span>
+            <strong>{deck.Cantidad_Palabras}</strong> palabras
+          </span>
+          <span>
+            Estado: <strong>{deck.Estado}</strong>
+          </span>
+        </div>
+
         <div className='modal-options'>
           <Link to={`/deck/${deck.ID_Mazo}/cards`} className='modal-option'>
             <CardsIcon />
             <span>Cartas</span>
           </Link>
+
           <Link to={`/deck/${deck.ID_Mazo}/history`} className='modal-option'>
             <StoryIcon />
             <span>Historia</span>
           </Link>
+
           <Link to={`/deck/${deck.ID_Mazo}/learn`} className='modal-option'>
             <LearnIcon />
             <span>Aprender</span>
           </Link>
+
           <Link to={`/deck/${deck.ID_Mazo}/quiz`} className='modal-option'>
             <QuizIcon />
             <span>Quiz</span>
           </Link>
-          <button onClick={handleComplete} className='modal-option complete'>
-            <CompleteIcon />
-            <span>Completar</span>
-          </button>
+
+          {/* Solo mostrar botón de completar si el mazo está activo */}
+          {deck.Estado === "Activo" && (
+            <button onClick={handleComplete} className='modal-option complete'>
+              <CompleteIcon />
+              <span>Completar Mazo</span>
+            </button>
+          )}
+
+          {/* Mostrar estado si ya está completado */}
+          {deck.Estado === "Completado" && (
+            <div className='modal-option completed-status'>
+              <CompleteIcon />
+              <span>Mazo Completado</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
