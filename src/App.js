@@ -80,6 +80,7 @@ const AppContent = () => {
         }
         const data = await response.json();
         if (data.success && data.userExists) {
+          setUserData(data.data);
         } else {
           navigate("/setup");
         }
