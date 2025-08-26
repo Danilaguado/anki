@@ -1,6 +1,4 @@
-// ===== /api/setup.js =====
-// Actualizado para incluir las nuevas columnas de registro de voz.
-
+// /api/setup.js - Actualizado para incluir Estado en Decks
 import { google } from "googleapis";
 
 export default async function handler(req, res) {
@@ -41,7 +39,13 @@ export default async function handler(req, res) {
       },
       {
         title: "Decks",
-        headers: ["ID_Mazo", "UserID", "Fecha_Creacion", "Cantidad_Palabras"],
+        headers: [
+          "ID_Mazo",
+          "UserID",
+          "Fecha_Creacion",
+          "Cantidad_Palabras",
+          "Estado",
+        ], // Agregada columna Estado
       },
       {
         title: "Study_Sessions",
@@ -69,7 +73,6 @@ export default async function handler(req, res) {
       { title: "Users", headers: ["UserID", "Email", "Fecha_Creacion"] },
       {
         title: userId,
-        // --- CORRECCIÓN: Añadidas las nuevas columnas aquí ---
         headers: [
           "ID_Palabra",
           "Estado",
@@ -137,13 +140,11 @@ export default async function handler(req, res) {
       2.5,
       0,
       0,
-      // --- CORRECCIÓN: Añadidos los valores iniciales para las nuevas columnas ---
       0, // Total_Voz_Aciertos
       0, // Total_Voz_Errores
     ]);
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      // --- CORRECCIÓN: Ampliado el rango para incluir las nuevas columnas ---
       range: `${userId}!A:I`,
       valueInputOption: "USER_ENTERED",
       resource: { values: userSheetRows },

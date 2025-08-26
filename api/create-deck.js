@@ -1,6 +1,4 @@
-// ===== /api/create-deck.js =====
-// Ahora actualiza el estado 'Aprendiendo' en la hoja específica del usuario y registra el mazo.
-
+// /api/create-deck.js - Actualizado para incluir Estado
 import { google } from "googleapis";
 
 export default async function handler(req, res) {
@@ -11,12 +9,10 @@ export default async function handler(req, res) {
   }
   const { userId, wordIds } = req.body;
   if (!userId || !wordIds) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "UserID y IDs de palabras son requeridos.",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "UserID y IDs de palabras son requeridos.",
+    });
   }
 
   try {
@@ -30,6 +26,7 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
+    // Obtener el siguiente ID de mazo
     const decksRange = "Decks!A:A";
     const decksResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -38,19 +35,23 @@ export default async function handler(req, res) {
     const nextDeckIdNum = (decksResponse.data.values || []).length;
     const newDeckId = `Mazo-${nextDeckIdNum}`;
 
+    // Crear el nuevo mazo con estado "Activo"
     const newDeckRow = [
       newDeckId,
       userId,
       new Date().toISOString(),
       wordIds.length,
+      "Activo", // Estado por defecto
     ];
+
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: "Decks!A:D",
+      range: "Decks!A:E", // Actualizado para incluir la columna Estado
       valueInputOption: "USER_ENTERED",
       resource: { values: [newDeckRow] },
     });
 
+    // Actualizar el estado de las palabras a "Aprendiendo"
     const userSheetRange = `${userId}!A:B`;
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -75,20 +76,17 @@ export default async function handler(req, res) {
       });
     }
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: `${newDeckId} creado con ${wordIds.length} palabras.`,
-      });
+    res.status(200).json({
+      success: true,
+      message: `${newDeckId} creado con ${wordIds.length} palabras.`,
+      deckId: newDeckId,
+    });
   } catch (error) {
     console.error("Error al crear el mazo:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error del servidor al crear el mazo.",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error del servidor al crear el mazo.",
+      error: error.message,
+    });
   }
 }

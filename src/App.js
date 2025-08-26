@@ -1,12 +1,11 @@
 // ===== /src/App.js =====
-// Ahora envía los resultados de voz al backend al finalizar la sesión.
-
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   useNavigate,
+  useParams,
 } from "react-router-dom";
 import SetupScreen from "./components/SetupScreen";
 import Dashboard from "./components/Dashboard";
@@ -14,7 +13,46 @@ import QuizScreen from "./components/QuizScreen";
 import ResultsScreen from "./components/ResultsScreen";
 import "./index.css";
 
-// Componente Wrapper para poder usar 'navigate' en las funciones
+// =======================
+// Componente temporal para las rutas en desarrollo
+const ComingSoon = ({ activityName, deckId }) => {
+  const navigate = useNavigate();
+  return (
+    <div className='screen-container'>
+      <h1>{activityName}</h1>
+      <p className='subtitle'>Mazo: {deckId}</p>
+      <p>Esta sección está en desarrollo...</p>
+      <button onClick={() => navigate("/")} className='button button-secondary'>
+        Volver al Panel
+      </button>
+    </div>
+  );
+};
+
+// =======================
+// Rutas placeholder para cada actividad de mazo
+const CardsActivity = () => {
+  const { deckId } = useParams();
+  return <ComingSoon activityName='Cartas' deckId={deckId} />;
+};
+
+const HistoryActivity = () => {
+  const { deckId } = useParams();
+  return <ComingSoon activityName='Historia' deckId={deckId} />;
+};
+
+const LearnActivity = () => {
+  const { deckId } = useParams();
+  return <ComingSoon activityName='Aprender' deckId={deckId} />;
+};
+
+const QuizActivity = () => {
+  const { deckId } = useParams();
+  return <ComingSoon activityName='Quiz' deckId={deckId} />;
+};
+
+// =======================
+// App principal
 const AppContent = () => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
@@ -92,7 +130,7 @@ const AppContent = () => {
     }
   };
 
-  const handleCreateDeck = async (amount) => {
+  const handleCreateDeck = async (amount = 10) => {
     const wordsToLearn = userData.words.filter(
       (word) => word.Estado === "Por Aprender"
     );
@@ -194,6 +232,7 @@ const AppContent = () => {
 
   return (
     <Routes>
+      {/* Setup */}
       <Route
         path='/setup'
         element={
@@ -204,6 +243,8 @@ const AppContent = () => {
           />
         }
       />
+
+      {/* Dashboard */}
       <Route
         path='/'
         element={
@@ -214,6 +255,14 @@ const AppContent = () => {
           />
         }
       />
+
+      {/* Rutas nuevas para actividades de mazo */}
+      <Route path='/deck/:deckId/cards' element={<CardsActivity />} />
+      <Route path='/deck/:deckId/history' element={<HistoryActivity />} />
+      <Route path='/deck/:deckId/learn' element={<LearnActivity />} />
+      <Route path='/deck/:deckId/quiz' element={<QuizActivity />} />
+
+      {/* Quiz y resultados */}
       <Route
         path='/quiz'
         element={
@@ -233,6 +282,7 @@ const AppContent = () => {
           />
         }
       />
+
       <Route path='*' element={<div>Cargando...</div>} />
     </Routes>
   );

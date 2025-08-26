@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import DeckModal from "./DeckModal"; // Importamos el nuevo modal
+import DeckModal from "./DeckModal";
 
 const AddIcon = () => (
   <svg
@@ -18,27 +18,40 @@ const AddIcon = () => (
   </svg>
 );
 
-const Dashboard = ({ userData, onStartQuiz }) => {
+const Dashboard = ({ userData, onCreateDeck }) => {
   const [selectedDeck, setSelectedDeck] = useState(null);
+
+  // Simulamos mazos existentes basados en userData
   const decks = userData.decks || [];
   const activeDecks = decks.filter((d) => d.Estado !== "Completado");
   const completedDecks = decks.filter((d) => d.Estado === "Completado");
 
-  const handleCreateDeck = () => {
-    // La lógica para llamar a /api/create-deck iría aquí
-    alert("Lógica para crear un nuevo mazo (en construcción).");
+  const handleCreateDeck = async () => {
+    // Lógica para crear un nuevo mazo
+    const wordsToLearn = userData.words.filter(
+      (word) => word.Estado === "Por Aprender"
+    );
+
+    if (wordsToLearn.length === 0) {
+      alert(
+        "¡Felicidades! Has añadido todas las palabras a tu mazo de estudio."
+      );
+      return;
+    }
+
+    // Por defecto crear mazo con 10 palabras o las que queden disponibles
+    const amount = Math.min(10, wordsToLearn.length);
+
+    if (onCreateDeck) {
+      await onCreateDeck(amount);
+      // El componente padre se encargará de actualizar userData y refrescar los mazos
+    }
   };
 
   return (
     <div className='screen-container'>
       {selectedDeck && (
-        <DeckModal
-          deck={selectedDeck}
-          onClose={() => setSelectedDeck(null)}
-          onSelectActivity={(activity) =>
-            onStartQuiz(selectedDeck.ID_Mazo, activity)
-          }
-        />
+        <DeckModal deck={selectedDeck} onClose={() => setSelectedDeck(null)} />
       )}
 
       <h1>Panel de Aprendizaje</h1>

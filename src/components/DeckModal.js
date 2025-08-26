@@ -17,6 +17,7 @@ const CardsIcon = () => (
     />
   </svg>
 );
+
 const StoryIcon = () => (
   <svg
     className='modal-icon'
@@ -32,6 +33,7 @@ const StoryIcon = () => (
     />
   </svg>
 );
+
 const LearnIcon = () => (
   <svg
     className='modal-icon'
@@ -47,6 +49,7 @@ const LearnIcon = () => (
     />
   </svg>
 );
+
 const QuizIcon = () => (
   <svg
     className='modal-icon'
@@ -62,6 +65,7 @@ const QuizIcon = () => (
     />
   </svg>
 );
+
 const CompleteIcon = () => (
   <svg
     className='modal-icon'
@@ -78,7 +82,7 @@ const CompleteIcon = () => (
   </svg>
 );
 
-const DeckModal = ({ deck, onClose, onSelectActivity }) => {
+const DeckModal = ({ deck, onClose }) => {
   const navigate = useNavigate();
 
   const handleComplete = async () => {
@@ -87,14 +91,24 @@ const DeckModal = ({ deck, onClose, onSelectActivity }) => {
         `¿Estás seguro de que quieres marcar el ${deck.ID_Mazo} como completado?`
       )
     ) {
-      // Lógica para llamar a /api/decks/complete
-      await fetch("/api/decks/complete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: deck.UserID, deckId: deck.ID_Mazo }),
-      });
-      onClose(); // Cierra el modal y refresca el dashboard
-      window.location.reload(); // Recarga para ver el cambio
+      try {
+        // Lógica para llamar a /api/decks/complete
+        const response = await fetch("/api/decks/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: deck.UserID, deckId: deck.ID_Mazo }),
+        });
+
+        if (response.ok) {
+          onClose(); // Cierra el modal
+          window.location.reload(); // Recarga para ver el cambio
+        } else {
+          alert("Error al completar el mazo");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Error al completar el mazo");
+      }
     }
   };
 
