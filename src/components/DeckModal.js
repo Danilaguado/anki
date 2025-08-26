@@ -82,7 +82,7 @@ const CompleteIcon = () => (
   </svg>
 );
 
-const DeckModal = ({ deck, onClose }) => {
+const DeckModal = ({ deck, onClose, onShowCards }) => {
   const navigate = useNavigate();
 
   const handleComplete = async () => {
@@ -112,6 +112,17 @@ const DeckModal = ({ deck, onClose }) => {
     }
   };
 
+  const handleCardsClick = () => {
+    onClose(); // Cierra el modal primero
+    if (onShowCards) {
+      // Si se proporciona una función callback para mostrar cartas
+      onShowCards(deck);
+    } else {
+      // Si usas React Router, navega a la ruta de cartas
+      navigate(`/deck/${deck.ID_Mazo}/cards`);
+    }
+  };
+
   return (
     <div className='modal-overlay' onClick={onClose}>
       <div className='modal-content' onClick={(e) => e.stopPropagation()}>
@@ -121,10 +132,18 @@ const DeckModal = ({ deck, onClose }) => {
         <h2>{deck.ID_Mazo}</h2>
         <p>Selecciona una actividad</p>
         <div className='modal-options'>
-          <Link to={`/deck/${deck.ID_Mazo}/cards`} className='modal-option'>
+          {/* Opción 1: Usando callback */}
+          <button onClick={handleCardsClick} className='modal-option'>
             <CardsIcon />
             <span>Cartas</span>
-          </Link>
+          </button>
+
+          {/* Opción 2: Usando Link (comentado para que uses solo una) */}
+          {/* <Link to={`/deck/${deck.ID_Mazo}/cards`} className='modal-option'>
+            <CardsIcon />
+            <span>Cartas</span>
+          </Link> */}
+
           <Link to={`/deck/${deck.ID_Mazo}/history`} className='modal-option'>
             <StoryIcon />
             <span>Historia</span>
