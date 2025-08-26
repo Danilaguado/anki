@@ -1,10 +1,52 @@
 /* ===== /src/QuizScreen.css ===== */
 /* Estilos dedicados para la pantalla del quiz. */
 
+.quiz-mode {
+  position: relative;
+}
+
+.progress-bar-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #3b82f6;
+  border-radius: inherit;
+  transition: width 0.3s ease-in-out;
+}
+
+.button-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0.5rem;
+  line-height: 1;
+}
+.button-close:hover {
+  color: #1f2937;
+}
+.icon-close {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 .quiz-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 1.5rem; /* Espacio para el botón de cerrar */
   margin-bottom: 1rem;
 }
 .quiz-header h2 {
@@ -46,7 +88,6 @@
   color: #6b7280;
   font-style: italic;
 }
-/* CORRECCIÓN: Se elimina el :hover para que solo funcione con el clic (clase .revealed) */
 .blurred-answer.revealed {
   filter: blur(0);
 }
@@ -124,7 +165,6 @@
   gap: 1rem;
   margin-top: 1rem;
 }
-
 .button-play {
   background: none;
   border: none;
@@ -136,7 +176,6 @@
   width: 1.5rem;
   height: 1.5rem;
 }
-
 .button-speech {
   background-color: #3b82f6;
   color: white;

@@ -2,14 +2,21 @@
 // Ahora envía los resultados de voz al backend al finalizar la sesión.
 
 import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 import SetupScreen from "./components/SetupScreen";
 import Dashboard from "./components/Dashboard";
 import QuizScreen from "./components/QuizScreen";
 import ResultsScreen from "./components/ResultsScreen";
 import "./index.css";
 
-function App() {
-  const [appState, setAppState] = useState("loading");
+// Componente Wrapper para poder usar 'navigate' en las funciones
+const AppContent = () => {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
   const [userData, setUserData] = useState({ words: [] });
   const [studyDeck, setStudyDeck] = useState([]);
@@ -32,22 +39,22 @@ function App() {
       try {
         const response = await fetch(`/api/data?userId=${localUserId}`);
         if (!response.ok) {
-          setAppState("setup");
+          navigate("/setup");
           return;
         }
         const data = await response.json();
         if (data.success && data.userExists) {
           setUserData(data.data);
-          setAppState("dashboard");
+          navigate("/");
         } else {
-          setAppState("setup");
+          navigate("/setup");
         }
       } catch (err) {
-        setAppState("setup");
+        navigate("/setup");
       }
     };
     fetchData();
-  }, [userId]);
+  }, [userId, navigate]);
 
   const handleSetupComplete = async (email, words) => {
     setIsLoading(true);
@@ -72,12 +79,12 @@ function App() {
           Factor_Facilidad: 2.5,
           Total_Aciertos: 0,
           Total_Errores: 0,
-          Total_Voz_Aciertos: 0, // Añadido para consistencia
-          Total_Voz_Errores: 0, // Añadido para consistencia
+          Total_Voz_Aciertos: 0,
+          Total_Voz_Errores: 0,
         })),
       };
       setUserData(initialUserData);
-      setAppState("dashboard");
+      navigate("/");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -145,13 +152,12 @@ function App() {
     const shuffledDeck = [...deckForQuiz].sort(() => Math.random() - 0.5);
     setStudyDeck(shuffledDeck);
     setSessionInfo({ startTime: new Date().toISOString() });
-    setAppState("quiz");
+    navigate("/quiz");
   };
 
-  // --- CORRECCIÓN: Ahora recibe voiceResults del QuizScreen ---
   const handleQuizComplete = (results, voiceResults) => {
     setSessionInfo((prev) => ({ ...prev, results, voiceResults }));
-    setAppState("results");
+    navigate("/results");
   };
 
   const handleBackToDashboard = async (sentiment) => {
@@ -165,11 +171,10 @@ function App() {
       await fetch("/api/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // --- CORRECCIÓN: Se envían los resultados de voz al backend ---
         body: JSON.stringify({
           userId,
           results: sessionInfo.results,
-          voiceResults: sessionInfo.voiceResults, // Nuevo
+          voiceResults: sessionInfo.voiceResults,
           sentiment,
           sessionInfo: finalSessionInfo,
         }),
@@ -183,46 +188,64 @@ function App() {
       console.error("Error al guardar los resultados:", err);
     } finally {
       setIsLoading(false);
-      setAppState("dashboard");
+      navigate("/");
     }
   };
 
-  const renderCurrentState = () => {
-    switch (appState) {
-      case "setup":
-        return (
+  return (
+    <Routes>
+      <Route
+        path='/setup'
+        element={
           <SetupScreen
             onSetupComplete={handleSetupComplete}
             isLoading={isLoading}
             error={error}
           />
-        );
-      case "dashboard":
-        return (
+        }
+      />
+      <Route
+        path='/'
+        element={
           <Dashboard
             userData={userData}
             onStartQuiz={handleStartQuiz}
             onCreateDeck={handleCreateDeck}
           />
-        );
-      case "quiz":
-        return (
-          <QuizScreen deck={studyDeck} onQuizComplete={handleQuizComplete} />
-        );
-      case "results":
-        return (
+        }
+      />
+      <Route
+        path='/quiz'
+        element={
+          <QuizScreen
+            deck={studyDeck}
+            onQuizComplete={handleQuizComplete}
+            onGoBack={() => navigate("/")}
+          />
+        }
+      />
+      <Route
+        path='/results'
+        element={
           <ResultsScreen
             results={sessionInfo.results || []}
             onBackToDashboard={handleBackToDashboard}
           />
-        );
-      case "loading":
-      default:
-        return <div className='loading-spinner'>Cargando...</div>;
-    }
-  };
+        }
+      />
+      <Route path='*' element={<div>Cargando...</div>} />
+    </Routes>
+  );
+};
 
-  return <div className='app-container'>{renderCurrentState()}</div>;
+function App() {
+  return (
+    <Router>
+      <div className='app-container'>
+        <AppContent />
+      </div>
+    </Router>
+  );
 }
 
 export default App;

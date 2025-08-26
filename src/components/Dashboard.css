@@ -1,53 +1,10 @@
-/* ===== /src/index.css ===== */
-/* Estilos actualizados para el Dashboard con mazos y el modal. */
+/* ===== /src/components/Dashboard.css ===== */
+/* Estilos dedicados para el Dashboard y el Modal de actividades. */
 
-/* --- Estilos Globales --- */
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: #f3f4f6;
-  color: #1f2937;
-}
-.app-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-.loading-spinner {
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: #4b5563;
-}
-.screen-container {
-  width: 100%;
-  max-width: 42rem; /* Un poco más ancho para los mazos */
-  margin: 0 auto;
-  background-color: white;
-  border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  padding: 2rem;
-  box-sizing: border-box;
-}
-h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  text-align: center;
-  color: #111827;
-  margin: 0 0 0.5rem 0;
-}
-.subtitle {
-  text-align: center;
-  color: #6b7280;
-  margin: 0 0 2rem 0;
-}
-
-/* --- Dashboard con Mazos --- */
 .decks-section {
   margin-top: 2rem;
 }
+
 .decks-section h2 {
   font-size: 1.25rem;
   font-weight: 600;
@@ -56,11 +13,13 @@ h1 {
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #e5e7eb;
 }
+
 .decks-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 1rem;
 }
+
 .deck-button {
   background-color: #fff;
   color: #3b82f6;
@@ -72,27 +31,33 @@ h1 {
   transition: all 0.2s;
   text-align: center;
 }
+
 .deck-button:hover {
   background-color: #eff6ff;
   transform: translateY(-2px);
 }
+
 .deck-button.add-new {
   border-style: dashed;
   color: #6b7280;
   border-color: #9ca3af;
 }
+
 .deck-button.add-new:hover {
   background-color: #f9fafb;
   border-color: #6b7280;
 }
+
 .deck-button.completed {
   border-color: #16a34a;
   color: #16a34a;
   opacity: 0.7;
 }
+
 .deck-button.completed:hover {
   background-color: #f0fdf4;
 }
+
 .deck-button .icon {
   width: 1.5rem;
   height: 1.5rem;
@@ -112,6 +77,7 @@ h1 {
   justify-content: center;
   z-index: 1000;
 }
+
 .modal-content {
   background-color: white;
   padding: 2rem;
@@ -121,6 +87,7 @@ h1 {
   text-align: center;
   position: relative;
 }
+
 .modal-close-button {
   position: absolute;
   top: 0.5rem;
@@ -131,19 +98,23 @@ h1 {
   cursor: pointer;
   color: #9ca3af;
 }
+
 .modal-content h2 {
   font-size: 1.5rem;
   margin-top: 0;
 }
+
 .modal-content p {
   color: #6b7280;
   margin-bottom: 1.5rem;
 }
+
 .modal-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
+
 .modal-option {
   display: flex;
   flex-direction: column;
@@ -159,18 +130,22 @@ h1 {
   color: #374151;
   text-decoration: none;
 }
+
 .modal-option:hover {
   border-color: #3b82f6;
   background-color: #eff6ff;
   color: #1d4ed8;
 }
+
 .modal-option.complete {
   color: #16a34a;
 }
+
 .modal-option.complete:hover {
   border-color: #16a34a;
   background-color: #f0fdf4;
 }
+
 .modal-icon {
   width: 2rem;
   height: 2rem;

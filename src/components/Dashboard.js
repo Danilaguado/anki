@@ -1,71 +1,84 @@
-import React from "react";
+import React, { useState } from "react";
+import DeckModal from "./DeckModal"; // Importamos el nuevo modal
 
-// ... (iconos sin cambios)
+const AddIcon = () => (
+  <svg
+    className='icon'
+    xmlns='http://www.w3.org/2000/svg'
+    fill='none'
+    viewBox='0 0 24 24'
+    strokeWidth={1.5}
+    stroke='currentColor'
+  >
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      d='M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z'
+    />
+  </svg>
+);
 
-const Dashboard = ({ userData, onStartQuiz, onCreateDeck }) => {
-  const wordsInStudy = userData.words.filter(
-    (w) => w.Estado === "Aprendiendo"
-  ).length;
-  const today = new Date().toISOString().split("T")[0];
-  const wordsToReviewToday = userData.words.filter(
-    (w) =>
-      w.Estado === "Aprendiendo" &&
-      (!w.Fecha_Proximo_Repaso || w.Fecha_Proximo_Repaso <= today)
-  ).length;
-  const wordsToLearn = userData.words.filter(
-    (w) => w.Estado === "Por Aprender"
-  ).length;
+const Dashboard = ({ userData, onStartQuiz }) => {
+  const [selectedDeck, setSelectedDeck] = useState(null);
+  const decks = userData.decks || [];
+  const activeDecks = decks.filter((d) => d.Estado !== "Completado");
+  const completedDecks = decks.filter((d) => d.Estado === "Completado");
 
   const handleCreateDeck = () => {
-    const amountStr = prompt(
-      `¿Cuántas palabras nuevas quieres añadir? (Disponibles: ${wordsToLearn})`,
-      "20"
-    );
-    const amount = parseInt(amountStr, 10);
-    if (!isNaN(amount) && amount > 0) {
-      onCreateDeck(amount);
-    } else if (amountStr !== null) {
-      alert("Por favor, introduce un número válido.");
-    }
+    // La lógica para llamar a /api/create-deck iría aquí
+    alert("Lógica para crear un nuevo mazo (en construcción).");
   };
 
   return (
     <div className='screen-container'>
+      {selectedDeck && (
+        <DeckModal
+          deck={selectedDeck}
+          onClose={() => setSelectedDeck(null)}
+          onSelectActivity={(activity) =>
+            onStartQuiz(selectedDeck.ID_Mazo, activity)
+          }
+        />
+      )}
+
       <h1>Panel de Aprendizaje</h1>
-      <p className='subtitle'>¡Bienvenido de nuevo! Aquí está tu progreso.</p>
-      <div className='stats-grid'>
-        <div className='stat-card'>
-          <p className='stat-number-blue'>{wordsInStudy}</p>
-          <p className='stat-label'>Palabras en Estudio</p>
-        </div>
-        <div className='stat-card'>
-          <p className='stat-number-green'>{wordsToReviewToday}</p>
-          <p className='stat-label'>Para Repasar Hoy</p>
+      <p className='subtitle'>Selecciona un mazo para empezar a estudiar.</p>
+
+      <div className='decks-section'>
+        <h2>Mazos Activos</h2>
+        <div className='decks-grid'>
+          {activeDecks.map((deck) => (
+            <button
+              key={deck.ID_Mazo}
+              className='deck-button'
+              onClick={() => setSelectedDeck(deck)}
+            >
+              {deck.ID_Mazo}
+            </button>
+          ))}
+          <button className='deck-button add-new' onClick={handleCreateDeck}>
+            <AddIcon />
+            Añadir Nuevo Mazo
+          </button>
         </div>
       </div>
-      <div className='button-group'>
-        <button
-          onClick={() => onStartQuiz(false)}
-          disabled={wordsToReviewToday === 0}
-          className='button button-green'
-        >
-          Repaso Diario ({wordsToReviewToday})
-        </button>
-        <button
-          onClick={() => onStartQuiz(true)}
-          disabled={wordsInStudy === 0}
-          className='button button-blue'
-        >
-          Modo Práctica ({wordsInStudy})
-        </button>
-        <button
-          onClick={handleCreateDeck}
-          disabled={wordsToLearn === 0}
-          className='button button-secondary'
-        >
-          Añadir Nuevo Mazo ({wordsToLearn})
-        </button>
-      </div>
+
+      {completedDecks.length > 0 && (
+        <div className='decks-section'>
+          <h2>Mazos Completados</h2>
+          <div className='decks-grid'>
+            {completedDecks.map((deck) => (
+              <button
+                key={deck.ID_Mazo}
+                className='deck-button completed'
+                onClick={() => setSelectedDeck(deck)}
+              >
+                {deck.ID_Mazo}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

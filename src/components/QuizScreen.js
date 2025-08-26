@@ -1,5 +1,5 @@
 // ===== /src/components/QuizScreen.js =====
-// Ahora registra los intentos de voz y los pasa al finalizar.
+// Implementa la barra de progreso, botón de cerrar, blur al hacer clic, y múltiples respuestas.
 
 import React, { useState, useEffect, useRef } from "react";
 import SpeechToTextButton from "./SpeechToTextButton";
@@ -16,24 +16,40 @@ const PlayIcon = () => (
     <path
       strokeLinecap='round'
       strokeLinejoin='round'
-      strokeWidth='2'
+      strokeWidth={2}
       d='M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z'
     />
     <path
       strokeLinecap='round'
       strokeLinejoin='round'
-      strokeWidth='2'
+      strokeWidth={2}
       d='M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
     />
   </svg>
 );
+const CloseIcon = () => (
+  <svg
+    className='icon-close'
+    xmlns='http://www.w3.org/2000/svg'
+    fill='none'
+    viewBox='0 0 24 24'
+    strokeWidth={2}
+    stroke='currentColor'
+  >
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      d='M6 18L18 6M6 6l12 12'
+    />
+  </svg>
+);
 
-const QuizScreen = ({ deck, onQuizComplete }) => {
+const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [sessionResults, setSessionResults] = useState([]);
-  const [voiceResults, setVoiceResults] = useState([]); // Nuevo estado para resultados de voz
+  const [voiceResults, setVoiceResults] = useState([]);
   const [startTime, setStartTime] = useState(Date.now());
   const [isAnswerBlurred, setIsAnswerBlurred] = useState(true);
   const inputRef = useRef(null);
@@ -46,10 +62,7 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
         <p className='subtitle'>
           No hay tarjetas disponibles en este mazo para estudiar.
         </p>
-        <button
-          onClick={() => (window.location.href = "/")}
-          className='button button-secondary'
-        >
+        <button onClick={onGoBack} className='button button-secondary'>
           Volver al Panel
         </button>
       </div>
@@ -57,6 +70,7 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
   }
 
   const currentCard = deck[currentIndex];
+  const progress = ((currentIndex + 1) / deck.length) * 100;
 
   useEffect(() => {
     if (inputRef.current) {
@@ -79,7 +93,6 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
     const correctText = currentCard.Inglés.trim().toLowerCase();
     const isCorrect = spokenText === correctText;
 
-    // Registrar el resultado del intento de voz
     setVoiceResults((prev) => [
       ...prev,
       { wordId: currentCard.ID_Palabra, isCorrect },
@@ -124,7 +137,6 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
       setUserAnswer("");
       setCurrentIndex(currentIndex + 1);
     } else {
-      // Al finalizar, pasar ambos tipos de resultados
       onQuizComplete(updatedResults, voiceResults);
     }
   };
@@ -136,13 +148,14 @@ const QuizScreen = ({ deck, onQuizComplete }) => {
   };
 
   return (
-    <div className='screen-container'>
-      <div className='quiz-header'>
-        <h2>Sesión de Repaso</h2>
-        <span>
-          {currentIndex + 1} / {deck.length}
-        </span>
+    <div className='screen-container quiz-mode'>
+      <div className='progress-bar-container'>
+        <div className='progress-bar' style={{ width: `${progress}%` }}></div>
       </div>
+      <button onClick={onGoBack} className='button-close'>
+        <CloseIcon />
+      </button>
+
       <div
         className={`quiz-card ${
           feedback === "correct"
