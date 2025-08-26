@@ -1,4 +1,4 @@
-// ===== /src/App.js =====
+// ===== /src/App.js - Actualizado con IDs cortos y registro exhaustivo =====
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -12,8 +12,16 @@ import Dashboard from "./components/Dashboard";
 import QuizScreen from "./components/QuizScreen";
 import ResultsScreen from "./components/ResultsScreen";
 import DeckWrapper from "./components/DeckWrapper";
+import AnalyticsDashboard from "./components/AnalyticsDashboard"; // NUEVO
 
 import "./index.css";
+
+// Función para generar IDs cortos (importada de utils)
+const generateShortUserId = () => {
+  const timestamp = (Date.now() % 1000000).toString(36);
+  const random = Math.random().toString(36).substr(2, 4);
+  return `u_${timestamp}${random}`;
+};
 
 // =======================
 // Componente temporal para las rutas en desarrollo
@@ -33,7 +41,6 @@ const ComingSoon = ({ activityName, deckId }) => {
 
 // =======================
 // Rutas placeholder para cada actividad de mazo
-
 const HistoryActivity = () => {
   const { deckId } = useParams();
   return <ComingSoon activityName='Historia' deckId={deckId} />;
@@ -60,15 +67,21 @@ const AppContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // NUEVO: Estado para tracking de actividad
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+  const [dailySessionCount, setDailySessionCount] = useState(0);
+
   useEffect(() => {
+    // Generar o recuperar userId con formato corto
     let localUserId = localStorage.getItem("ankiUserId");
-    if (!localUserId) {
-      const timestampPart = (Date.now() % 1000000).toString(36);
-      const randomPart = Math.random().toString(36).substr(2, 5);
-      localUserId = `user-${timestampPart}${randomPart}`;
+    if (!localUserId || !localUserId.startsWith("u_")) {
+      localUserId = generateShortUserId();
       localStorage.setItem("ankiUserId", localUserId);
     }
     setUserId(localUserId);
+
+    // Registrar inicio de actividad diaria
+    registerDailyActivity();
 
     const fetchData = async () => {
       if (!localUserId) return;
@@ -90,6 +103,42 @@ const AppContent = () => {
     };
     fetchData();
   }, [userId, navigate]);
+
+  // NUEVO: Función para registrar actividad diaria
+  const registerDailyActivity = async () => {
+    const today = new Date().toISOString().split("T")[0];
+    const lastVisit = localStorage.getItem("lastVisit");
+
+    if (lastVisit !== today) {
+      // Primera visita del día
+      localStorage.setItem("lastVisit", today);
+      localStorage.setItem("dailySessionCount", "1");
+      setDailySessionCount(1);
+
+      // Registrar en la API (podrías crear un endpoint específico para esto)
+      try {
+        await fetch("/api/track-activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "daily_checkin",
+            userId: localStorage.getItem("ankiUserId"),
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch (error) {
+        console.error("Error registrando actividad diaria:", error);
+      }
+    } else {
+      // Incrementar contador de sesiones del día
+      const currentCount = parseInt(
+        localStorage.getItem("dailySessionCount") || "0"
+      );
+      const newCount = currentCount + 1;
+      localStorage.setItem("dailySessionCount", newCount.toString());
+      setDailySessionCount(newCount);
+    }
+  };
 
   // Función para refrescar los datos del usuario
   const refreshUserData = async () => {
@@ -145,7 +194,7 @@ const AppContent = () => {
   };
 
   const handleCreateDeck = async (amount = 10) => {
-    // Filtrar palabras que están "Por Aprender" (no han sido añadidas a ningún mazo)
+    // Filtrar palabras que están "Por Aprender"
     const wordsToLearn = userData.words.filter(
       (word) => word.Estado === "Por Aprender"
     );
@@ -183,7 +232,7 @@ const AppContent = () => {
             : word
         );
 
-        // Crear el nuevo mazo localmente para actualización inmediata
+        // Crear el nuevo mazo localmente
         const newDeck = {
           ID_Mazo: result.deckId,
           UserID: userId,
@@ -202,7 +251,7 @@ const AppContent = () => {
           `¡Éxito! Se creó "${result.deckId}" con ${selectedWords.length} palabras nuevas.`
         );
 
-        // Refrescar datos del servidor para asegurar sincronización
+        // Refrescar datos del servidor
         setTimeout(() => {
           refreshUserData();
         }, 500);
@@ -218,6 +267,9 @@ const AppContent = () => {
   };
 
   const handleStartQuiz = (isPracticeMode = false) => {
+    // Registrar inicio de sesión de estudio
+    setSessionStartTime(new Date().toISOString());
+
     const today = new Date().toISOString().split("T")[0];
     let deckForQuiz;
     if (isPracticeMode) {
@@ -231,6 +283,7 @@ const AppContent = () => {
           (!word.Fecha_Proximo_Repaso || word.Fecha_Proximo_Repaso <= today)
       );
     }
+
     if (deckForQuiz.length === 0) {
       alert(
         isPracticeMode
@@ -239,25 +292,47 @@ const AppContent = () => {
       );
       return;
     }
+
     const shuffledDeck = [...deckForQuiz].sort(() => Math.random() - 0.5);
     setStudyDeck(shuffledDeck);
-    setSessionInfo({ startTime: new Date().toISOString() });
+    setSessionInfo({
+      startTime: new Date().toISOString(),
+      isPracticeMode,
+      originalDeckSize: shuffledDeck.length,
+    });
     navigate("/quiz");
   };
 
-  const handleQuizComplete = (results, voiceResults) => {
-    setSessionInfo((prev) => ({ ...prev, results, voiceResults }));
+  const handleQuizComplete = (results, voiceResults, finalStats) => {
+    setSessionInfo((prev) => ({
+      ...prev,
+      results,
+      voiceResults,
+      finalStats,
+      endTime: new Date().toISOString(),
+    }));
     navigate("/results");
   };
 
   const handleBackToDashboard = async (sentiment) => {
     setIsLoading(true);
+
+    // Calcular duración total de la sesión
+    const totalDuration = sessionStartTime
+      ? Date.now() - new Date(sessionStartTime).getTime()
+      : 0;
+
     const finalSessionInfo = {
       ...sessionInfo,
       status: "Completada",
-      duration: Date.now() - new Date(sessionInfo.startTime).getTime(),
+      duration: totalDuration,
+      sentiment,
+      dailySessionNumber: dailySessionCount,
     };
+
     try {
+      // El registro detallado ya se hizo en QuizScreen,
+      // aquí solo actualizamos el progreso SRS tradicional
       await fetch("/api/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -294,7 +369,7 @@ const AppContent = () => {
         }
       />
 
-      {/* Dashboard */}
+      {/* Dashboard principal */}
       <Route
         path='/'
         element={
@@ -302,11 +377,19 @@ const AppContent = () => {
             userData={userData}
             onStartQuiz={handleStartQuiz}
             onCreateDeck={handleCreateDeck}
+            userId={userId}
+            dailySessionCount={dailySessionCount}
           />
         }
       />
 
-      {/* Rutas nuevas para actividades de mazo */}
+      {/* NUEVO: Dashboard de Analytics */}
+      <Route
+        path='/analytics'
+        element={<AnalyticsDashboard userId={userId} />}
+      />
+
+      {/* Rutas de actividades de mazo */}
       <Route path='/deck/:deckId/history' element={<HistoryActivity />} />
       <Route path='/deck/:deckId/learn' element={<LearnActivity />} />
       <Route path='/deck/:deckId/quiz' element={<QuizActivity />} />
@@ -320,6 +403,7 @@ const AppContent = () => {
             deck={studyDeck}
             onQuizComplete={handleQuizComplete}
             onGoBack={() => navigate("/")}
+            sessionInfo={sessionInfo}
           />
         }
       />
@@ -328,6 +412,8 @@ const AppContent = () => {
         element={
           <ResultsScreen
             results={sessionInfo.results || []}
+            voiceResults={sessionInfo.voiceResults || []}
+            finalStats={sessionInfo.finalStats || {}}
             onBackToDashboard={handleBackToDashboard}
           />
         }

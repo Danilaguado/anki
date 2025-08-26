@@ -1,6 +1,3 @@
-// ===== /src/components/QuizScreen.js =====
-// Versión mejorada con X bien posicionada y estilos coherentes
-
 import React, { useState, useEffect, useRef } from "react";
 import SpeechToTextButton from "./SpeechToTextButton";
 
@@ -50,8 +47,17 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
   const [feedback, setFeedback] = useState(null);
   const [sessionResults, setSessionResults] = useState([]);
   const [voiceResults, setVoiceResults] = useState([]);
-  const [startTime, setStartTime] = useState(Date.now());
   const [isAnswerBlurred, setIsAnswerBlurred] = useState(true);
+  const [sessionId, setSessionId] = useState(null);
+
+  // Estados para repetición espaciada
+  const [cardsToRepeat, setCardsToRepeat] = useState([]);
+  const [isInRepeatPhase, setIsInRepeatPhase] = useState(false);
+  const [originalDeckLength, setOriginalDeckLength] = useState(0);
+
+  // Referencias para tracking de tiempo
+  const cardStartTime = useRef(Date.now());
+  const sessionStartTime = useRef(Date.now());
   const inputRef = useRef(null);
   const tempResultRef = useRef(null);
 
@@ -69,16 +75,53 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
     );
   }
 
-  const currentCard = deck[currentIndex];
-  const progress = ((currentIndex + 1) / deck.length) * 100;
+  // Inicializar sesión
+  useEffect(() => {
+    initializeSession();
+    setOriginalDeckLength(deck.length);
+  }, []);
 
+  // Reiniciar tiempo por carta cuando cambia el índice
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-    setStartTime(Date.now());
+    cardStartTime.current = Date.now();
     setIsAnswerBlurred(true);
   }, [currentIndex]);
+
+  const initializeSession = async () => {
+    try {
+      const response = await fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "start_session",
+          userId: localStorage.getItem("ankiUserId"),
+          sessionData: {
+            deckId: "quiz-session",
+            startTime: new Date().toISOString(),
+          },
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setSessionId(result.sessionId);
+        sessionStartTime.current = Date.now();
+      }
+    } catch (error) {
+      console.error("Error iniciando sesión:", error);
+    }
+  };
+
+  const getCurrentDeck = () => {
+    return isInRepeatPhase ? cardsToRepeat : deck;
+  };
+
+  const currentCard = getCurrentDeck()[currentIndex];
+  const currentDeck = getCurrentDeck();
+  const progress = ((currentIndex + 1) / currentDeck.length) * 100;
 
   const playAudio = (text, lang = "en-US") => {
     if ("speechSynthesis" in window && text) {
@@ -88,10 +131,31 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
     }
   };
 
-  const handleSpeechResult = (transcript) => {
+  const handleSpeechResult = async (transcript) => {
     const spokenText = transcript.trim().toLowerCase();
     const correctText = currentCard.Inglés.trim().toLowerCase();
     const isCorrect = spokenText === correctText;
+
+    // Registrar interacción de voz
+    try {
+      await fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "voice_interaction",
+          userId: localStorage.getItem("ankiUserId"),
+          voiceData: {
+            sessionId,
+            wordId: currentCard.ID_Palabra,
+            detectedText: transcript,
+            expectedText: currentCard.Inglés,
+            isVoiceCorrect: isCorrect,
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Error registrando interacción de voz:", error);
+    }
 
     setVoiceResults((prev) => [
       ...prev,
@@ -100,6 +164,11 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
 
     if (isCorrect) {
       alert(`¡Coincidencia exacta! Dijiste: "${transcript}"`);
+      // Reproducir sonido de éxito
+      const audio = new Audio("/correct-6033.mp3");
+      audio
+        .play()
+        .catch((e) => console.error("Error reproduciendo sonido:", e));
     } else {
       alert(
         `Casi... Dijiste: "${transcript}". La palabra correcta es: "${currentCard.Inglés}"`
@@ -108,8 +177,7 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
   };
 
   const handleCheckAnswer = () => {
-    const responseTime = Date.now() - startTime;
-
+    const responseTime = Date.now() - cardStartTime.current;
     const userCleanAnswer = userAnswer.trim().toLowerCase();
     const correctAnswers = currentCard.Español.split("/").map((ans) =>
       ans.trim().toLowerCase()
@@ -123,21 +191,144 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
       isCorrect: isCorrect,
       responseTime: responseTime,
       timestamp: new Date().toISOString(),
+      userAnswer: userAnswer,
       srsFeedback: null,
     };
   };
 
-  const handleSrsFeedback = (srsLevel) => {
+  const handleSrsFeedback = async (srsLevel) => {
     const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
-    const updatedResults = [...sessionResults, finalResult];
 
-    if (currentIndex < deck.length - 1) {
-      setSessionResults(updatedResults);
+    // Registrar la interacción con la carta
+    try {
+      await fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "card_interaction",
+          userId: localStorage.getItem("ankiUserId"),
+          cardData: {
+            sessionId,
+            wordId: currentCard.ID_Palabra,
+            userAnswer: finalResult.userAnswer,
+            isCorrect: finalResult.isCorrect,
+            responseTime: finalResult.responseTime,
+            difficulty: srsLevel,
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Error registrando interacción con carta:", error);
+    }
+
+    // Lógica de repetición espaciada: si es 'again' o 'hard', programar repetición
+    if (srsLevel === "again" || srsLevel === "hard") {
+      // Verificar si la carta ya está en la lista de repetición
+      const alreadyInRepeat = cardsToRepeat.some(
+        (card) => card.ID_Palabra === currentCard.ID_Palabra
+      );
+
+      if (!alreadyInRepeat) {
+        setCardsToRepeat((prev) => [
+          ...prev,
+          { ...currentCard, repeatCount: 1 },
+        ]);
+      } else {
+        // Incrementar contador de repeticiones
+        setCardsToRepeat((prev) =>
+          prev.map((card) =>
+            card.ID_Palabra === currentCard.ID_Palabra
+              ? { ...card, repeatCount: (card.repeatCount || 0) + 1 }
+              : card
+          )
+        );
+      }
+    }
+
+    const updatedResults = [...sessionResults, finalResult];
+    setSessionResults(updatedResults);
+
+    // Avanzar a la siguiente carta
+    if (currentIndex < currentDeck.length - 1) {
       setFeedback(null);
       setUserAnswer("");
       setCurrentIndex(currentIndex + 1);
     } else {
-      onQuizComplete(updatedResults, voiceResults);
+      // Si terminamos el mazo original y hay cartas para repetir
+      if (!isInRepeatPhase && cardsToRepeat.length > 0) {
+        // Cambiar a fase de repetición
+        setIsInRepeatPhase(true);
+        setCurrentIndex(0);
+        setFeedback(null);
+        setUserAnswer("");
+
+        // Mostrar mensaje de transición
+        alert(
+          `¡Excelente! Ahora vamos a repasar ${cardsToRepeat.length} palabra(s) que necesitan más práctica.`
+        );
+      } else {
+        // Finalizar quiz completamente
+        await endSession(updatedResults);
+      }
+    }
+  };
+
+  const endSession = async (results) => {
+    try {
+      await fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "end_session",
+          userId: localStorage.getItem("ankiUserId"),
+          finalResults: {
+            sessionId,
+            results,
+            sentiment: null, // Se establecerá en ResultsScreen
+          },
+          sessionData: {
+            startTime: new Date(sessionStartTime.current).toISOString(),
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Error finalizando sesión:", error);
+    }
+
+    // Calcular estadísticas finales
+    const totalCards = originalDeckLength + cardsToRepeat.length;
+    const finalStats = {
+      ...results,
+      totalOriginalCards: originalDeckLength,
+      totalRepeatedCards: cardsToRepeat.length,
+      totalSessionCards: totalCards,
+      sessionDuration: Date.now() - sessionStartTime.current,
+    };
+
+    onQuizComplete(results, voiceResults, finalStats);
+  };
+
+  const handleAbandonSession = async () => {
+    if (
+      window.confirm(
+        "¿Estás seguro de que quieres abandonar esta sesión? Tu progreso no se guardará."
+      )
+    ) {
+      try {
+        await fetch("/api/track-activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "abandon_session",
+            userId: localStorage.getItem("ankiUserId"),
+            sessionData: { sessionId },
+          }),
+        });
+      } catch (error) {
+        console.error("Error registrando abandono de sesión:", error);
+      }
+
+      onGoBack();
     }
   };
 
@@ -149,24 +340,52 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
 
   return (
     <div className='quiz-container'>
-      {/* Barra de progreso */}
-      <div className='quiz-progress-bar'>
-        <div
-          className='quiz-progress-fill'
-          style={{ width: `${progress}%` }}
-        ></div>
+      {/* Barra de progreso mejorada */}
+      <div className='quiz-progress-section'>
+        <div className='quiz-progress-bar'>
+          <div
+            className='quiz-progress-fill'
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+
+        {/* Indicadores de fase */}
+        <div className='quiz-phase-indicators'>
+          <span
+            className={`phase-indicator ${
+              !isInRepeatPhase ? "active" : "completed"
+            }`}
+          >
+            Mazo Principal ({originalDeckLength})
+          </span>
+          {cardsToRepeat.length > 0 && (
+            <span
+              className={`phase-indicator ${
+                isInRepeatPhase ? "active" : "pending"
+              }`}
+            >
+              Repaso ({cardsToRepeat.length})
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Botón de cerrar */}
-      <button onClick={onGoBack} className='quiz-close-button'>
+      <button onClick={handleAbandonSession} className='quiz-close-button'>
         <CloseIcon />
       </button>
 
-      {/* Header del quiz */}
+      {/* Header del quiz con información extendida */}
       <div className='quiz-header'>
         <h2>
-          Pregunta {currentIndex + 1} de {deck.length}
+          {isInRepeatPhase ? "Fase de Repaso" : "Mazo Principal"} - Pregunta{" "}
+          {currentIndex + 1} de {currentDeck.length}
         </h2>
+        {currentCard.repeatCount && (
+          <p className='repeat-info'>
+            Esta palabra ha sido repetida {currentCard.repeatCount} vez(es)
+          </p>
+        )}
       </div>
 
       {/* Tarjeta principal */}
@@ -181,6 +400,7 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
       >
         <div className='quiz-word'>
           <h3>{currentCard.Inglés}</h3>
+          {isInRepeatPhase && <div className='repeat-badge'>🔄 Repaso</div>}
         </div>
 
         <div className='quiz-answer-section'>
@@ -283,6 +503,29 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Panel de estadísticas en tiempo real (opcional) */}
+      <div className='quiz-stats-panel'>
+        <div className='stat-item'>
+          <span className='stat-label'>Sesión:</span>
+          <span className='stat-value'>
+            {Math.round((Date.now() - sessionStartTime.current) / 1000 / 60)}min
+          </span>
+        </div>
+        <div className='stat-item'>
+          <span className='stat-label'>Aciertos:</span>
+          <span className='stat-value'>
+            {sessionResults.filter((r) => r.isCorrect).length}/
+            {sessionResults.length}
+          </span>
+        </div>
+        {cardsToRepeat.length > 0 && (
+          <div className='stat-item'>
+            <span className='stat-label'>Para Repasar:</span>
+            <span className='stat-value'>{cardsToRepeat.length}</span>
           </div>
         )}
       </div>
