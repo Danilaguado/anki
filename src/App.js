@@ -11,6 +11,8 @@ import SetupScreen from "./components/SetupScreen";
 import Dashboard from "./components/Dashboard";
 import QuizScreen from "./components/QuizScreen";
 import ResultsScreen from "./components/ResultsScreen";
+import DeckWrapper from "./components/DeckWrapper";
+
 import "./index.css";
 
 // =======================
@@ -31,10 +33,6 @@ const ComingSoon = ({ activityName, deckId }) => {
 
 // =======================
 // Rutas placeholder para cada actividad de mazo
-const CardsActivity = () => {
-  const { deckId } = useParams();
-  return <ComingSoon activityName='Cartas' deckId={deckId} />;
-};
 
 const HistoryActivity = () => {
   const { deckId } = useParams();
@@ -261,6 +259,7 @@ const AppContent = () => {
       <Route path='/deck/:deckId/history' element={<HistoryActivity />} />
       <Route path='/deck/:deckId/learn' element={<LearnActivity />} />
       <Route path='/deck/:deckId/quiz' element={<QuizActivity />} />
+      <Route path='/deck/:deckId/cards' element={<DeckWrapper />} />
 
       {/* Quiz y resultados */}
       <Route
