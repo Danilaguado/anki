@@ -1,4 +1,4 @@
-/* ===== src/components/Dashboard.css - Estilos del Dashboard ===== */
+/* ===== src/components/Dashboard.css - Estilos del Panel Principal ===== */
 
 .dashboard-container {
   display: flex;
@@ -6,28 +6,14 @@
   gap: 32px;
 }
 
-.decks-section h2 {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+.dashboard-header {
+  margin-bottom: 16px;
 }
 
-.section-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.section-count {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-/* --- Estadísticas --- */
+/* --- Sección de Estadísticas --- */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
 }
 
@@ -36,114 +22,91 @@
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-large);
   padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  text-align: center;
 }
 
 .stat-card .stats-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px; /* Tamaño de icono controlado */
+  height: 32px;
+  margin: 0 auto 12px;
   color: var(--color-text-secondary);
-}
-
-.stat-card .stat-info {
-  text-align: left;
-}
-
-.stat-card.completed .stats-icon {
-  color: var(--color-success);
-}
-.stat-card.learning .stats-icon {
-  color: var(--color-primary);
 }
 
 .stat-card .stat-number {
-  font-size: 1.75rem;
-  font-weight: 600;
-  display: block;
+  font-size: 2rem;
+  font-weight: 700;
   color: var(--color-text-primary);
+  line-height: 1.2;
 }
 
 .stat-card .stat-label {
-  font-size: 0.8rem;
-  text-transform: uppercase;
+  font-size: 0.9rem;
   color: var(--color-text-secondary);
 }
 
-/* --- Mazos (Decks) --- */
+/* --- Sección de Mazos --- */
+.decks-section h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+}
+
 .decks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
 }
 
 .deck-button {
-  padding: 20px;
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius-large);
   background: var(--color-surface);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 16px;
-  font-weight: 500;
-  color: #374151;
-  min-height: 120px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-large);
+  padding: 24px;
+  min-height: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: var(--shadow-medium);
 }
 
 .deck-button:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-large);
   border-color: var(--color-primary);
-  background-color: var(--color-primary-light);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-medium);
 }
 
 .deck-button.add-new {
   border-style: dashed;
-  color: var(--color-success);
-  border-color: var(--color-success);
+  border-width: 2px;
+  color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  box-shadow: none;
 }
-
 .deck-button.add-new:hover {
-  background-color: #ecfdf5;
-  border-color: #059669;
-}
-
-.deck-button.add-new .icon {
-  color: var(--color-success);
-}
-
-.deck-button.completed {
-  border-color: var(--color-completed-border);
-  background-color: var(--color-completed-bg);
-  color: var(--color-completed-text);
-  opacity: 0.8;
-}
-
-.deck-button.completed:hover {
-  border-color: #4b5563;
-  background-color: #f3f4f6;
+  background-color: #f0fdf4;
+  border-color: var(--color-secondary-dark);
 }
 
 .deck-button .icon {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 8px;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 12px;
 }
 
 .deck-content .deck-title {
-  display: block;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  margin-bottom: 4px;
 }
 
 .deck-content .deck-info {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--color-text-secondary);
 }

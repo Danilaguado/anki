@@ -1,23 +1,20 @@
 /* ===== src/index.css - Estilos Globales y Base ===== */
 
-/* 1. Variables Globales (La fuente de la verdad)
------------------------------------------------------ */
+/* 1. Variables Globales (Fuente de la verdad para el diseño) */
 :root {
-  --color-primary: #3b82f6; /* Azul principal de los botones e interacciones */
-  --color-primary-hover: #2563eb; /* Azul más oscuro para hover */
-  --color-primary-light: #f8fafc; /* Fondo claro para hover */
-  --color-text-primary: #111827; /* Texto principal (casi negro) */
-  --color-text-secondary: #6b7280; /* Texto secundario y placeholders */
-  --color-surface: #ffffff; /* Fondo de tarjetas y modales */
-  --color-background: #f9fafb; /* Fondo general de la app */
+  --color-primary: #3b82f6; /* Azul principal (botones, enlaces) */
+  --color-primary-dark: #2563eb; /* Azul oscuro para hover */
+  --color-primary-light: #eff6ff; /* Fondo azul muy claro */
+  --color-secondary: #10b981; /* Verde para éxito y acciones positivas */
+  --color-secondary-dark: #059669; /* Verde oscuro para hover */
+  --color-text-primary: #1f2937; /* Texto principal (casi negro) */
+  --color-text-secondary: #6b7280; /* Texto secundario (gris) */
+  --color-surface: #ffffff; /* Fondo de tarjetas y elementos */
+  --color-background: #f3f4f6; /* Fondo general de la app */
   --color-border: #e5e7eb; /* Bordes sutiles */
-  --color-success: #10b981; /* Verde para estados de éxito */
-  --color-error: #ef4444; /* Rojo para estados de error */
-  --color-completed-border: #6b7280; /* Borde para elementos completados */
-  --color-completed-bg: #f9fafb; /* Fondo para elementos completados */
-  --color-completed-text: #6b7280; /* Texto para elementos completados */
+  --color-error: #ef4444; /* Rojo para errores */
 
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
   --border-radius-medium: 8px;
   --border-radius-large: 12px;
@@ -25,8 +22,7 @@
   --shadow-large: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* 2. Reseteo y Estilos Base
------------------------------------------------------ */
+/* 2. Reseteo y Estilos Base */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -40,8 +36,7 @@ body {
   line-height: 1.6;
 }
 
-/* 3. Layout y Tipografía
------------------------------------------------------ */
+/* 3. Layout y Tipografía */
 .app-container,
 .screen-container {
   max-width: 800px;
@@ -52,7 +47,7 @@ body {
 
 h1 {
   font-size: 32px;
-  font-weight: bold;
+  font-weight: 700;
   margin-bottom: 8px;
   color: #111827;
   text-align: center;
@@ -68,50 +63,47 @@ h2 {
 p,
 .subtitle {
   color: var(--color-text-secondary);
-}
-.subtitle {
-  font-size: 18px;
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
-/* 4. Componentes Reutilizables
------------------------------------------------------ */
-
-/* --- Botones --- */
+/* 4. Componentes Reutilizables */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 12px 24px;
   border-radius: var(--border-radius-medium);
-  font-weight: 500;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 16px;
   text-decoration: none;
 }
-.button.primary {
+
+.button-primary {
   background-color: var(--color-primary);
   color: white;
 }
-.button.primary:hover {
-  background-color: var(--color-primary-hover);
+.button-primary:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
 }
-.button.secondary {
+
+.button-secondary {
   background-color: var(--color-text-secondary);
   color: white;
 }
-.button.secondary:hover {
+.button-secondary:hover {
   background-color: #4b5563;
 }
+
 .button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* --- Tarjetas --- */
 .card {
   background-color: var(--color-surface);
   border-radius: var(--border-radius-large);
@@ -120,7 +112,6 @@ p,
   border: 1px solid var(--color-border);
 }
 
-/* --- Formularios --- */
 .input-field {
   width: 100%;
   border: 2px solid var(--color-border);
@@ -132,13 +123,4 @@ p,
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-/* 5. Diseño Responsivo Base
------------------------------------------------------ */
-@media (max-width: 768px) {
-  .app-container,
-  .screen-container {
-    padding: 16px;
-  }
 }
