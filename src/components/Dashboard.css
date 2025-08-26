@@ -1,112 +1,189 @@
-/* ===== src/components/Dashboard.css - Estilos del Panel Principal ===== */
+/* ===== src/components/Dashboard.css - Estilos del Dashboard Actualizados ===== */
 
 .dashboard-container {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  min-height: 100vh;
 }
 
 .dashboard-header {
-  margin-bottom: 16px;
+  text-align: center;
+  margin-bottom: 24px;
 }
 
-/* --- Sección de Estadísticas --- */
+/* --- Estadísticas Mejoradas --- */
 .stats-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
+  margin-bottom: 32px;
 }
 
 .stat-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-large);
-  padding: 20px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: 24px;
   text-align: center;
+  transition: var(--transition);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+}
+
+.stat-card:hover {
+  border-color: var(--color-border-hover);
+  background-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .stat-card .stats-icon {
-  width: 32px; /* Tamaño de icono controlado */
+  width: 32px;
   height: 32px;
-  margin: 0 auto 12px;
-  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+  color: var(--color-text-muted);
+}
+
+.stat-card .stat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .stat-card .stat-number {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  line-height: 1.2;
+  font-size: 32px;
+  font-weight: bold;
+  display: block;
+  color: var(--color-text);
+  margin-bottom: 4px;
+  line-height: 1;
 }
 
 .stat-card .stat-label {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
-/* --- Sección de Mazos --- */
+.stat-card.completed .stat-number {
+  color: var(--color-success);
+}
+
+.stat-card.completed .stats-icon {
+  color: var(--color-success);
+}
+
+.stat-card.learning .stat-number {
+  color: var(--color-primary);
+}
+
+.stat-card.learning .stats-icon {
+  color: var(--color-primary);
+}
+
+/* --- Secciones de Mazos --- */
+.decks-section {
+  margin-bottom: 32px;
+}
+
 .decks-section h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
-  border-bottom: 2px solid var(--color-border);
-  padding-bottom: 8px;
-  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.section-count {
+  color: var(--color-text-muted);
+  font-weight: normal;
 }
 
 .decks-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  gap: 16px;
 }
 
+/* --- Botones de Mazo Mejorados --- */
 .deck-button {
+  padding: 24px 20px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-large);
-  padding: 24px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text);
   min-height: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: var(--shadow-medium);
+  box-shadow: var(--shadow);
+  position: relative;
 }
 
 .deck-button:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-large);
-  border-color: var(--color-primary);
+  border-color: var(--color-border-hover);
+  background-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .deck-button.add-new {
+  border-color: var(--color-success);
+  color: var(--color-success);
   border-style: dashed;
-  border-width: 2px;
-  color: var(--color-secondary);
-  border-color: var(--color-secondary);
-  box-shadow: none;
 }
+
 .deck-button.add-new:hover {
-  background-color: #f0fdf4;
-  border-color: var(--color-secondary-dark);
+  border-color: var(--color-success-hover);
+  background-color: var(--color-success-light);
+  border-style: solid;
 }
 
-.deck-button .icon {
-  width: 28px;
-  height: 28px;
-  margin-bottom: 12px;
-}
-
-.deck-content .deck-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.deck-content .deck-info {
-  font-size: 0.9rem;
+.deck-button.completed {
+  border-color: var(--color-text-secondary);
+  background-color: var(--color-background);
   color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+
+.deck-button.completed:hover {
+  border-color: #4b5563;
+  background-color: #f3f4f6;
+}
+
+.deck-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deck-title {
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+.deck-info {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.add-text {
+  margin-top: 8px;
+  font-weight: 500;
 }
