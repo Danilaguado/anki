@@ -80,8 +80,6 @@ const AppContent = () => {
         }
         const data = await response.json();
         if (data.success && data.userExists) {
-          setUserData(data.data);
-          navigate("/");
         } else {
           navigate("/setup");
         }
@@ -90,7 +88,7 @@ const AppContent = () => {
       }
     };
     fetchData();
-  }, [userId, navigate]);
+  }, [userId]);
 
   const handleSetupComplete = async (email, words) => {
     setIsLoading(true);
