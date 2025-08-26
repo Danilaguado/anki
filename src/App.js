@@ -255,7 +255,6 @@ const AppContent = () => {
       />
 
       {/* Rutas nuevas para actividades de mazo */}
-      <Route path='/deck/:deckId/cards' element={<CardsActivity />} />
       <Route path='/deck/:deckId/history' element={<HistoryActivity />} />
       <Route path='/deck/:deckId/learn' element={<LearnActivity />} />
       <Route path='/deck/:deckId/quiz' element={<QuizActivity />} />
