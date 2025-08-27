@@ -60,16 +60,63 @@ const QuizScreen = ({
   const [isInRepeatPhase, setIsInRepeatPhase] = useState(false);
   const [originalDeckLength, setOriginalDeckLength] = useState(0);
 
+  // 🆕 Estados para Study_Sessions
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [sessionStarted, setSessionStarted] = useState(false);
+
   // Referencias para tracking de tiempo
   const cardStartTime = useRef(Date.now());
   const sessionStartTime = useRef(Date.now());
   const inputRef = useRef(null);
   const tempResultRef = useRef(null);
 
-  // 🔥 SIMPLIFICACIÓN: Usar userId directamente para todas las operaciones
   const userId = localStorage.getItem("ankiUserId");
 
-  console.log(`[QUIZ] SIMPLIFICADO - UserId: ${userId}`);
+  console.log(
+    `[QUIZ] MEJORADO - UserId: ${userId}, SessionId: ${currentSessionId}`
+  );
+
+  // 🆕 INICIALIZAR SESIÓN AL EMPEZAR
+  useEffect(() => {
+    const startStudySession = async () => {
+      if (!sessionStarted && userId) {
+        try {
+          const sessionId = `session_${Date.now()}_${Math.random()
+            .toString(36)
+            .substr(2, 5)}`;
+          const currentTime = new Date().toISOString();
+
+          const response = await fetch("/api/track-activity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              action: "start_session",
+              sessionData: {
+                sessionId,
+                deckId: sessionInfo?.deckId || "practice-deck",
+                startTime: currentTime,
+              },
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            setCurrentSessionId(sessionId);
+            setSessionStarted(true);
+            console.log(`[QUIZ] 📊 Sesión iniciada: ${sessionId}`);
+          }
+        } catch (error) {
+          console.error("[QUIZ] ❌ Error iniciando sesión:", error);
+          // Continuar sin sesión registrada
+          setSessionStarted(true);
+        }
+      }
+    };
+
+    startStudySession();
+  }, [userId, sessionInfo, sessionStarted]);
 
   if (!deck || deck.length === 0) {
     return (
@@ -114,7 +161,7 @@ const QuizScreen = ({
     }
   };
 
-  // 🔥 FUNCIÓN SIMPLIFICADA: Actualizar directamente sin sessionId
+  // Función simplificada para actualizar palabras (sin cambios)
   const updateWordDirectly = async (wordId, isCorrect, difficulty = null) => {
     try {
       const response = await fetch("/api/track-activity", {
@@ -123,6 +170,7 @@ const QuizScreen = ({
         body: JSON.stringify({
           userId,
           action: "check_answer",
+          sessionId: currentSessionId,
           cardData: {
             wordId,
             isCorrect,
@@ -131,12 +179,8 @@ const QuizScreen = ({
       });
 
       const result = await response.json();
-      console.log(
-        `[QUIZ] ✅ Actualización directa: ${wordId} = ${isCorrect}`,
-        result
-      );
+      console.log(`[QUIZ] ✅ Actualización directa: ${wordId} = ${isCorrect}`);
 
-      // Si hay dificultad SRS, registrarla también
       if (difficulty) {
         const srsResponse = await fetch("/api/track-activity", {
           method: "POST",
@@ -144,6 +188,7 @@ const QuizScreen = ({
           body: JSON.stringify({
             userId,
             action: "rate_memory",
+            sessionId: currentSessionId,
             cardData: {
               wordId,
               difficulty,
@@ -152,10 +197,7 @@ const QuizScreen = ({
         });
 
         const srsResult = await srsResponse.json();
-        console.log(
-          `[QUIZ] ✅ SRS actualizado: ${wordId} = ${difficulty}`,
-          srsResult
-        );
+        console.log(`[QUIZ] ✅ SRS actualizado: ${wordId} = ${difficulty}`);
       }
 
       return result.success;
@@ -182,6 +224,7 @@ const QuizScreen = ({
         body: JSON.stringify({
           userId,
           action: "voice_interaction",
+          sessionId: currentSessionId,
           voiceData: {
             wordId: currentCard.ID_Palabra,
             detectedText: transcript,
@@ -229,7 +272,7 @@ const QuizScreen = ({
 
     setFeedback(isCorrect ? "correct" : "incorrect");
 
-    // 🔥 ACTUALIZACIÓN DIRECTA: Sin dependencia de trackActivity
+    // Actualización directa
     await updateWordDirectly(currentCard.ID_Palabra, isCorrect);
 
     // Guardamos los datos para el feedback de SRS
@@ -252,7 +295,6 @@ const QuizScreen = ({
       `[QUIZ] Evaluación SRS: ${currentCard.ID_Palabra} = ${srsLevel}`
     );
 
-    // 🔥 ACTUALIZACIÓN DIRECTA: Sin dependencia de trackActivity
     await updateWordDirectly(
       currentCard.ID_Palabra,
       finalResult.isCorrect,
@@ -316,73 +358,119 @@ const QuizScreen = ({
     }
   };
 
-  const endSession = (results) => {
-    // 🔥 FINALIZACIÓN SIMPLIFICADA: Sin trackActivity complejo
+  // 🆕 FUNCIÓN MEJORADA PARA FINALIZAR SESIÓN
+  const endSession = async (results) => {
     const sessionDuration = Date.now() - sessionStartTime.current;
-    const totalCards = originalDeckLength + cardsToRepeat.length;
     const correctAnswers = results.filter((r) => r.isCorrect).length;
     const totalAnswers = results.length;
+    const accuracy =
+      totalAnswers > 0
+        ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
+        : "0";
 
     const finalStats = {
-      sessionId: `local_${Date.now()}`, // ID local simple
+      sessionId: currentSessionId,
+      sessionDuration: sessionDuration,
+      correctAnswers: correctAnswers,
+      totalAnswers: totalAnswers,
+      accuracy: accuracy,
+    };
+
+    console.log(
+      "[QUIZ] 📊 Finalizando sesión con estadísticas completas:",
+      finalStats
+    );
+
+    // 🆕 REGISTRAR FINALIZACIÓN COMPLETA EN STUDY_SESSIONS
+    if (currentSessionId) {
+      try {
+        await fetch("/api/track-activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            action: "end_session",
+            finalResults: {
+              sessionId: currentSessionId,
+              sentiment: "normal", // Se puede personalizar después
+              sessionDuration: sessionDuration,
+              correctAnswers: correctAnswers,
+              totalAnswers: totalAnswers,
+              accuracy: accuracy,
+              estadoFinal: "Completada", // ✅ Nuevo campo
+            },
+          }),
+        });
+
+        console.log(
+          "[QUIZ] 📊 ✅ Sesión registrada completamente en Study_Sessions"
+        );
+      } catch (error) {
+        console.error("[QUIZ] ❌ Error al registrar fin de sesión:", error);
+      }
+    }
+
+    // Preparar estadísticas finales para el componente padre
+    const completeStats = {
+      sessionId: currentSessionId || `local_${Date.now()}`,
       sessionDuration: sessionDuration,
       totalOriginalCards: originalDeckLength,
       totalRepeatedCards: cardsToRepeat.length,
-      totalSessionCards: totalCards,
+      totalSessionCards: originalDeckLength + cardsToRepeat.length,
       correctAnswers: correctAnswers,
       totalAnswers: totalAnswers,
-      accuracy:
-        totalAnswers > 0
-          ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
-          : "0",
+      accuracy: accuracy,
       startTime: sessionStartTime.current,
       endTime: Date.now(),
     };
 
-    console.log("[QUIZ] ✅ Sesión finalizada:", finalStats);
-
-    // Registrar finalización de sesión de manera simple
-    fetch("/api/track-activity", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        action: "end_session",
-        finalResults: {
-          sessionId: finalStats.sessionId,
-          sentiment: "normal", // Por defecto
-          sessionDuration: finalStats.sessionDuration,
-          correctAnswers: finalStats.correctAnswers,
-          totalAnswers: finalStats.totalAnswers,
-          accuracy: finalStats.accuracy,
-        },
-      }),
-    }).catch((error) => {
-      console.error("[QUIZ] Error al registrar fin de sesión:", error);
-    });
-
-    onQuizComplete(results, voiceResults, finalStats);
+    onQuizComplete(results, voiceResults, completeStats);
   };
 
-  const handleAbandonSession = () => {
+  // 🆕 FUNCIÓN MEJORADA PARA ABANDONAR SESIÓN
+  const handleAbandonSession = async () => {
     if (
       window.confirm(
         "¿Estás seguro de que quieres abandonar esta sesión? Tu progreso no se guardará."
       )
     ) {
-      console.log(`[QUIZ] Abandonando sesión`);
+      console.log(`[QUIZ] 🚪 Abandonando sesión: ${currentSessionId}`);
 
-      // Registrar abandono de manera simple
-      fetch("/api/track-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          action: "abandon_session",
-        }),
-      }).catch((error) => {
-        console.error("[QUIZ] Error al registrar abandono:", error);
-      });
+      // 🆕 REGISTRAR ABANDONO CON ESTADO ESPECÍFICO
+      if (currentSessionId) {
+        try {
+          const sessionDuration = Date.now() - sessionStartTime.current;
+          const correctAnswers = sessionResults.filter(
+            (r) => r.isCorrect
+          ).length;
+          const totalAnswers = sessionResults.length;
+
+          await fetch("/api/track-activity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              action: "end_session", // Usamos end_session pero con estado diferente
+              finalResults: {
+                sessionId: currentSessionId,
+                sentiment: "abandonada",
+                sessionDuration: sessionDuration,
+                correctAnswers: correctAnswers,
+                totalAnswers: totalAnswers,
+                accuracy:
+                  totalAnswers > 0
+                    ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
+                    : "0",
+                estadoFinal: "Abandonada", // ✅ Estado específico para abandono
+              },
+            }),
+          });
+
+          console.log("[QUIZ] 🚪 ✅ Abandono registrado en Study_Sessions");
+        } catch (error) {
+          console.error("[QUIZ] ❌ Error al registrar abandono:", error);
+        }
+      }
 
       onGoBack();
     }
@@ -440,6 +528,15 @@ const QuizScreen = ({
         {currentCard.repeatCount && (
           <p className='repeat-info'>
             Esta palabra ha sido repetida {currentCard.repeatCount} vez(es)
+          </p>
+        )}
+        {/* 🆕 Mostrar información de sesión */}
+        {currentSessionId && (
+          <p
+            className='session-info'
+            style={{ fontSize: "12px", color: "#666" }}
+          >
+            📊 Sesión: {currentSessionId}
           </p>
         )}
       </div>
@@ -563,30 +660,43 @@ const QuizScreen = ({
         )}
       </div>
 
-      {/* Panel de estadísticas */}
+      {/* Panel de estadísticas mejorado */}
       <div className='quiz-stats-panel'>
         <div className='stat-item'>
-          <span className='stat-label'>Sesión:</span>
+          <span className='stat-label'>⏱️ Sesión:</span>
           <span className='stat-value'>
             {Math.round((Date.now() - sessionStartTime.current) / 1000 / 60)}min
           </span>
         </div>
         <div className='stat-item'>
-          <span className='stat-label'>Aciertos:</span>
+          <span className='stat-label'>✅ Aciertos:</span>
           <span className='stat-value'>
             {sessionResults.filter((r) => r.isCorrect).length}/
             {sessionResults.length}
           </span>
         </div>
+        <div className='stat-item'>
+          <span className='stat-label'>📊 Precisión:</span>
+          <span className='stat-value'>
+            {sessionResults.length > 0
+              ? Math.round(
+                  (sessionResults.filter((r) => r.isCorrect).length /
+                    sessionResults.length) *
+                    100
+                )
+              : 0}
+            %
+          </span>
+        </div>
         {cardsToRepeat.length > 0 && (
           <div className='stat-item'>
-            <span className='stat-label'>Para Repasar:</span>
+            <span className='stat-label'>🔄 Repaso:</span>
             <span className='stat-value'>{cardsToRepeat.length}</span>
           </div>
         )}
         {voiceResults.length > 0 && (
           <div className='stat-item'>
-            <span className='stat-label'>Voz:</span>
+            <span className='stat-label'>🎤 Voz:</span>
             <span className='stat-value'>
               {voiceResults.filter((v) => v.isCorrect).length}/
               {voiceResults.length}
