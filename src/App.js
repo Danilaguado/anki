@@ -317,38 +317,26 @@ const AppContent = () => {
   const handleBackToDashboard = async (sentiment) => {
     setIsLoading(true);
 
-    // Calcular duración total de la sesión
-    const totalDuration = sessionStartTime
-      ? Date.now() - new Date(sessionStartTime).getTime()
-      : 0;
-
-    const finalSessionInfo = {
-      ...sessionInfo,
-      status: "Completada",
-      duration: totalDuration,
-      sentiment,
-      dailySessionNumber: dailySessionCount,
-    };
-
     try {
-      // El registro detallado ya se hizo en QuizScreen,
-      // aquí solo actualizamos el progreso SRS tradicional
-      await fetch("/api/update", {
+      // 1. Finalizar la sesión en el backend CON el sentimiento
+      await fetch("/api/track-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
-          results: sessionInfo.results,
-          voiceResults: sessionInfo.voiceResults,
-          sentiment,
-          sessionInfo: finalSessionInfo,
+          action: "end_session",
+          userId: userId, // Usar el userId del estado
+          finalResults: {
+            sessionId: sessionInfo.finalStats.sessionId, // Asegúrate que el sessionId esté aquí
+            results: sessionInfo.results,
+            sentiment: sentiment, // ¡Aquí usamos el parámetro!
+          },
         }),
       });
 
-      // Refrescar datos después de completar quiz
+      // 2. Refrescar los datos del usuario para actualizar el panel
       await refreshUserData();
     } catch (err) {
-      console.error("Error al guardar los resultados:", err);
+      console.error("Error al guardar y finalizar la sesión:", err);
     } finally {
       setIsLoading(false);
       navigate("/");

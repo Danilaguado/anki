@@ -176,7 +176,8 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
     }
   };
 
-  const handleCheckAnswer = () => {
+  const handleCheckAnswer = async () => {
+    // <--- La hacemos 'async'
     const responseTime = Date.now() - cardStartTime.current;
     const userCleanAnswer = userAnswer.trim().toLowerCase();
     const correctAnswers = currentCard.Español.split("/").map((ans) =>
@@ -186,6 +187,33 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
 
     setFeedback(isCorrect ? "correct" : "incorrect");
 
+    // ******************************************************
+    // ***** INICIO: NUEVO BLOQUE DE CÓDIGO *****
+    // ******************************************************
+
+    // Registramos el acierto/error INMEDIATAMENTE
+    try {
+      await fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "check_answer", // <-- Nueva acción específica
+          userId: localStorage.getItem("ankiUserId"),
+          cardData: {
+            wordId: currentCard.ID_Palabra,
+            isCorrect: isCorrect,
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Error registrando el resultado de la respuesta:", error);
+    }
+
+    // ******************************************************
+    // ****** FIN: NUEVO BLOQUE DE CÓDIGO ******
+    // ******************************************************
+
+    // Guardamos el resto de los datos temporalmente para el feedback de SRS
     tempResultRef.current = {
       wordId: currentCard.ID_Palabra,
       isCorrect: isCorrect,
@@ -196,34 +224,35 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
     };
   };
 
+  //=============== DENTRO DE QuizScreen.js ===============
+
   const handleSrsFeedback = async (srsLevel) => {
     const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
 
-    // Registrar la interacción con la carta
+    // Ahora, esta llamada solo registra la dificultad (memoria)
     try {
       await fetch("/api/track-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "card_interaction",
+          // La nueva acción es más específica
+          action: "rate_memory",
           userId: localStorage.getItem("ankiUserId"),
           cardData: {
             sessionId,
             wordId: currentCard.ID_Palabra,
-            userAnswer: finalResult.userAnswer,
-            isCorrect: finalResult.isCorrect,
-            responseTime: finalResult.responseTime,
+            // Ya no enviamos isCorrect, userAnswer, etc.
+            // Solo la dificultad de recordarlo.
             difficulty: srsLevel,
           },
         }),
       });
     } catch (error) {
-      console.error("Error registrando interacción con carta:", error);
+      console.error("Error registrando la evaluación de memoria:", error);
     }
 
     // Lógica de repetición espaciada: si es 'again' o 'hard', programar repetición
     if (srsLevel === "again" || srsLevel === "hard") {
-      // Verificar si la carta ya está en la lista de repetición
       const alreadyInRepeat = cardsToRepeat.some(
         (card) => card.ID_Palabra === currentCard.ID_Palabra
       );
@@ -234,7 +263,6 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
           { ...currentCard, repeatCount: 1 },
         ]);
       } else {
-        // Incrementar contador de repeticiones
         setCardsToRepeat((prev) =>
           prev.map((card) =>
             card.ID_Palabra === currentCard.ID_Palabra
@@ -268,34 +296,15 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
         );
       } else {
         // Finalizar quiz completamente
-        await endSession(updatedResults);
+        // La función endSession ya fue simplificada y no llama a la API
+        endSession(updatedResults);
       }
     }
   };
+  const endSession = (results) => {
+    // Ya no hay llamada a la API aquí.
+    // Solo calculamos las estadísticas finales y pasamos todo a App.js
 
-  const endSession = async (results) => {
-    try {
-      await fetch("/api/track-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "end_session",
-          userId: localStorage.getItem("ankiUserId"),
-          finalResults: {
-            sessionId,
-            results,
-            sentiment: null, // Se establecerá en ResultsScreen
-          },
-          sessionData: {
-            startTime: new Date(sessionStartTime.current).toISOString(),
-          },
-        }),
-      });
-    } catch (error) {
-      console.error("Error finalizando sesión:", error);
-    }
-
-    // Calcular estadísticas finales
     const totalCards = originalDeckLength + cardsToRepeat.length;
     const finalStats = {
       ...results,
