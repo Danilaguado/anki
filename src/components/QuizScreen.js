@@ -41,14 +41,13 @@ const CloseIcon = () => (
   </svg>
 );
 
-const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
+const QuizScreen = ({ deck, onQuizComplete, onGoBack, sessionInfo }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [sessionResults, setSessionResults] = useState([]);
   const [voiceResults, setVoiceResults] = useState([]);
   const [isAnswerBlurred, setIsAnswerBlurred] = useState(true);
-  const [sessionId, setSessionId] = useState(null);
 
   // Estados para repetición espaciada
   const [cardsToRepeat, setCardsToRepeat] = useState([]);
@@ -60,6 +59,10 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
   const sessionStartTime = useRef(Date.now());
   const inputRef = useRef(null);
   const tempResultRef = useRef(null);
+
+  // CORRECCIÓN: Extraer sessionId del sessionInfo
+  const sessionId = sessionInfo?.sessionId;
+  const userId = localStorage.getItem("ankiUserId");
 
   if (!deck || deck.length === 0) {
     return (
@@ -75,13 +78,11 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
     );
   }
 
-  // Inicializar sesión
   useEffect(() => {
-    initializeSession();
     setOriginalDeckLength(deck.length);
+    sessionStartTime.current = Date.now();
   }, []);
 
-  // Reiniciar tiempo por carta cuando cambia el índice
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -89,31 +90,6 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
     cardStartTime.current = Date.now();
     setIsAnswerBlurred(true);
   }, [currentIndex]);
-
-  const initializeSession = async () => {
-    try {
-      const response = await fetch("/api/track-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "start_session",
-          userId: localStorage.getItem("ankiUserId"),
-          sessionData: {
-            deckId: "quiz-session",
-            startTime: new Date().toISOString(),
-          },
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setSessionId(result.sessionId);
-        sessionStartTime.current = Date.now();
-      }
-    } catch (error) {
-      console.error("Error iniciando sesión:", error);
-    }
-  };
 
   const getCurrentDeck = () => {
     return isInRepeatPhase ? cardsToRepeat : deck;
@@ -136,16 +112,16 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
     const correctText = currentCard.Inglés.trim().toLowerCase();
     const isCorrect = spokenText === correctText;
 
-    // Registrar interacción de voz
+    // CORRECCIÓN: Registrar interacción de voz con estructura correcta
     try {
       await fetch("/api/track-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: userId,
           action: "voice_interaction",
-          userId: localStorage.getItem("ankiUserId"),
           voiceData: {
-            sessionId,
+            sessionId: sessionId,
             wordId: currentCard.ID_Palabra,
             detectedText: transcript,
             expectedText: currentCard.Inglés,
@@ -153,6 +129,10 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
           },
         }),
       });
+
+      console.log(
+        `[QUIZ] Interacción de voz registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
+      );
     } catch (error) {
       console.error("Error registrando interacción de voz:", error);
     }
@@ -186,20 +166,24 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
 
     setFeedback(isCorrect ? "correct" : "incorrect");
 
-    // Registramos el acierto/error INMEDIATAMENTE
+    // CORRECCIÓN: Registrar respuesta inmediatamente con estructura correcta
     try {
       await fetch("/api/track-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: userId,
           action: "check_answer",
-          userId: localStorage.getItem("ankiUserId"),
           cardData: {
             wordId: currentCard.ID_Palabra,
             isCorrect: isCorrect,
           },
         }),
       });
+
+      console.log(
+        `[QUIZ] Respuesta registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
+      );
     } catch (error) {
       console.error("Error registrando el resultado de la respuesta:", error);
     }
@@ -220,21 +204,25 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
   const handleSrsFeedback = async (srsLevel) => {
     const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
 
-    // Registrar la dificultad (memoria)
+    // CORRECCIÓN: Registrar la dificultad (memoria) con estructura correcta
     try {
       await fetch("/api/track-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: userId,
           action: "rate_memory",
-          userId: localStorage.getItem("ankiUserId"),
           cardData: {
-            sessionId,
+            sessionId: sessionId,
             wordId: currentCard.ID_Palabra,
             difficulty: srsLevel,
           },
         }),
       });
+
+      console.log(
+        `[QUIZ] Memoria evaluada: ${currentCard.ID_Palabra} = ${srsLevel}`
+      );
     } catch (error) {
       console.error("Error registrando la evaluación de memoria:", error);
     }
@@ -290,14 +278,14 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
   };
 
   const endSession = (results) => {
-    // Calcular estadísticas finales más completas
+    // CORRECCIÓN: Calcular estadísticas finales más completas y precisas
     const sessionDuration = Date.now() - sessionStartTime.current;
     const totalCards = originalDeckLength + cardsToRepeat.length;
     const correctAnswers = results.filter((r) => r.isCorrect).length;
     const totalAnswers = results.length;
 
     const finalStats = {
-      sessionId: sessionId,
+      sessionId: sessionId, // IMPORTANTE: Preservar sessionId
       sessionDuration: sessionDuration,
       totalOriginalCards: originalDeckLength,
       totalRepeatedCards: cardsToRepeat.length,
@@ -307,7 +295,7 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
       accuracy:
         totalAnswers > 0
           ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
-          : 0,
+          : "0",
       startTime: sessionStartTime.current,
       endTime: Date.now(),
     };
@@ -323,16 +311,19 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
         "¿Estás seguro de que quieres abandonar esta sesión? Tu progreso no se guardará."
       )
     ) {
+      // CORRECCIÓN: Usar la estructura correcta para abandonar sesión
       try {
         await fetch("/api/track-activity", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            userId: userId,
             action: "abandon_session",
-            userId: localStorage.getItem("ankiUserId"),
-            sessionData: { sessionId },
+            sessionData: { sessionId: sessionId },
           }),
         });
+
+        console.log(`[QUIZ] Sesión abandonada: ${sessionId}`);
       } catch (error) {
         console.error("Error registrando abandono de sesión:", error);
       }
@@ -395,6 +386,7 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
             Esta palabra ha sido repetida {currentCard.repeatCount} vez(es)
           </p>
         )}
+        {sessionId && <p className='session-info'>Sesión: {sessionId}</p>}
       </div>
 
       {/* Tarjeta principal */}
@@ -516,7 +508,7 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
         )}
       </div>
 
-      {/* Panel de estadísticas en tiempo real (opcional) */}
+      {/* Panel de estadísticas en tiempo real */}
       <div className='quiz-stats-panel'>
         <div className='stat-item'>
           <span className='stat-label'>Sesión:</span>
@@ -535,6 +527,15 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
           <div className='stat-item'>
             <span className='stat-label'>Para Repasar:</span>
             <span className='stat-value'>{cardsToRepeat.length}</span>
+          </div>
+        )}
+        {voiceResults.length > 0 && (
+          <div className='stat-item'>
+            <span className='stat-label'>Voz:</span>
+            <span className='stat-value'>
+              {voiceResults.filter((v) => v.isCorrect).length}/
+              {voiceResults.length}
+            </span>
           </div>
         )}
       </div>
