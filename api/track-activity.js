@@ -1,8 +1,7 @@
 // /api/track-activity.js - Versión final con la lógica de "Dominada" integrada
-
 import { google } from "googleapis";
 
-// --- Funciones de Utilidad y SRS ---
+// --- Funciones de Utilidad y SRS (Tu código original) ---
 
 function generateShortId() {
   const timestamp = Date.now().toString(36);
@@ -10,24 +9,23 @@ function generateShortId() {
   return `${timestamp}-${random}`;
 }
 
-// Algoritmo de Repetición Espaciada (SRS)
 function calculateSRSInterval(previousInterval, difficulty, easeFactor) {
   let newInterval = previousInterval || 1;
   let newEaseFactor = easeFactor || 2.5;
 
   switch (difficulty) {
-    case "again": // Mal
+    case "again":
       newInterval = 1;
       newEaseFactor = Math.max(1.3, newEaseFactor - 0.2);
       break;
-    case "hard": // Difícil
+    case "hard":
       newInterval = Math.max(1, Math.round(newInterval * 1.2));
       newEaseFactor = Math.max(1.3, newEaseFactor - 0.15);
       break;
-    case "good": // Bien
+    case "good":
       newInterval = Math.round(newInterval * newEaseFactor);
       break;
-    case "easy": // Fácil
+    case "easy":
       newInterval = Math.round(newInterval * newEaseFactor * 1.3);
       newEaseFactor = Math.min(2.5, newEaseFactor + 0.15);
       break;
@@ -41,7 +39,7 @@ function calculateNextReview(interval) {
   return nextDate.toISOString().split("T")[0];
 }
 
-//=============== ESTE ES EL CÓDIGO CORRECTO Y COMPLETO ===============
+// --- Handler Principal de la API (Corregido y Reestructurado) ---
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -74,7 +72,6 @@ export default async function handler(req, res) {
 
     switch (action) {
       case "start_session": {
-        // Tu lógica original se mantiene
         const sessionId = generateShortId();
         const sessionRow = [
           sessionId,
@@ -107,7 +104,7 @@ export default async function handler(req, res) {
           .json({ success: true, sessionId, message: "Sesión iniciada." });
       }
 
-      // --- NUEVA LÓGICA SEPARADA ---
+      // --- LÓGICA SEPARADA PARA INTERACCIONES DE TARJETA ---
       case "check_answer": {
         const { wordId, isCorrect } = cardData;
         await updateWordCorrectness(
@@ -124,7 +121,7 @@ export default async function handler(req, res) {
       }
 
       case "rate_memory": {
-        const { wordId, difficulty, sessionId } = cardData; // Asumimos que sessionId se envía
+        const { wordId, difficulty, sessionId } = cardData;
         await updateWordSRS(sheets, spreadsheetId, userId, wordId, difficulty);
 
         if (difficulty === "again" || difficulty === "hard") {
@@ -137,7 +134,6 @@ export default async function handler(req, res) {
           );
         }
 
-        // También registramos la interacción completa para tener un log
         const interactionRow = [
           generateShortId(),
           sessionId,
@@ -157,14 +153,15 @@ export default async function handler(req, res) {
           resource: { values: [interactionRow] },
         });
 
-        return res.status(200).json({
-          success: true,
-          message: "Evaluación de memoria registrada.",
-        });
+        return res
+          .status(200)
+          .json({
+            success: true,
+            message: "Evaluación de memoria registrada.",
+          });
       }
 
       case "voice_interaction": {
-        // Tu lógica original se mantiene, pero ahora usa la nueva función auxiliar
         const {
           sessionId,
           wordId,
@@ -205,7 +202,6 @@ export default async function handler(req, res) {
       }
 
       case "end_session": {
-        // Tu lógica original se mantiene
         const { sessionId, sentiment, results } = finalResults;
         const correctAnswers = results.filter((r) => r.isCorrect).length;
         const totalAnswers = results.length;
@@ -259,7 +255,6 @@ export default async function handler(req, res) {
       }
 
       case "abandon_session": {
-        // Tu lógica original se mantiene
         const { sessionId } = sessionData;
         const rowNumber = await getSessionRowNumber(
           sheets,
@@ -302,102 +297,141 @@ export default async function handler(req, res) {
   }
 }
 
-// --- Funciones Auxiliares Completas ---
+// --- NUEVAS FUNCIONES AUXILIARES SEPARADAS ---
 
-async function updateWordStatistics(
+async function updateWordCorrectness(
   sheets,
   spreadsheetId,
   userId,
   wordId,
-  interactionData
+  isCorrect,
+  type
 ) {
-  const { isCorrect, responseTime, difficulty, type } = interactionData;
-  // IMPORTANTE: Asegúrate que la hoja de la que lees es la hoja INDIVIDUAL del usuario
-  // y que contiene todas las columnas que necesitas.
-  // Si tus columnas (Estado, Intervalo_SRS, etc.) están en `User_${userId}`
-  // deberías cambiar el 'range' aquí. Por ahora, asumiré que están en "Word_Statistics".
-  const range = `u_${userId}!A:M`; // <--- AJUSTADO PARA APUNTAR A LA HOJA DE USUARIO
+  const range = `u_${userId}!A:M`; // <-- CORRECCIÓN CRÍTICA
 
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range,
-  });
-  const rows = response.data.values || [];
-  const headers = rows[0] || [];
-
-  // Encontrar los índices de las columnas que nos interesan
-  const wordIdIndex = headers.indexOf("ID_Palabra");
-  if (wordIdIndex === -1)
-    throw new Error("La columna 'ID_Palabra' no se encontró.");
-
-  const rowIndex = rows.findIndex((row) => row[wordIdIndex] === wordId);
-
-  let stats = {};
-  if (rowIndex > 0) {
-    const currentRow = rows[rowIndex];
-    headers.forEach((header, i) => (stats[header] = currentRow[i]));
-  } else {
-    // Si la palabra no existe, no podemos actualizarla.
-    // Esto previene crear filas nuevas desde aquí. La creación debe ser en otro proceso.
-    console.log(
-      `Palabra ${wordId} no encontrada para usuario ${userId}. Se omite la actualización.`
-    );
-    return;
-  }
-
-  // Lógica de actualización de contadores
-  stats.Total_Aciertos = parseInt(stats.Total_Aciertos) || 0;
-  stats.Total_Errores = parseInt(stats.Total_Errores) || 0;
-  stats.Total_Voz_Aciertos = parseInt(stats.Total_Voz_Aciertos) || 0;
-  stats.Total_Voz_Errores = parseInt(stats.Total_Voz_Errores) || 0;
-
-  if (type === "text") {
-    if (isCorrect) stats.Total_Aciertos++;
-    else stats.Total_Errores++;
-  } else if (type === "voice") {
-    if (isCorrect) stats.Total_Voz_Aciertos++;
-    else stats.Total_Voz_Errores++;
-  }
-
-  // Lógica de SRS
-  const { newInterval, newEaseFactor } = calculateSRSInterval(
-    parseInt(stats.Intervalo_SRS),
-    difficulty,
-    parseFloat(stats.Factor_Facilidad)
-  );
-  stats.Intervalo_SRS = newInterval;
-  stats.Factor_Facilidad = newEaseFactor.toFixed(2);
-  stats.Fecha_Proximo_Repaso = calculateNextReview(newInterval);
-
-  // ******************************************************
-  // ***** INICIO: LÓGICA PARA PALABRA "DOMINADA" *****
-  // ******************************************************
-
-  const DOMINADA_THRESHOLD = 30; // Umbral de 30 días
-
-  // Asegúrate de que tu hoja de usuario tiene una columna llamada "Estado"
-  if (headers.includes("Estado")) {
-    if (newInterval > DOMINADA_THRESHOLD) {
-      stats.Estado = "Dominada";
-    }
-  }
-
-  // ******************************************************
-  // ****** FIN: LÓGICA PARA PALABRA "DOMINADA" ******
-  // ******************************************************
-
-  const newRowData = headers.map((header) => stats[header] || null);
-
-  if (rowIndex > 0) {
-    await sheets.spreadsheets.values.update({
+  try {
+    const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `User_${userId}!A${rowIndex + 1}`, // Apunta a la fila correcta en la hoja de usuario
-      valueInputOption: "USER_ENTERED",
-      resource: { values: [newRowData] },
+      range,
     });
+    const rows = response.data.values || [];
+    if (rows.length === 0) return;
+
+    const headers = rows[0];
+    const wordIdIndex = headers.indexOf("ID_Palabra");
+    const rowIndex = rows.findIndex((row) => row[wordIdIndex] === wordId);
+
+    if (rowIndex === -1) {
+      console.error(`Palabra ${wordId} no encontrada para ${userId}.`);
+      return;
+    }
+
+    const rowData = rows[rowIndex];
+
+    if (type === "text") {
+      const correctIndex = headers.indexOf("Total_Aciertos");
+      const incorrectIndex = headers.indexOf("Total_Errores");
+      let totalCorrect = parseInt(rowData[correctIndex]) || 0;
+      let totalIncorrect = parseInt(rowData[incorrectIndex]) || 0;
+      if (isCorrect) totalCorrect++;
+      else totalIncorrect++;
+
+      const colLetter = String.fromCharCode("A".charCodeAt(0) + correctIndex);
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `u_${userId}!${colLetter}${rowIndex + 1}`,
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [[totalCorrect, totalIncorrect]] },
+      });
+    } else if (type === "voice") {
+      const voiceCorrectIndex = headers.indexOf("Total_Voz_Aciertos");
+      const voiceIncorrectIndex = headers.indexOf("Total_Voz_Errores");
+      let voiceCorrect = parseInt(rowData[voiceCorrectIndex]) || 0;
+      let voiceIncorrect = parseInt(rowData[voiceIncorrectIndex]) || 0;
+      if (isCorrect) voiceCorrect++;
+      else voiceIncorrect++;
+
+      const colLetter = String.fromCharCode(
+        "A".charCodeAt(0) + voiceCorrectIndex
+      );
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `u_${userId}!${colLetter}${rowIndex + 1}`,
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [[voiceCorrect, voiceIncorrect]] },
+      });
+    }
+  } catch (error) {
+    console.error(`Error al actualizar acierto/error para u_${userId}:`, error);
   }
 }
 
+async function updateWordSRS(
+  sheets,
+  spreadsheetId,
+  userId,
+  wordId,
+  difficulty
+) {
+  const range = `u_${userId}!A:M`; // <-- CORRECCIÓN CRÍTICA
+
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
+    const rows = response.data.values || [];
+    if (rows.length === 0) return;
+
+    const headers = rows[0];
+    const wordIdIndex = headers.indexOf("ID_Palabra");
+    const rowIndex = rows.findIndex((row) => row[wordIdIndex] === wordId);
+
+    if (rowIndex === -1) {
+      console.error(`Palabra ${wordId} no encontrada para ${userId}.`);
+      return;
+    }
+
+    const rowData = rows[rowIndex];
+    const intervalIndex = headers.indexOf("Intervalo_SRS");
+    const easeFactorIndex = headers.indexOf("Factor_Facilidad");
+    const nextReviewIndex = headers.indexOf("Fecha_Proximo_Repaso");
+    const stateIndex = headers.indexOf("Estado");
+
+    const currentInterval = parseInt(rowData[intervalIndex]) || 1;
+    const easeFactor = parseFloat(rowData[easeFactorIndex]) || 2.5;
+    const { newInterval, newEaseFactor } = calculateSRSInterval(
+      currentInterval,
+      difficulty,
+      easeFactor
+    );
+    const nextReviewDate = calculateNextReview(newInterval);
+
+    let newStatus = rowData[stateIndex];
+    if (newInterval > 30) {
+      newStatus = "Dominada";
+    }
+
+    const srsUpdateData = [
+      newInterval,
+      newEaseFactor.toFixed(2),
+      nextReviewDate,
+      newStatus,
+    ];
+    const startColLetter = String.fromCharCode(
+      "A".charCodeAt(0) + intervalIndex
+    );
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `u_${userId}!${startColLetter}${rowIndex + 1}`,
+      valueInputOption: "USER_ENTERED",
+      resource: { values: [srsUpdateData] },
+    });
+  } catch (error) {
+    console.error(`Error al actualizar SRS para u_${userId}:`, error);
+  }
+}
 async function updateDailyActivity(
   sheets,
   spreadsheetId,
