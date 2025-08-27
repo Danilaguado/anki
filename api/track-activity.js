@@ -157,12 +157,10 @@ export default async function handler(req, res) {
           resource: { values: [interactionRow] },
         });
 
-        return res
-          .status(200)
-          .json({
-            success: true,
-            message: "Evaluación de memoria registrada.",
-          });
+        return res.status(200).json({
+          success: true,
+          message: "Evaluación de memoria registrada.",
+        });
       }
 
       case "voice_interaction": {
@@ -318,7 +316,7 @@ async function updateWordStatistics(
   // y que contiene todas las columnas que necesitas.
   // Si tus columnas (Estado, Intervalo_SRS, etc.) están en `User_${userId}`
   // deberías cambiar el 'range' aquí. Por ahora, asumiré que están en "Word_Statistics".
-  const range = `User_${userId}!A:M`; // <--- AJUSTADO PARA APUNTAR A LA HOJA DE USUARIO
+  const range = `u_${userId}!A:M`; // <--- AJUSTADO PARA APUNTAR A LA HOJA DE USUARIO
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
