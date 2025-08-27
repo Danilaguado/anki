@@ -41,13 +41,6 @@ const CloseIcon = () => (
   </svg>
 );
 
-// Función para generar sessionId cuando no existe
-const generateSessionId = () => {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substr(2, 5);
-  return `session_${timestamp}-${random}`;
-};
-
 const QuizScreen = ({
   deck,
   onQuizComplete,
@@ -67,56 +60,16 @@ const QuizScreen = ({
   const [isInRepeatPhase, setIsInRepeatPhase] = useState(false);
   const [originalDeckLength, setOriginalDeckLength] = useState(0);
 
-  // 🔧 FIX: Asegurar que siempre tengamos un sessionId válido
-  const [currentSessionId, setCurrentSessionId] = useState(
-    sessionInfo?.sessionId || generateSessionId()
-  );
-
   // Referencias para tracking de tiempo
   const cardStartTime = useRef(Date.now());
   const sessionStartTime = useRef(Date.now());
   const inputRef = useRef(null);
   const tempResultRef = useRef(null);
 
-  // 🔧 FIX: Usar currentSessionId en lugar de sessionInfo?.sessionId
-  const sessionId = currentSessionId;
+  // 🔥 SIMPLIFICACIÓN: Usar userId directamente para todas las operaciones
   const userId = localStorage.getItem("ankiUserId");
 
-  console.log(`[QUIZ] SessionId: ${sessionId}, UserId: ${userId}`);
-
-  // 🔧 FIX: Inicializar sesión si no existe
-  useEffect(() => {
-    const initializeSession = async () => {
-      if (!sessionInfo?.sessionId && trackActivity) {
-        console.log(
-          "🔧 [QUIZ] Inicializando sesión porque sessionId es undefined..."
-        );
-
-        try {
-          const result = await trackActivity("start_session", {
-            sessionData: { deckId: "practice-mode" },
-          });
-
-          if (result?.sessionId) {
-            setCurrentSessionId(result.sessionId);
-            console.log("✅ [QUIZ] Sesión inicializada:", result.sessionId);
-          } else {
-            console.error("❌ [QUIZ] No se pudo obtener sessionId del backend");
-            // Usar sessionId generado localmente como fallback
-            console.log("🔧 [QUIZ] Usando sessionId local:", currentSessionId);
-          }
-        } catch (error) {
-          console.error("❌ [QUIZ] Error inicializando sesión:", error);
-          console.log(
-            "🔧 [QUIZ] Usando sessionId local como fallback:",
-            currentSessionId
-          );
-        }
-      }
-    };
-
-    initializeSession();
-  }, [sessionInfo, trackActivity, currentSessionId]);
+  console.log(`[QUIZ] SIMPLIFICADO - UserId: ${userId}`);
 
   if (!deck || deck.length === 0) {
     return (
@@ -161,6 +114,57 @@ const QuizScreen = ({
     }
   };
 
+  // 🔥 FUNCIÓN SIMPLIFICADA: Actualizar directamente sin sessionId
+  const updateWordDirectly = async (wordId, isCorrect, difficulty = null) => {
+    try {
+      const response = await fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          action: "check_answer",
+          cardData: {
+            wordId,
+            isCorrect,
+          },
+        }),
+      });
+
+      const result = await response.json();
+      console.log(
+        `[QUIZ] ✅ Actualización directa: ${wordId} = ${isCorrect}`,
+        result
+      );
+
+      // Si hay dificultad SRS, registrarla también
+      if (difficulty) {
+        const srsResponse = await fetch("/api/track-activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            action: "rate_memory",
+            cardData: {
+              wordId,
+              difficulty,
+            },
+          }),
+        });
+
+        const srsResult = await srsResponse.json();
+        console.log(
+          `[QUIZ] ✅ SRS actualizado: ${wordId} = ${difficulty}`,
+          srsResult
+        );
+      }
+
+      return result.success;
+    } catch (error) {
+      console.error(`[QUIZ] ❌ Error en actualización directa:`, error);
+      return false;
+    }
+  };
+
   const handleSpeechResult = async (transcript) => {
     const spokenText = transcript.trim().toLowerCase();
     const correctText = currentCard.Inglés.trim().toLowerCase();
@@ -170,20 +174,25 @@ const QuizScreen = ({
       `[QUIZ] Voz detectada: "${transcript}" vs "${currentCard.Inglés}" = ${isCorrect}`
     );
 
-    // Registrar interacción de voz
-    if (trackActivity && sessionId) {
-      await trackActivity("voice_interaction", {
-        sessionId,
-        voiceData: {
-          wordId: currentCard.ID_Palabra,
-          detectedText: transcript,
-          expectedText: currentCard.Inglés,
-          isVoiceCorrect: isCorrect,
-        },
+    // Registrar interacción de voz directamente
+    try {
+      await fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          action: "voice_interaction",
+          voiceData: {
+            wordId: currentCard.ID_Palabra,
+            detectedText: transcript,
+            expectedText: currentCard.Inglés,
+            isVoiceCorrect: isCorrect,
+          },
+        }),
       });
-      console.log(
-        `[QUIZ] Interacción de voz registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
-      );
+      console.log(`[QUIZ] ✅ Voz registrada: ${currentCard.ID_Palabra}`);
+    } catch (error) {
+      console.error(`[QUIZ] ❌ Error registrando voz:`, error);
     }
 
     setVoiceResults((prev) => [
@@ -193,7 +202,6 @@ const QuizScreen = ({
 
     if (isCorrect) {
       alert(`¡Coincidencia exacta! Dijiste: "${transcript}"`);
-      // Reproducir sonido de éxito
       try {
         const audio = new Audio("/correct-6033.mp3");
         await audio.play();
@@ -221,35 +229,10 @@ const QuizScreen = ({
 
     setFeedback(isCorrect ? "correct" : "incorrect");
 
-    // 🔧 FIX: Usar sessionId válido y verificar que existe
-    if (trackActivity && sessionId) {
-      try {
-        await trackActivity("check_answer", {
-          sessionId,
-          cardData: {
-            wordId: currentCard.ID_Palabra,
-            isCorrect: isCorrect,
-          },
-        });
-        console.log(
-          `[QUIZ] ✅ Respuesta registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
-        );
-      } catch (error) {
-        console.error(`[QUIZ] ❌ Error registrando respuesta:`, error);
-      }
-    } else {
-      console.error(
-        "❌ [QUIZ] No se puede registrar respuesta: trackActivity o sessionId faltante"
-      );
-      console.log(
-        "🔍 [QUIZ] trackActivity:",
-        !!trackActivity,
-        "sessionId:",
-        sessionId
-      );
-    }
+    // 🔥 ACTUALIZACIÓN DIRECTA: Sin dependencia de trackActivity
+    await updateWordDirectly(currentCard.ID_Palabra, isCorrect);
 
-    // Guardamos el resto de los datos temporalmente para el feedback de SRS
+    // Guardamos los datos para el feedback de SRS
     tempResultRef.current = {
       wordId: currentCard.ID_Palabra,
       english: currentCard.Inglés,
@@ -269,35 +252,14 @@ const QuizScreen = ({
       `[QUIZ] Evaluación SRS: ${currentCard.ID_Palabra} = ${srsLevel}`
     );
 
-    // 🔧 FIX: Usar sessionId válido y verificar que existe
-    if (trackActivity && sessionId) {
-      try {
-        await trackActivity("rate_memory", {
-          sessionId,
-          cardData: {
-            wordId: currentCard.ID_Palabra,
-            difficulty: srsLevel,
-          },
-        });
-        console.log(
-          `[QUIZ] ✅ Memoria evaluada: ${currentCard.ID_Palabra} = ${srsLevel}`
-        );
-      } catch (error) {
-        console.error(`[QUIZ] ❌ Error evaluando memoria:`, error);
-      }
-    } else {
-      console.error(
-        "❌ [QUIZ] No se puede evaluar memoria: trackActivity o sessionId faltante"
-      );
-      console.log(
-        "🔍 [QUIZ] trackActivity:",
-        !!trackActivity,
-        "sessionId:",
-        sessionId
-      );
-    }
+    // 🔥 ACTUALIZACIÓN DIRECTA: Sin dependencia de trackActivity
+    await updateWordDirectly(
+      currentCard.ID_Palabra,
+      finalResult.isCorrect,
+      srsLevel
+    );
 
-    // Lógica de repetición espaciada: si es 'again' o 'hard', programar repetición
+    // Lógica de repetición espaciada
     if (srsLevel === "again" || srsLevel === "hard") {
       const alreadyInRepeat = cardsToRepeat.some(
         (card) => card.ID_Palabra === currentCard.ID_Palabra
@@ -319,9 +281,6 @@ const QuizScreen = ({
               : card
           )
         );
-        console.log(
-          `[QUIZ] Aumentando repeticiones para ${currentCard.ID_Palabra}`
-        );
       }
     }
 
@@ -336,7 +295,6 @@ const QuizScreen = ({
     } else {
       // Si terminamos el mazo original y hay cartas para repetir
       if (!isInRepeatPhase && cardsToRepeat.length > 0) {
-        // Cambiar a fase de repetición
         setIsInRepeatPhase(true);
         setCurrentIndex(0);
         setFeedback(null);
@@ -346,12 +304,10 @@ const QuizScreen = ({
           `[QUIZ] Iniciando fase de repaso con ${cardsToRepeat.length} palabras`
         );
 
-        // Mostrar mensaje de transición
         alert(
           `¡Excelente! Ahora vamos a repasar ${cardsToRepeat.length} palabra(s) que necesitan más práctica.`
         );
       } else {
-        // Finalizar quiz completamente
         console.log(
           `[QUIZ] Finalizando sesión con ${updatedResults.length} resultados`
         );
@@ -361,14 +317,14 @@ const QuizScreen = ({
   };
 
   const endSession = (results) => {
-    // Calcular estadísticas finales más completas y precisas
+    // 🔥 FINALIZACIÓN SIMPLIFICADA: Sin trackActivity complejo
     const sessionDuration = Date.now() - sessionStartTime.current;
     const totalCards = originalDeckLength + cardsToRepeat.length;
     const correctAnswers = results.filter((r) => r.isCorrect).length;
     const totalAnswers = results.length;
 
     const finalStats = {
-      sessionId: sessionId, // IMPORTANTE: Preservar sessionId
+      sessionId: `local_${Date.now()}`, // ID local simple
       sessionDuration: sessionDuration,
       totalOriginalCards: originalDeckLength,
       totalRepeatedCards: cardsToRepeat.length,
@@ -383,28 +339,50 @@ const QuizScreen = ({
       endTime: Date.now(),
     };
 
-    console.log("[QUIZ] Estadísticas finales calculadas:", finalStats);
+    console.log("[QUIZ] ✅ Sesión finalizada:", finalStats);
+
+    // Registrar finalización de sesión de manera simple
+    fetch("/api/track-activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        action: "end_session",
+        finalResults: {
+          sessionId: finalStats.sessionId,
+          sentiment: "normal", // Por defecto
+          sessionDuration: finalStats.sessionDuration,
+          correctAnswers: finalStats.correctAnswers,
+          totalAnswers: finalStats.totalAnswers,
+          accuracy: finalStats.accuracy,
+        },
+      }),
+    }).catch((error) => {
+      console.error("[QUIZ] Error al registrar fin de sesión:", error);
+    });
 
     onQuizComplete(results, voiceResults, finalStats);
   };
 
-  const handleAbandonSession = async () => {
+  const handleAbandonSession = () => {
     if (
       window.confirm(
         "¿Estás seguro de que quieres abandonar esta sesión? Tu progreso no se guardará."
       )
     ) {
-      console.log(`[QUIZ] Abandonando sesión: ${sessionId}`);
+      console.log(`[QUIZ] Abandonando sesión`);
 
-      // Usar la función trackActivity para registrar abandono
-      if (trackActivity && sessionId) {
-        try {
-          await trackActivity("abandon_session", { sessionId });
-          console.log(`[QUIZ] ✅ Sesión abandonada registrada: ${sessionId}`);
-        } catch (error) {
-          console.error(`[QUIZ] ❌ Error registrando abandono:`, error);
-        }
-      }
+      // Registrar abandono de manera simple
+      fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          action: "abandon_session",
+        }),
+      }).catch((error) => {
+        console.error("[QUIZ] Error al registrar abandono:", error);
+      });
 
       onGoBack();
     }
@@ -418,7 +396,7 @@ const QuizScreen = ({
 
   return (
     <div className='quiz-container'>
-      {/* Barra de progreso mejorada */}
+      {/* Barra de progreso */}
       <div className='quiz-progress-section'>
         <div className='quiz-progress-bar'>
           <div
@@ -453,7 +431,7 @@ const QuizScreen = ({
         <CloseIcon />
       </button>
 
-      {/* Header del quiz con información extendida */}
+      {/* Header del quiz */}
       <div className='quiz-header'>
         <h2>
           {isInRepeatPhase ? "Fase de Repaso" : "Mazo Principal"} - Pregunta{" "}
@@ -464,7 +442,6 @@ const QuizScreen = ({
             Esta palabra ha sido repetida {currentCard.repeatCount} vez(es)
           </p>
         )}
-        {sessionId && <p className='session-info'>Sesión: {sessionId}</p>}
       </div>
 
       {/* Tarjeta principal */}
@@ -586,7 +563,7 @@ const QuizScreen = ({
         )}
       </div>
 
-      {/* Panel de estadísticas en tiempo real */}
+      {/* Panel de estadísticas */}
       <div className='quiz-stats-panel'>
         <div className='stat-item'>
           <span className='stat-label'>Sesión:</span>
