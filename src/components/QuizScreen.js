@@ -352,7 +352,9 @@ const QuizScreen = ({
             Esta palabra ha sido repetida {currentCard.repeatCount} vez(es)
           </p>
         )}
-        {sessionId && <p className='session-info'>Sesión: {sessionId}</p>}
+        {sessionInfo.sessionId && (
+          <p className='session-info'>Sesión: {sessionInfo.sessionId}</p>
+        )}
       </div>
 
       {/* Tarjeta principal */}
