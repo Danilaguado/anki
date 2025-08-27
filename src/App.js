@@ -469,7 +469,7 @@ const AppContent = () => {
           body: JSON.stringify({
             userId: userId,
             action: "abandon_session",
-            sessionData: { sessionId: sessionInfo.sessionId },
+            sessionId: sessionInfo.sessionId, // Mover sessionId al nivel superior
           }),
         });
       } catch (error) {

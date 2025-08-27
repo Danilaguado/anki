@@ -66,9 +66,8 @@ const QuizScreen = ({
   const inputRef = useRef(null);
   const tempResultRef = useRef(null);
 
-  // CORRECCIÓN: Extraer sessionId del sessionInfo
-  // const sessionId = sessionInfo?.sessionId;
-  // const userId = localStorage.getItem("ankiUserId");
+  const sessionId = sessionInfo?.sessionId;
+  const userId = localStorage.getItem("ankiUserId");
 
   if (!deck || deck.length === 0) {
     return (
@@ -194,10 +193,11 @@ const QuizScreen = ({
     // CORRECCIÓN: Usar la función trackActivity
     if (trackActivity) {
       trackActivity("rate_memory", {
-        word: currentCard.Inglés,
-        rating: srsLevel,
-        isCorrect: finalResult.isCorrect,
-        responseTime: finalResult.responseTime,
+        cardData: {
+          sessionId: sessionId, // Agregar sessionId
+          wordId: currentCard.ID_Palabra,
+          difficulty: srsLevel,
+        },
       });
       console.log(
         `[QUIZ] Memoria evaluada: ${currentCard.ID_Palabra} = ${srsLevel}`
@@ -290,7 +290,9 @@ const QuizScreen = ({
       // CORRECCIÓN: Usar la estructura correcta para abandonar sesión
       // CORRECCIÓN: Usar la función trackActivity
       if (trackActivity) {
-        trackActivity("abandon_session");
+        trackActivity("abandon_session", {
+          sessionId: sessionId, // ← FALTA ESTE PARÁMETRO
+        });
         console.log(`[QUIZ] Sesión abandonada registrada`);
       }
 

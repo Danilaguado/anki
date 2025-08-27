@@ -337,48 +337,47 @@ export default async function handler(req, res) {
       }
 
       case "abandon_session": {
-        const studySessionsSheet = doc.sheetsByTitle["Study_Sessions"];
-        if (studySessionsSheet) {
-          const rows = await studySessionsSheet.getRows();
-          const sessionRow = rows.find((r) => r.ID_Sesion === sessionId);
-          if (sessionRow) {
-            sessionRow.Fecha_Fin = formattedDate;
-            sessionRow.Hora_Fin = formattedTime;
-            sessionRow.Estado_Final = "Incompleta";
-            const startTime = new Date(
-              `${sessionRow.Fecha_Inicio}T${sessionRow.Hora_Inicio}`
-            );
-            const duration = now.getTime() - startTime.getTime();
-            sessionRow.Duracion_Total_ms = duration;
-            await sessionRow.save();
-          }
+        const sessionId = req.body.sessionId;
+
+        if (!sessionId) {
+          console.log("[TRACK-ACTIVITY] No sessionId para abandonar");
+          return res
+            .status(200)
+            .json({ success: true, message: "Sin sesión activa" });
         }
 
-        const dailyRow = await getDailyActivityRow();
-        if (dailyRow) {
-          dailyRow.Sesiones_Abandonadas =
-            parseInt(dailyRow.Sesiones_Abandonadas || 0) + 1;
+        const currentTime = new Date().toISOString();
+        const rowNumber = await getSessionRowNumber(
+          sheets,
+          spreadsheetId,
+          sessionId
+        );
 
-          // --- INICIO DE LA CORRECCIÓN ---
-          // Reutilizamos la variable 'studySessionsSheet' que ya tiene la hoja
-          if (studySessionsSheet) {
-            const sessionRows = await studySessionsSheet.getRows();
-            const abandonedSession = sessionRows.find(
-              (r) => r.ID_Sesion === sessionId
-            );
-            if (abandonedSession && abandonedSession.Duracion_Total_ms) {
-              dailyRow.Tiempo_Total_Estudio_ms =
-                parseInt(dailyRow.Tiempo_Total_Estudio_ms || 0) +
-                parseInt(abandonedSession.Duracion_Total_ms);
-            }
-          }
-          // --- FIN DE LA CORRECCIÓN ---
+        if (rowNumber !== -1) {
+          const updateData = [
+            { range: `Study_Sessions!E${rowNumber}`, values: [[currentTime]] }, // Timestamp_Fin
+            { range: `Study_Sessions!G${rowNumber}`, values: [["Abandonada"]] }, // Estado_Final
+          ];
 
-          await dailyRow.save();
+          await sheets.spreadsheets.values.batchUpdate({
+            spreadsheetId,
+            resource: { valueInputOption: "USER_ENTERED", data: updateData },
+          });
         }
-        break;
+
+        await updateDailyActivity(
+          sheets,
+          spreadsheetId,
+          userId,
+          currentTime,
+          "session_abandon"
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: "Sesión abandonada registrada.",
+        });
       }
-
       case "daily_checkin": {
         // Solo actualizar actividad diaria
         await updateDailyActivity(
@@ -421,9 +420,12 @@ async function updateWordCorrectness(
   isCorrect,
   type
 ) {
-  const range = `${userId}!A:I`;
+  // CORRECCIÓN: Usar ID limpio sin prefijo para el nombre de hoja
+  const cleanUserId = userId.startsWith("user_") ? userId.substring(5) : userId;
+  const range = `${cleanUserId}!A:I`;
+
   console.log(
-    `[updateWordCorrectness] Actualizando ${wordId} en hoja ${userId}, tipo: ${type}, correcto: ${isCorrect}`
+    `[updateWordCorrectness] Actualizando ${wordId} en hoja ${cleanUserId}, tipo: ${type}, correcto: ${isCorrect}`
   );
 
   try {
@@ -434,7 +436,7 @@ async function updateWordCorrectness(
 
     const rows = response.data.values || [];
     if (rows.length === 0) {
-      console.error(`No hay datos en la hoja ${userId}`);
+      console.error(`No hay datos en la hoja ${cleanUserId}`);
       return;
     }
 
@@ -444,7 +446,9 @@ async function updateWordCorrectness(
     const rowIndex = dataRows.findIndex((row) => row[wordIdIndex] === wordId);
 
     if (rowIndex === -1) {
-      console.error(`Palabra ${wordId} no encontrada en la hoja ${userId}.`);
+      console.error(
+        `Palabra ${wordId} no encontrada en la hoja ${cleanUserId}.`
+      );
       return;
     }
 
@@ -475,11 +479,11 @@ async function updateWordCorrectness(
           valueInputOption: "USER_ENTERED",
           data: [
             {
-              range: `${userId}!${correctCol}${actualRowNumber}`,
+              range: `${cleanUserId}!${correctCol}${actualRowNumber}`,
               values: [[totalCorrect]],
             },
             {
-              range: `${userId}!${incorrectCol}${actualRowNumber}`,
+              range: `${cleanUserId}!${incorrectCol}${actualRowNumber}`,
               values: [[totalIncorrect]],
             },
           ],
@@ -515,11 +519,11 @@ async function updateWordCorrectness(
           valueInputOption: "USER_ENTERED",
           data: [
             {
-              range: `${userId}!${voiceCorrectCol}${actualRowNumber}`,
+              range: `${cleanUserId}!${voiceCorrectCol}${actualRowNumber}`,
               values: [[voiceCorrect]],
             },
             {
-              range: `${userId}!${voiceIncorrectCol}${actualRowNumber}`,
+              range: `${cleanUserId}!${voiceIncorrectCol}${actualRowNumber}`,
               values: [[voiceIncorrect]],
             },
           ],
@@ -542,10 +546,9 @@ async function updateWordSRS(
   wordId,
   difficulty
 ) {
-  const range = `${userId}!A:I`;
-  console.log(
-    `[updateWordSRS] Actualizando SRS ${wordId} en hoja ${userId}, dificultad: ${difficulty}`
-  );
+  // AGREGAR ESTA LÍNEA:
+  const cleanUserId = userId.startsWith("user_") ? userId.substring(5) : userId;
+  const range = `${cleanUserId}!A:I`;
 
   try {
     const response = await sheets.spreadsheets.values.get({
@@ -603,19 +606,19 @@ async function updateWordSRS(
         valueInputOption: "USER_ENTERED",
         data: [
           {
-            range: `${userId}!${intervalCol}${actualRowNumber}`,
+            range: `${cleanUserId}!${intervalCol}${actualRowNumber}`,
             values: [[newInterval]],
           },
           {
-            range: `${userId}!${easeFactorCol}${actualRowNumber}`,
+            range: `${cleanUserId}!${easeFactorCol}${actualRowNumber}`,
             values: [[newEaseFactor.toFixed(2)]],
           },
           {
-            range: `${userId}!${nextReviewCol}${actualRowNumber}`,
+            range: `${cleanUserId}!${nextReviewCol}${actualRowNumber}`,
             values: [[nextReviewDate]],
           },
           {
-            range: `${userId}!${stateCol}${actualRowNumber}`,
+            range: `${cleanUserId}!${stateCol}${actualRowNumber}`,
             values: [[newStatus]],
           },
         ],
