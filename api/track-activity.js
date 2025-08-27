@@ -217,7 +217,7 @@ export default async function handler(req, res) {
         const voiceId = `voice_${generateShortId()}`;
         await sheets.spreadsheets.values.append({
           spreadsheetId,
-          range: "Voice_Interactions!A:H",
+          range: "Voice_Interactions!A:I",
           valueInputOption: "USER_ENTERED",
           resource: {
             values: [
@@ -410,7 +410,7 @@ export default async function handler(req, res) {
   }
 }
 
-// ===== FUNCIONES AUXILIARES CORREGIDAS =====
+// ===== FUNCIONES AUXILIARES =====
 
 async function updateWordCorrectness(
   sheets,
@@ -857,6 +857,7 @@ async function updateDailyActivity(
         dailyData.Total_Tiempo_Estudio_ms =
           parseInt(dailyData.Total_Tiempo_Estudio_ms || 0) +
           (extraData.duration || 0);
+        dailyData.Palabras_Practicadas;
         dailyData.Palabras_Practicadas =
           parseInt(dailyData.Palabras_Practicadas || 0) +
           (extraData.wordsCount || 0);
