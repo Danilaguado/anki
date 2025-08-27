@@ -177,7 +177,6 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
   };
 
   const handleCheckAnswer = async () => {
-    // <--- La hacemos 'async'
     const responseTime = Date.now() - cardStartTime.current;
     const userCleanAnswer = userAnswer.trim().toLowerCase();
     const correctAnswers = currentCard.Español.split("/").map((ans) =>
@@ -187,17 +186,13 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
 
     setFeedback(isCorrect ? "correct" : "incorrect");
 
-    // ******************************************************
-    // ***** INICIO: NUEVO BLOQUE DE CÓDIGO *****
-    // ******************************************************
-
     // Registramos el acierto/error INMEDIATAMENTE
     try {
       await fetch("/api/track-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "check_answer", // <-- Nueva acción específica
+          action: "check_answer",
           userId: localStorage.getItem("ankiUserId"),
           cardData: {
             wordId: currentCard.ID_Palabra,
@@ -209,13 +204,11 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
       console.error("Error registrando el resultado de la respuesta:", error);
     }
 
-    // ******************************************************
-    // ****** FIN: NUEVO BLOQUE DE CÓDIGO ******
-    // ******************************************************
-
     // Guardamos el resto de los datos temporalmente para el feedback de SRS
     tempResultRef.current = {
       wordId: currentCard.ID_Palabra,
+      english: currentCard.Inglés,
+      spanish: currentCard.Español,
       isCorrect: isCorrect,
       responseTime: responseTime,
       timestamp: new Date().toISOString(),
@@ -224,25 +217,20 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
     };
   };
 
-  //=============== DENTRO DE QuizScreen.js ===============
-
   const handleSrsFeedback = async (srsLevel) => {
     const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
 
-    // Ahora, esta llamada solo registra la dificultad (memoria)
+    // Registrar la dificultad (memoria)
     try {
       await fetch("/api/track-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // La nueva acción es más específica
           action: "rate_memory",
           userId: localStorage.getItem("ankiUserId"),
           cardData: {
             sessionId,
             wordId: currentCard.ID_Palabra,
-            // Ya no enviamos isCorrect, userAnswer, etc.
-            // Solo la dificultad de recordarlo.
             difficulty: srsLevel,
           },
         }),
@@ -296,23 +284,35 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack }) => {
         );
       } else {
         // Finalizar quiz completamente
-        // La función endSession ya fue simplificada y no llama a la API
         endSession(updatedResults);
       }
     }
   };
-  const endSession = (results) => {
-    // Ya no hay llamada a la API aquí.
-    // Solo calculamos las estadísticas finales y pasamos todo a App.js
 
+  const endSession = (results) => {
+    // Calcular estadísticas finales más completas
+    const sessionDuration = Date.now() - sessionStartTime.current;
     const totalCards = originalDeckLength + cardsToRepeat.length;
+    const correctAnswers = results.filter((r) => r.isCorrect).length;
+    const totalAnswers = results.length;
+
     const finalStats = {
-      ...results,
+      sessionId: sessionId,
+      sessionDuration: sessionDuration,
       totalOriginalCards: originalDeckLength,
       totalRepeatedCards: cardsToRepeat.length,
       totalSessionCards: totalCards,
-      sessionDuration: Date.now() - sessionStartTime.current,
+      correctAnswers: correctAnswers,
+      totalAnswers: totalAnswers,
+      accuracy:
+        totalAnswers > 0
+          ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
+          : 0,
+      startTime: sessionStartTime.current,
+      endTime: Date.now(),
     };
+
+    console.log("[QUIZ] Estadísticas finales calculadas:", finalStats);
 
     onQuizComplete(results, voiceResults, finalStats);
   };

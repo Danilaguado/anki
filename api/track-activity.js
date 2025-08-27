@@ -41,215 +41,103 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res
       .status(405)
-      .json({ success: false, message: "Method Not Allowed" });
-  }
-
-  const { action, userId, sessionData, cardData, voiceData, finalResults } =
-    req.body;
-
-  if (!userId || !action) {
-    return res
-      .status(400)
-      .json({ success: false, message: "UserID y action son requeridos." });
+      .json({ success: false, message: "Método no permitido" });
   }
 
   try {
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-      },
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
+    const {
+      userId,
+      type,
+      timestamp,
+      sentence,
+      feedback,
+      finalResults,
+      sessionId,
+    } = req.body;
 
+    if (!userId || !type || !timestamp) {
+      return res.status(400).json({
+        success: false,
+        message: "Faltan parámetros obligatorios.",
+      });
+    }
+
+    const auth = await authorize();
     const sheets = google.sheets({ version: "v4", auth });
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
-    const timestamp = new Date().toISOString();
+    const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
 
-    console.log(`[TRACK-ACTIVITY] Acción: ${action}, Usuario: ${userId}`);
-
-    switch (action) {
+    switch (type) {
       case "start_session": {
-        const sessionId = generateShortId();
-        const sessionRow = [
-          sessionId,
-          sessionData.deckId || "Custom",
-          userId,
-          timestamp,
-          null,
-          null,
-          "En_Progreso",
-          null,
-          null,
-          null,
-          null,
-        ];
+        const newSessionId = `session_${Date.now()}`;
         await sheets.spreadsheets.values.append({
           spreadsheetId,
           range: "Study_Sessions!A:K",
           valueInputOption: "USER_ENTERED",
-          resource: { values: [sessionRow] },
+          resource: {
+            values: [
+              [
+                newSessionId,
+                userId,
+                "Conversación de práctica",
+                timestamp,
+                "",
+                "",
+                "En progreso",
+                "",
+                "",
+                "",
+                "",
+              ],
+            ],
+          },
         });
-        console.log(`[TRACK-ACTIVITY] Sesión iniciada: ${sessionId}`);
-
-        await updateDailyActivity(
-          sheets,
-          spreadsheetId,
-          userId,
-          timestamp,
-          "session_start"
-        );
 
         return res.status(200).json({
           success: true,
-          sessionId,
           message: "Sesión iniciada.",
-        });
-      }
-
-      case "check_answer": {
-        const { wordId, isCorrect } = cardData;
-        console.log(
-          `[TRACK-ACTIVITY] Check answer: ${wordId}, correcto: ${isCorrect}`
-        );
-
-        await updateWordCorrectness(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          isCorrect,
-          "text"
-        );
-        await updateWordStatistics(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          isCorrect,
-          "text"
-        );
-
-        return res.status(200).json({
-          success: true,
-          message: "Resultado registrado.",
-        });
-      }
-
-      case "rate_memory": {
-        const { wordId, difficulty, sessionId } = cardData;
-        console.log(
-          `[TRACK-ACTIVITY] Rate memory: ${wordId}, dificultad: ${difficulty}`
-        );
-
-        await updateWordSRS(sheets, spreadsheetId, userId, wordId, difficulty);
-
-        if (difficulty === "again" || difficulty === "hard") {
-          await schedulePracticeReview(
-            sheets,
-            spreadsheetId,
-            userId,
-            wordId,
-            difficulty
-          );
-        }
-
-        const interactionRow = [
-          generateShortId(),
-          sessionId,
-          wordId,
-          userId,
-          timestamp,
-          "SRS_Feedback",
-          null,
-          null,
-          null,
-          difficulty,
-        ];
-        await sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: "Card_Interactions!A:J",
-          valueInputOption: "USER_ENTERED",
-          resource: { values: [interactionRow] },
-        });
-
-        return res.status(200).json({
-          success: true,
-          message: "Evaluación de memoria registrada.",
+          sessionId: newSessionId,
         });
       }
 
       case "voice_interaction": {
-        const {
-          sessionId,
-          wordId,
-          detectedText,
-          expectedText,
-          isVoiceCorrect,
-        } = voiceData;
-        console.log(
-          `[TRACK-ACTIVITY] Voice interaction: ${wordId}, correcto: ${isVoiceCorrect}`
-        );
-
-        const voiceInteractionRow = [
-          generateShortId(),
-          sessionId,
-          wordId,
-          userId,
-          timestamp,
-          detectedText,
-          expectedText,
-          isVoiceCorrect,
-          calculateSimilarityPercentage(detectedText, expectedText),
-        ];
         await sheets.spreadsheets.values.append({
           spreadsheetId,
-          range: "Voice_Interactions!A:I",
+          range: "Voice_Interactions!A:F",
           valueInputOption: "USER_ENTERED",
-          resource: { values: [voiceInteractionRow] },
+          resource: {
+            values: [
+              [
+                sessionId,
+                userId,
+                timestamp,
+                sentence || "",
+                feedback || "",
+                "",
+              ],
+            ],
+          },
         });
-
-        await updateWordCorrectness(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          isVoiceCorrect,
-          "voice"
-        );
-        await updateWordStatistics(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          isVoiceCorrect,
-          "voice"
-        );
 
         return res.status(200).json({
           success: true,
-          message: "Interacción de voz registrada.",
+          message: "Interacción de voz guardada.",
         });
       }
 
       case "end_session": {
-        const { sessionId, sentiment, results } = finalResults;
-        console.log(`[TRACK-ACTIVITY] End session: ${sessionId}`);
+        const { sentiment, correctAnswers, totalAnswers, accuracy } =
+          finalResults;
 
-        const correctAnswers = results.filter((r) => r.isCorrect).length;
-        const totalAnswers = results.length;
-        const accuracy =
-          totalAnswers > 0
-            ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
-            : 0;
+        console.log(`[TRACK-ACTIVITY] End session: ${sessionId}`);
 
         const rowNumber = await getSessionRowNumber(
           sheets,
           spreadsheetId,
           sessionId
         );
-        if (rowNumber === -1)
+        if (rowNumber === -1) {
           throw new Error("ID de sesión no encontrado para finalizar.");
+        }
 
         const sessionResponse = await sheets.spreadsheets.values.get({
           spreadsheetId,
@@ -294,7 +182,6 @@ export default async function handler(req, res) {
       }
 
       case "abandon_session": {
-        const { sessionId } = sessionData;
         console.log(`[TRACK-ACTIVITY] Abandon session: ${sessionId}`);
 
         const rowNumber = await getSessionRowNumber(
@@ -302,14 +189,18 @@ export default async function handler(req, res) {
           spreadsheetId,
           sessionId
         );
-        if (rowNumber === -1)
+        if (rowNumber === -1) {
           throw new Error("ID de sesión no encontrado para abandonar.");
+        }
 
-        await sheets.spreadsheets.values.update({
+        const updateData = [
+          { range: `Study_Sessions!E${rowNumber}`, values: [[timestamp]] },
+          { range: `Study_Sessions!G${rowNumber}`, values: [["Abandonada"]] },
+        ];
+
+        await sheets.spreadsheets.values.batchUpdate({
           spreadsheetId,
-          range: `Study_Sessions!G${rowNumber}`,
-          valueInputOption: "USER_ENTERED",
-          resource: { values: [["Abandonada"]] },
+          resource: { valueInputOption: "USER_ENTERED", data: updateData },
         });
 
         await updateDailyActivity(
@@ -329,14 +220,14 @@ export default async function handler(req, res) {
       default:
         return res.status(400).json({
           success: false,
-          message: "Acción no válida.",
+          message: "Tipo de evento no válido.",
         });
     }
   } catch (error) {
-    console.error("Error en track-activity:", error);
-    res.status(500).json({
+    console.error("Error en track-activity API:", error);
+    return res.status(500).json({
       success: false,
-      message: "Error del servidor.",
+      message: "Error al registrar la actividad.",
       error: error.message,
     });
   }

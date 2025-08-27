@@ -354,25 +354,44 @@ const AppContent = () => {
     setIsLoading(true);
 
     try {
-      // 1. Finalizar la sesión en el backend CON el sentimiento
-      await fetch("/api/track-activity", {
+      console.log("[APP] Finalizando sesión con datos:", {
+        sessionId: sessionInfo.finalStats?.sessionId,
+        sentiment: sentiment,
+        resultsCount: sessionInfo.results?.length,
+        sessionDuration: sessionInfo.finalStats?.sessionDuration,
+      });
+
+      // 1. Finalizar la sesión en el backend CON todos los datos
+      const response = await fetch("/api/track-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "end_session",
           userId: userId,
           finalResults: {
-            sessionId: sessionInfo.finalStats.sessionId,
-            results: sessionInfo.results,
+            sessionId: sessionInfo.finalStats?.sessionId,
+            results: sessionInfo.results || [],
             sentiment: sentiment,
+            sessionDuration: sessionInfo.finalStats?.sessionDuration,
+            correctAnswers: sessionInfo.finalStats?.correctAnswers,
+            totalAnswers: sessionInfo.finalStats?.totalAnswers,
+            accuracy: sessionInfo.finalStats?.accuracy,
           },
         }),
       });
+
+      const result = await response.json();
+      console.log("[APP] Respuesta de finalización:", result);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Error al finalizar la sesión");
+      }
 
       // 2. Refrescar los datos del usuario para actualizar el panel
       await refreshUserData();
     } catch (err) {
       console.error("Error al guardar y finalizar la sesión:", err);
+      alert("Error al guardar la sesión. Por favor, inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
       navigate("/");
