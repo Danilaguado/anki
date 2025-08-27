@@ -56,8 +56,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, action, sessionData, cardData, voiceData, finalResults } =
-      req.body;
+    const {
+      userId,
+      action,
+      sessionData,
+      cardData,
+      voiceData,
+      finalResults,
+      sessionId,
+    } = req.body;
 
     if (!userId || !action) {
       return res.status(400).json({
@@ -122,6 +129,10 @@ export default async function handler(req, res) {
       case "check_answer": {
         const { wordId, isCorrect } = cardData;
 
+        console.log(
+          `[TRACK-ACTIVITY] Registrando respuesta: ${wordId} = ${isCorrect}`
+        );
+
         // Actualizar estadísticas de la palabra del usuario
         await updateWordCorrectness(
           sheets,
@@ -153,8 +164,13 @@ export default async function handler(req, res) {
       }
 
       case "rate_memory": {
-        const { sessionId, wordId, difficulty } = cardData;
+        const { wordId, difficulty } = cardData;
+        const sessionIdToUse = sessionId || cardData.sessionId;
         const currentTime = new Date().toISOString();
+
+        console.log(
+          `[TRACK-ACTIVITY] Evaluando memoria: ${wordId} = ${difficulty}, sessionId: ${sessionIdToUse}`
+        );
 
         // REGISTRAR EN Card_Interactions
         const interactionId = `interaction_${generateShortId()}`;
@@ -166,7 +182,7 @@ export default async function handler(req, res) {
             values: [
               [
                 interactionId, // ID_Interaccion
-                sessionId, // ID_Sesion
+                sessionIdToUse || "", // ID_Sesion
                 wordId, // ID_Palabra
                 userId, // UserID
                 currentTime, // Timestamp
@@ -204,14 +220,14 @@ export default async function handler(req, res) {
       }
 
       case "voice_interaction": {
-        const {
-          sessionId,
-          wordId,
-          detectedText,
-          expectedText,
-          isVoiceCorrect,
-        } = voiceData;
+        const { wordId, detectedText, expectedText, isVoiceCorrect } =
+          voiceData;
+        const sessionIdToUse = sessionId || voiceData.sessionId;
         const currentTime = new Date().toISOString();
+
+        console.log(
+          `[TRACK-ACTIVITY] Interacción de voz: ${wordId} = ${isVoiceCorrect}`
+        );
 
         // REGISTRAR EN Voice_Interactions
         const voiceId = `voice_${generateShortId()}`;
@@ -223,7 +239,7 @@ export default async function handler(req, res) {
             values: [
               [
                 voiceId, // ID_Voz
-                sessionId, // ID_Sesion
+                sessionIdToUse || "", // ID_Sesion
                 wordId, // ID_Palabra
                 userId, // UserID
                 currentTime, // Timestamp
@@ -266,8 +282,8 @@ export default async function handler(req, res) {
 
       case "end_session": {
         const {
-          sessionId,
-          sentiment, // ESTE ES EL SENTIMIENTO REAL DEL USUARIO
+          sessionId: finalSessionId,
+          sentiment,
           sessionDuration,
           correctAnswers,
           totalAnswers,
@@ -276,7 +292,7 @@ export default async function handler(req, res) {
 
         const currentTime = new Date().toISOString();
 
-        console.log(`[TRACK-ACTIVITY] Finalizando sesión: ${sessionId}`);
+        console.log(`[TRACK-ACTIVITY] Finalizando sesión: ${finalSessionId}`);
         console.log(`[TRACK-ACTIVITY] Datos finales:`, {
           sentiment,
           sessionDuration,
@@ -289,7 +305,7 @@ export default async function handler(req, res) {
         const rowNumber = await getSessionRowNumber(
           sheets,
           spreadsheetId,
-          sessionId
+          finalSessionId
         );
         if (rowNumber === -1) {
           throw new Error("ID de sesión no encontrado para finalizar.");
@@ -303,7 +319,7 @@ export default async function handler(req, res) {
             values: [[sessionDuration]],
           }, // Duracion_Total_ms
           { range: `Study_Sessions!G${rowNumber}`, values: [["Completada"]] }, // Estado_Final
-          { range: `Study_Sessions!H${rowNumber}`, values: [[sentiment]] }, // Sentimiento_Reportado (CORRECTO)
+          { range: `Study_Sessions!H${rowNumber}`, values: [[sentiment]] }, // Sentimiento_Reportado
           { range: `Study_Sessions!I${rowNumber}`, values: [[correctAnswers]] }, // Palabras_Correctas
           { range: `Study_Sessions!J${rowNumber}`, values: [[totalAnswers]] }, // Palabras_Totales
           { range: `Study_Sessions!K${rowNumber}`, values: [[accuracy]] }, // Porcentaje_Acierto
@@ -337,9 +353,9 @@ export default async function handler(req, res) {
       }
 
       case "abandon_session": {
-        const sessionId = req.body.sessionId;
+        const sessionIdToAbandon = sessionId || req.body.sessionId;
 
-        if (!sessionId) {
+        if (!sessionIdToAbandon) {
           console.log("[TRACK-ACTIVITY] No sessionId para abandonar");
           return res
             .status(200)
@@ -350,19 +366,23 @@ export default async function handler(req, res) {
         const rowNumber = await getSessionRowNumber(
           sheets,
           spreadsheetId,
-          sessionId
+          sessionIdToAbandon
         );
 
         if (rowNumber !== -1) {
           const updateData = [
             { range: `Study_Sessions!E${rowNumber}`, values: [[currentTime]] }, // Timestamp_Fin
-            { range: `Study_Sessions!G${rowNumber}`, values: [["Abandonada"]] }, // Estado_Final
+            { range: `Study_Sessions!G${rowNumber}`, values: [["Incompleta"]] }, // Estado_Final CAMBIADO
           ];
 
           await sheets.spreadsheets.values.batchUpdate({
             spreadsheetId,
             resource: { valueInputOption: "USER_ENTERED", data: updateData },
           });
+
+          console.log(
+            `[TRACK-ACTIVITY] Sesión marcada como Incompleta: ${sessionIdToAbandon}`
+          );
         }
 
         await updateDailyActivity(
@@ -378,6 +398,7 @@ export default async function handler(req, res) {
           message: "Sesión abandonada registrada.",
         });
       }
+
       case "daily_checkin": {
         // Solo actualizar actividad diaria
         await updateDailyActivity(
@@ -410,7 +431,7 @@ export default async function handler(req, res) {
   }
 }
 
-// ===== FUNCIONES AUXILIARES =====
+// ===== FUNCIONES AUXILIARES CORREGIDAS =====
 
 async function updateWordCorrectness(
   sheets,
@@ -420,12 +441,12 @@ async function updateWordCorrectness(
   isCorrect,
   type
 ) {
-  // CORRECCIÓN: Usar ID limpio sin prefijo para el nombre de hoja
-  const cleanUserId = userId.startsWith("user_") ? userId.substring(5) : userId;
-  const range = `${cleanUserId}!A:I`;
+  // CORRECCIÓN PRINCIPAL: Usar userId completo como nombre de hoja
+  const userSheetName = userId; // NO extraer ID limpio
+  const range = `${userSheetName}!A:I`;
 
   console.log(
-    `[updateWordCorrectness] Actualizando ${wordId} en hoja ${cleanUserId}, tipo: ${type}, correcto: ${isCorrect}`
+    `[updateWordCorrectness] Actualizando ${wordId} en hoja ${userSheetName}, tipo: ${type}, correcto: ${isCorrect}`
   );
 
   try {
@@ -436,7 +457,7 @@ async function updateWordCorrectness(
 
     const rows = response.data.values || [];
     if (rows.length === 0) {
-      console.error(`No hay datos en la hoja ${cleanUserId}`);
+      console.error(`No hay datos en la hoja ${userSheetName}`);
       return;
     }
 
@@ -447,7 +468,7 @@ async function updateWordCorrectness(
 
     if (rowIndex === -1) {
       console.error(
-        `Palabra ${wordId} no encontrada en la hoja ${cleanUserId}.`
+        `Palabra ${wordId} no encontrada en la hoja ${userSheetName}.`
       );
       return;
     }
@@ -479,11 +500,11 @@ async function updateWordCorrectness(
           valueInputOption: "USER_ENTERED",
           data: [
             {
-              range: `${cleanUserId}!${correctCol}${actualRowNumber}`,
+              range: `${userSheetName}!${correctCol}${actualRowNumber}`,
               values: [[totalCorrect]],
             },
             {
-              range: `${cleanUserId}!${incorrectCol}${actualRowNumber}`,
+              range: `${userSheetName}!${incorrectCol}${actualRowNumber}`,
               values: [[totalIncorrect]],
             },
           ],
@@ -519,11 +540,11 @@ async function updateWordCorrectness(
           valueInputOption: "USER_ENTERED",
           data: [
             {
-              range: `${cleanUserId}!${voiceCorrectCol}${actualRowNumber}`,
+              range: `${userSheetName}!${voiceCorrectCol}${actualRowNumber}`,
               values: [[voiceCorrect]],
             },
             {
-              range: `${cleanUserId}!${voiceIncorrectCol}${actualRowNumber}`,
+              range: `${userSheetName}!${voiceIncorrectCol}${actualRowNumber}`,
               values: [[voiceIncorrect]],
             },
           ],
@@ -546,9 +567,13 @@ async function updateWordSRS(
   wordId,
   difficulty
 ) {
-  // AGREGAR ESTA LÍNEA:
-  const cleanUserId = userId.startsWith("user_") ? userId.substring(5) : userId;
-  const range = `${cleanUserId}!A:I`;
+  // CORRECCIÓN: Usar userId completo como nombre de hoja
+  const userSheetName = userId;
+  const range = `${userSheetName}!A:I`;
+
+  console.log(
+    `[updateWordSRS] Actualizando SRS para ${wordId} en hoja ${userSheetName}`
+  );
 
   try {
     const response = await sheets.spreadsheets.values.get({
@@ -606,19 +631,19 @@ async function updateWordSRS(
         valueInputOption: "USER_ENTERED",
         data: [
           {
-            range: `${cleanUserId}!${intervalCol}${actualRowNumber}`,
+            range: `${userSheetName}!${intervalCol}${actualRowNumber}`,
             values: [[newInterval]],
           },
           {
-            range: `${cleanUserId}!${easeFactorCol}${actualRowNumber}`,
+            range: `${userSheetName}!${easeFactorCol}${actualRowNumber}`,
             values: [[newEaseFactor.toFixed(2)]],
           },
           {
-            range: `${cleanUserId}!${nextReviewCol}${actualRowNumber}`,
+            range: `${userSheetName}!${nextReviewCol}${actualRowNumber}`,
             values: [[nextReviewDate]],
           },
           {
-            range: `${cleanUserId}!${stateCol}${actualRowNumber}`,
+            range: `${userSheetName}!${stateCol}${actualRowNumber}`,
             values: [[newStatus]],
           },
         ],
@@ -626,7 +651,7 @@ async function updateWordSRS(
     });
 
     console.log(
-      `[updateWordSRS] SRS actualizado - Intervalo: ${newInterval}, Estado: ${newStatus}`
+      `[updateWordSRS] SRS actualizado - Intervalo: ${newInterval}, Estado: ${newStatus}, Próximo repaso: ${nextReviewDate}`
     );
   } catch (error) {
     console.error(`Error al actualizar SRS para ${userId}:`, error);
@@ -861,7 +886,6 @@ async function updateDailyActivity(
         dailyData.Total_Tiempo_Estudio_ms =
           parseInt(dailyData.Total_Tiempo_Estudio_ms || 0) +
           (extraData.duration || 0);
-        dailyData.Palabras_Practicadas;
         dailyData.Palabras_Practicadas =
           parseInt(dailyData.Palabras_Practicadas || 0) +
           (extraData.wordsCount || 0);

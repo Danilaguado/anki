@@ -66,8 +66,11 @@ const QuizScreen = ({
   const inputRef = useRef(null);
   const tempResultRef = useRef(null);
 
+  // CORRECCIÓN: Obtener sessionId y userId correctamente
   const sessionId = sessionInfo?.sessionId;
   const userId = localStorage.getItem("ankiUserId");
+
+  console.log(`[QUIZ] SessionId: ${sessionId}, UserId: ${userId}`);
 
   if (!deck || deck.length === 0) {
     return (
@@ -117,9 +120,13 @@ const QuizScreen = ({
     const correctText = currentCard.Inglés.trim().toLowerCase();
     const isCorrect = spokenText === correctText;
 
+    console.log(
+      `[QUIZ] Voz detectada: "${transcript}" vs "${currentCard.Inglés}" = ${isCorrect}`
+    );
+
     // CORRECCIÓN: Registrar interacción de voz con estructura correcta
-    if (trackActivity) {
-      trackActivity("voice_interaction", {
+    if (trackActivity && sessionId) {
+      await trackActivity("voice_interaction", {
         voiceData: {
           wordId: currentCard.ID_Palabra,
           detectedText: transcript,
@@ -140,10 +147,12 @@ const QuizScreen = ({
     if (isCorrect) {
       alert(`¡Coincidencia exacta! Dijiste: "${transcript}"`);
       // Reproducir sonido de éxito
-      const audio = new Audio("/correct-6033.mp3");
-      audio
-        .play()
-        .catch((e) => console.error("Error reproduciendo sonido:", e));
+      try {
+        const audio = new Audio("/correct-6033.mp3");
+        await audio.play();
+      } catch (e) {
+        console.log("Sonido de éxito no disponible");
+      }
     } else {
       alert(
         `Casi... Dijiste: "${transcript}". La palabra correcta es: "${currentCard.Inglés}"`
@@ -159,11 +168,15 @@ const QuizScreen = ({
     );
     const isCorrect = correctAnswers.includes(userCleanAnswer);
 
+    console.log(
+      `[QUIZ] Respuesta: "${userAnswer}" vs "${currentCard.Español}" = ${isCorrect}`
+    );
+
     setFeedback(isCorrect ? "correct" : "incorrect");
 
     // CORRECCIÓN: Registrar respuesta inmediatamente con estructura correcta
-    if (trackActivity) {
-      trackActivity("check_answer", {
+    if (trackActivity && sessionId) {
+      await trackActivity("check_answer", {
         cardData: {
           wordId: currentCard.ID_Palabra,
           isCorrect: isCorrect,
@@ -190,11 +203,14 @@ const QuizScreen = ({
   const handleSrsFeedback = async (srsLevel) => {
     const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
 
-    // CORRECCIÓN: Usar la función trackActivity
-    if (trackActivity) {
-      trackActivity("rate_memory", {
+    console.log(
+      `[QUIZ] Evaluación SRS: ${currentCard.ID_Palabra} = ${srsLevel}`
+    );
+
+    // CORRECCIÓN: Usar la función trackActivity con datos correctos
+    if (trackActivity && sessionId) {
+      await trackActivity("rate_memory", {
         cardData: {
-          sessionId: sessionId, // Agregar sessionId
           wordId: currentCard.ID_Palabra,
           difficulty: srsLevel,
         },
@@ -203,6 +219,7 @@ const QuizScreen = ({
         `[QUIZ] Memoria evaluada: ${currentCard.ID_Palabra} = ${srsLevel}`
       );
     }
+
     // Lógica de repetición espaciada: si es 'again' o 'hard', programar repetición
     if (srsLevel === "again" || srsLevel === "hard") {
       const alreadyInRepeat = cardsToRepeat.some(
@@ -214,6 +231,9 @@ const QuizScreen = ({
           ...prev,
           { ...currentCard, repeatCount: 1 },
         ]);
+        console.log(
+          `[QUIZ] Palabra ${currentCard.ID_Palabra} añadida para repetir`
+        );
       } else {
         setCardsToRepeat((prev) =>
           prev.map((card) =>
@@ -221,6 +241,9 @@ const QuizScreen = ({
               ? { ...card, repeatCount: (card.repeatCount || 0) + 1 }
               : card
           )
+        );
+        console.log(
+          `[QUIZ] Aumentando repeticiones para ${currentCard.ID_Palabra}`
         );
       }
     }
@@ -242,12 +265,19 @@ const QuizScreen = ({
         setFeedback(null);
         setUserAnswer("");
 
+        console.log(
+          `[QUIZ] Iniciando fase de repaso con ${cardsToRepeat.length} palabras`
+        );
+
         // Mostrar mensaje de transición
         alert(
           `¡Excelente! Ahora vamos a repasar ${cardsToRepeat.length} palabra(s) que necesitan más práctica.`
         );
       } else {
         // Finalizar quiz completamente
+        console.log(
+          `[QUIZ] Finalizando sesión con ${updatedResults.length} resultados`
+        );
         endSession(updatedResults);
       }
     }
@@ -287,13 +317,12 @@ const QuizScreen = ({
         "¿Estás seguro de que quieres abandonar esta sesión? Tu progreso no se guardará."
       )
     ) {
-      // CORRECCIÓN: Usar la estructura correcta para abandonar sesión
-      // CORRECCIÓN: Usar la función trackActivity
-      if (trackActivity) {
-        trackActivity("abandon_session", {
-          sessionId: sessionId, // ← FALTA ESTE PARÁMETRO
-        });
-        console.log(`[QUIZ] Sesión abandonada registrada`);
+      console.log(`[QUIZ] Abandonando sesión: ${sessionId}`);
+
+      // CORRECCIÓN: Usar la función trackActivity con sessionId en el nivel correcto
+      if (trackActivity && sessionId) {
+        await trackActivity("abandon_session", {});
+        console.log(`[QUIZ] Sesión abandonada registrada: ${sessionId}`);
       }
 
       onGoBack();
@@ -354,9 +383,7 @@ const QuizScreen = ({
             Esta palabra ha sido repetida {currentCard.repeatCount} vez(es)
           </p>
         )}
-        {sessionInfo?.sessionId && (
-          <p className='session-info'>Sesión: {sessionInfo.sessionId}</p>
-        )}
+        {sessionId && <p className='session-info'>Sesión: {sessionId}</p>}
       </div>
 
       {/* Tarjeta principal */}
