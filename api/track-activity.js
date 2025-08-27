@@ -1,7 +1,5 @@
-// /api/track-activity.js - Versión final con la lógica de "Dominada" integrada
+// /api/track-activity.js - VERSION para hojas SIN prefijo u_
 import { google } from "googleapis";
-
-// --- Funciones de Utilidad y SRS (Tu código original) ---
 
 function generateShortId() {
   const timestamp = Date.now().toString(36);
@@ -39,8 +37,6 @@ function calculateNextReview(interval) {
   return nextDate.toISOString().split("T")[0];
 }
 
-// --- Handler Principal de la API (Corregido y Reestructurado) ---
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res
@@ -70,6 +66,8 @@ export default async function handler(req, res) {
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const timestamp = new Date().toISOString();
 
+    console.log(`[TRACK-ACTIVITY] Acción: ${action}, Usuario: ${userId}`);
+
     switch (action) {
       case "start_session": {
         const sessionId = generateShortId();
@@ -92,6 +90,8 @@ export default async function handler(req, res) {
           valueInputOption: "USER_ENTERED",
           resource: { values: [sessionRow] },
         });
+        console.log(`[TRACK-ACTIVITY] Sesión iniciada: ${sessionId}`);
+
         await updateDailyActivity(
           sheets,
           spreadsheetId,
@@ -99,14 +99,20 @@ export default async function handler(req, res) {
           timestamp,
           "session_start"
         );
-        return res
-          .status(200)
-          .json({ success: true, sessionId, message: "Sesión iniciada." });
+
+        return res.status(200).json({
+          success: true,
+          sessionId,
+          message: "Sesión iniciada.",
+        });
       }
 
-      // --- LÓGICA SEPARADA PARA INTERACCIONES DE TARJETA ---
       case "check_answer": {
         const { wordId, isCorrect } = cardData;
+        console.log(
+          `[TRACK-ACTIVITY] Check answer: ${wordId}, correcto: ${isCorrect}`
+        );
+
         await updateWordCorrectness(
           sheets,
           spreadsheetId,
@@ -115,13 +121,27 @@ export default async function handler(req, res) {
           isCorrect,
           "text"
         );
-        return res
-          .status(200)
-          .json({ success: true, message: "Resultado registrado." });
+        await updateWordStatistics(
+          sheets,
+          spreadsheetId,
+          userId,
+          wordId,
+          isCorrect,
+          "text"
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: "Resultado registrado.",
+        });
       }
 
       case "rate_memory": {
         const { wordId, difficulty, sessionId } = cardData;
+        console.log(
+          `[TRACK-ACTIVITY] Rate memory: ${wordId}, dificultad: ${difficulty}`
+        );
+
         await updateWordSRS(sheets, spreadsheetId, userId, wordId, difficulty);
 
         if (difficulty === "again" || difficulty === "hard") {
@@ -153,12 +173,10 @@ export default async function handler(req, res) {
           resource: { values: [interactionRow] },
         });
 
-        return res
-          .status(200)
-          .json({
-            success: true,
-            message: "Evaluación de memoria registrada.",
-          });
+        return res.status(200).json({
+          success: true,
+          message: "Evaluación de memoria registrada.",
+        });
       }
 
       case "voice_interaction": {
@@ -169,6 +187,10 @@ export default async function handler(req, res) {
           expectedText,
           isVoiceCorrect,
         } = voiceData;
+        console.log(
+          `[TRACK-ACTIVITY] Voice interaction: ${wordId}, correcto: ${isVoiceCorrect}`
+        );
+
         const voiceInteractionRow = [
           generateShortId(),
           sessionId,
@@ -195,20 +217,32 @@ export default async function handler(req, res) {
           isVoiceCorrect,
           "voice"
         );
+        await updateWordStatistics(
+          sheets,
+          spreadsheetId,
+          userId,
+          wordId,
+          isVoiceCorrect,
+          "voice"
+        );
 
-        return res
-          .status(200)
-          .json({ success: true, message: "Interacción de voz registrada." });
+        return res.status(200).json({
+          success: true,
+          message: "Interacción de voz registrada.",
+        });
       }
 
       case "end_session": {
         const { sessionId, sentiment, results } = finalResults;
+        console.log(`[TRACK-ACTIVITY] End session: ${sessionId}`);
+
         const correctAnswers = results.filter((r) => r.isCorrect).length;
         const totalAnswers = results.length;
         const accuracy =
           totalAnswers > 0
             ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
             : 0;
+
         const rowNumber = await getSessionRowNumber(
           sheets,
           spreadsheetId,
@@ -224,6 +258,7 @@ export default async function handler(req, res) {
         const startTime = sessionResponse.data.values[0][0];
         const durationMs =
           new Date(timestamp).getTime() - new Date(startTime).getTime();
+
         const updateData = [
           { range: `Study_Sessions!E${rowNumber}`, values: [[timestamp]] },
           { range: `Study_Sessions!F${rowNumber}`, values: [[durationMs]] },
@@ -233,10 +268,12 @@ export default async function handler(req, res) {
           { range: `Study_Sessions!J${rowNumber}`, values: [[totalAnswers]] },
           { range: `Study_Sessions!K${rowNumber}`, values: [[accuracy]] },
         ];
+
         await sheets.spreadsheets.values.batchUpdate({
           spreadsheetId,
           resource: { valueInputOption: "USER_ENTERED", data: updateData },
         });
+
         await updateDailyActivity(
           sheets,
           spreadsheetId,
@@ -249,13 +286,17 @@ export default async function handler(req, res) {
             accuracy: parseFloat(accuracy),
           }
         );
-        return res
-          .status(200)
-          .json({ success: true, message: "Sesión completada." });
+
+        return res.status(200).json({
+          success: true,
+          message: "Sesión completada.",
+        });
       }
 
       case "abandon_session": {
         const { sessionId } = sessionData;
+        console.log(`[TRACK-ACTIVITY] Abandon session: ${sessionId}`);
+
         const rowNumber = await getSessionRowNumber(
           sheets,
           spreadsheetId,
@@ -270,6 +311,7 @@ export default async function handler(req, res) {
           valueInputOption: "USER_ENTERED",
           resource: { values: [["Abandonada"]] },
         });
+
         await updateDailyActivity(
           sheets,
           spreadsheetId,
@@ -277,15 +319,18 @@ export default async function handler(req, res) {
           timestamp,
           "session_abandon"
         );
-        return res
-          .status(200)
-          .json({ success: true, message: "Sesión abandonada." });
+
+        return res.status(200).json({
+          success: true,
+          message: "Sesión abandonada.",
+        });
       }
 
       default:
-        return res
-          .status(400)
-          .json({ success: false, message: "Acción no válida." });
+        return res.status(400).json({
+          success: false,
+          message: "Acción no válida.",
+        });
     }
   } catch (error) {
     console.error("Error en track-activity:", error);
@@ -297,7 +342,7 @@ export default async function handler(req, res) {
   }
 }
 
-// --- NUEVAS FUNCIONES AUXILIARES SEPARADAS ---
+// ===== FUNCIONES AUXILIARES CORREGIDAS =====
 
 async function updateWordCorrectness(
   sheets,
@@ -307,62 +352,124 @@ async function updateWordCorrectness(
   isCorrect,
   type
 ) {
-  const range = `u_${userId}!A:M`; // <-- CORRECCIÓN CRÍTICA
+  // NUEVA LÓGICA: Extraer ID limpio para el nombre de la hoja
+  const cleanUserId = userId.startsWith("u_") ? userId.substring(2) : userId;
+  const range = `${cleanUserId}!A:I`;
+  console.log(
+    `[updateWordCorrectness] Actualizando ${wordId} en hoja ${cleanUserId}, tipo: ${type}, correcto: ${isCorrect}`
+  );
 
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,
     });
+
     const rows = response.data.values || [];
-    if (rows.length === 0) return;
-
-    const headers = rows[0];
-    const wordIdIndex = headers.indexOf("ID_Palabra");
-    const rowIndex = rows.findIndex((row) => row[wordIdIndex] === wordId);
-
-    if (rowIndex === -1) {
-      console.error(`Palabra ${wordId} no encontrada para ${userId}.`);
+    if (rows.length === 0) {
+      console.error(`No hay datos en la hoja ${cleanUserId}`);
       return;
     }
 
-    const rowData = rows[rowIndex];
+    const headers = rows[0];
+    const wordIdIndex = headers.indexOf("ID_Palabra");
+    const dataRows = rows.slice(1);
+    const rowIndex = dataRows.findIndex((row) => row[wordIdIndex] === wordId);
+
+    if (rowIndex === -1) {
+      console.error(
+        `Palabra ${wordId} no encontrada en la hoja ${cleanUserId}.`
+      );
+      return;
+    }
+
+    const actualRowNumber = rowIndex + 2;
+    const rowData = dataRows[rowIndex];
 
     if (type === "text") {
       const correctIndex = headers.indexOf("Total_Aciertos");
       const incorrectIndex = headers.indexOf("Total_Errores");
-      let totalCorrect = parseInt(rowData[correctIndex]) || 0;
-      let totalIncorrect = parseInt(rowData[incorrectIndex]) || 0;
-      if (isCorrect) totalCorrect++;
-      else totalIncorrect++;
 
-      const colLetter = String.fromCharCode("A".charCodeAt(0) + correctIndex);
-      await sheets.spreadsheets.values.update({
+      let totalCorrect = parseInt(rowData[correctIndex] || 0);
+      let totalIncorrect = parseInt(rowData[incorrectIndex] || 0);
+
+      if (isCorrect) {
+        totalCorrect++;
+      } else {
+        totalIncorrect++;
+      }
+
+      const correctCol = String.fromCharCode("A".charCodeAt(0) + correctIndex);
+      const incorrectCol = String.fromCharCode(
+        "A".charCodeAt(0) + incorrectIndex
+      );
+
+      await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId,
-        range: `u_${userId}!${colLetter}${rowIndex + 1}`,
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [[totalCorrect, totalIncorrect]] },
+        resource: {
+          valueInputOption: "USER_ENTERED",
+          data: [
+            {
+              range: `${cleanUserId}!${correctCol}${actualRowNumber}`,
+              values: [[totalCorrect]],
+            },
+            {
+              range: `${cleanUserId}!${incorrectCol}${actualRowNumber}`,
+              values: [[totalIncorrect]],
+            },
+          ],
+        },
       });
+
+      console.log(
+        `[updateWordCorrectness] Actualizado texto - Aciertos: ${totalCorrect}, Errores: ${totalIncorrect}`
+      );
     } else if (type === "voice") {
       const voiceCorrectIndex = headers.indexOf("Total_Voz_Aciertos");
       const voiceIncorrectIndex = headers.indexOf("Total_Voz_Errores");
-      let voiceCorrect = parseInt(rowData[voiceCorrectIndex]) || 0;
-      let voiceIncorrect = parseInt(rowData[voiceIncorrectIndex]) || 0;
-      if (isCorrect) voiceCorrect++;
-      else voiceIncorrect++;
 
-      const colLetter = String.fromCharCode(
+      let voiceCorrect = parseInt(rowData[voiceCorrectIndex] || 0);
+      let voiceIncorrect = parseInt(rowData[voiceIncorrectIndex] || 0);
+
+      if (isCorrect) {
+        voiceCorrect++;
+      } else {
+        voiceIncorrect++;
+      }
+
+      const voiceCorrectCol = String.fromCharCode(
         "A".charCodeAt(0) + voiceCorrectIndex
       );
-      await sheets.spreadsheets.values.update({
+      const voiceIncorrectCol = String.fromCharCode(
+        "A".charCodeAt(0) + voiceIncorrectIndex
+      );
+
+      await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId,
-        range: `u_${userId}!${colLetter}${rowIndex + 1}`,
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [[voiceCorrect, voiceIncorrect]] },
+        resource: {
+          valueInputOption: "USER_ENTERED",
+          data: [
+            {
+              range: `${cleanUserId}!${voiceCorrectCol}${actualRowNumber}`,
+              values: [[voiceCorrect]],
+            },
+            {
+              range: `${cleanUserId}!${voiceIncorrectCol}${actualRowNumber}`,
+              values: [[voiceIncorrect]],
+            },
+          ],
+        },
       });
+
+      console.log(
+        `[updateWordCorrectness] Actualizado voz - Aciertos: ${voiceCorrect}, Errores: ${voiceIncorrect}`
+      );
     }
   } catch (error) {
-    console.error(`Error al actualizar acierto/error para u_${userId}:`, error);
+    console.error(
+      `Error al actualizar acierto/error para ${cleanUserId}:`,
+      error
+    );
   }
 }
 
@@ -373,33 +480,43 @@ async function updateWordSRS(
   wordId,
   difficulty
 ) {
-  const range = `u_${userId}!A:M`; // <-- CORRECCIÓN CRÍTICA
+  const cleanUserId = userId.startsWith("u_") ? userId.substring(2) : userId;
+  const range = `${cleanUserId}!A:I`;
+  console.log(
+    `[updateWordSRS] Actualizando SRS ${wordId} en hoja ${cleanUserId}, dificultad: ${difficulty}`
+  );
 
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,
     });
+
     const rows = response.data.values || [];
     if (rows.length === 0) return;
 
     const headers = rows[0];
     const wordIdIndex = headers.indexOf("ID_Palabra");
-    const rowIndex = rows.findIndex((row) => row[wordIdIndex] === wordId);
+    const dataRows = rows.slice(1);
+    const rowIndex = dataRows.findIndex((row) => row[wordIdIndex] === wordId);
 
     if (rowIndex === -1) {
-      console.error(`Palabra ${wordId} no encontrada para ${userId}.`);
+      console.error(
+        `Palabra ${wordId} no encontrada para SRS en ${cleanUserId}.`
+      );
       return;
     }
 
-    const rowData = rows[rowIndex];
+    const actualRowNumber = rowIndex + 2;
+    const rowData = dataRows[rowIndex];
+
     const intervalIndex = headers.indexOf("Intervalo_SRS");
     const easeFactorIndex = headers.indexOf("Factor_Facilidad");
     const nextReviewIndex = headers.indexOf("Fecha_Proximo_Repaso");
     const stateIndex = headers.indexOf("Estado");
 
-    const currentInterval = parseInt(rowData[intervalIndex]) || 1;
-    const easeFactor = parseFloat(rowData[easeFactorIndex]) || 2.5;
+    const currentInterval = parseInt(rowData[intervalIndex] || 1);
+    const easeFactor = parseFloat(rowData[easeFactorIndex] || 2.5);
     const { newInterval, newEaseFactor } = calculateSRSInterval(
       currentInterval,
       difficulty,
@@ -407,31 +524,168 @@ async function updateWordSRS(
     );
     const nextReviewDate = calculateNextReview(newInterval);
 
-    let newStatus = rowData[stateIndex];
+    let newStatus = rowData[stateIndex] || "Aprendiendo";
     if (newInterval > 30) {
       newStatus = "Dominada";
     }
 
-    const srsUpdateData = [
-      newInterval,
-      newEaseFactor.toFixed(2),
-      nextReviewDate,
-      newStatus,
-    ];
-    const startColLetter = String.fromCharCode(
-      "A".charCodeAt(0) + intervalIndex
+    const intervalCol = String.fromCharCode("A".charCodeAt(0) + intervalIndex);
+    const easeFactorCol = String.fromCharCode(
+      "A".charCodeAt(0) + easeFactorIndex
     );
+    const nextReviewCol = String.fromCharCode(
+      "A".charCodeAt(0) + nextReviewIndex
+    );
+    const stateCol = String.fromCharCode("A".charCodeAt(0) + stateIndex);
 
-    await sheets.spreadsheets.values.update({
+    await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId,
-      range: `u_${userId}!${startColLetter}${rowIndex + 1}`,
-      valueInputOption: "USER_ENTERED",
-      resource: { values: [srsUpdateData] },
+      resource: {
+        valueInputOption: "USER_ENTERED",
+        data: [
+          {
+            range: `${cleanUserId}!${intervalCol}${actualRowNumber}`,
+            values: [[newInterval]],
+          },
+          {
+            range: `${cleanUserId}!${easeFactorCol}${actualRowNumber}`,
+            values: [[newEaseFactor.toFixed(2)]],
+          },
+          {
+            range: `${cleanUserId}!${nextReviewCol}${actualRowNumber}`,
+            values: [[nextReviewDate]],
+          },
+          {
+            range: `${cleanUserId}!${stateCol}${actualRowNumber}`,
+            values: [[newStatus]],
+          },
+        ],
+      },
     });
+
+    console.log(
+      `[updateWordSRS] SRS actualizado - Intervalo: ${newInterval}, Estado: ${newStatus}`
+    );
   } catch (error) {
-    console.error(`Error al actualizar SRS para u_${userId}:`, error);
+    console.error(`Error al actualizar SRS para ${cleanUserId}:`, error);
   }
 }
+
+async function updateWordStatistics(
+  sheets,
+  spreadsheetId,
+  userId,
+  wordId,
+  isCorrect,
+  type
+) {
+  console.log(
+    `[updateWordStatistics] Actualizando stats ${wordId} para ${userId}`
+  );
+
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: "Word_Statistics!A:M",
+    });
+
+    const rows = response.data.values || [];
+    if (rows.length === 0) return;
+
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+    const rowIndex = dataRows.findIndex(
+      (row) => row[0] === userId && row[1] === wordId
+    );
+
+    if (rowIndex === -1) {
+      // Crear nuevo registro
+      const newRow = [
+        userId,
+        wordId,
+        1, // Total_Veces_Practicada
+        type === "text" && isCorrect ? 1 : 0, // Total_Aciertos_Texto
+        type === "text" && !isCorrect ? 1 : 0, // Total_Errores_Texto
+        type === "voice" && isCorrect ? 1 : 0, // Total_Aciertos_Voz
+        type === "voice" && !isCorrect ? 1 : 0, // Total_Errores_Voz
+        0, // Mejor_Tiempo_Respuesta
+        0, // Peor_Tiempo_Respuesta
+        0, // Promedio_Tiempo_Respuesta
+        2, // Dificultad_Promedio
+        new Date().toISOString().split("T")[0], // Ultima_Practica
+        null, // Proxima_Revision
+      ];
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: "Word_Statistics!A:M",
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [newRow] },
+      });
+
+      console.log(
+        `[updateWordStatistics] Nuevo registro creado para ${wordId}`
+      );
+    } else {
+      // Actualizar registro existente
+      const actualRowNumber = rowIndex + 2;
+      const rowData = dataRows[rowIndex];
+
+      let totalPracticed = parseInt(rowData[2] || 0) + 1;
+      let textCorrect = parseInt(rowData[3] || 0);
+      let textIncorrect = parseInt(rowData[4] || 0);
+      let voiceCorrect = parseInt(rowData[5] || 0);
+      let voiceIncorrect = parseInt(rowData[6] || 0);
+
+      if (type === "text") {
+        if (isCorrect) textCorrect++;
+        else textIncorrect++;
+      } else if (type === "voice") {
+        if (isCorrect) voiceCorrect++;
+        else voiceIncorrect++;
+      }
+
+      const updateData = [
+        {
+          range: `Word_Statistics!C${actualRowNumber}`,
+          values: [[totalPracticed]],
+        },
+        {
+          range: `Word_Statistics!D${actualRowNumber}`,
+          values: [[textCorrect]],
+        },
+        {
+          range: `Word_Statistics!E${actualRowNumber}`,
+          values: [[textIncorrect]],
+        },
+        {
+          range: `Word_Statistics!F${actualRowNumber}`,
+          values: [[voiceCorrect]],
+        },
+        {
+          range: `Word_Statistics!G${actualRowNumber}`,
+          values: [[voiceIncorrect]],
+        },
+        {
+          range: `Word_Statistics!L${actualRowNumber}`,
+          values: [[new Date().toISOString().split("T")[0]]],
+        },
+      ];
+
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        resource: { valueInputOption: "USER_ENTERED", data: updateData },
+      });
+
+      console.log(
+        `[updateWordStatistics] Estadísticas actualizadas para ${wordId}`
+      );
+    }
+  } catch (error) {
+    console.error(`Error al actualizar estadísticas de palabra:`, error);
+  }
+}
+
 async function updateDailyActivity(
   sheets,
   spreadsheetId,
@@ -441,55 +695,109 @@ async function updateDailyActivity(
   extraData = {}
 ) {
   const today = new Date(timestamp).toISOString().split("T")[0];
-  const range = "Daily_Activity!A:J";
-
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range,
-  });
-  const rows = response.data.values || [];
-  const headers = rows[0] || [];
-  const rowIndex = rows.findIndex(
-    (row) => row[0] === userId && row[1] === today
+  console.log(
+    `[updateDailyActivity] Actualizando actividad diaria para ${userId}, tipo: ${activityType}`
   );
 
-  let dailyData = {};
-  if (rowIndex > 0) {
-    headers.forEach((h, i) => (dailyData[h] = rows[rowIndex][i]));
-  } else {
-    dailyData = { UserID: userId, Date: today };
-  }
-
-  dailyData.Last_Activity_Timestamp = timestamp;
-  if (activityType === "session_start") {
-    dailyData.Total_Sessions_Started =
-      (parseInt(dailyData.Total_Sessions_Started) || 0) + 1;
-  }
-  if (activityType === "session_end") {
-    dailyData.Total_Sessions_Completed =
-      (parseInt(dailyData.Total_Sessions_Completed) || 0) + 1;
-    dailyData.Total_Study_Time_ms =
-      (parseInt(dailyData.Total_Study_Time_ms) || 0) + extraData.duration;
-    dailyData.Total_Words_Practiced =
-      (parseInt(dailyData.Total_Words_Practiced) || 0) + extraData.wordsCount;
-  }
-
-  const newRow = headers.map((h) => dailyData[h] || null);
-
-  if (rowIndex > 0) {
-    await sheets.spreadsheets.values.update({
+  try {
+    const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `Daily_Activity!A${rowIndex + 1}`,
-      valueInputOption: "USER_ENTERED",
-      resource: { values: [newRow] },
+      range: "Daily_Activity!A:J",
     });
-  } else {
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range,
-      valueInputOption: "USER_ENTERED",
-      resource: { values: [newRow] },
-    });
+
+    const rows = response.data.values || [];
+    const headers =
+      rows.length > 0
+        ? rows[0]
+        : [
+            "UserID",
+            "Fecha",
+            "Primera_Sesion",
+            "Ultima_Sesion",
+            "Total_Sesiones_Dia",
+            "Total_Tiempo_Estudio_ms",
+            "Sesiones_Completadas",
+            "Sesiones_Abandonadas",
+            "Palabras_Practicadas",
+            "Porcentaje_Acierto_Dia",
+          ];
+
+    const dataRows = rows.slice(1);
+    const rowIndex = dataRows.findIndex(
+      (row) => row[0] === userId && row[1] === today
+    );
+
+    let dailyData = {
+      UserID: userId,
+      Fecha: today,
+      Primera_Sesion: timestamp.split("T")[1].substring(0, 8),
+      Ultima_Sesion: timestamp.split("T")[1].substring(0, 8),
+      Total_Sesiones_Dia: 0,
+      Total_Tiempo_Estudio_ms: 0,
+      Sesiones_Completadas: 0,
+      Sesiones_Abandonadas: 0,
+      Palabras_Practicadas: 0,
+      Porcentaje_Acierto_Dia: 0,
+    };
+
+    if (rowIndex !== -1) {
+      // Cargar datos existentes
+      const existingData = dataRows[rowIndex];
+      headers.forEach((header, i) => {
+        if (existingData[i] !== undefined) {
+          dailyData[header] = existingData[i];
+        }
+      });
+      // No actualizar primera sesión si ya existe
+      delete dailyData.Primera_Sesion;
+    }
+
+    // Actualizar según tipo de actividad
+    switch (activityType) {
+      case "session_start":
+        dailyData.Total_Sesiones_Dia =
+          parseInt(dailyData.Total_Sesiones_Dia || 0) + 1;
+        break;
+      case "session_end":
+        dailyData.Sesiones_Completadas =
+          parseInt(dailyData.Sesiones_Completadas || 0) + 1;
+        dailyData.Total_Tiempo_Estudio_ms =
+          parseInt(dailyData.Total_Tiempo_Estudio_ms || 0) + extraData.duration;
+        dailyData.Palabras_Practicadas =
+          parseInt(dailyData.Palabras_Practicadas || 0) + extraData.wordsCount;
+        break;
+      case "session_abandon":
+        dailyData.Sesiones_Abandonadas =
+          parseInt(dailyData.Sesiones_Abandonadas || 0) + 1;
+        break;
+    }
+
+    dailyData.Ultima_Sesion = timestamp.split("T")[1].substring(0, 8);
+
+    const newRow = headers.map((header) => dailyData[header] || "");
+
+    if (rowIndex !== -1) {
+      // Actualizar fila existente
+      const actualRowNumber = rowIndex + 2;
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Daily_Activity!A${actualRowNumber}:J${actualRowNumber}`,
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [newRow] },
+      });
+      console.log(`[updateDailyActivity] Actividad diaria actualizada`);
+    } else {
+      // Crear nueva fila
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: "Daily_Activity!A:J",
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [newRow] },
+      });
+      console.log(`[updateDailyActivity] Nueva actividad diaria creada`);
+    }
+  } catch (error) {
+    console.error(`Error al actualizar actividad diaria:`, error);
   }
 }
 

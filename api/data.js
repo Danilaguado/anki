@@ -1,4 +1,4 @@
-// /api/data.js - Actualizado para incluir mazos
+// /api/data.js - CORREGIDO para hojas sin prefijo u_
 import { google } from "googleapis";
 
 export default async function handler(req, res) {
@@ -25,19 +25,26 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
+    // CORRECCIÓN: Extraer ID limpio para buscar la hoja
+    const cleanUserId = userId.startsWith("u_") ? userId.substring(2) : userId;
+    console.log(
+      `[DATA] Buscando datos para userId: ${userId}, hoja: ${cleanUserId}`
+    );
+
     const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
     const userSheetExists = spreadsheetInfo.data.sheets.some(
-      (s) => s.properties.title === userId
+      (s) => s.properties.title === cleanUserId // ← Usar cleanUserId
     );
 
     if (!userSheetExists) {
+      console.log(`[DATA] Hoja ${cleanUserId} no existe`);
       return res.status(200).json({ success: true, userExists: false });
     }
 
     const ranges = [
       `Master_Palabras!A:C`,
-      `${userId}!A:I`, // Actualizado para incluir columnas de voz
-      `Decks!A:E`, // Incluir información de mazos
+      `${cleanUserId}!A:I`, // ← Usar cleanUserId en el rango
+      `Decks!A:E`,
     ];
 
     const response = await sheets.spreadsheets.values.batchGet({
@@ -66,22 +73,25 @@ export default async function handler(req, res) {
       return { ...masterWord, ...progressObj };
     });
 
-    // Procesar mazos del usuario
+    // Procesar mazos del usuario (aquí SÍ usamos el userId completo para filtrar)
     const decksHeaders = decksRows[0];
     const decksData = decksRows.slice(1);
     const userDecks = decksData
-      .filter((row) => row[decksHeaders.indexOf("UserID")] === userId)
+      .filter((row) => row[decksHeaders.indexOf("UserID")] === userId) // ← Usar userId completo
       .map((deckRow) => {
         const deckObj = {};
         decksHeaders.forEach((header, i) => {
           deckObj[header] = deckRow[i];
         });
-        // Añadir estado por defecto si no existe
         if (!deckObj.Estado) {
           deckObj.Estado = "Activo";
         }
         return deckObj;
       });
+
+    console.log(
+      `[DATA] Datos cargados: ${combinedWords.length} palabras, ${userDecks.length} mazos`
+    );
 
     res.status(200).json({
       success: true,
