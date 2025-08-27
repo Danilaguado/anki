@@ -1,4 +1,4 @@
-// /api/track-activity.js - VERSIÓN COMPLETAMENTE CORREGIDA Y OPTIMIZADA
+// /api/track-activity.js - VERSIÓN CORREGIDA PARA STUDY_SESSIONS
 import { google } from "googleapis";
 
 function generateShortId() {
@@ -81,46 +81,55 @@ export default async function handler(req, res) {
 
     switch (action) {
       case "start_session": {
-        const newSessionId = `session_${generateShortId()}`;
-        const currentTime = new Date().toISOString();
+        // 🆕 CREAR SESIÓN EN STUDY_SESSIONS
+        const newSessionId =
+          sessionData?.sessionId || `session_${generateShortId()}`;
+        const currentTime = sessionData?.startTime || new Date().toISOString();
+        const deckId = sessionData?.deckId || "general";
 
-        await sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: "Study_Sessions!A:K",
-          valueInputOption: "USER_ENTERED",
-          resource: {
-            values: [
-              [
-                newSessionId,
-                sessionData?.deckId || "general",
-                userId,
-                currentTime,
-                "",
-                "",
-                "En progreso",
-                "",
-                "",
-                "",
-                "",
+        console.log(`[TRACK-ACTIVITY] 📊 Creando sesión: ${newSessionId}`);
+
+        try {
+          await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: "Study_Sessions!A:K",
+            valueInputOption: "USER_ENTERED",
+            resource: {
+              values: [
+                [
+                  newSessionId, // ID_Sesion
+                  deckId, // ID_Mazo
+                  userId, // UserID
+                  currentTime, // Timestamp_Inicio
+                  "", // Timestamp_Fin (vacío al iniciar)
+                  "", // Duracion_Total_ms (vacío al iniciar)
+                  "En progreso", // Estado_Final
+                  "", // Sentimiento_Reportado (vacío al iniciar)
+                  "", // Palabras_Correctas (vacío al iniciar)
+                  "", // Palabras_Totales (vacío al iniciar)
+                  "", // Porcentaje_Acierto (vacío al iniciar)
+                ],
               ],
-            ],
-          },
-        });
+            },
+          });
 
-        await updateDailyActivity(
-          sheets,
-          spreadsheetId,
-          userId,
-          currentTime,
-          "session_start"
-        );
+          console.log(
+            `[TRACK-ACTIVITY] ✅ Sesión creada en Study_Sessions: ${newSessionId}`
+          );
 
-        console.log(`[TRACK-ACTIVITY] Sesión iniciada: ${newSessionId}`);
-        return res.status(200).json({
-          success: true,
-          message: "Sesión iniciada correctamente.",
-          sessionId: newSessionId,
-        });
+          return res.status(200).json({
+            success: true,
+            message: "Sesión iniciada correctamente.",
+            sessionId: newSessionId,
+          });
+        } catch (error) {
+          console.error(`[TRACK-ACTIVITY] ❌ Error creando sesión:`, error);
+          return res.status(500).json({
+            success: false,
+            message: "Error al crear sesión",
+            error: error.message,
+          });
+        }
       }
 
       case "check_answer": {
@@ -129,7 +138,7 @@ export default async function handler(req, res) {
           `[TRACK-ACTIVITY] Registrando respuesta: ${wordId} = ${isCorrect}`
         );
 
-        // ✅ CORRECCIÓN CRÍTICA: Actualizar hoja del usuario
+        // Actualizar hoja del usuario
         await updateUserWordStats(
           sheets,
           spreadsheetId,
@@ -139,7 +148,7 @@ export default async function handler(req, res) {
           "text"
         );
 
-        // ✅ CORRECCIÓN CRÍTICA: Actualizar estadísticas globales
+        // Actualizar estadísticas globales
         await updateWordStatistics(
           sheets,
           spreadsheetId,
@@ -150,7 +159,7 @@ export default async function handler(req, res) {
         );
 
         console.log(
-          `[TRACK-ACTIVITY] Respuesta registrada exitosamente: ${wordId} = ${isCorrect}`
+          `[TRACK-ACTIVITY] ✅ Respuesta registrada: ${wordId} = ${isCorrect}`
         );
         return res.status(200).json({
           success: true,
@@ -192,7 +201,7 @@ export default async function handler(req, res) {
           },
         });
 
-        // ✅ CORRECCIÓN CRÍTICA: Actualizar SRS del usuario
+        // Actualizar SRS del usuario
         await updateUserWordSRS(
           sheets,
           spreadsheetId,
@@ -201,7 +210,7 @@ export default async function handler(req, res) {
           difficulty
         );
 
-        // ✅ CORRECCIÓN CRÍTICA: Programar próxima práctica
+        // Programar próxima práctica
         await schedulePracticeReview(
           sheets,
           spreadsheetId,
@@ -211,7 +220,7 @@ export default async function handler(req, res) {
         );
 
         console.log(
-          `[TRACK-ACTIVITY] Memoria evaluada exitosamente: ${wordId} = ${difficulty}`
+          `[TRACK-ACTIVITY] ✅ Memoria evaluada: ${wordId} = ${difficulty}`
         );
         return res.status(200).json({
           success: true,
@@ -252,7 +261,7 @@ export default async function handler(req, res) {
           },
         });
 
-        // ✅ CORRECCIÓN CRÍTICA: Actualizar estadísticas de voz
+        // Actualizar estadísticas de voz
         await updateUserWordStats(
           sheets,
           spreadsheetId,
@@ -271,7 +280,7 @@ export default async function handler(req, res) {
         );
 
         console.log(
-          `[TRACK-ACTIVITY] Interacción de voz registrada exitosamente: ${wordId}`
+          `[TRACK-ACTIVITY] ✅ Interacción de voz registrada: ${wordId}`
         );
         return res.status(200).json({
           success: true,
@@ -280,6 +289,7 @@ export default async function handler(req, res) {
       }
 
       case "end_session": {
+        // 🆕 FINALIZAR SESIÓN CON DATOS COMPLETOS
         const {
           sessionId: finalSessionId,
           sentiment,
@@ -287,40 +297,108 @@ export default async function handler(req, res) {
           correctAnswers,
           totalAnswers,
           accuracy,
+          estadoFinal,
         } = finalResults;
 
         const currentTime = new Date().toISOString();
-        console.log(`[TRACK-ACTIVITY] Finalizando sesión: ${finalSessionId}`);
 
-        // Buscar y actualizar la sesión
-        const rowNumber = await getSessionRowNumber(
-          sheets,
-          spreadsheetId,
-          finalSessionId
+        console.log(
+          `[TRACK-ACTIVITY] 📊 Finalizando sesión: ${finalSessionId}`
         );
-        if (rowNumber !== -1) {
+        console.log(
+          `[TRACK-ACTIVITY] 📊 Datos: ${correctAnswers}/${totalAnswers} (${accuracy}%) - Estado: ${
+            estadoFinal || "Completada"
+          }`
+        );
+
+        if (!finalSessionId) {
+          console.log(
+            `[TRACK-ACTIVITY] ⚠️ Sin sessionId, no se puede actualizar Study_Sessions`
+          );
+          return res.status(200).json({
+            success: true,
+            message: "Sesión finalizada sin registro (falta sessionId).",
+          });
+        }
+
+        try {
+          // Buscar la fila de la sesión
+          const sessionsResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: "Study_Sessions!A:K",
+          });
+
+          const rows = sessionsResponse.data.values || [];
+          const headers = rows[0] || [];
+          const dataRows = rows.slice(1);
+
+          const rowIndex = dataRows.findIndex(
+            (row) => row[0] === finalSessionId
+          );
+
+          if (rowIndex === -1) {
+            console.log(
+              `[TRACK-ACTIVITY] ⚠️ Sesión ${finalSessionId} no encontrada en Study_Sessions`
+            );
+            return res.status(200).json({
+              success: true,
+              message: "Sesión finalizada pero no encontrada en registro.",
+            });
+          }
+
+          const actualRowNumber = rowIndex + 2; // +1 por headers, +1 por índice 0-based
+
+          // 🆕 ACTUALIZAR TODAS LAS COLUMNAS DE LA SESIÓN
           const updateData = [
-            { range: `Study_Sessions!E${rowNumber}`, values: [[currentTime]] },
             {
-              range: `Study_Sessions!F${rowNumber}`,
-              values: [[sessionDuration]],
-            },
-            { range: `Study_Sessions!G${rowNumber}`, values: [["Completada"]] },
-            { range: `Study_Sessions!H${rowNumber}`, values: [[sentiment]] },
+              range: `Study_Sessions!E${actualRowNumber}`,
+              values: [[currentTime]],
+            }, // Timestamp_Fin
             {
-              range: `Study_Sessions!I${rowNumber}`,
-              values: [[correctAnswers]],
-            },
-            { range: `Study_Sessions!J${rowNumber}`, values: [[totalAnswers]] },
-            { range: `Study_Sessions!K${rowNumber}`, values: [[accuracy]] },
+              range: `Study_Sessions!F${actualRowNumber}`,
+              values: [[sessionDuration || 0]],
+            }, // Duracion_Total_ms
+            {
+              range: `Study_Sessions!G${actualRowNumber}`,
+              values: [[estadoFinal || "Completada"]],
+            }, // Estado_Final ✅
+            {
+              range: `Study_Sessions!H${actualRowNumber}`,
+              values: [[sentiment || "normal"]],
+            }, // Sentimiento_Reportado
+            {
+              range: `Study_Sessions!I${actualRowNumber}`,
+              values: [[correctAnswers || 0]],
+            }, // Palabras_Correctas ✅
+            {
+              range: `Study_Sessions!J${actualRowNumber}`,
+              values: [[totalAnswers || 0]],
+            }, // Palabras_Totales ✅
+            {
+              range: `Study_Sessions!K${actualRowNumber}`,
+              values: [[accuracy || "0"]],
+            }, // Porcentaje_Acierto ✅
           ];
 
           await sheets.spreadsheets.values.batchUpdate({
             spreadsheetId,
             resource: { valueInputOption: "USER_ENTERED", data: updateData },
           });
+
+          console.log(
+            `[TRACK-ACTIVITY] ✅ Study_Sessions actualizado completamente para sesión ${finalSessionId}`
+          );
+          console.log(
+            `[TRACK-ACTIVITY] 📊 Estado: ${estadoFinal}, Duración: ${sessionDuration}ms, Precisión: ${accuracy}%`
+          );
+        } catch (error) {
+          console.error(
+            `[TRACK-ACTIVITY] ❌ Error actualizando Study_Sessions:`,
+            error
+          );
         }
 
+        // Actualizar actividad diaria
         await updateDailyActivity(
           sheets,
           spreadsheetId,
@@ -330,51 +408,28 @@ export default async function handler(req, res) {
           {
             duration: sessionDuration,
             wordsCount: totalAnswers,
-            accuracy: parseFloat(accuracy),
+            accuracy: parseFloat(accuracy || 0),
           }
         );
 
-        console.log(`[TRACK-ACTIVITY] Sesión completada exitosamente`);
         return res.status(200).json({
           success: true,
-          message: "Sesión completada y registrada.",
+          message: "Sesión completada y registrada en Study_Sessions.",
         });
       }
 
       case "abandon_session": {
-        const sessionIdToAbandon = sessionId || req.body.sessionId;
-        if (!sessionIdToAbandon) {
-          return res
-            .status(200)
-            .json({ success: true, message: "Sin sesión activa" });
-        }
+        console.log(`[TRACK-ACTIVITY] 🚪 Registro de abandono solicitado`);
 
-        const currentTime = new Date().toISOString();
-        const rowNumber = await getSessionRowNumber(
-          sheets,
-          spreadsheetId,
-          sessionIdToAbandon
-        );
-
-        if (rowNumber !== -1) {
-          const updateData = [
-            { range: `Study_Sessions!E${rowNumber}`, values: [[currentTime]] },
-            { range: `Study_Sessions!G${rowNumber}`, values: [["Incompleta"]] },
-          ];
-
-          await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId,
-            resource: { valueInputOption: "USER_ENTERED", data: updateData },
-          });
-        }
-
+        // Para abandono simple, solo registrar en actividad diaria
         await updateDailyActivity(
           sheets,
           spreadsheetId,
           userId,
-          currentTime,
+          new Date().toISOString(),
           "session_abandon"
         );
+
         return res.status(200).json({
           success: true,
           message: "Sesión abandonada registrada.",
@@ -411,7 +466,7 @@ export default async function handler(req, res) {
   }
 }
 
-// ===== FUNCIONES AUXILIARES CORREGIDAS =====
+// ===== FUNCIONES AUXILIARES =====
 
 async function updateUserWordStats(
   sheets,
@@ -491,7 +546,7 @@ async function updateUserWordStats(
       );
 
       console.log(
-        `[updateUserWordStats] Actualizando texto - Aciertos: ${totalCorrect}, Errores: ${totalIncorrect}`
+        `[updateUserWordStats] ✅ Actualizando texto - Aciertos: ${totalCorrect}, Errores: ${totalIncorrect}`
       );
     } else if (type === "voice") {
       const voiceCorrectIndex = headers.indexOf("Total_Voz_Aciertos");
@@ -530,7 +585,7 @@ async function updateUserWordStats(
       );
 
       console.log(
-        `[updateUserWordStats] Actualizando voz - Aciertos: ${voiceCorrect}, Errores: ${voiceIncorrect}`
+        `[updateUserWordStats] ✅ Actualizando voz - Aciertos: ${voiceCorrect}, Errores: ${voiceIncorrect}`
       );
     }
 
@@ -687,21 +742,20 @@ async function updateWordStatistics(
 
     const rows = response.data.values || [];
     if (rows.length <= 1) {
-      // Crear nuevo registro
       const newRow = [
         userId,
         wordId,
-        1, // Total_Veces_Practicada
-        type === "text" && isCorrect ? 1 : 0, // Total_Aciertos_Texto
-        type === "text" && !isCorrect ? 1 : 0, // Total_Errores_Texto
-        type === "voice" && isCorrect ? 1 : 0, // Total_Aciertos_Voz
-        type === "voice" && !isCorrect ? 1 : 0, // Total_Errores_Voz
-        0, // Mejor_Tiempo_Respuesta
-        0, // Peor_Tiempo_Respuesta
-        0, // Promedio_Tiempo_Respuesta
-        2, // Dificultad_Promedio
-        new Date().toISOString().split("T")[0], // Ultima_Practica
-        null, // Proxima_Revision
+        1,
+        type === "text" && isCorrect ? 1 : 0,
+        type === "text" && !isCorrect ? 1 : 0,
+        type === "voice" && isCorrect ? 1 : 0,
+        type === "voice" && !isCorrect ? 1 : 0,
+        0,
+        0,
+        0,
+        2,
+        new Date().toISOString().split("T")[0],
+        null,
       ];
 
       await sheets.spreadsheets.values.append({
@@ -717,18 +771,16 @@ async function updateWordStatistics(
       return;
     }
 
-    const headers = rows[0];
     const dataRows = rows.slice(1);
     const rowIndex = dataRows.findIndex(
       (row) => row[0] === userId && row[1] === wordId
     );
 
     if (rowIndex === -1) {
-      // Crear nuevo registro
       const newRow = [
         userId,
         wordId,
-        1, // Total_Veces_Practicada
+        1,
         type === "text" && isCorrect ? 1 : 0,
         type === "text" && !isCorrect ? 1 : 0,
         type === "voice" && isCorrect ? 1 : 0,
@@ -752,7 +804,6 @@ async function updateWordStatistics(
         `[updateWordStatistics] ✅ Nuevo registro creado para ${wordId}`
       );
     } else {
-      // Actualizar registro existente
       const actualRowNumber = rowIndex + 2;
       const rowData = dataRows[rowIndex];
 
@@ -825,10 +876,6 @@ async function updateDailyActivity(
   const today = new Date(timestamp).toISOString().split("T")[0];
   const timeOnly = timestamp.split("T")[1].substring(0, 8);
 
-  console.log(
-    `[updateDailyActivity] Actualizando actividad diaria para ${userId}, tipo: ${activityType}`
-  );
-
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -880,7 +927,6 @@ async function updateDailyActivity(
       dailyData.Primera_Sesion = existingData[2] || timeOnly;
     }
 
-    // Actualizar según tipo de actividad
     switch (activityType) {
       case "session_start":
       case "daily_checkin":
@@ -914,9 +960,6 @@ async function updateDailyActivity(
         valueInputOption: "USER_ENTERED",
         resource: { values: [newRow] },
       });
-      console.log(
-        `[updateDailyActivity] ✅ Actividad diaria actualizada para ${userId}`
-      );
     } else {
       await sheets.spreadsheets.values.append({
         spreadsheetId,
@@ -924,9 +967,6 @@ async function updateDailyActivity(
         valueInputOption: "USER_ENTERED",
         resource: { values: [newRow] },
       });
-      console.log(
-        `[updateDailyActivity] ✅ Nueva actividad diaria creada para ${userId}`
-      );
     }
   } catch (error) {
     console.error(
@@ -973,24 +1013,6 @@ async function schedulePracticeReview(
       `[schedulePracticeReview] ❌ Error programando práctica:`,
       error
     );
-  }
-}
-
-async function getSessionRowNumber(sheets, spreadsheetId, sessionId) {
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Study_Sessions!A:A",
-    });
-    const rows = response.data.values || [];
-    const index = rows.findIndex((row) => row[0] === sessionId);
-    return index !== -1 ? index + 1 : -1;
-  } catch (error) {
-    console.error(
-      `[getSessionRowNumber] ❌ Error buscando sesión ${sessionId}:`,
-      error
-    );
-    return -1;
   }
 }
 

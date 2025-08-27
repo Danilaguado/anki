@@ -15,13 +15,10 @@ import DeckWrapper from "./components/DeckWrapper";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
 import "./index.css";
-// En tu App.js, agrega temporalmente para testing:
+
+// 🔧 CORRECCIÓN: Import correcto del DebugPanel
 import DebugPanel from "./components/DebugPanel";
 
-// Dentro del componente, agrega:
-{
-  process.env.NODE_ENV === "development" && <DebugPanel userId={userId} />;
-}
 const generateShortUserId = () => {
   const timestamp = (Date.now() % 1000000).toString(36);
   const random = Math.random().toString(36).substr(2, 4);
@@ -236,7 +233,7 @@ const AppContent = () => {
       sessionData: { deckId: isPracticeMode ? "practice-mode" : "review-mode" },
     });
 
-    console.log("🔍 [APP] Resultado de start_session:", result); // Agrega este log
+    console.log("🔍 [APP] Resultado de start_session:", result);
 
     if (!result || !result.success || !result.sessionId) {
       alert("Error al iniciar la sesión de estudio desde el backend.");
@@ -307,66 +304,71 @@ const AppContent = () => {
   }
 
   return (
-    <Routes>
-      <Route
-        path='/setup'
-        element={
-          <SetupScreen
-            onSetupComplete={handleSetupComplete}
-            isLoading={isLoading}
-            error={error}
-            userId={userId}
-          />
-        }
-      />
-      <Route
-        path='/'
-        element={
-          <Dashboard
-            userData={userData}
-            onStartQuiz={handleStartQuiz}
-            onCreateDeck={handleCreateDeck}
-            userId={userId}
-            dailySessionCount={dailySessionCount}
-          />
-        }
-      />
-      <Route
-        path='/analytics'
-        element={<AnalyticsDashboard userId={userId} />}
-      />
-      <Route path='/deck/:deckId/history' element={<HistoryActivity />} />
-      <Route path='/deck/:deckId/learn' element={<LearnActivity />} />
-      <Route path='/deck/:deckId/quiz' element={<QuizActivity />} />
-      <Route path='/deck/:deckId/cards' element={<DeckWrapper />} />
-      <Route
-        path='/quiz'
-        element={
-          <QuizScreen
-            deck={studyDeck}
-            onQuizComplete={handleQuizComplete}
-            onGoBack={() => {
-              handleAbandonSession();
-              navigate("/");
-            }}
-            sessionInfo={sessionInfo}
-            trackActivity={trackActivity}
-          />
-        }
-      />
-      <Route
-        path='/results'
-        element={
-          <ResultsScreen
-            results={sessionInfo.results || []}
-            voiceResults={sessionInfo.voiceResults || []}
-            finalStats={sessionInfo.finalStats || {}}
-            onBackToDashboard={handleBackToDashboard}
-          />
-        }
-      />
-      <Route path='*' element={<div>Página no encontrada</div>} />
-    </Routes>
+    <>
+      {/* 🔧 CORRECCIÓN: Sintaxis correcta para renderizado condicional */}
+      {process.env.NODE_ENV === "development" && <DebugPanel userId={userId} />}
+
+      <Routes>
+        <Route
+          path='/setup'
+          element={
+            <SetupScreen
+              onSetupComplete={handleSetupComplete}
+              isLoading={isLoading}
+              error={error}
+              userId={userId}
+            />
+          }
+        />
+        <Route
+          path='/'
+          element={
+            <Dashboard
+              userData={userData}
+              onStartQuiz={handleStartQuiz}
+              onCreateDeck={handleCreateDeck}
+              userId={userId}
+              dailySessionCount={dailySessionCount}
+            />
+          }
+        />
+        <Route
+          path='/analytics'
+          element={<AnalyticsDashboard userId={userId} />}
+        />
+        <Route path='/deck/:deckId/history' element={<HistoryActivity />} />
+        <Route path='/deck/:deckId/learn' element={<LearnActivity />} />
+        <Route path='/deck/:deckId/quiz' element={<QuizActivity />} />
+        <Route path='/deck/:deckId/cards' element={<DeckWrapper />} />
+        <Route
+          path='/quiz'
+          element={
+            <QuizScreen
+              deck={studyDeck}
+              onQuizComplete={handleQuizComplete}
+              onGoBack={() => {
+                handleAbandonSession();
+                navigate("/");
+              }}
+              sessionInfo={sessionInfo}
+              trackActivity={trackActivity}
+            />
+          }
+        />
+        <Route
+          path='/results'
+          element={
+            <ResultsScreen
+              results={sessionInfo.results || []}
+              voiceResults={sessionInfo.voiceResults || []}
+              finalStats={sessionInfo.finalStats || {}}
+              onBackToDashboard={handleBackToDashboard}
+            />
+          }
+        />
+        <Route path='*' element={<div>Página no encontrada</div>} />
+      </Routes>
+    </>
   );
 };
 
