@@ -41,7 +41,13 @@ const CloseIcon = () => (
   </svg>
 );
 
-const QuizScreen = ({ deck, onQuizComplete, onGoBack, sessionInfo }) => {
+const QuizScreen = ({
+  deck,
+  onQuizComplete,
+  onGoBack,
+  sessionInfo,
+  trackActivity,
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState(null);
@@ -61,8 +67,8 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack, sessionInfo }) => {
   const tempResultRef = useRef(null);
 
   // CORRECCIÓN: Extraer sessionId del sessionInfo
-  const sessionId = sessionInfo?.sessionId;
-  const userId = localStorage.getItem("ankiUserId");
+  // const sessionId = sessionInfo?.sessionId;
+  // const userId = localStorage.getItem("ankiUserId");
 
   if (!deck || deck.length === 0) {
     return (
@@ -113,28 +119,18 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack, sessionInfo }) => {
     const isCorrect = spokenText === correctText;
 
     // CORRECCIÓN: Registrar interacción de voz con estructura correcta
-    try {
-      await fetch("/api/track-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: userId,
-          action: "voice_interaction",
-          voiceData: {
-            sessionId: sessionId,
-            wordId: currentCard.ID_Palabra,
-            detectedText: transcript,
-            expectedText: currentCard.Inglés,
-            isVoiceCorrect: isCorrect,
-          },
-        }),
+    if (trackActivity) {
+      trackActivity("voice_interaction", {
+        voiceData: {
+          wordId: currentCard.ID_Palabra,
+          detectedText: transcript,
+          expectedText: currentCard.Inglés,
+          isVoiceCorrect: isCorrect,
+        },
       });
-
       console.log(
         `[QUIZ] Interacción de voz registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
       );
-    } catch (error) {
-      console.error("Error registrando interacción de voz:", error);
     }
 
     setVoiceResults((prev) => [
@@ -167,25 +163,16 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack, sessionInfo }) => {
     setFeedback(isCorrect ? "correct" : "incorrect");
 
     // CORRECCIÓN: Registrar respuesta inmediatamente con estructura correcta
-    try {
-      await fetch("/api/track-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: userId,
-          action: "check_answer",
-          cardData: {
-            wordId: currentCard.ID_Palabra,
-            isCorrect: isCorrect,
-          },
-        }),
+    if (trackActivity) {
+      trackActivity("check_answer", {
+        cardData: {
+          wordId: currentCard.ID_Palabra,
+          isCorrect: isCorrect,
+        },
       });
-
       console.log(
         `[QUIZ] Respuesta registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
       );
-    } catch (error) {
-      console.error("Error registrando el resultado de la respuesta:", error);
     }
 
     // Guardamos el resto de los datos temporalmente para el feedback de SRS
@@ -204,29 +191,18 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack, sessionInfo }) => {
   const handleSrsFeedback = async (srsLevel) => {
     const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
 
-    // CORRECCIÓN: Registrar la dificultad (memoria) con estructura correcta
-    try {
-      await fetch("/api/track-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: userId,
-          action: "rate_memory",
-          cardData: {
-            sessionId: sessionId,
-            wordId: currentCard.ID_Palabra,
-            difficulty: srsLevel,
-          },
-        }),
+    // CORRECCIÓN: Usar la función trackActivity
+    if (trackActivity) {
+      trackActivity("rate_memory", {
+        word: currentCard.Inglés,
+        rating: srsLevel,
+        isCorrect: finalResult.isCorrect,
+        responseTime: finalResult.responseTime,
       });
-
       console.log(
         `[QUIZ] Memoria evaluada: ${currentCard.ID_Palabra} = ${srsLevel}`
       );
-    } catch (error) {
-      console.error("Error registrando la evaluación de memoria:", error);
     }
-
     // Lógica de repetición espaciada: si es 'again' o 'hard', programar repetición
     if (srsLevel === "again" || srsLevel === "hard") {
       const alreadyInRepeat = cardsToRepeat.some(
@@ -312,20 +288,10 @@ const QuizScreen = ({ deck, onQuizComplete, onGoBack, sessionInfo }) => {
       )
     ) {
       // CORRECCIÓN: Usar la estructura correcta para abandonar sesión
-      try {
-        await fetch("/api/track-activity", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: userId,
-            action: "abandon_session",
-            sessionData: { sessionId: sessionId },
-          }),
-        });
-
-        console.log(`[QUIZ] Sesión abandonada: ${sessionId}`);
-      } catch (error) {
-        console.error("Error registrando abandono de sesión:", error);
+      // CORRECCIÓN: Usar la función trackActivity
+      if (trackActivity) {
+        trackActivity("abandon_session");
+        console.log(`[QUIZ] Sesión abandonada registrada`);
       }
 
       onGoBack();

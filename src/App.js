@@ -68,6 +68,39 @@ const AppContent = () => {
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const [dailySessionCount, setDailySessionCount] = useState(0);
 
+  // NUEVA FUNCIÓN CENTRALIZADA PARA TRACKING
+  const trackActivity = async (action, payload = {}) => {
+    // Si no hay sessionId para acciones que no sean de inicio, no hacemos nada.
+    if (
+      !sessionInfo.sessionId &&
+      action !== "start_session" &&
+      action !== "daily_checkin"
+    ) {
+      console.warn(
+        `[TRACKING] Se intentó registrar '${action}' sin un ID de sesión.`
+      );
+      return;
+    }
+
+    try {
+      await fetch("/api/track-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: action,
+          userId: userId,
+          sessionId: sessionInfo.sessionId, // Tomamos el ID de la sesión del estado
+          ...payload, // El resto de los datos específicos de la acción
+        }),
+      });
+    } catch (error) {
+      console.error(
+        `[TRACKING] Error registrando la acción '${action}':`,
+        error
+      );
+    }
+  };
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -510,6 +543,7 @@ const AppContent = () => {
               navigate("/");
             }}
             sessionInfo={sessionInfo}
+            trackActivity={trackActivity} // Le pasamos la nueva función
           />
         }
       />

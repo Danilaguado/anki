@@ -337,45 +337,46 @@ export default async function handler(req, res) {
       }
 
       case "abandon_session": {
-        const { sessionId } = sessionData;
-        const currentTime = new Date().toISOString();
-
-        console.log(`[TRACK-ACTIVITY] Abandonando sesión: ${sessionId}`);
-
-        const rowNumber = await getSessionRowNumber(
-          sheets,
-          spreadsheetId,
-          sessionId
-        );
-        if (rowNumber === -1) {
-          throw new Error("ID de sesión no encontrado para abandonar.");
+        const studySessionsSheet = doc.sheetsByTitle["Study_Sessions"];
+        if (studySessionsSheet) {
+          const rows = await studySessionsSheet.getRows();
+          const sessionRow = rows.find((r) => r.ID_Sesion === sessionId);
+          if (sessionRow) {
+            sessionRow.Fecha_Fin = formattedDate;
+            sessionRow.Hora_Fin = formattedTime;
+            sessionRow.Estado_Final = "Incompleta";
+            const startTime = new Date(
+              `${sessionRow.Fecha_Inicio}T${sessionRow.Hora_Inicio}`
+            );
+            const duration = now.getTime() - startTime.getTime();
+            sessionRow.Duracion_Total_ms = duration;
+            await sessionRow.save();
+          }
         }
 
-        // MARCAR COMO ABANDONADA
-        const updateData = [
-          { range: `Study_Sessions!E${rowNumber}`, values: [[currentTime]] }, // Timestamp_Fin
-          { range: `Study_Sessions!G${rowNumber}`, values: [["Abandonada"]] }, // Estado_Final
-        ];
+        const dailyRow = await getDailyActivityRow();
+        if (dailyRow) {
+          dailyRow.Sesiones_Abandonadas =
+            parseInt(dailyRow.Sesiones_Abandonadas || 0) + 1;
 
-        await sheets.spreadsheets.values.batchUpdate({
-          spreadsheetId,
-          resource: { valueInputOption: "USER_ENTERED", data: updateData },
-        });
+          // --- INICIO DE LA CORRECCIÓN ---
+          // Reutilizamos la variable 'studySessionsSheet' que ya tiene la hoja
+          if (studySessionsSheet) {
+            const sessionRows = await studySessionsSheet.getRows();
+            const abandonedSession = sessionRows.find(
+              (r) => r.ID_Sesion === sessionId
+            );
+            if (abandonedSession && abandonedSession.Duracion_Total_ms) {
+              dailyRow.Tiempo_Total_Estudio_ms =
+                parseInt(dailyRow.Tiempo_Total_Estudio_ms || 0) +
+                parseInt(abandonedSession.Duracion_Total_ms);
+            }
+          }
+          // --- FIN DE LA CORRECCIÓN ---
 
-        await updateDailyActivity(
-          sheets,
-          spreadsheetId,
-          userId,
-          currentTime,
-          "session_abandon"
-        );
-
-        console.log(`[TRACK-ACTIVITY] Sesión abandonada registrada`);
-
-        return res.status(200).json({
-          success: true,
-          message: "Sesión abandonada registrada.",
-        });
+          await dailyRow.save();
+        }
+        break;
       }
 
       case "daily_checkin": {
