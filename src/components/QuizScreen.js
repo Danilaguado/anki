@@ -1,1025 +1,543 @@
-// /api/track-activity.js - VERSIÓN COMPLETAMENTE CORREGIDA Y OPTIMIZADA
+import React, { useState, useEffect, useRef } from "react";
+import SpeechToTextButton from "./SpeechToTextButton";
 
-function generateShortId() {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substr(2, 5);
-  return `${timestamp}-${random}`;
-}
+const PlayIcon = () => (
+  <svg
+    className='icon-play'
+    xmlns='http://www.w3.org/2000/svg'
+    fill='none'
+    viewBox='0 0 24 24'
+    stroke='currentColor'
+  >
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth={2}
+      d='M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z'
+    />
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth={2}
+      d='M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+    />
+  </svg>
+);
 
-function calculateSRSInterval(previousInterval, difficulty, easeFactor) {
-  let newInterval = previousInterval || 1;
-  let newEaseFactor = easeFactor || 2.5;
+const CloseIcon = () => (
+  <svg
+    className='icon-close'
+    xmlns='http://www.w3.org/2000/svg'
+    fill='none'
+    viewBox='0 0 24 24'
+    strokeWidth={2}
+    stroke='currentColor'
+  >
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      d='M6 18L18 6M6 6l12 12'
+    />
+  </svg>
+);
 
-  switch (difficulty) {
-    case "again":
-      newInterval = 1;
-      newEaseFactor = Math.max(1.3, newEaseFactor - 0.2);
-      break;
-    case "hard":
-      newInterval = Math.max(1, Math.round(newInterval * 1.2));
-      newEaseFactor = Math.max(1.3, newEaseFactor - 0.15);
-      break;
-    case "good":
-      newInterval = Math.round(newInterval * newEaseFactor);
-      break;
-    case "easy":
-      newInterval = Math.round(newInterval * newEaseFactor * 1.3);
-      newEaseFactor = Math.min(2.5, newEaseFactor + 0.15);
-      break;
-  }
-  return { newInterval, newEaseFactor };
-}
+const QuizScreen = ({
+  deck,
+  onQuizComplete,
+  onGoBack,
+  sessionInfo,
+  trackActivity,
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [sessionResults, setSessionResults] = useState([]);
+  const [voiceResults, setVoiceResults] = useState([]);
+  const [isAnswerBlurred, setIsAnswerBlurred] = useState(true);
 
-function calculateNextReview(interval) {
-  const nextDate = new Date();
-  nextDate.setDate(nextDate.getDate() + interval);
-  return nextDate.toISOString().split("T")[0];
-}
+  // Estados para repetición espaciada
+  const [cardsToRepeat, setCardsToRepeat] = useState([]);
+  const [isInRepeatPhase, setIsInRepeatPhase] = useState(false);
+  const [originalDeckLength, setOriginalDeckLength] = useState(0);
 
-async function authorize() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    },
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  });
-  return auth;
-}
+  // Referencias para tracking de tiempo
+  const cardStartTime = useRef(Date.now());
+  const sessionStartTime = useRef(Date.now());
+  const inputRef = useRef(null);
+  const tempResultRef = useRef(null);
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res
-      .status(405)
-      .json({ success: false, message: "Método no permitido" });
-  }
+  // CORRECCIÓN: Obtener sessionId y userId correctamente
+  const sessionId = sessionInfo?.sessionId;
+  const userId = localStorage.getItem("ankiUserId");
 
-  try {
-    const {
-      userId,
-      action,
-      sessionData,
-      cardData,
-      voiceData,
-      finalResults,
-      sessionId,
-    } = req.body;
+  console.log(`[QUIZ] SessionId: ${sessionId}, UserId: ${userId}`);
 
-    if (!userId || !action) {
-      return res.status(400).json({
-        success: false,
-        message: "Faltan parámetros obligatorios: userId y action.",
-      });
-    }
-
-    const auth = await authorize();
-    const sheets = google.sheets({ version: "v4", auth });
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
-
-    console.log(`[TRACK-ACTIVITY] Acción: ${action} para usuario: ${userId}`);
-
-    switch (action) {
-      case "start_session": {
-        const newSessionId = `session_${generateShortId()}`;
-        const currentTime = new Date().toISOString();
-
-        await sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: "Study_Sessions!A:K",
-          valueInputOption: "USER_ENTERED",
-          resource: {
-            values: [
-              [
-                newSessionId,
-                sessionData?.deckId || "general",
-                userId,
-                currentTime,
-                "",
-                "",
-                "En progreso",
-                "",
-                "",
-                "",
-                "",
-              ],
-            ],
-          },
-        });
-
-        await updateDailyActivity(
-          sheets,
-          spreadsheetId,
-          userId,
-          currentTime,
-          "session_start"
-        );
-
-        console.log(`[TRACK-ACTIVITY] Sesión iniciada: ${newSessionId}`);
-        return res.status(200).json({
-          success: true,
-          message: "Sesión iniciada correctamente.",
-          sessionId: newSessionId,
-        });
-      }
-
-      case "check_answer": {
-        const { wordId, isCorrect } = cardData;
-        console.log(
-          `[TRACK-ACTIVITY] Registrando respuesta: ${wordId} = ${isCorrect}`
-        );
-
-        // ✅ CORRECCIÓN CRÍTICA: Actualizar hoja del usuario
-        await updateUserWordStats(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          isCorrect,
-          "text"
-        );
-
-        // ✅ CORRECCIÓN CRÍTICA: Actualizar estadísticas globales
-        await updateWordStatistics(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          isCorrect,
-          "text"
-        );
-
-        console.log(
-          `[TRACK-ACTIVITY] Respuesta registrada exitosamente: ${wordId} = ${isCorrect}`
-        );
-        return res.status(200).json({
-          success: true,
-          message: "Respuesta registrada.",
-        });
-      }
-
-      case "rate_memory": {
-        const { wordId, difficulty } = cardData;
-        const sessionIdToUse = sessionId || cardData.sessionId;
-        const currentTime = new Date().toISOString();
-
-        console.log(
-          `[TRACK-ACTIVITY] Evaluando memoria: ${wordId} = ${difficulty}`
-        );
-
-        // Registrar en Card_Interactions
-        const interactionId = `interaction_${generateShortId()}`;
-        await sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: "Card_Interactions!A:K",
-          valueInputOption: "USER_ENTERED",
-          resource: {
-            values: [
-              [
-                interactionId,
-                sessionIdToUse || "",
-                wordId,
-                userId,
-                currentTime,
-                "Text",
-                "",
-                "",
-                "",
-                difficulty,
-                "",
-              ],
-            ],
-          },
-        });
-
-        // ✅ CORRECCIÓN CRÍTICA: Actualizar SRS del usuario
-        await updateUserWordSRS(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          difficulty
-        );
-
-        // ✅ CORRECCIÓN CRÍTICA: Programar próxima práctica
-        await schedulePracticeReview(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          difficulty
-        );
-
-        console.log(
-          `[TRACK-ACTIVITY] Memoria evaluada exitosamente: ${wordId} = ${difficulty}`
-        );
-        return res.status(200).json({
-          success: true,
-          message: "Evaluación de memoria registrada.",
-        });
-      }
-
-      case "voice_interaction": {
-        const { wordId, detectedText, expectedText, isVoiceCorrect } =
-          voiceData;
-        const sessionIdToUse = sessionId || voiceData.sessionId;
-        const currentTime = new Date().toISOString();
-
-        console.log(
-          `[TRACK-ACTIVITY] Interacción de voz: ${wordId} = ${isVoiceCorrect}`
-        );
-
-        // Registrar en Voice_Interactions
-        const voiceId = `voice_${generateShortId()}`;
-        await sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: "Voice_Interactions!A:I",
-          valueInputOption: "USER_ENTERED",
-          resource: {
-            values: [
-              [
-                voiceId,
-                sessionIdToUse || "",
-                wordId,
-                userId,
-                currentTime,
-                detectedText,
-                expectedText,
-                isVoiceCorrect,
-                calculateSimilarityPercentage(detectedText, expectedText),
-              ],
-            ],
-          },
-        });
-
-        // ✅ CORRECCIÓN CRÍTICA: Actualizar estadísticas de voz
-        await updateUserWordStats(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          isVoiceCorrect,
-          "voice"
-        );
-        await updateWordStatistics(
-          sheets,
-          spreadsheetId,
-          userId,
-          wordId,
-          isVoiceCorrect,
-          "voice"
-        );
-
-        console.log(
-          `[TRACK-ACTIVITY] Interacción de voz registrada exitosamente: ${wordId}`
-        );
-        return res.status(200).json({
-          success: true,
-          message: "Interacción de voz registrada.",
-        });
-      }
-
-      case "end_session": {
-        const {
-          sessionId: finalSessionId,
-          sentiment,
-          sessionDuration,
-          correctAnswers,
-          totalAnswers,
-          accuracy,
-        } = finalResults;
-
-        const currentTime = new Date().toISOString();
-        console.log(`[TRACK-ACTIVITY] Finalizando sesión: ${finalSessionId}`);
-
-        // Buscar y actualizar la sesión
-        const rowNumber = await getSessionRowNumber(
-          sheets,
-          spreadsheetId,
-          finalSessionId
-        );
-        if (rowNumber !== -1) {
-          const updateData = [
-            { range: `Study_Sessions!E${rowNumber}`, values: [[currentTime]] },
-            {
-              range: `Study_Sessions!F${rowNumber}`,
-              values: [[sessionDuration]],
-            },
-            { range: `Study_Sessions!G${rowNumber}`, values: [["Completada"]] },
-            { range: `Study_Sessions!H${rowNumber}`, values: [[sentiment]] },
-            {
-              range: `Study_Sessions!I${rowNumber}`,
-              values: [[correctAnswers]],
-            },
-            { range: `Study_Sessions!J${rowNumber}`, values: [[totalAnswers]] },
-            { range: `Study_Sessions!K${rowNumber}`, values: [[accuracy]] },
-          ];
-
-          await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId,
-            resource: { valueInputOption: "USER_ENTERED", data: updateData },
-          });
-        }
-
-        await updateDailyActivity(
-          sheets,
-          spreadsheetId,
-          userId,
-          currentTime,
-          "session_end",
-          {
-            duration: sessionDuration,
-            wordsCount: totalAnswers,
-            accuracy: parseFloat(accuracy),
-          }
-        );
-
-        console.log(`[TRACK-ACTIVITY] Sesión completada exitosamente`);
-        return res.status(200).json({
-          success: true,
-          message: "Sesión completada y registrada.",
-        });
-      }
-
-      case "abandon_session": {
-        const sessionIdToAbandon = sessionId || req.body.sessionId;
-        if (!sessionIdToAbandon) {
-          return res
-            .status(200)
-            .json({ success: true, message: "Sin sesión activa" });
-        }
-
-        const currentTime = new Date().toISOString();
-        const rowNumber = await getSessionRowNumber(
-          sheets,
-          spreadsheetId,
-          sessionIdToAbandon
-        );
-
-        if (rowNumber !== -1) {
-          const updateData = [
-            { range: `Study_Sessions!E${rowNumber}`, values: [[currentTime]] },
-            { range: `Study_Sessions!G${rowNumber}`, values: [["Incompleta"]] },
-          ];
-
-          await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId,
-            resource: { valueInputOption: "USER_ENTERED", data: updateData },
-          });
-        }
-
-        await updateDailyActivity(
-          sheets,
-          spreadsheetId,
-          userId,
-          currentTime,
-          "session_abandon"
-        );
-        return res.status(200).json({
-          success: true,
-          message: "Sesión abandonada registrada.",
-        });
-      }
-
-      case "daily_checkin": {
-        await updateDailyActivity(
-          sheets,
-          spreadsheetId,
-          userId,
-          new Date().toISOString(),
-          "daily_checkin"
-        );
-        return res.status(200).json({
-          success: true,
-          message: "Check-in diario registrado.",
-        });
-      }
-
-      default:
-        return res.status(400).json({
-          success: false,
-          message: `Acción no válida: ${action}`,
-        });
-    }
-  } catch (error) {
-    console.error("Error en track-activity API:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Error al registrar la actividad.",
-      error: error.message,
-    });
-  }
-}
-
-// ===== FUNCIONES AUXILIARES CORREGIDAS =====
-
-async function updateUserWordStats(
-  sheets,
-  spreadsheetId,
-  userId,
-  wordId,
-  isCorrect,
-  type
-) {
-  console.log(
-    `[updateUserWordStats] Actualizando ${wordId} en hoja ${userId}, tipo: ${type}, correcto: ${isCorrect}`
-  );
-
-  try {
-    const range = `${userId}!A:I`;
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
-
-    const rows = response.data.values || [];
-    if (rows.length === 0) {
-      console.error(`[updateUserWordStats] No hay datos en la hoja ${userId}`);
-      return;
-    }
-
-    const headers = rows[0];
-    const wordIdIndex = headers.indexOf("ID_Palabra");
-    const dataRows = rows.slice(1);
-    const rowIndex = dataRows.findIndex((row) => row[wordIdIndex] === wordId);
-
-    if (rowIndex === -1) {
-      console.error(
-        `[updateUserWordStats] Palabra ${wordId} no encontrada en la hoja ${userId}.`
-      );
-      return;
-    }
-
-    const actualRowNumber = rowIndex + 2;
-    const rowData = dataRows[rowIndex];
-    const updateData = [];
-
-    if (type === "text") {
-      const correctIndex = headers.indexOf("Total_Aciertos");
-      const incorrectIndex = headers.indexOf("Total_Errores");
-
-      if (correctIndex === -1 || incorrectIndex === -1) {
-        console.error(
-          `[updateUserWordStats] Columnas de aciertos/errores no encontradas`
-        );
-        return;
-      }
-
-      let totalCorrect = parseInt(rowData[correctIndex] || 0);
-      let totalIncorrect = parseInt(rowData[incorrectIndex] || 0);
-
-      if (isCorrect) {
-        totalCorrect++;
-      } else {
-        totalIncorrect++;
-      }
-
-      const correctCol = String.fromCharCode("A".charCodeAt(0) + correctIndex);
-      const incorrectCol = String.fromCharCode(
-        "A".charCodeAt(0) + incorrectIndex
-      );
-
-      updateData.push(
-        {
-          range: `${userId}!${correctCol}${actualRowNumber}`,
-          values: [[totalCorrect]],
-        },
-        {
-          range: `${userId}!${incorrectCol}${actualRowNumber}`,
-          values: [[totalIncorrect]],
-        }
-      );
-
-      console.log(
-        `[updateUserWordStats] Actualizando texto - Aciertos: ${totalCorrect}, Errores: ${totalIncorrect}`
-      );
-    } else if (type === "voice") {
-      const voiceCorrectIndex = headers.indexOf("Total_Voz_Aciertos");
-      const voiceIncorrectIndex = headers.indexOf("Total_Voz_Errores");
-
-      if (voiceCorrectIndex === -1 || voiceIncorrectIndex === -1) {
-        console.error(`[updateUserWordStats] Columnas de voz no encontradas`);
-        return;
-      }
-
-      let voiceCorrect = parseInt(rowData[voiceCorrectIndex] || 0);
-      let voiceIncorrect = parseInt(rowData[voiceIncorrectIndex] || 0);
-
-      if (isCorrect) {
-        voiceCorrect++;
-      } else {
-        voiceIncorrect++;
-      }
-
-      const voiceCorrectCol = String.fromCharCode(
-        "A".charCodeAt(0) + voiceCorrectIndex
-      );
-      const voiceIncorrectCol = String.fromCharCode(
-        "A".charCodeAt(0) + voiceIncorrectIndex
-      );
-
-      updateData.push(
-        {
-          range: `${userId}!${voiceCorrectCol}${actualRowNumber}`,
-          values: [[voiceCorrect]],
-        },
-        {
-          range: `${userId}!${voiceIncorrectCol}${actualRowNumber}`,
-          values: [[voiceIncorrect]],
-        }
-      );
-
-      console.log(
-        `[updateUserWordStats] Actualizando voz - Aciertos: ${voiceCorrect}, Errores: ${voiceIncorrect}`
-      );
-    }
-
-    if (updateData.length > 0) {
-      await sheets.spreadsheets.values.batchUpdate({
-        spreadsheetId,
-        resource: { valueInputOption: "USER_ENTERED", data: updateData },
-      });
-      console.log(
-        `[updateUserWordStats] ✅ Hoja ${userId} actualizada exitosamente para ${wordId}`
-      );
-    }
-  } catch (error) {
-    console.error(
-      `[updateUserWordStats] ❌ Error al actualizar hoja ${userId}:`,
-      error
+  if (!deck || deck.length === 0) {
+    return (
+      <div className='quiz-container'>
+        <div className='quiz-error'>
+          <h1>Error</h1>
+          <p>No hay tarjetas disponibles en este mazo para estudiar.</p>
+          <button onClick={onGoBack} className='quiz-button secondary'>
+            Volver al Panel
+          </button>
+        </div>
+      </div>
     );
   }
-}
 
-async function updateUserWordSRS(
-  sheets,
-  spreadsheetId,
-  userId,
-  wordId,
-  difficulty
-) {
-  console.log(
-    `[updateUserWordSRS] Actualizando SRS para ${wordId} en hoja ${userId}, dificultad: ${difficulty}`
-  );
+  useEffect(() => {
+    setOriginalDeckLength(deck.length);
+    sessionStartTime.current = Date.now();
+  }, []);
 
-  try {
-    const range = `${userId}!A:I`;
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
-
-    const rows = response.data.values || [];
-    if (rows.length === 0) {
-      console.error(`[updateUserWordSRS] No hay datos en la hoja ${userId}`);
-      return;
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
+    cardStartTime.current = Date.now();
+    setIsAnswerBlurred(true);
+  }, [currentIndex]);
 
-    const headers = rows[0];
-    const wordIdIndex = headers.indexOf("ID_Palabra");
-    const dataRows = rows.slice(1);
-    const rowIndex = dataRows.findIndex((row) => row[wordIdIndex] === wordId);
+  const getCurrentDeck = () => {
+    return isInRepeatPhase ? cardsToRepeat : deck;
+  };
 
-    if (rowIndex === -1) {
-      console.error(
-        `[updateUserWordSRS] Palabra ${wordId} no encontrada en hoja ${userId}`
-      );
-      return;
+  const currentCard = getCurrentDeck()[currentIndex];
+  const currentDeck = getCurrentDeck();
+  const progress = ((currentIndex + 1) / currentDeck.length) * 100;
+
+  const playAudio = (text, lang = "en-US") => {
+    if ("speechSynthesis" in window && text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      window.speechSynthesis.speak(utterance);
     }
+  };
 
-    const actualRowNumber = rowIndex + 2;
-    const rowData = dataRows[rowIndex];
-
-    const intervalIndex = headers.indexOf("Intervalo_SRS");
-    const easeFactorIndex = headers.indexOf("Factor_Facilidad");
-    const nextReviewIndex = headers.indexOf("Fecha_Proximo_Repaso");
-    const stateIndex = headers.indexOf("Estado");
-
-    if (
-      intervalIndex === -1 ||
-      easeFactorIndex === -1 ||
-      nextReviewIndex === -1 ||
-      stateIndex === -1
-    ) {
-      console.error(
-        `[updateUserWordSRS] Columnas SRS no encontradas en hoja ${userId}`
-      );
-      return;
-    }
-
-    const currentInterval = parseInt(rowData[intervalIndex] || 1);
-    const easeFactor = parseFloat(rowData[easeFactorIndex] || 2.5);
-    const { newInterval, newEaseFactor } = calculateSRSInterval(
-      currentInterval,
-      difficulty,
-      easeFactor
-    );
-    const nextReviewDate = calculateNextReview(newInterval);
-
-    let newStatus = rowData[stateIndex] || "Aprendiendo";
-    if (newInterval > 30) {
-      newStatus = "Dominada";
-    } else if (difficulty === "again") {
-      newStatus = "Aprendiendo";
-    }
-
-    const intervalCol = String.fromCharCode("A".charCodeAt(0) + intervalIndex);
-    const easeFactorCol = String.fromCharCode(
-      "A".charCodeAt(0) + easeFactorIndex
-    );
-    const nextReviewCol = String.fromCharCode(
-      "A".charCodeAt(0) + nextReviewIndex
-    );
-    const stateCol = String.fromCharCode("A".charCodeAt(0) + stateIndex);
-
-    const updateData = [
-      {
-        range: `${userId}!${intervalCol}${actualRowNumber}`,
-        values: [[newInterval]],
-      },
-      {
-        range: `${userId}!${easeFactorCol}${actualRowNumber}`,
-        values: [[newEaseFactor.toFixed(2)]],
-      },
-      {
-        range: `${userId}!${nextReviewCol}${actualRowNumber}`,
-        values: [[nextReviewDate]],
-      },
-      {
-        range: `${userId}!${stateCol}${actualRowNumber}`,
-        values: [[newStatus]],
-      },
-    ];
-
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId,
-      resource: { valueInputOption: "USER_ENTERED", data: updateData },
-    });
+  const handleSpeechResult = async (transcript) => {
+    const spokenText = transcript.trim().toLowerCase();
+    const correctText = currentCard.Inglés.trim().toLowerCase();
+    const isCorrect = spokenText === correctText;
 
     console.log(
-      `[updateUserWordSRS] ✅ SRS actualizado - Intervalo: ${newInterval}, Estado: ${newStatus}, Próximo: ${nextReviewDate}`
+      `[QUIZ] Voz detectada: "${transcript}" vs "${currentCard.Inglés}" = ${isCorrect}`
     );
-  } catch (error) {
-    console.error(
-      `[updateUserWordSRS] ❌ Error al actualizar SRS para ${userId}:`,
-      error
-    );
-  }
-}
 
-async function updateWordStatistics(
-  sheets,
-  spreadsheetId,
-  userId,
-  wordId,
-  isCorrect,
-  type
-) {
-  console.log(
-    `[updateWordStatistics] Actualizando estadísticas globales ${wordId} para ${userId}`
-  );
-
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Word_Statistics!A:M",
-    });
-
-    const rows = response.data.values || [];
-    if (rows.length <= 1) {
-      // Crear nuevo registro
-      const newRow = [
-        userId,
-        wordId,
-        1, // Total_Veces_Practicada
-        type === "text" && isCorrect ? 1 : 0, // Total_Aciertos_Texto
-        type === "text" && !isCorrect ? 1 : 0, // Total_Errores_Texto
-        type === "voice" && isCorrect ? 1 : 0, // Total_Aciertos_Voz
-        type === "voice" && !isCorrect ? 1 : 0, // Total_Errores_Voz
-        0, // Mejor_Tiempo_Respuesta
-        0, // Peor_Tiempo_Respuesta
-        0, // Promedio_Tiempo_Respuesta
-        2, // Dificultad_Promedio
-        new Date().toISOString().split("T")[0], // Ultima_Practica
-        null, // Proxima_Revision
-      ];
-
-      await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: "Word_Statistics!A:M",
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [newRow] },
+    // CORRECCIÓN: Registrar interacción de voz con estructura correcta
+    if (trackActivity && sessionId) {
+      await trackActivity("voice_interaction", {
+        voiceData: {
+          wordId: currentCard.ID_Palabra,
+          detectedText: transcript,
+          expectedText: currentCard.Inglés,
+          isVoiceCorrect: isCorrect,
+        },
       });
-
       console.log(
-        `[updateWordStatistics] ✅ Nuevo registro creado para ${wordId}`
+        `[QUIZ] Interacción de voz registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
       );
-      return;
     }
 
-    const headers = rows[0];
-    const dataRows = rows.slice(1);
-    const rowIndex = dataRows.findIndex(
-      (row) => row[0] === userId && row[1] === wordId
-    );
+    setVoiceResults((prev) => [
+      ...prev,
+      { wordId: currentCard.ID_Palabra, isCorrect },
+    ]);
 
-    if (rowIndex === -1) {
-      // Crear nuevo registro
-      const newRow = [
-        userId,
-        wordId,
-        1, // Total_Veces_Practicada
-        type === "text" && isCorrect ? 1 : 0,
-        type === "text" && !isCorrect ? 1 : 0,
-        type === "voice" && isCorrect ? 1 : 0,
-        type === "voice" && !isCorrect ? 1 : 0,
-        0,
-        0,
-        0,
-        2,
-        new Date().toISOString().split("T")[0],
-        null,
-      ];
-
-      await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: "Word_Statistics!A:M",
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [newRow] },
-      });
-
-      console.log(
-        `[updateWordStatistics] ✅ Nuevo registro creado para ${wordId}`
-      );
-    } else {
-      // Actualizar registro existente
-      const actualRowNumber = rowIndex + 2;
-      const rowData = dataRows[rowIndex];
-
-      let totalPracticed = parseInt(rowData[2] || 0) + 1;
-      let textCorrect = parseInt(rowData[3] || 0);
-      let textIncorrect = parseInt(rowData[4] || 0);
-      let voiceCorrect = parseInt(rowData[5] || 0);
-      let voiceIncorrect = parseInt(rowData[6] || 0);
-
-      if (type === "text") {
-        if (isCorrect) textCorrect++;
-        else textIncorrect++;
-      } else if (type === "voice") {
-        if (isCorrect) voiceCorrect++;
-        else voiceIncorrect++;
+    if (isCorrect) {
+      alert(`¡Coincidencia exacta! Dijiste: "${transcript}"`);
+      // Reproducir sonido de éxito
+      try {
+        const audio = new Audio("/correct-6033.mp3");
+        await audio.play();
+      } catch (e) {
+        console.log("Sonido de éxito no disponible");
       }
-
-      const updateData = [
-        {
-          range: `Word_Statistics!C${actualRowNumber}`,
-          values: [[totalPracticed]],
-        },
-        {
-          range: `Word_Statistics!D${actualRowNumber}`,
-          values: [[textCorrect]],
-        },
-        {
-          range: `Word_Statistics!E${actualRowNumber}`,
-          values: [[textIncorrect]],
-        },
-        {
-          range: `Word_Statistics!F${actualRowNumber}`,
-          values: [[voiceCorrect]],
-        },
-        {
-          range: `Word_Statistics!G${actualRowNumber}`,
-          values: [[voiceIncorrect]],
-        },
-        {
-          range: `Word_Statistics!L${actualRowNumber}`,
-          values: [[new Date().toISOString().split("T")[0]]],
-        },
-      ];
-
-      await sheets.spreadsheets.values.batchUpdate({
-        spreadsheetId,
-        resource: { valueInputOption: "USER_ENTERED", data: updateData },
-      });
-
-      console.log(
-        `[updateWordStatistics] ✅ Estadísticas globales actualizadas para ${wordId}`
+    } else {
+      alert(
+        `Casi... Dijiste: "${transcript}". La palabra correcta es: "${currentCard.Inglés}"`
       );
     }
-  } catch (error) {
-    console.error(
-      `[updateWordStatistics] ❌ Error al actualizar estadísticas globales:`,
-      error
+  };
+
+  const handleCheckAnswer = async () => {
+    const responseTime = Date.now() - cardStartTime.current;
+    const userCleanAnswer = userAnswer.trim().toLowerCase();
+    const correctAnswers = currentCard.Español.split("/").map((ans) =>
+      ans.trim().toLowerCase()
     );
-  }
-}
+    const isCorrect = correctAnswers.includes(userCleanAnswer);
 
-async function updateDailyActivity(
-  sheets,
-  spreadsheetId,
-  userId,
-  timestamp,
-  activityType,
-  extraData = {}
-) {
-  const today = new Date(timestamp).toISOString().split("T")[0];
-  const timeOnly = timestamp.split("T")[1].substring(0, 8);
-
-  console.log(
-    `[updateDailyActivity] Actualizando actividad diaria para ${userId}, tipo: ${activityType}`
-  );
-
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Daily_Activity!A:J",
-    });
-
-    const rows = response.data.values || [];
-    const headers =
-      rows.length > 0
-        ? rows[0]
-        : [
-            "UserID",
-            "Fecha",
-            "Primera_Sesion",
-            "Ultima_Sesion",
-            "Total_Sesiones_Dia",
-            "Total_Tiempo_Estudio_ms",
-            "Sesiones_Completadas",
-            "Sesiones_Abandonadas",
-            "Palabras_Practicadas",
-            "Porcentaje_Acierto_Dia",
-          ];
-
-    const dataRows = rows.slice(1);
-    const rowIndex = dataRows.findIndex(
-      (row) => row[0] === userId && row[1] === today
+    console.log(
+      `[QUIZ] Respuesta: "${userAnswer}" vs "${currentCard.Español}" = ${isCorrect}`
     );
 
-    let dailyData = {
-      UserID: userId,
-      Fecha: today,
-      Primera_Sesion: timeOnly,
-      Ultima_Sesion: timeOnly,
-      Total_Sesiones_Dia: 0,
-      Total_Tiempo_Estudio_ms: 0,
-      Sesiones_Completadas: 0,
-      Sesiones_Abandonadas: 0,
-      Palabras_Practicadas: 0,
-      Porcentaje_Acierto_Dia: 0,
+    setFeedback(isCorrect ? "correct" : "incorrect");
+
+    // CORRECCIÓN: Registrar respuesta inmediatamente con estructura correcta
+    if (trackActivity && sessionId) {
+      await trackActivity("check_answer", {
+        cardData: {
+          wordId: currentCard.ID_Palabra,
+          isCorrect: isCorrect,
+        },
+      });
+      console.log(
+        `[QUIZ] Respuesta registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
+      );
+    }
+
+    // Guardamos el resto de los datos temporalmente para el feedback de SRS
+    tempResultRef.current = {
+      wordId: currentCard.ID_Palabra,
+      english: currentCard.Inglés,
+      spanish: currentCard.Español,
+      isCorrect: isCorrect,
+      responseTime: responseTime,
+      timestamp: new Date().toISOString(),
+      userAnswer: userAnswer,
+      srsFeedback: null,
+    };
+  };
+
+  const handleSrsFeedback = async (srsLevel) => {
+    const finalResult = { ...tempResultRef.current, srsFeedback: srsLevel };
+
+    console.log(
+      `[QUIZ] Evaluación SRS: ${currentCard.ID_Palabra} = ${srsLevel}`
+    );
+
+    // CORRECCIÓN: Usar la función trackActivity con datos correctos
+    if (trackActivity && sessionId) {
+      await trackActivity("rate_memory", {
+        cardData: {
+          wordId: currentCard.ID_Palabra,
+          difficulty: srsLevel,
+        },
+      });
+      console.log(
+        `[QUIZ] Memoria evaluada: ${currentCard.ID_Palabra} = ${srsLevel}`
+      );
+    }
+
+    // Lógica de repetición espaciada: si es 'again' o 'hard', programar repetición
+    if (srsLevel === "again" || srsLevel === "hard") {
+      const alreadyInRepeat = cardsToRepeat.some(
+        (card) => card.ID_Palabra === currentCard.ID_Palabra
+      );
+
+      if (!alreadyInRepeat) {
+        setCardsToRepeat((prev) => [
+          ...prev,
+          { ...currentCard, repeatCount: 1 },
+        ]);
+        console.log(
+          `[QUIZ] Palabra ${currentCard.ID_Palabra} añadida para repetir`
+        );
+      } else {
+        setCardsToRepeat((prev) =>
+          prev.map((card) =>
+            card.ID_Palabra === currentCard.ID_Palabra
+              ? { ...card, repeatCount: (card.repeatCount || 0) + 1 }
+              : card
+          )
+        );
+        console.log(
+          `[QUIZ] Aumentando repeticiones para ${currentCard.ID_Palabra}`
+        );
+      }
+    }
+
+    const updatedResults = [...sessionResults, finalResult];
+    setSessionResults(updatedResults);
+
+    // Avanzar a la siguiente carta
+    if (currentIndex < currentDeck.length - 1) {
+      setFeedback(null);
+      setUserAnswer("");
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      // Si terminamos el mazo original y hay cartas para repetir
+      if (!isInRepeatPhase && cardsToRepeat.length > 0) {
+        // Cambiar a fase de repetición
+        setIsInRepeatPhase(true);
+        setCurrentIndex(0);
+        setFeedback(null);
+        setUserAnswer("");
+
+        console.log(
+          `[QUIZ] Iniciando fase de repaso con ${cardsToRepeat.length} palabras`
+        );
+
+        // Mostrar mensaje de transición
+        alert(
+          `¡Excelente! Ahora vamos a repasar ${cardsToRepeat.length} palabra(s) que necesitan más práctica.`
+        );
+      } else {
+        // Finalizar quiz completamente
+        console.log(
+          `[QUIZ] Finalizando sesión con ${updatedResults.length} resultados`
+        );
+        endSession(updatedResults);
+      }
+    }
+  };
+
+  const endSession = (results) => {
+    // CORRECCIÓN: Calcular estadísticas finales más completas y precisas
+    const sessionDuration = Date.now() - sessionStartTime.current;
+    const totalCards = originalDeckLength + cardsToRepeat.length;
+    const correctAnswers = results.filter((r) => r.isCorrect).length;
+    const totalAnswers = results.length;
+
+    const finalStats = {
+      sessionId: sessionId, // IMPORTANTE: Preservar sessionId
+      sessionDuration: sessionDuration,
+      totalOriginalCards: originalDeckLength,
+      totalRepeatedCards: cardsToRepeat.length,
+      totalSessionCards: totalCards,
+      correctAnswers: correctAnswers,
+      totalAnswers: totalAnswers,
+      accuracy:
+        totalAnswers > 0
+          ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
+          : "0",
+      startTime: sessionStartTime.current,
+      endTime: Date.now(),
     };
 
-    if (rowIndex !== -1) {
-      const existingData = dataRows[rowIndex];
-      headers.forEach((header, i) => {
-        if (existingData[i] !== undefined) {
-          dailyData[header] = existingData[i];
-        }
-      });
-      dailyData.Primera_Sesion = existingData[2] || timeOnly;
+    console.log("[QUIZ] Estadísticas finales calculadas:", finalStats);
+
+    onQuizComplete(results, voiceResults, finalStats);
+  };
+
+  const handleAbandonSession = async () => {
+    if (
+      window.confirm(
+        "¿Estás seguro de que quieres abandonar esta sesión? Tu progreso no se guardará."
+      )
+    ) {
+      console.log(`[QUIZ] Abandonando sesión: ${sessionId}`);
+
+      // CORRECCIÓN: Usar la función trackActivity con sessionId en el nivel correcto
+      if (trackActivity && sessionId) {
+        await trackActivity("abandon_session", {});
+        console.log(`[QUIZ] Sesión abandonada registrada: ${sessionId}`);
+      }
+
+      onGoBack();
     }
+  };
 
-    // Actualizar según tipo de actividad
-    switch (activityType) {
-      case "session_start":
-      case "daily_checkin":
-        dailyData.Total_Sesiones_Dia =
-          parseInt(dailyData.Total_Sesiones_Dia || 0) + 1;
-        break;
-      case "session_end":
-        dailyData.Sesiones_Completadas =
-          parseInt(dailyData.Sesiones_Completadas || 0) + 1;
-        dailyData.Total_Tiempo_Estudio_ms =
-          parseInt(dailyData.Total_Tiempo_Estudio_ms || 0) +
-          (extraData.duration || 0);
-        dailyData.Palabras_Practicadas =
-          parseInt(dailyData.Palabras_Practicadas || 0) +
-          (extraData.wordsCount || 0);
-        break;
-      case "session_abandon":
-        dailyData.Sesiones_Abandonadas =
-          parseInt(dailyData.Sesiones_Abandonadas || 0) + 1;
-        break;
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !feedback) {
+      handleCheckAnswer();
     }
+  };
 
-    dailyData.Ultima_Sesion = timeOnly;
-    const newRow = headers.map((header) => dailyData[header] || "");
+  return (
+    <div className='quiz-container'>
+      {/* Barra de progreso mejorada */}
+      <div className='quiz-progress-section'>
+        <div className='quiz-progress-bar'>
+          <div
+            className='quiz-progress-fill'
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
 
-    if (rowIndex !== -1) {
-      const actualRowNumber = rowIndex + 2;
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `Daily_Activity!A${actualRowNumber}:J${actualRowNumber}`,
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [newRow] },
-      });
-      console.log(
-        `[updateDailyActivity] ✅ Actividad diaria actualizada para ${userId}`
-      );
-    } else {
-      await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: "Daily_Activity!A:J",
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [newRow] },
-      });
-      console.log(
-        `[updateDailyActivity] ✅ Nueva actividad diaria creada para ${userId}`
-      );
-    }
-  } catch (error) {
-    console.error(
-      `[updateDailyActivity] ❌ Error al actualizar actividad diaria:`,
-      error
-    );
-  }
-}
+        {/* Indicadores de fase */}
+        <div className='quiz-phase-indicators'>
+          <span
+            className={`phase-indicator ${
+              !isInRepeatPhase ? "active" : "completed"
+            }`}
+          >
+            Mazo Principal ({originalDeckLength})
+          </span>
+          {cardsToRepeat.length > 0 && (
+            <span
+              className={`phase-indicator ${
+                isInRepeatPhase ? "active" : "pending"
+              }`}
+            >
+              Repaso ({cardsToRepeat.length})
+            </span>
+          )}
+        </div>
+      </div>
 
-async function schedulePracticeReview(
-  sheets,
-  spreadsheetId,
-  userId,
-  wordId,
-  difficulty
-) {
-  try {
-    const intervalHours =
-      difficulty === "again" ? 4 : difficulty === "hard" ? 12 : 24;
-    const reviewDate = new Date(Date.now() + intervalHours * 60 * 60 * 1000);
+      {/* Botón de cerrar */}
+      <button onClick={handleAbandonSession} className='quiz-close-button'>
+        <CloseIcon />
+      </button>
 
-    const practiceRow = [
-      userId,
-      wordId,
-      reviewDate.toISOString().split("T")[0],
-      reviewDate.toISOString().split("T")[1].substring(0, 5),
-      "Pendiente",
-      null,
-      null,
-    ];
+      {/* Header del quiz con información extendida */}
+      <div className='quiz-header'>
+        <h2>
+          {isInRepeatPhase ? "Fase de Repaso" : "Mazo Principal"} - Pregunta{" "}
+          {currentIndex + 1} de {currentDeck.length}
+        </h2>
+        {currentCard.repeatCount && (
+          <p className='repeat-info'>
+            Esta palabra ha sido repetida {currentCard.repeatCount} vez(es)
+          </p>
+        )}
+        {sessionId && <p className='session-info'>Sesión: {sessionId}</p>}
+      </div>
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: "Practice_Schedule!A:G",
-      valueInputOption: "USER_ENTERED",
-      resource: { values: [practiceRow] },
-    });
+      {/* Tarjeta principal */}
+      <div
+        className={`quiz-card ${
+          feedback === "correct"
+            ? "correct"
+            : feedback === "incorrect"
+            ? "incorrect"
+            : ""
+        }`}
+      >
+        <div className='quiz-word'>
+          <h3>{currentCard.Inglés}</h3>
+          {isInRepeatPhase && <div className='repeat-badge'>🔄 Repaso</div>}
+        </div>
 
-    console.log(
-      `[schedulePracticeReview] ✅ Práctica programada para ${wordId}`
-    );
-  } catch (error) {
-    console.error(
-      `[schedulePracticeReview] ❌ Error programando práctica:`,
-      error
-    );
-  }
-}
+        <div className='quiz-answer-section'>
+          <p
+            className={`quiz-blurred-answer ${
+              !isAnswerBlurred ? "revealed" : ""
+            }`}
+            onClick={() => setIsAnswerBlurred(false)}
+          >
+            {currentCard.Español}
+          </p>
 
-async function getSessionRowNumber(sheets, spreadsheetId, sessionId) {
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Study_Sessions!A:A",
-    });
-    const rows = response.data.values || [];
-    const index = rows.findIndex((row) => row[0] === sessionId);
-    return index !== -1 ? index + 1 : -1;
-  } catch (error) {
-    console.error(
-      `[getSessionRowNumber] ❌ Error buscando sesión ${sessionId}:`,
-      error
-    );
-    return -1;
-  }
-}
+          <div className='quiz-audio-controls'>
+            <button
+              onClick={() => playAudio(currentCard.Inglés)}
+              className='quiz-play-button'
+              title='Reproducir pronunciación'
+            >
+              <PlayIcon />
+            </button>
+            <SpeechToTextButton onResult={handleSpeechResult} lang='en-US' />
+          </div>
+        </div>
+      </div>
 
-function calculateSimilarityPercentage(detected, expected) {
-  if (!detected || !expected) return 0;
-  const detectedLower = detected.toLowerCase().trim();
-  const expectedLower = expected.toLowerCase().trim();
-  if (detectedLower === expectedLower) return 100;
-  const longer =
-    detectedLower.length > expectedLower.length ? detectedLower : expectedLower;
-  if (longer.length === 0) return 100;
-  const editDistance = levenshteinDistance(detectedLower, expectedLower);
-  return Math.round((1 - editDistance / longer.length) * 100);
-}
+      {/* Sección de interacción */}
+      <div className='quiz-interaction'>
+        {!feedback ? (
+          <div className='quiz-input-section'>
+            <input
+              ref={inputRef}
+              type='text'
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder='Escribe la traducción aquí...'
+              className='quiz-input-field'
+            />
+            <button
+              onClick={handleCheckAnswer}
+              className='quiz-button primary'
+              disabled={!userAnswer.trim()}
+            >
+              Revisar Respuesta
+            </button>
+          </div>
+        ) : (
+          <div className='quiz-feedback-section'>
+            <div className='quiz-feedback-result'>
+              {feedback === "correct" ? (
+                <div className='quiz-feedback correct'>
+                  <span className='feedback-icon'>✅</span>
+                  <span className='feedback-text'>¡Correcto!</span>
+                </div>
+              ) : (
+                <div className='quiz-feedback incorrect'>
+                  <span className='feedback-icon'>❌</span>
+                  <div className='feedback-content'>
+                    <span className='feedback-text'>Respuesta correcta:</span>
+                    <strong className='correct-answer'>
+                      {currentCard.Español}
+                    </strong>
+                  </div>
+                </div>
+              )}
+            </div>
 
-function levenshteinDistance(a, b) {
-  const matrix = Array(b.length + 1)
-    .fill(null)
-    .map(() => Array(a.length + 1).fill(null));
-  for (let i = 0; i <= a.length; i += 1) matrix[0][i] = i;
-  for (let j = 0; j <= b.length; j += 1) matrix[j][0] = j;
-  for (let j = 1; j <= b.length; j += 1) {
-    for (let i = 1; i <= a.length; i += 1) {
-      const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[j][i] = Math.min(
-        matrix[j][i - 1] + 1,
-        matrix[j - 1][i] + 1,
-        matrix[j - 1][i - 1] + indicator
-      );
-    }
-  }
-  return matrix[b.length][a.length];
-}
+            <div className='quiz-srs-section'>
+              <p className='srs-prompt'>
+                ¿Qué tan bien recordaste esta palabra?
+              </p>
+              <div className='quiz-srs-buttons'>
+                <button
+                  onClick={() => handleSrsFeedback("easy")}
+                  className='quiz-srs-button easy'
+                >
+                  <span className='srs-emoji'>😎</span>
+                  <span className='srs-text'>Fácil</span>
+                </button>
+                <button
+                  onClick={() => handleSrsFeedback("good")}
+                  className='quiz-srs-button good'
+                >
+                  <span className='srs-emoji'>🙂</span>
+                  <span className='srs-text'>Bien</span>
+                </button>
+                <button
+                  onClick={() => handleSrsFeedback("hard")}
+                  className='quiz-srs-button hard'
+                >
+                  <span className='srs-emoji'>🤔</span>
+                  <span className='srs-text'>Difícil</span>
+                </button>
+                <button
+                  onClick={() => handleSrsFeedback("again")}
+                  className='quiz-srs-button again'
+                >
+                  <span className='srs-emoji'>😭</span>
+                  <span className='srs-text'>Mal</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Panel de estadísticas en tiempo real */}
+      <div className='quiz-stats-panel'>
+        <div className='stat-item'>
+          <span className='stat-label'>Sesión:</span>
+          <span className='stat-value'>
+            {Math.round((Date.now() - sessionStartTime.current) / 1000 / 60)}min
+          </span>
+        </div>
+        <div className='stat-item'>
+          <span className='stat-label'>Aciertos:</span>
+          <span className='stat-value'>
+            {sessionResults.filter((r) => r.isCorrect).length}/
+            {sessionResults.length}
+          </span>
+        </div>
+        {cardsToRepeat.length > 0 && (
+          <div className='stat-item'>
+            <span className='stat-label'>Para Repasar:</span>
+            <span className='stat-value'>{cardsToRepeat.length}</span>
+          </div>
+        )}
+        {voiceResults.length > 0 && (
+          <div className='stat-item'>
+            <span className='stat-label'>Voz:</span>
+            <span className='stat-value'>
+              {voiceResults.filter((v) => v.isCorrect).length}/
+              {voiceResults.length}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default QuizScreen;
