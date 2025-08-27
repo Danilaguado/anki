@@ -1,4 +1,4 @@
-// /api/track-activity.js - VERSION para hojas SIN prefijo u_
+// /api/track-activity.js - CORREGIDO para usar userId completo (sin remover prefijo)
 import { google } from "googleapis";
 
 function generateShortId() {
@@ -352,11 +352,10 @@ async function updateWordCorrectness(
   isCorrect,
   type
 ) {
-  // NUEVA LÓGICA: Extraer ID limpio para el nombre de la hoja
-  const cleanUserId = userId.startsWith("u_") ? userId.substring(2) : userId;
-  const range = `${cleanUserId}!A:I`;
+  // CORRECCIÓN: Usar el userId completo como nombre de hoja
+  const range = `${userId}!A:I`;
   console.log(
-    `[updateWordCorrectness] Actualizando ${wordId} en hoja ${cleanUserId}, tipo: ${type}, correcto: ${isCorrect}`
+    `[updateWordCorrectness] Actualizando ${wordId} en hoja ${userId}, tipo: ${type}, correcto: ${isCorrect}`
   );
 
   try {
@@ -367,7 +366,7 @@ async function updateWordCorrectness(
 
     const rows = response.data.values || [];
     if (rows.length === 0) {
-      console.error(`No hay datos en la hoja ${cleanUserId}`);
+      console.error(`No hay datos en la hoja ${userId}`);
       return;
     }
 
@@ -377,9 +376,7 @@ async function updateWordCorrectness(
     const rowIndex = dataRows.findIndex((row) => row[wordIdIndex] === wordId);
 
     if (rowIndex === -1) {
-      console.error(
-        `Palabra ${wordId} no encontrada en la hoja ${cleanUserId}.`
-      );
+      console.error(`Palabra ${wordId} no encontrada en la hoja ${userId}.`);
       return;
     }
 
@@ -410,11 +407,11 @@ async function updateWordCorrectness(
           valueInputOption: "USER_ENTERED",
           data: [
             {
-              range: `${cleanUserId}!${correctCol}${actualRowNumber}`,
+              range: `${userId}!${correctCol}${actualRowNumber}`,
               values: [[totalCorrect]],
             },
             {
-              range: `${cleanUserId}!${incorrectCol}${actualRowNumber}`,
+              range: `${userId}!${incorrectCol}${actualRowNumber}`,
               values: [[totalIncorrect]],
             },
           ],
@@ -450,11 +447,11 @@ async function updateWordCorrectness(
           valueInputOption: "USER_ENTERED",
           data: [
             {
-              range: `${cleanUserId}!${voiceCorrectCol}${actualRowNumber}`,
+              range: `${userId}!${voiceCorrectCol}${actualRowNumber}`,
               values: [[voiceCorrect]],
             },
             {
-              range: `${cleanUserId}!${voiceIncorrectCol}${actualRowNumber}`,
+              range: `${userId}!${voiceIncorrectCol}${actualRowNumber}`,
               values: [[voiceIncorrect]],
             },
           ],
@@ -466,10 +463,7 @@ async function updateWordCorrectness(
       );
     }
   } catch (error) {
-    console.error(
-      `Error al actualizar acierto/error para ${cleanUserId}:`,
-      error
-    );
+    console.error(`Error al actualizar acierto/error para ${userId}:`, error);
   }
 }
 
@@ -480,10 +474,9 @@ async function updateWordSRS(
   wordId,
   difficulty
 ) {
-  const cleanUserId = userId.startsWith("u_") ? userId.substring(2) : userId;
-  const range = `${cleanUserId}!A:I`;
+  const range = `${userId}!A:I`;
   console.log(
-    `[updateWordSRS] Actualizando SRS ${wordId} en hoja ${cleanUserId}, dificultad: ${difficulty}`
+    `[updateWordSRS] Actualizando SRS ${wordId} en hoja ${userId}, dificultad: ${difficulty}`
   );
 
   try {
@@ -501,9 +494,7 @@ async function updateWordSRS(
     const rowIndex = dataRows.findIndex((row) => row[wordIdIndex] === wordId);
 
     if (rowIndex === -1) {
-      console.error(
-        `Palabra ${wordId} no encontrada para SRS en ${cleanUserId}.`
-      );
+      console.error(`Palabra ${wordId} no encontrada para SRS en ${userId}.`);
       return;
     }
 
@@ -544,19 +535,19 @@ async function updateWordSRS(
         valueInputOption: "USER_ENTERED",
         data: [
           {
-            range: `${cleanUserId}!${intervalCol}${actualRowNumber}`,
+            range: `${userId}!${intervalCol}${actualRowNumber}`,
             values: [[newInterval]],
           },
           {
-            range: `${cleanUserId}!${easeFactorCol}${actualRowNumber}`,
+            range: `${userId}!${easeFactorCol}${actualRowNumber}`,
             values: [[newEaseFactor.toFixed(2)]],
           },
           {
-            range: `${cleanUserId}!${nextReviewCol}${actualRowNumber}`,
+            range: `${userId}!${nextReviewCol}${actualRowNumber}`,
             values: [[nextReviewDate]],
           },
           {
-            range: `${cleanUserId}!${stateCol}${actualRowNumber}`,
+            range: `${userId}!${stateCol}${actualRowNumber}`,
             values: [[newStatus]],
           },
         ],
@@ -567,7 +558,7 @@ async function updateWordSRS(
       `[updateWordSRS] SRS actualizado - Intervalo: ${newInterval}, Estado: ${newStatus}`
     );
   } catch (error) {
-    console.error(`Error al actualizar SRS para ${cleanUserId}:`, error);
+    console.error(`Error al actualizar SRS para ${userId}:`, error);
   }
 }
 

@@ -1,4 +1,4 @@
-// /api/setup.js - Actualizado con todas las tablas de registro
+// /api/setup.js - CORREGIDO para usar userId completo como nombre de hoja
 import { google } from "googleapis";
 
 // Función para generar IDs más cortos
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       (s) => s.properties.title
     );
 
-    // Definir todas las hojas necesarias
+    // Definir todas las hojas necesarias (usando userId completo)
     const sheetsToEnsure = [
       {
         title: "Master_Palabras",
@@ -159,7 +159,8 @@ export default async function handler(req, res) {
       },
       { title: "Users", headers: ["UserID", "Email", "Fecha_Creacion"] },
       {
-        title: userId,
+        // CORRECCIÓN: Usar userId completo como nombre de hoja
+        title: userId, // ← Cambio principal: usar userId completo
         headers: [
           "ID_Palabra",
           "Estado",
@@ -222,7 +223,7 @@ export default async function handler(req, res) {
       resource: { values: [userRow] },
     });
 
-    // Inicializar hoja del usuario
+    // Inicializar hoja del usuario (usando userId completo)
     const userSheetRows = masterWords.map((word) => [
       word.id,
       word.status,
@@ -236,7 +237,7 @@ export default async function handler(req, res) {
     ]);
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${userId}!A:I`,
+      range: `${userId}!A:I`, // ← Usar userId completo
       valueInputOption: "USER_ENTERED",
       resource: { values: userSheetRows },
     });

@@ -1,4 +1,4 @@
-// ===== /src/App.js - CORREGIDO para flujo de autenticación =====
+// ===== /src/App.js - CORREGIDO para usar prefijo user_ =====
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -12,15 +12,15 @@ import Dashboard from "./components/Dashboard";
 import QuizScreen from "./components/QuizScreen";
 import ResultsScreen from "./components/ResultsScreen";
 import DeckWrapper from "./components/DeckWrapper";
-import AnalyticsDashboard from "./components/AnalyticsDashboard"; // NUEVO
+import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
 import "./index.css";
 
-// Función para generar IDs cortos (importada de utils)
+// CORRECCIÓN: Función para generar IDs con prefijo user_
 const generateShortUserId = () => {
   const timestamp = (Date.now() % 1000000).toString(36);
   const random = Math.random().toString(36).substr(2, 4);
-  return `u_${timestamp}${random}`;
+  return `user_${timestamp}${random}`; // ← CAMBIO: user_ en lugar de u_
 };
 
 // =======================
@@ -64,7 +64,7 @@ const AppContent = () => {
   const [userData, setUserData] = useState({ words: [], decks: [] });
   const [studyDeck, setStudyDeck] = useState([]);
   const [sessionInfo, setSessionInfo] = useState({});
-  const [isLoading, setIsLoading] = useState(true); // CAMBIADO: Iniciar en true
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   // NUEVO: Estado para tracking de actividad
@@ -76,7 +76,8 @@ const AppContent = () => {
       try {
         // 1. Generar o recuperar userId
         let localUserId = localStorage.getItem("ankiUserId");
-        if (!localUserId || !localUserId.startsWith("u_")) {
+        if (!localUserId || !localUserId.startsWith("user_")) {
+          // ← CAMBIO: buscar user_
           localUserId = generateShortUserId();
           localStorage.setItem("ankiUserId", localUserId);
           console.log(`[APP] Nuevo userId generado: ${localUserId}`);
@@ -359,11 +360,11 @@ const AppContent = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "end_session",
-          userId: userId, // Usar el userId del estado
+          userId: userId,
           finalResults: {
-            sessionId: sessionInfo.finalStats.sessionId, // Asegúrate que el sessionId esté aquí
+            sessionId: sessionInfo.finalStats.sessionId,
             results: sessionInfo.results,
-            sentiment: sentiment, // ¡Aquí usamos el parámetro!
+            sentiment: sentiment,
           },
         }),
       });
