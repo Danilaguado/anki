@@ -1,5 +1,4 @@
 // /api/track-activity.js - VERSIÓN COMPLETAMENTE CORREGIDA Y OPTIMIZADA
-import { google } from "googleapis";
 
 function generateShortId() {
   const timestamp = Date.now().toString(36);
