@@ -1,4 +1,4 @@
-// ===== /src/App.js - Actualizado con IDs cortos y registro exhaustivo =====
+// ===== /src/App.js - CORREGIDO para flujo de autenticación =====
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -64,7 +64,7 @@ const AppContent = () => {
   const [userData, setUserData] = useState({ words: [], decks: [] });
   const [studyDeck, setStudyDeck] = useState([]);
   const [sessionInfo, setSessionInfo] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // CAMBIADO: Iniciar en true
   const [error, setError] = useState("");
 
   // NUEVO: Estado para tracking de actividad
@@ -72,37 +72,48 @@ const AppContent = () => {
   const [dailySessionCount, setDailySessionCount] = useState(0);
 
   useEffect(() => {
-    // Generar o recuperar userId con formato corto
-    let localUserId = localStorage.getItem("ankiUserId");
-    if (!localUserId || !localUserId.startsWith("u_")) {
-      localUserId = generateShortUserId();
-      localStorage.setItem("ankiUserId", localUserId);
-    }
-    setUserId(localUserId);
-
-    // Registrar inicio de actividad diaria
-    registerDailyActivity();
-
-    const fetchData = async () => {
-      if (!localUserId) return;
+    const initializeApp = async () => {
       try {
-        const response = await fetch(`/api/data?userId=${localUserId}`);
-        if (!response.ok) {
-          navigate("/setup");
-          return;
-        }
-        const data = await response.json();
-        if (data.success && data.userExists) {
-          setUserData(data.data);
+        // 1. Generar o recuperar userId
+        let localUserId = localStorage.getItem("ankiUserId");
+        if (!localUserId || !localUserId.startsWith("u_")) {
+          localUserId = generateShortUserId();
+          localStorage.setItem("ankiUserId", localUserId);
+          console.log(`[APP] Nuevo userId generado: ${localUserId}`);
         } else {
+          console.log(`[APP] userId recuperado: ${localUserId}`);
+        }
+        setUserId(localUserId);
+
+        // 2. Verificar si el usuario existe en el backend
+        console.log(`[APP] Verificando existencia del usuario...`);
+        const response = await fetch(`/api/data?userId=${localUserId}`);
+        const data = await response.json();
+
+        console.log(`[APP] Respuesta del backend:`, data);
+
+        if (response.ok && data.success && data.userExists) {
+          // Usuario existe, cargar datos
+          console.log(`[APP] Usuario existe, cargando datos...`);
+          setUserData(data.data);
+          registerDailyActivity();
+          setIsLoading(false);
+        } else {
+          // Usuario no existe, ir al setup
+          console.log(`[APP] Usuario no existe, redirigiendo al setup...`);
+          setIsLoading(false);
           navigate("/setup");
         }
       } catch (err) {
+        console.error("[APP] Error al inicializar:", err);
+        // En caso de error, asumir que necesita setup
+        setIsLoading(false);
         navigate("/setup");
       }
     };
-    fetchData();
-  }, [userId, navigate]);
+
+    initializeApp();
+  }, [navigate]);
 
   // NUEVO: Función para registrar actividad diaria
   const registerDailyActivity = async () => {
@@ -144,10 +155,12 @@ const AppContent = () => {
   const refreshUserData = async () => {
     if (!userId) return;
     try {
+      console.log(`[APP] Refrescando datos para userId: ${userId}`);
       const response = await fetch(`/api/data?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.userExists) {
+          console.log(`[APP] Datos refrescados exitosamente`);
           setUserData(data.data);
         }
       }
@@ -159,21 +172,36 @@ const AppContent = () => {
   const handleSetupComplete = async (email, words) => {
     setIsLoading(true);
     setError("");
+
+    console.log(`[APP] Iniciando setup para userId: ${userId}`);
+    console.log(`[APP] Email: ${email}, Palabras: ${words.length}`);
+
     try {
       const response = await fetch("/api/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, masterWords: words, userId }),
+        body: JSON.stringify({
+          email,
+          masterWords: words,
+          userId,
+        }),
       });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Error en la configuración.");
 
+      const data = await response.json();
+      console.log(`[APP] Respuesta del setup:`, data);
+
+      if (!response.ok) {
+        throw new Error(data.message || "Error en la configuración.");
+      }
+
+      // Construcción de datos inicial más completa
       const initialUserData = {
         words: words.map((w) => ({
-          ...w,
+          ID_Palabra: w.id,
+          Inglés: w.english,
+          Español: w.spanish,
           UserID: userId,
-          Estado: w.status,
+          Estado: w.status || "Por Aprender",
           Intervalo_SRS: 1,
           Fecha_Proximo_Repaso: null,
           Factor_Facilidad: 2.5,
@@ -184,11 +212,18 @@ const AppContent = () => {
         })),
         decks: [],
       };
+
+      console.log(`[APP] Setup completado, estableciendo datos iniciales`);
       setUserData(initialUserData);
-      navigate("/");
+
+      // Pequeña pausa para asegurar que el backend esté listo
+      setTimeout(() => {
+        setIsLoading(false);
+        navigate("/");
+      }, 1000);
     } catch (err) {
+      console.error("[APP] Error en handleSetupComplete:", err);
       setError(err.message);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -343,6 +378,18 @@ const AppContent = () => {
     }
   };
 
+  // Loading inicial
+  if (isLoading && !userId) {
+    return (
+      <div className='loading-container'>
+        <div className='loading-content'>
+          <h2>Cargando aplicación...</h2>
+          <p>Inicializando sistema de aprendizaje</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Routes>
       {/* Setup */}
@@ -353,6 +400,7 @@ const AppContent = () => {
             onSetupComplete={handleSetupComplete}
             isLoading={isLoading}
             error={error}
+            userId={userId}
           />
         }
       />
