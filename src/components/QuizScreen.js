@@ -41,6 +41,13 @@ const CloseIcon = () => (
   </svg>
 );
 
+// Función para generar sessionId cuando no existe
+const generateSessionId = () => {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substr(2, 5);
+  return `session_${timestamp}-${random}`;
+};
+
 const QuizScreen = ({
   deck,
   onQuizComplete,
@@ -60,17 +67,56 @@ const QuizScreen = ({
   const [isInRepeatPhase, setIsInRepeatPhase] = useState(false);
   const [originalDeckLength, setOriginalDeckLength] = useState(0);
 
+  // 🔧 FIX: Asegurar que siempre tengamos un sessionId válido
+  const [currentSessionId, setCurrentSessionId] = useState(
+    sessionInfo?.sessionId || generateSessionId()
+  );
+
   // Referencias para tracking de tiempo
   const cardStartTime = useRef(Date.now());
   const sessionStartTime = useRef(Date.now());
   const inputRef = useRef(null);
   const tempResultRef = useRef(null);
 
-  // CORRECCIÓN: Obtener sessionId y userId correctamente
-  const sessionId = sessionInfo?.sessionId;
+  // 🔧 FIX: Usar currentSessionId en lugar de sessionInfo?.sessionId
+  const sessionId = currentSessionId;
   const userId = localStorage.getItem("ankiUserId");
 
   console.log(`[QUIZ] SessionId: ${sessionId}, UserId: ${userId}`);
+
+  // 🔧 FIX: Inicializar sesión si no existe
+  useEffect(() => {
+    const initializeSession = async () => {
+      if (!sessionInfo?.sessionId && trackActivity) {
+        console.log(
+          "🔧 [QUIZ] Inicializando sesión porque sessionId es undefined..."
+        );
+
+        try {
+          const result = await trackActivity("start_session", {
+            sessionData: { deckId: "practice-mode" },
+          });
+
+          if (result?.sessionId) {
+            setCurrentSessionId(result.sessionId);
+            console.log("✅ [QUIZ] Sesión inicializada:", result.sessionId);
+          } else {
+            console.error("❌ [QUIZ] No se pudo obtener sessionId del backend");
+            // Usar sessionId generado localmente como fallback
+            console.log("🔧 [QUIZ] Usando sessionId local:", currentSessionId);
+          }
+        } catch (error) {
+          console.error("❌ [QUIZ] Error inicializando sesión:", error);
+          console.log(
+            "🔧 [QUIZ] Usando sessionId local como fallback:",
+            currentSessionId
+          );
+        }
+      }
+    };
+
+    initializeSession();
+  }, [sessionInfo, trackActivity, currentSessionId]);
 
   if (!deck || deck.length === 0) {
     return (
@@ -89,7 +135,7 @@ const QuizScreen = ({
   useEffect(() => {
     setOriginalDeckLength(deck.length);
     sessionStartTime.current = Date.now();
-  }, []);
+  }, [deck.length]);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -124,9 +170,10 @@ const QuizScreen = ({
       `[QUIZ] Voz detectada: "${transcript}" vs "${currentCard.Inglés}" = ${isCorrect}`
     );
 
-    // CORRECCIÓN: Registrar interacción de voz con estructura correcta
+    // Registrar interacción de voz
     if (trackActivity && sessionId) {
       await trackActivity("voice_interaction", {
+        sessionId,
         voiceData: {
           wordId: currentCard.ID_Palabra,
           detectedText: transcript,
@@ -174,16 +221,31 @@ const QuizScreen = ({
 
     setFeedback(isCorrect ? "correct" : "incorrect");
 
-    // CORRECCIÓN: Registrar respuesta inmediatamente con estructura correcta
+    // 🔧 FIX: Usar sessionId válido y verificar que existe
     if (trackActivity && sessionId) {
-      await trackActivity("check_answer", {
-        cardData: {
-          wordId: currentCard.ID_Palabra,
-          isCorrect: isCorrect,
-        },
-      });
+      try {
+        await trackActivity("check_answer", {
+          sessionId,
+          cardData: {
+            wordId: currentCard.ID_Palabra,
+            isCorrect: isCorrect,
+          },
+        });
+        console.log(
+          `[QUIZ] ✅ Respuesta registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
+        );
+      } catch (error) {
+        console.error(`[QUIZ] ❌ Error registrando respuesta:`, error);
+      }
+    } else {
+      console.error(
+        "❌ [QUIZ] No se puede registrar respuesta: trackActivity o sessionId faltante"
+      );
       console.log(
-        `[QUIZ] Respuesta registrada: ${currentCard.ID_Palabra} = ${isCorrect}`
+        "🔍 [QUIZ] trackActivity:",
+        !!trackActivity,
+        "sessionId:",
+        sessionId
       );
     }
 
@@ -207,16 +269,31 @@ const QuizScreen = ({
       `[QUIZ] Evaluación SRS: ${currentCard.ID_Palabra} = ${srsLevel}`
     );
 
-    // CORRECCIÓN: Usar la función trackActivity con datos correctos
+    // 🔧 FIX: Usar sessionId válido y verificar que existe
     if (trackActivity && sessionId) {
-      await trackActivity("rate_memory", {
-        cardData: {
-          wordId: currentCard.ID_Palabra,
-          difficulty: srsLevel,
-        },
-      });
+      try {
+        await trackActivity("rate_memory", {
+          sessionId,
+          cardData: {
+            wordId: currentCard.ID_Palabra,
+            difficulty: srsLevel,
+          },
+        });
+        console.log(
+          `[QUIZ] ✅ Memoria evaluada: ${currentCard.ID_Palabra} = ${srsLevel}`
+        );
+      } catch (error) {
+        console.error(`[QUIZ] ❌ Error evaluando memoria:`, error);
+      }
+    } else {
+      console.error(
+        "❌ [QUIZ] No se puede evaluar memoria: trackActivity o sessionId faltante"
+      );
       console.log(
-        `[QUIZ] Memoria evaluada: ${currentCard.ID_Palabra} = ${srsLevel}`
+        "🔍 [QUIZ] trackActivity:",
+        !!trackActivity,
+        "sessionId:",
+        sessionId
       );
     }
 
@@ -284,7 +361,7 @@ const QuizScreen = ({
   };
 
   const endSession = (results) => {
-    // CORRECCIÓN: Calcular estadísticas finales más completas y precisas
+    // Calcular estadísticas finales más completas y precisas
     const sessionDuration = Date.now() - sessionStartTime.current;
     const totalCards = originalDeckLength + cardsToRepeat.length;
     const correctAnswers = results.filter((r) => r.isCorrect).length;
@@ -319,10 +396,14 @@ const QuizScreen = ({
     ) {
       console.log(`[QUIZ] Abandonando sesión: ${sessionId}`);
 
-      // CORRECCIÓN: Usar la función trackActivity con sessionId en el nivel correcto
+      // Usar la función trackActivity para registrar abandono
       if (trackActivity && sessionId) {
-        await trackActivity("abandon_session", {});
-        console.log(`[QUIZ] Sesión abandonada registrada: ${sessionId}`);
+        try {
+          await trackActivity("abandon_session", { sessionId });
+          console.log(`[QUIZ] ✅ Sesión abandonada registrada: ${sessionId}`);
+        } catch (error) {
+          console.error(`[QUIZ] ❌ Error registrando abandono:`, error);
+        }
       }
 
       onGoBack();

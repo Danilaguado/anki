@@ -236,6 +236,8 @@ const AppContent = () => {
       sessionData: { deckId: isPracticeMode ? "practice-mode" : "review-mode" },
     });
 
+    console.log("🔍 [APP] Resultado de start_session:", result); // Agrega este log
+
     if (!result || !result.success || !result.sessionId) {
       alert("Error al iniciar la sesión de estudio desde el backend.");
       return;
