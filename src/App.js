@@ -15,7 +15,13 @@ import DeckWrapper from "./components/DeckWrapper";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
 import "./index.css";
+// En tu App.js, agrega temporalmente para testing:
+import DebugPanel from "./components/DebugPanel";
 
+// Dentro del componente, agrega:
+{
+  process.env.NODE_ENV === "development" && <DebugPanel userId={userId} />;
+}
 const generateShortUserId = () => {
   const timestamp = (Date.now() % 1000000).toString(36);
   const random = Math.random().toString(36).substr(2, 4);
