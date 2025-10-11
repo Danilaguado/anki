@@ -164,12 +164,12 @@ function App() {
     try {
       // Procesar imagen con OCR
       // Para modo simulado (pruebas), usa esta línea:
-      const validationResult = await paymentProcessor.mockValidation(
-        comprobante
-      );
+      //   const validationResult = await paymentProcessor.mockValidation(
+      //     comprobante
+      //   );
 
       // Para OCR real, descomenta esta línea y comenta la de arriba:
-      // const validationResult = await paymentProcessor.processImage(comprobante);
+      const validationResult = await paymentProcessor.processImage(comprobante);
 
       if (validationResult.success) {
         // Pago aprobado - Enviar datos al servidor
