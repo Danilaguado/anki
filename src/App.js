@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 // --- Iconos SVG ---
@@ -80,12 +80,19 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [copiedField, setCopiedField] = useState("");
+  const whatsappInputRef = useRef(null);
 
   const paymentData = {
-    banco: "0191 BNC",
-    telefono: "0412.549.79.36",
-    cedula: "23.621.688",
+    banco: { display: "Banco: BNC", value: "0191" },
+    telefono: { display: "04125497936", value: "04125497936" },
+    cedula: { display: "23621688", value: "23621688" },
   };
+
+  useEffect(() => {
+    if (receiveWhatsapp && whatsappInputRef.current) {
+      whatsappInputRef.current.focus();
+    }
+  }, [receiveWhatsapp]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -101,8 +108,7 @@ function App() {
 
   const copyToClipboard = async (text, field) => {
     try {
-      const cleanText = text.replace(/\./g, "").replace(/\s/g, "");
-      await navigator.clipboard.writeText(cleanText);
+      await navigator.clipboard.writeText(text);
       setCopiedField(field);
       setTimeout(() => setCopiedField(""), 2000);
     } catch (err) {
@@ -168,9 +174,9 @@ function App() {
           whatsapp: receiveWhatsapp ? "Sí" : "No",
           whatsappNumber: formData.whatsappNumber,
           fecha: new Date().toISOString(),
-          banco: paymentData.banco,
-          telefono: paymentData.telefono,
-          cedula: paymentData.cedula,
+          banco: paymentData.banco.value,
+          telefono: paymentData.telefono.value,
+          cedula: paymentData.cedula.value,
         }),
       });
 
@@ -246,13 +252,21 @@ function App() {
 
           <div className='payment-info'>
             <label>Datos del Pago Móvil</label>
-            {Object.entries(paymentData).map(([key, value]) => (
+            {Object.entries(paymentData).map(([key, { display, value }]) => (
               <div key={key} className='info-row'>
                 <span className='info-label'>
-                  {key.charAt(0).toUpperCase() + key.slice(1)}:
+                  {key === "banco" ? (
+                    <span>
+                      Banco: <strong>BNC</strong>
+                    </span>
+                  ) : (
+                    `${key.charAt(0).toUpperCase() + key.slice(1)}:`
+                  )}
                 </span>
                 <div className='info-value-container'>
-                  <span className='info-value'>{value}</span>
+                  <span className='info-value'>
+                    {key === "banco" ? value : display}
+                  </span>
                   <button
                     type='button'
                     onClick={() => copyToClipboard(value, key)}
@@ -305,12 +319,13 @@ function App() {
               <div className='form-group'>
                 <label htmlFor='whatsappNumber'>Número de WhatsApp</label>
                 <input
+                  ref={whatsappInputRef}
                   type='tel'
                   id='whatsappNumber'
                   name='whatsappNumber'
                   value={formData.whatsappNumber}
                   onChange={handleInputChange}
-                  placeholder='Ej: 0412 345 6789'
+                  placeholder='Ej: 04123456789'
                   disabled={isSubmitting}
                 />
               </div>
