@@ -83,6 +83,8 @@ function App() {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [copiedField, setCopiedField] = useState("");
   const [processingStatus, setProcessingStatus] = useState(null);
+  const [dollarRate, setDollarRate] = useState(null);
+  const [loadingDollar, setLoadingDollar] = useState(true);
   const whatsappInputRef = useRef(null);
   const paymentProcessor = useRef(new PaymentProcessor()).current;
 
@@ -91,6 +93,25 @@ function App() {
     telefono: { display: "04125497936", value: "04125497936" },
     cedula: { display: "23621688", value: "23621688" },
   };
+
+  // Obtener cotización del dólar al cargar el componente
+  useEffect(() => {
+    const fetchDollarRate = async () => {
+      try {
+        const response = await fetch(
+          "https://ve.dolarapi.com/v1/dolares/oficial"
+        );
+        const data = await response.json();
+        setDollarRate(data.promedio); // Usa el promedio entre compra y venta
+        setLoadingDollar(false);
+      } catch (error) {
+        console.error("Error al obtener tasa del dólar:", error);
+        setLoadingDollar(false);
+      }
+    };
+
+    fetchDollarRate();
+  }, []);
 
   useEffect(() => {
     if (receiveWhatsapp && whatsappInputRef.current) {
@@ -158,21 +179,16 @@ function App() {
   };
 
   const processPayment = async () => {
-    // Mostrar modal de procesamiento
     setProcessingStatus({ stage: "processing" });
 
     try {
-      // Procesar imagen con OCR
       // Para modo simulado (pruebas), usa esta línea:
-      //   const validationResult = await paymentProcessor.mockValidation(
-      //     comprobante
-      //   );
+      // const validationResult = await paymentProcessor.mockValidation(comprobante);
 
       // Para OCR real, descomenta esta línea y comenta la de arriba:
       const validationResult = await paymentProcessor.processImage(comprobante);
 
       if (validationResult.success) {
-        // Pago aprobado - Enviar datos al servidor
         const response = await fetch("/api/submit-payment", {
           method: "POST",
           headers: {
@@ -195,10 +211,7 @@ function App() {
         const result = await response.json();
 
         if (result.success) {
-          // Mostrar modal de éxito
           setProcessingStatus({ stage: "success" });
-
-          // Limpiar formulario
           setFormData({ nombre: "", correo: "", whatsappNumber: "" });
           setComprobante(null);
           setAcceptedTerms(false);
@@ -208,7 +221,6 @@ function App() {
           throw new Error(result.message || "Error al procesar el pago.");
         }
       } else {
-        // Pago no reconocido
         setProcessingStatus({ stage: "error" });
       }
     } catch (error) {
@@ -307,6 +319,22 @@ function App() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Cotización del Dólar BCV */}
+          <div className='dollar-rate-container'>
+            {loadingDollar ? (
+              <p className='dollar-rate-loading'>Cargando cotización...</p>
+            ) : dollarRate ? (
+              <p className='dollar-rate'>
+                Cotización del Dólar BCV:{" "}
+                <strong>Bs. {dollarRate.toFixed(2)}</strong>
+              </p>
+            ) : (
+              <p className='dollar-rate-error'>
+                No se pudo cargar la cotización del dólar
+              </p>
+            )}
           </div>
 
           <div className='form-group'>
