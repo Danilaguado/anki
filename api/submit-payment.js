@@ -3,7 +3,6 @@ import { google } from "googleapis";
 import nodemailer from "nodemailer";
 
 export default async function handler(req, res) {
-  // Solo permitir POST
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -11,26 +10,25 @@ export default async function handler(req, res) {
     });
   }
 
-  const { nombre, correo, referencia, fecha, banco, telefono, cedula } =
-    req.body;
+  const {
+    nombre,
+    correo,
+    comprobante,
+    whatsapp,
+    fecha,
+    banco,
+    telefono,
+    cedula,
+  } = req.body;
 
-  // Validaciones
-  if (!nombre || !correo || !referencia) {
+  if (!nombre || !correo || !comprobante) {
     return res.status(400).json({
       success: false,
-      message: "Todos los campos son requeridos",
-    });
-  }
-
-  if (referencia.length !== 4) {
-    return res.status(400).json({
-      success: false,
-      message: "La referencia debe tener 4 dígitos",
+      message: "Nombre, correo y comprobante son requeridos.",
     });
   }
 
   try {
-    // ====== 1. GUARDAR EN GOOGLE SHEETS ======
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
@@ -42,30 +40,23 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
 
-    // Verificar si existe la hoja "Pagos", si no, crearla
+    const sheetName = "Pagos";
     const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
     const sheetExists = spreadsheetInfo.data.sheets.some(
-      (s) => s.properties.title === "Pagos"
+      (s) => s.properties.title === sheetName
     );
 
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         resource: {
-          requests: [
-            {
-              addSheet: {
-                properties: { title: "Pagos" },
-              },
-            },
-          ],
+          requests: [{ addSheet: { properties: { title: sheetName } } }],
         },
       });
 
-      // Añadir encabezados
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: "Pagos!A1:G1",
+        range: `${sheetName}!A1:I1`,
         valueInputOption: "USER_ENTERED",
         resource: {
           values: [
@@ -76,14 +67,14 @@ export default async function handler(req, res) {
               "Banco",
               "Teléfono",
               "Cédula",
-              "Referencia (últimos 4)",
+              "Comprobante (Nombre de archivo)",
+              "Recibir por Whatsapp",
             ],
           ],
         },
       });
     }
 
-    // Insertar datos del pago
     const newRow = [
       new Date(fecha).toLocaleString("es-ES", {
         timeZone: "America/Caracas",
@@ -93,28 +84,24 @@ export default async function handler(req, res) {
       banco,
       telefono,
       cedula,
-      referencia,
+      comprobante,
+      whatsapp,
     ];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: "Pagos!A:G",
+      range: `${sheetName}!A:I`,
       valueInputOption: "USER_ENTERED",
       resource: {
         values: [newRow],
       },
     });
 
-    console.log("✅ Pago registrado en Google Sheets");
-
-    // ====== 2. ENVIAR CORREO ======
-    // Configurar transporter de nodemailer
-    // IMPORTANTE: Debes configurar las variables de entorno para el correo
     const transporter = nodemailer.createTransport({
-      service: "gmail", // o el servicio que uses
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, // Tu correo
-        pass: process.env.EMAIL_PASSWORD, // Contraseña de aplicación
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
 
@@ -123,123 +110,42 @@ export default async function handler(req, res) {
       to: "daniellaguado90@gmail.com",
       subject: `Nuevo Pago Registrado - ${nombre}`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-            }
-            .container {
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-              background-color: #f9f9f9;
-            }
-            .header {
-              background-color: #4f46e5;
-              color: white;
-              padding: 20px;
-              text-align: center;
-              border-radius: 8px 8px 0 0;
-            }
-            .content {
-              background-color: white;
-              padding: 30px;
-              border-radius: 0 0 8px 8px;
-            }
-            .info-row {
-              display: flex;
-              margin-bottom: 15px;
-              border-bottom: 1px solid #eee;
-              padding-bottom: 10px;
-            }
-            .label {
-              font-weight: bold;
-              min-width: 150px;
-              color: #666;
-            }
-            .value {
-              color: #1a1a1a;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 20px;
-              font-size: 12px;
-              color: #999;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1 style="margin: 0;">Nuevo Pago Registrado</h1>
-            </div>
-            <div class="content">
-              <p>Se ha registrado un nuevo pago con los siguientes detalles:</p>
-              
-              <div class="info-row">
-                <span class="label">Fecha:</span>
-                <span class="value">${new Date(fecha).toLocaleString("es-ES", {
-                  timeZone: "America/Caracas",
-                })}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Nombre:</span>
-                <span class="value">${nombre}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Correo:</span>
-                <span class="value">${correo}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Banco:</span>
-                <span class="value">${banco}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Teléfono:</span>
-                <span class="value">${telefono}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Cédula:</span>
-                <span class="value">${cedula}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Referencia (últimos 4):</span>
-                <span class="value"><strong>${referencia}</strong></span>
-              </div>
-              
-              <p style="margin-top: 30px; padding: 15px; background-color: #f0f9ff; border-left: 4px solid #4f46e5;">
-                <strong>Nota:</strong> Este pago ha sido registrado automáticamente en Google Sheets.
-              </p>
-            </div>
-            <div class="footer">
-              <p>Este es un correo automático, por favor no responder.</p>
-            </div>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
+          <div style="background-color: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0;">Nuevo Pago Registrado</h1>
           </div>
-        </body>
-        </html>
+          <div style="padding: 20px;">
+            <p>Se ha registrado un nuevo pago con los siguientes detalles:</p>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Fecha:</td><td style="padding: 8px;">${new Date(
+                fecha
+              ).toLocaleString("es-ES", {
+                timeZone: "America/Caracas",
+              })}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Nombre:</td><td style="padding: 8px;">${nombre}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Correo:</td><td style="padding: 8px;">${correo}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Banco:</td><td style="padding: 8px;">${banco}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Teléfono:</td><td style="padding: 8px;">${telefono}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Cédula:</td><td style="padding: 8px;">${cedula}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Comprobante:</td><td style="padding: 8px;">${comprobante}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Recibir por Whatsapp:</td><td style="padding: 8px;">${whatsapp}</td></tr>
+            </table>
+          </div>
+          <div style="text-align: center; padding: 10px; font-size: 12px; color: #999; background-color: #f9f9f9; border-radius: 0 0 8px 8px;">
+            <p>Este es un correo automático, por favor no responder.</p>
+          </div>
+        </div>
       `,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("✅ Correo enviado exitosamente");
 
-    // ====== 3. RESPONDER AL CLIENTE ======
     return res.status(200).json({
       success: true,
       message: "Pago registrado exitosamente",
     });
   } catch (error) {
-    console.error("❌ Error al procesar el pago:", error);
+    console.error("Error al procesar el pago:", error);
     return res.status(500).json({
       success: false,
       message: "Error al procesar el pago",
