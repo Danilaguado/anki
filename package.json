@@ -1,12 +1,13 @@
 {
-  "name": "quantified-anki-app",
+  "name": "payment-form-app",
   "version": "1.0.0",
   "private": true,
+  "description": "Formulario de registro de pagos móviles",
   "dependencies": {
     "googleapis": "^108.0.0",
+    "nodemailer": "^6.9.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.8.2",
     "react-scripts": "5.0.1"
   },
   "scripts": {
@@ -14,5 +15,22 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

@@ -1,384 +1,309 @@
-// ===== /src/App.js - VERSIÓN FINAL CORREGIDA =====
-import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
-import SetupScreen from "./components/SetupScreen";
-import Dashboard from "./components/Dashboard";
-import QuizScreen from "./components/QuizScreen";
-import ResultsScreen from "./components/ResultsScreen";
-import DeckWrapper from "./components/DeckWrapper";
-import AnalyticsDashboard from "./components/AnalyticsDashboard";
+// src/App.js
+import React, { useState } from "react";
+import "./App.css";
 
-import "./index.css";
+// Iconos SVG
+const CopyIcon = () => (
+  <svg
+    width='18'
+    height='18'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
+    <rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect>
+    <path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path>
+  </svg>
+);
 
-// 🔧 CORRECCIÓN: Import correcto del DebugPanel
-import DebugPanel from "./components/DebugPanel";
+const CheckIcon = () => (
+  <svg
+    width='18'
+    height='18'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
+    <polyline points='20 6 9 17 4 12'></polyline>
+  </svg>
+);
 
-const generateShortUserId = () => {
-  const timestamp = (Date.now() % 1000000).toString(36);
-  const random = Math.random().toString(36).substr(2, 4);
-  return `user_${timestamp}${random}`;
-};
-
-const ComingSoon = ({ activityName, deckId }) => {
-  const navigate = useNavigate();
-  return (
-    <div className='screen-container'>
-      <h1>{activityName}</h1>
-      <p className='subtitle'>Mazo: {deckId}</p>
-      <p>Esta sección está en desarrollo...</p>
-      <button onClick={() => navigate("/")} className='button button-secondary'>
-        Volver al Panel
-      </button>
-    </div>
-  );
-};
-
-const HistoryActivity = () => {
-  const { deckId } = useParams();
-  return <ComingSoon activityName='Historia' deckId={deckId} />;
-};
-const LearnActivity = () => {
-  const { deckId } = useParams();
-  return <ComingSoon activityName='Aprender' deckId={deckId} />;
-};
-const QuizActivity = () => {
-  const { deckId } = useParams();
-  return <ComingSoon activityName='Quiz' deckId={deckId} />;
-};
-
-// App principal
-const AppContent = () => {
-  const navigate = useNavigate();
-  const [userId, setUserId] = useState(null);
-  const [userData, setUserData] = useState({ words: [], decks: [] });
-  const [studyDeck, setStudyDeck] = useState([]);
-  const [sessionInfo, setSessionInfo] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [dailySessionCount, setDailySessionCount] = useState(0);
-
-  // FUNCIÓN CENTRALIZADA PARA REGISTRAR TODA LA ACTIVIDAD
-  const trackActivity = async (action, payload = {}) => {
-    const sessionIdToSend = sessionInfo.sessionId || payload.sessionId;
-
-    // Prevenimos logs innecesarios si no hay datos clave
-    if (!userId) {
-      console.warn(
-        `[TRACKING] Se intentó registrar '${action}' pero falta el userId.`
-      );
-      return { success: false, message: "UserID no disponible." };
-    }
-
-    try {
-      const requestBody = {
-        action,
-        userId,
-        sessionId: sessionIdToSend,
-        ...payload,
-      };
-
-      const response = await fetch("/api/track-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      const result = await response.json();
-
-      if (!result.success) {
-        console.error(
-          `[APP TRACKING] La API devolvió un error para '${action}':`,
-          result.message
-        );
-      } else {
-        console.log(`[APP TRACKING] Éxito para '${action}':`, result);
-      }
-
-      return result; // Siempre devolvemos el resultado para poder usarlo (ej. obtener sessionId)
-    } catch (err) {
-      console.error(`[APP TRACKING] Fallo de red para '${action}':`, err);
-      return { success: false, error: err.message };
-    }
-  };
-
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        let localUserId = localStorage.getItem("ankiUserId");
-        if (!localUserId || !localUserId.startsWith("user_")) {
-          localUserId = generateShortUserId();
-          localStorage.setItem("ankiUserId", localUserId);
-        }
-        setUserId(localUserId);
-
-        const response = await fetch(`/api/data?userId=${localUserId}`);
-        const data = await response.json();
-
-        if (response.ok && data.success && data.userExists) {
-          setUserData(data.data);
-          registerDailyActivity(localUserId); // Pasamos el userId para el checkin
-        } else {
-          navigate("/setup");
-        }
-      } catch (err) {
-        console.error("[APP] Error al inicializar:", err);
-        navigate("/setup");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initializeApp();
-  }, [navigate]);
-
-  const registerDailyActivity = async (currentUserId) => {
-    const today = new Date().toISOString().split("T")[0];
-    const lastVisit = localStorage.getItem("lastVisit");
-    if (lastVisit !== today) {
-      localStorage.setItem("lastVisit", today);
-      // Usamos una versión especial de trackActivity porque sessionInfo aún no existe
-      try {
-        await fetch("/api/track-activity", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "daily_checkin",
-            userId: currentUserId,
-          }),
-        });
-      } catch (error) {
-        console.error("Error en el check-in diario:", error);
-      }
-    }
-  };
-
-  const refreshUserData = async () => {
-    if (!userId) return;
-    try {
-      const response = await fetch(`/api/data?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.userExists) setUserData(data.data);
-      }
-    } catch (err) {
-      console.error("Error al refrescar datos:", err);
-    }
-  };
-
-  const handleSetupComplete = async (email, words) => {
-    setIsLoading(true);
-    setError("");
-    try {
-      const response = await fetch("/api/setup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, masterWords: words, userId }),
-      });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Error en la configuración.");
-      await refreshUserData();
-      setIsLoading(false);
-      navigate("/");
-    } catch (err) {
-      setError(err.message);
-      setIsLoading(false);
-    }
-  };
-
-  const handleCreateDeck = async (amount = 10) => {
-    const wordsToLearn = userData.words.filter(
-      (w) => w.Estado === "Por Aprender"
-    );
-    if (wordsToLearn.length === 0) {
-      alert("¡Felicidades! Has añadido todas las palabras disponibles.");
-      return;
-    }
-    const selectedWords = wordsToLearn.slice(
-      0,
-      Math.min(amount, wordsToLearn.length)
-    );
-    const wordIdsToAdd = selectedWords.map((w) => w.ID_Palabra);
-
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/create-deck", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, wordIds: wordIdsToAdd }),
-      });
-      const result = await response.json();
-      if (response.ok && result.success) {
-        alert(
-          `¡Éxito! Se creó "${result.deckId}" con ${selectedWords.length} palabras.`
-        );
-        await refreshUserData();
-      } else {
-        throw new Error(result.message || "Error al crear el mazo");
-      }
-    } catch (err) {
-      alert(`Error al crear el mazo: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStartQuiz = async (isPracticeMode = false) => {
-    const result = await trackActivity("start_session", {
-      sessionData: { deckId: isPracticeMode ? "practice-mode" : "review-mode" },
-    });
-
-    console.log("🔍 [APP] Resultado de start_session:", result);
-
-    if (!result || !result.success || !result.sessionId) {
-      alert("Error al iniciar la sesión de estudio desde el backend.");
-      return;
-    }
-
-    const { sessionId } = result;
-    const today = new Date().toISOString().split("T")[0];
-    const deckForQuiz = userData.words.filter(
-      (word) =>
-        word.Estado === "Aprendiendo" &&
-        (!isPracticeMode
-          ? !word.Fecha_Proximo_Repaso || word.Fecha_Proximo_Repaso <= today
-          : true)
-    );
-
-    if (deckForQuiz.length === 0) {
-      await trackActivity("abandon_session", { sessionId }); // Pasamos el sessionId para abandonarlo
-      alert(
-        isPracticeMode
-          ? "No tienes palabras en estudio para practicar."
-          : "No tienes palabras para repasar hoy."
-      );
-      return;
-    }
-
-    const shuffledDeck = [...deckForQuiz].sort(() => Math.random() - 0.5);
-    setStudyDeck(shuffledDeck);
-    // Guardamos toda la info de la sesión en el estado
-    setSessionInfo({
-      sessionId: sessionId,
-      startTime: new Date().toISOString(),
-      isPracticeMode,
-      originalDeckSize: shuffledDeck.length,
-    });
-    navigate("/quiz");
-  };
-
-  const handleQuizComplete = (results, voiceResults, finalStats) => {
-    setSessionInfo((prev) => ({ ...prev, results, voiceResults, finalStats }));
-    navigate("/results");
-  };
-
-  const handleBackToDashboard = async (sentiment) => {
-    setIsLoading(true);
-    await trackActivity("end_session", {
-      finalResults: { ...sessionInfo.finalStats, sentiment: sentiment },
-    });
-    setSessionInfo({}); // Limpiar la sesión actual
-    await refreshUserData();
-    setIsLoading(false);
-    navigate("/");
-  };
-
-  const handleAbandonSession = async () => {
-    if (sessionInfo.sessionId) {
-      await trackActivity("abandon_session");
-    }
-    setSessionInfo({}); // Limpiar la sesión actual
-  };
-
-  if (isLoading) {
-    return (
-      <div className='loading-container'>
-        <h2>Cargando aplicación...</h2>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {/* 🔧 CORRECCIÓN: Sintaxis correcta para renderizado condicional */}
-      {process.env.NODE_ENV === "development" && <DebugPanel userId={userId} />}
-
-      <Routes>
-        <Route
-          path='/setup'
-          element={
-            <SetupScreen
-              onSetupComplete={handleSetupComplete}
-              isLoading={isLoading}
-              error={error}
-              userId={userId}
-            />
-          }
-        />
-        <Route
-          path='/'
-          element={
-            <Dashboard
-              userData={userData}
-              onStartQuiz={handleStartQuiz}
-              onCreateDeck={handleCreateDeck}
-              userId={userId}
-              dailySessionCount={dailySessionCount}
-            />
-          }
-        />
-        <Route
-          path='/analytics'
-          element={<AnalyticsDashboard userId={userId} />}
-        />
-        <Route path='/deck/:deckId/history' element={<HistoryActivity />} />
-        <Route path='/deck/:deckId/learn' element={<LearnActivity />} />
-        <Route path='/deck/:deckId/quiz' element={<QuizActivity />} />
-        <Route path='/deck/:deckId/cards' element={<DeckWrapper />} />
-        <Route
-          path='/quiz'
-          element={
-            <QuizScreen
-              deck={studyDeck}
-              onQuizComplete={handleQuizComplete}
-              onGoBack={() => {
-                handleAbandonSession();
-                navigate("/");
-              }}
-              sessionInfo={sessionInfo}
-              trackActivity={trackActivity}
-            />
-          }
-        />
-        <Route
-          path='/results'
-          element={
-            <ResultsScreen
-              results={sessionInfo.results || []}
-              voiceResults={sessionInfo.voiceResults || []}
-              finalStats={sessionInfo.finalStats || {}}
-              onBackToDashboard={handleBackToDashboard}
-            />
-          }
-        />
-        <Route path='*' element={<div>Página no encontrada</div>} />
-      </Routes>
-    </>
-  );
-};
+const AlertIcon = () => (
+  <svg
+    width='18'
+    height='18'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
+    <circle cx='12' cy='12' r='10'></circle>
+    <line x1='12' y1='8' x2='12' y2='12'></line>
+    <line x1='12' y1='16' x2='12.01' y2='16'></line>
+  </svg>
+);
 
 function App() {
+  const [formData, setFormData] = useState({
+    nombre: "",
+    correo: "",
+    referencia: "",
+  });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [copiedField, setCopiedField] = useState("");
+
+  const paymentData = {
+    banco: "0191 BNC",
+    telefono: "0412.549.79.36",
+    cedula: "23.621.688",
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    // Solo permitir números en referencia
+    if (name === "referencia") {
+      const numericValue = value.replace(/[^0-9]/g, "");
+      setFormData((prev) => ({
+        ...prev,
+        [name]: numericValue,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const copyToClipboard = async (text, field) => {
+    try {
+      // Limpiar el texto antes de copiar
+      const cleanText = text.replace(/\./g, "").replace(/\s/g, "");
+      await navigator.clipboard.writeText(cleanText);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(""), 2000);
+    } catch (err) {
+      console.error("Error al copiar:", err);
+      alert("No se pudo copiar. Por favor copie manualmente.");
+    }
+  };
+
+  const validateForm = () => {
+    if (!formData.nombre.trim()) {
+      setMessage({ type: "error", text: "Por favor ingrese su nombre" });
+      return false;
+    }
+    if (!formData.correo.trim() || !formData.correo.includes("@")) {
+      setMessage({ type: "error", text: "Por favor ingrese un correo válido" });
+      return false;
+    }
+    if (!formData.referencia.trim() || formData.referencia.length !== 4) {
+      setMessage({
+        type: "error",
+        text: "Por favor ingrese los 4 últimos dígitos de la referencia",
+      });
+      return false;
+    }
+    if (!acceptedTerms) {
+      setMessage({
+        type: "error",
+        text: "Debe aceptar los términos y condiciones",
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage({ type: "", text: "" });
+
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/submit-payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nombre: formData.nombre,
+          correo: formData.correo,
+          referencia: formData.referencia,
+          fecha: new Date().toISOString(),
+          banco: paymentData.banco,
+          telefono: paymentData.telefono,
+          cedula: paymentData.cedula,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setMessage({
+          type: "success",
+          text: "Pago registrado exitosamente. Recibirá una confirmación por correo.",
+        });
+        setFormData({ nombre: "", correo: "", referencia: "" });
+        setAcceptedTerms(false);
+      } else {
+        throw new Error(result.message || "Error al procesar el pago");
+      }
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: "Error al procesar su solicitud. Por favor intente nuevamente.",
+      });
+      console.error("Error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <Router>
-      <div className='app-container'>
-        <AppContent />
+    <div className='app-container'>
+      <div className='payment-card'>
+        <div className='header'>
+          <h1>Registro de Pago</h1>
+          <p className='subtitle'>
+            Complete el formulario para registrar su pago móvil
+          </p>
+        </div>
+
+        {message.text && (
+          <div className={`message ${message.type}`}>
+            <AlertIcon />
+            <span>{message.text}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className='payment-form'>
+          {/* Nombre */}
+          <div className='form-group'>
+            <label htmlFor='nombre'>Nombre Completo</label>
+            <input
+              type='text'
+              id='nombre'
+              name='nombre'
+              value={formData.nombre}
+              onChange={handleInputChange}
+              placeholder='Ingrese su nombre completo'
+              disabled={isSubmitting}
+            />
+          </div>
+
+          {/* Correo */}
+          <div className='form-group'>
+            <label htmlFor='correo'>Correo Electrónico</label>
+            <input
+              type='email'
+              id='correo'
+              name='correo'
+              value={formData.correo}
+              onChange={handleInputChange}
+              placeholder='correo@ejemplo.com'
+              disabled={isSubmitting}
+            />
+          </div>
+
+          {/* Datos del Pago Móvil */}
+          <div className='payment-info'>
+            <label>Datos para Pago Móvil</label>
+
+            {Object.entries(paymentData).map(([key, value]) => (
+              <div key={key} className='info-row'>
+                <span className='info-label'>
+                  {key === "banco"
+                    ? "Banco"
+                    : key === "telefono"
+                    ? "Teléfono"
+                    : "Cédula"}
+                  :
+                </span>
+                <div className='info-value-container'>
+                  <span className='info-value'>{value}</span>
+                  <button
+                    type='button'
+                    onClick={() => copyToClipboard(value, key)}
+                    className={`copy-button ${
+                      copiedField === key ? "copied" : ""
+                    }`}
+                    title='Copiar'
+                    disabled={isSubmitting}
+                  >
+                    {copiedField === key ? <CheckIcon /> : <CopyIcon />}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Referencia */}
+          <div className='form-group'>
+            <label htmlFor='referencia'>Últimos 4 Dígitos de Referencia</label>
+            <input
+              type='text'
+              id='referencia'
+              name='referencia'
+              value={formData.referencia}
+              onChange={handleInputChange}
+              placeholder='0000'
+              maxLength='4'
+              pattern='[0-9]*'
+              inputMode='numeric'
+              disabled={isSubmitting}
+            />
+          </div>
+
+          {/* Términos y Condiciones */}
+          <div className='terms-container'>
+            <label className='checkbox-label'>
+              <input
+                type='checkbox'
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              <span>
+                Acepto los{" "}
+                <a
+                  href='#terms'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert(
+                      "Términos y Condiciones: Al registrar su pago, autoriza el procesamiento de sus datos personales exclusivamente para fines de verificación del pago móvil realizado."
+                    );
+                  }}
+                >
+                  términos y condiciones
+                </a>{" "}
+                del servicio
+              </span>
+            </label>
+          </div>
+
+          {/* Botón Enviar */}
+          <button
+            type='submit'
+            disabled={isSubmitting}
+            className='submit-button'
+          >
+            {isSubmitting ? "Procesando..." : "Registrar Pago"}
+          </button>
+        </form>
+
+        <p className='footer-text'>
+          Sus datos serán procesados de forma segura
+        </p>
       </div>
-    </Router>
+    </div>
   );
 }
 
