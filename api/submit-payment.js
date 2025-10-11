@@ -15,6 +15,7 @@ export default async function handler(req, res) {
     correo,
     comprobante,
     whatsapp,
+    whatsappNumber,
     fecha,
     banco,
     telefono,
@@ -69,6 +70,7 @@ export default async function handler(req, res) {
               "Cédula",
               "Comprobante (Nombre de archivo)",
               "Recibir por Whatsapp",
+              "Número de Whatsapp",
             ],
           ],
         },
@@ -86,6 +88,7 @@ export default async function handler(req, res) {
       cedula,
       comprobante,
       whatsapp,
+      whatsappNumber || "No proporcionado",
     ];
 
     await sheets.spreadsheets.values.append({
@@ -129,6 +132,9 @@ export default async function handler(req, res) {
               <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Cédula:</td><td style="padding: 8px;">${cedula}</td></tr>
               <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Comprobante:</td><td style="padding: 8px;">${comprobante}</td></tr>
               <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Recibir por Whatsapp:</td><td style="padding: 8px;">${whatsapp}</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Número de Whatsapp:</td><td style="padding: 8px;">${
+                whatsappNumber || "No proporcionado"
+              }</td></tr>
             </table>
           </div>
           <div style="text-align: center; padding: 10px; font-size: 12px; color: #999; background-color: #f9f9f9; border-radius: 0 0 8px 8px;">

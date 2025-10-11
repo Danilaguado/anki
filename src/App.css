@@ -6,8 +6,10 @@
   padding: 0;
 }
 
+html,
 body,
-html {
+#root,
+.app-container {
   height: 100%;
 }
 
@@ -16,15 +18,15 @@ body {
     "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f3f4f6;
 }
 
 .app-container {
-  min-height: 100vh;
-  background-color: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto; /* Permite scroll vertical si el contenido es muy largo */
 }
 
 .payment-card {
@@ -34,6 +36,7 @@ body {
   padding: 32px;
   max-width: 480px;
   width: 100%;
+  margin: 20px 0;
 }
 
 .header {
@@ -124,6 +127,20 @@ body {
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
+.file-upload-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #f0fdf4;
+  border-radius: 6px;
+  color: #065f46;
+  font-size: 13px;
+  font-weight: 500;
+  word-break: break-all;
+}
+
 .payment-info {
   background: #f9fafb;
   padding: 16px;
@@ -191,6 +208,9 @@ body {
 
 .terms-container {
   margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Espacio entre los checkboxes */
 }
 
 .checkbox-label {
@@ -218,6 +238,17 @@ body {
   text-decoration: underline;
 }
 
+.whatsapp-input-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, margin-top 0.3s ease-in-out;
+}
+
+.whatsapp-input-container.open {
+  max-height: 100px; /* Suficiente altura para el campo y la etiqueta */
+  margin-top: -8px; /* Ajuste para que se vea más pegado */
+}
+
 .submit-button {
   width: 100%;
   padding: 12px;
@@ -229,6 +260,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
+  margin-top: 8px;
 }
 
 .submit-button:hover:not(:disabled) {

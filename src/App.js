@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import "./App.css";
 
-// Iconos SVG
+// --- Iconos SVG ---
 const CopyIcon = () => (
   <svg
     width='18'
@@ -11,6 +11,8 @@ const CopyIcon = () => (
     fill='none'
     stroke='currentColor'
     strokeWidth='2'
+    strokeLinecap='round'
+    strokeLinejoin='round'
   >
     <rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect>
     <path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path>
@@ -25,6 +27,8 @@ const CheckIcon = () => (
     fill='none'
     stroke='currentColor'
     strokeWidth='2'
+    strokeLinecap='round'
+    strokeLinejoin='round'
   >
     <polyline points='20 6 9 17 4 12'></polyline>
   </svg>
@@ -38,6 +42,8 @@ const AlertIcon = () => (
     fill='none'
     stroke='currentColor'
     strokeWidth='2'
+    strokeLinecap='round'
+    strokeLinejoin='round'
   >
     <circle cx='12' cy='12' r='10'></circle>
     <line x1='12' y1='8' x2='12' y2='12'></line>
@@ -45,10 +51,28 @@ const AlertIcon = () => (
   </svg>
 );
 
+const FileCheckIcon = () => (
+  <svg
+    width='18'
+    height='18'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+    strokeLinecap='round'
+    strokeLinejoin='round'
+  >
+    <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path>
+    <polyline points='14 2 14 8 20 8'></polyline>
+    <polyline points='9 15 11 17 15 13'></polyline>
+  </svg>
+);
+
 function App() {
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
+    whatsappNumber: "",
   });
   const [comprobante, setComprobante] = useState(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -106,6 +130,13 @@ function App() {
       });
       return false;
     }
+    if (receiveWhatsapp && !formData.whatsappNumber.trim()) {
+      setMessage({
+        type: "error",
+        text: "Por favor ingrese su número de WhatsApp.",
+      });
+      return false;
+    }
     if (!acceptedTerms) {
       setMessage({
         type: "error",
@@ -135,6 +166,7 @@ function App() {
           correo: formData.correo,
           comprobante: comprobante.name,
           whatsapp: receiveWhatsapp ? "Sí" : "No",
+          whatsappNumber: formData.whatsappNumber,
           fecha: new Date().toISOString(),
           banco: paymentData.banco,
           telefono: paymentData.telefono,
@@ -149,7 +181,7 @@ function App() {
           type: "success",
           text: "Pago registrado exitosamente. Recibirá una confirmación por correo.",
         });
-        setFormData({ nombre: "", correo: "" });
+        setFormData({ nombre: "", correo: "", whatsappNumber: "" });
         setComprobante(null);
         setAcceptedTerms(false);
         setReceiveWhatsapp(false);
@@ -247,9 +279,42 @@ function App() {
               disabled={isSubmitting}
               accept='image/*,.pdf'
             />
+            {comprobante && (
+              <div className='file-upload-success'>
+                <FileCheckIcon />
+                <span>{comprobante.name}</span>
+              </div>
+            )}
           </div>
 
           <div className='terms-container'>
+            <label className='checkbox-label'>
+              <input
+                type='checkbox'
+                checked={receiveWhatsapp}
+                onChange={(e) => setReceiveWhatsapp(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              <span>Recibir Material por Whatsapp (Opcional)</span>
+            </label>
+            <div
+              className={`whatsapp-input-container ${
+                receiveWhatsapp ? "open" : ""
+              }`}
+            >
+              <div className='form-group'>
+                <label htmlFor='whatsappNumber'>Número de WhatsApp</label>
+                <input
+                  type='tel'
+                  id='whatsappNumber'
+                  name='whatsappNumber'
+                  value={formData.whatsappNumber}
+                  onChange={handleInputChange}
+                  placeholder='Ej: 0412 345 6789'
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
             <label className='checkbox-label'>
               <input
                 type='checkbox'
@@ -272,15 +337,6 @@ function App() {
                 </a>
                 .
               </span>
-            </label>
-            <label className='checkbox-label' style={{ marginTop: "10px" }}>
-              <input
-                type='checkbox'
-                checked={receiveWhatsapp}
-                onChange={(e) => setReceiveWhatsapp(e.target.checked)}
-                disabled={isSubmitting}
-              />
-              <span>Recibir Material por Whatsapp (Opcional)</span>
             </label>
           </div>
 
