@@ -2,13 +2,14 @@
   "name": "payment-form-app",
   "version": "1.0.0",
   "private": true,
-  "description": "Formulario de registro de pagos",
+  "description": "Formulario de registro de pagos con OCR",
   "dependencies": {
     "googleapis": "^108.0.0",
     "nodemailer": "^6.9.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "tesseract.js": "^5.0.4"
   },
   "scripts": {
     "start": "react-scripts start",

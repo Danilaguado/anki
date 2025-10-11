@@ -1,0 +1,221 @@
+/* src/components/ProcessingModal.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  animation: slideUp 0.4s ease-out;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-icon {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.modal-message {
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.success-button {
+  background-color: #10b981;
+  color: white;
+}
+
+.success-button:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.error-button {
+  background-color: #ef4444;
+  color: white;
+}
+
+.error-button:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.secondary-button {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.secondary-button:hover {
+  background-color: #e5e7eb;
+}
+
+/* Loading Spinner */
+.spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+.spinner-ring:nth-child(2) {
+  border-top-color: #818cf8;
+  animation-delay: -0.4s;
+}
+
+.spinner-ring:nth-child(3) {
+  border-top-color: #c7d2fe;
+  animation-delay: -0.8s;
+}
+
+/* Success Icon Animation */
+.success-icon {
+  width: 80px;
+  height: 80px;
+}
+
+.success-circle {
+  stroke: #10b981;
+  stroke-width: 2;
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.success-check {
+  stroke: #10b981;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+}
+
+/* Error Icon Animation */
+.error-icon {
+  width: 80px;
+  height: 80px;
+}
+
+.error-circle {
+  stroke: #ef4444;
+  stroke-width: 2;
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.error-x {
+  stroke: #ef4444;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 54;
+  stroke-dashoffset: 54;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .modal-content {
+    padding: 32px 24px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .modal-message {
+    font-size: 14px;
+  }
+}
