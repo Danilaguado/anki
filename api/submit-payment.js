@@ -139,7 +139,7 @@ export default async function handler(req, res) {
               background-color: #f9f9f9;
             }
             .header {
-              background-color: #3b82f6;
+              background-color: #4f46e5;
               color: white;
               padding: 20px;
               text-align: center;
@@ -217,7 +217,7 @@ export default async function handler(req, res) {
                 <span class="value"><strong>${referencia}</strong></span>
               </div>
               
-              <p style="margin-top: 30px; padding: 15px; background-color: #f0f9ff; border-left: 4px solid #3b82f6;">
+              <p style="margin-top: 30px; padding: 15px; background-color: #f0f9ff; border-left: 4px solid #4f46e5;">
                 <strong>Nota:</strong> Este pago ha sido registrado automáticamente en Google Sheets.
               </p>
             </div>

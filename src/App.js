@@ -95,24 +95,27 @@ function App() {
 
   const validateForm = () => {
     if (!formData.nombre.trim()) {
-      setMessage({ type: "error", text: "Por favor ingrese su nombre" });
+      setMessage({ type: "error", text: "Por favor ingrese su nombre." });
       return false;
     }
     if (!formData.correo.trim() || !formData.correo.includes("@")) {
-      setMessage({ type: "error", text: "Por favor ingrese un correo válido" });
+      setMessage({
+        type: "error",
+        text: "Por favor ingrese un correo válido.",
+      });
       return false;
     }
     if (!formData.referencia.trim() || formData.referencia.length !== 4) {
       setMessage({
         type: "error",
-        text: "Por favor ingrese los 4 últimos dígitos de la referencia",
+        text: "Por favor ingrese los 4 últimos dígitos de la referencia.",
       });
       return false;
     }
     if (!acceptedTerms) {
       setMessage({
         type: "error",
-        text: "Debe aceptar los términos y condiciones",
+        text: "Debe aceptar los términos y condiciones.",
       });
       return false;
     }
@@ -154,7 +157,7 @@ function App() {
         setFormData({ nombre: "", correo: "", referencia: "" });
         setAcceptedTerms(false);
       } else {
-        throw new Error(result.message || "Error al procesar el pago");
+        throw new Error(result.message || "Error al procesar el pago.");
       }
     } catch (error) {
       setMessage({
@@ -173,7 +176,7 @@ function App() {
         <div className='header'>
           <h1>Registro de Pago</h1>
           <p className='subtitle'>
-            Complete el formulario para registrar su pago móvil
+            Complete el formulario para registrar su pago móvil.
           </p>
         </div>
 
@@ -185,21 +188,19 @@ function App() {
         )}
 
         <form onSubmit={handleSubmit} className='payment-form'>
-          {/* Nombre */}
           <div className='form-group'>
-            <label htmlFor='nombre'>Nombre Completo</label>
+            <label htmlFor='nombre'>Nombre</label>
             <input
               type='text'
               id='nombre'
               name='nombre'
               value={formData.nombre}
               onChange={handleInputChange}
-              placeholder='Ingrese su nombre completo'
+              placeholder='Su nombre completo'
               disabled={isSubmitting}
             />
           </div>
 
-          {/* Correo */}
           <div className='form-group'>
             <label htmlFor='correo'>Correo Electrónico</label>
             <input
@@ -208,24 +209,18 @@ function App() {
               name='correo'
               value={formData.correo}
               onChange={handleInputChange}
-              placeholder='correo@ejemplo.com'
+              placeholder='ejemplo@correo.com'
               disabled={isSubmitting}
             />
           </div>
 
-          {/* Datos del Pago Móvil */}
           <div className='payment-info'>
-            <label>Datos para Pago Móvil</label>
+            <label>Datos del Pago Móvil</label>
 
             {Object.entries(paymentData).map(([key, value]) => (
               <div key={key} className='info-row'>
                 <span className='info-label'>
-                  {key === "banco"
-                    ? "Banco"
-                    : key === "telefono"
-                    ? "Teléfono"
-                    : "Cédula"}
-                  :
+                  {key.charAt(0).toUpperCase() + key.slice(1)}:
                 </span>
                 <div className='info-value-container'>
                   <span className='info-value'>{value}</span>
@@ -245,7 +240,6 @@ function App() {
             ))}
           </div>
 
-          {/* Referencia */}
           <div className='form-group'>
             <label htmlFor='referencia'>Últimos 4 Dígitos de Referencia</label>
             <input
@@ -262,7 +256,6 @@ function App() {
             />
           </div>
 
-          {/* Términos y Condiciones */}
           <div className='terms-container'>
             <label className='checkbox-label'>
               <input
@@ -278,18 +271,17 @@ function App() {
                   onClick={(e) => {
                     e.preventDefault();
                     alert(
-                      "Términos y Condiciones: Al registrar su pago, autoriza el procesamiento de sus datos personales exclusivamente para fines de verificación del pago móvil realizado."
+                      "Términos y Condiciones: Al registrar su pago, usted autoriza el procesamiento de sus datos personales con el único fin de verificar el pago móvil realizado."
                     );
                   }}
                 >
                   términos y condiciones
-                </a>{" "}
-                del servicio
+                </a>
+                .
               </span>
             </label>
           </div>
 
-          {/* Botón Enviar */}
           <button
             type='submit'
             disabled={isSubmitting}
@@ -298,10 +290,6 @@ function App() {
             {isSubmitting ? "Procesando..." : "Registrar Pago"}
           </button>
         </form>
-
-        <p className='footer-text'>
-          Sus datos serán procesados de forma segura
-        </p>
       </div>
     </div>
   );
