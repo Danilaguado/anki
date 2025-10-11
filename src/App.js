@@ -1,6 +1,8 @@
 // src/App.js
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
+import { ProcessingModal } from "./components/ProcessingModal";
+import { PaymentProcessor } from "./services/PaymentProcessor";
 
 // --- Iconos SVG ---
 const CopyIcon = () => (
@@ -80,7 +82,9 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [copiedField, setCopiedField] = useState("");
+  const [processingStatus, setProcessingStatus] = useState(null);
   const whatsappInputRef = useRef(null);
+  const paymentProcessor = useRef(new PaymentProcessor()).current;
 
   const paymentData = {
     banco: { display: "Banco: BNC", value: "0191" },
@@ -153,6 +157,66 @@ function App() {
     return true;
   };
 
+  const processPayment = async () => {
+    // Mostrar modal de procesamiento
+    setProcessingStatus({ stage: "processing" });
+
+    try {
+      // Procesar imagen con OCR
+      // Para modo simulado (pruebas), usa esta línea:
+      const validationResult = await paymentProcessor.mockValidation(
+        comprobante
+      );
+
+      // Para OCR real, descomenta esta línea y comenta la de arriba:
+      // const validationResult = await paymentProcessor.processImage(comprobante);
+
+      if (validationResult.success) {
+        // Pago aprobado - Enviar datos al servidor
+        const response = await fetch("/api/submit-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nombre: formData.nombre,
+            correo: formData.correo,
+            comprobante: comprobante.name,
+            whatsapp: receiveWhatsapp ? "Sí" : "No",
+            whatsappNumber: formData.whatsappNumber,
+            fecha: new Date().toISOString(),
+            banco: paymentData.banco.value,
+            telefono: paymentData.telefono.value,
+            cedula: paymentData.cedula.value,
+            ocrResult: validationResult,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Mostrar modal de éxito
+          setProcessingStatus({ stage: "success" });
+
+          // Limpiar formulario
+          setFormData({ nombre: "", correo: "", whatsappNumber: "" });
+          setComprobante(null);
+          setAcceptedTerms(false);
+          setReceiveWhatsapp(false);
+          document.getElementById("comprobante").value = "";
+        } else {
+          throw new Error(result.message || "Error al procesar el pago.");
+        }
+      } else {
+        // Pago no reconocido
+        setProcessingStatus({ stage: "error" });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setProcessingStatus({ stage: "error" });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: "", text: "" });
@@ -160,50 +224,12 @@ function App() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    await processPayment();
+    setIsSubmitting(false);
+  };
 
-    try {
-      const response = await fetch("/api/submit-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre: formData.nombre,
-          correo: formData.correo,
-          comprobante: comprobante.name,
-          whatsapp: receiveWhatsapp ? "Sí" : "No",
-          whatsappNumber: formData.whatsappNumber,
-          fecha: new Date().toISOString(),
-          banco: paymentData.banco.value,
-          telefono: paymentData.telefono.value,
-          cedula: paymentData.cedula.value,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setMessage({
-          type: "success",
-          text: "Pago registrado exitosamente. Recibirá una confirmación por correo.",
-        });
-        setFormData({ nombre: "", correo: "", whatsappNumber: "" });
-        setComprobante(null);
-        setAcceptedTerms(false);
-        setReceiveWhatsapp(false);
-        document.getElementById("comprobante").value = "";
-      } else {
-        throw new Error(result.message || "Error al procesar el pago.");
-      }
-    } catch (error) {
-      setMessage({
-        type: "error",
-        text: "Error al procesar su solicitud. Por favor intente nuevamente.",
-      });
-      console.error("Error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleCloseModal = () => {
+    setProcessingStatus(null);
   };
 
   return (
@@ -364,6 +390,8 @@ function App() {
           </button>
         </form>
       </div>
+
+      <ProcessingModal status={processingStatus} onClose={handleCloseModal} />
     </div>
   );
 }
