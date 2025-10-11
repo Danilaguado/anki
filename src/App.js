@@ -49,9 +49,10 @@ function App() {
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
-    referencia: "",
   });
+  const [comprobante, setComprobante] = useState(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [receiveWhatsapp, setReceiveWhatsapp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [copiedField, setCopiedField] = useState("");
@@ -64,25 +65,18 @@ function App() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-    // Solo permitir números en referencia
-    if (name === "referencia") {
-      const numericValue = value.replace(/[^0-9]/g, "");
-      setFormData((prev) => ({
-        ...prev,
-        [name]: numericValue,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+  const handleFileChange = (e) => {
+    setComprobante(e.target.files[0]);
   };
 
   const copyToClipboard = async (text, field) => {
     try {
-      // Limpiar el texto antes de copiar
       const cleanText = text.replace(/\./g, "").replace(/\s/g, "");
       await navigator.clipboard.writeText(cleanText);
       setCopiedField(field);
@@ -105,10 +99,10 @@ function App() {
       });
       return false;
     }
-    if (!formData.referencia.trim() || formData.referencia.length !== 4) {
+    if (!comprobante) {
       setMessage({
         type: "error",
-        text: "Por favor ingrese los 4 últimos dígitos de la referencia.",
+        text: "Por favor suba el comprobante de pago.",
       });
       return false;
     }
@@ -139,7 +133,8 @@ function App() {
         body: JSON.stringify({
           nombre: formData.nombre,
           correo: formData.correo,
-          referencia: formData.referencia,
+          comprobante: comprobante.name,
+          whatsapp: receiveWhatsapp ? "Sí" : "No",
           fecha: new Date().toISOString(),
           banco: paymentData.banco,
           telefono: paymentData.telefono,
@@ -154,8 +149,11 @@ function App() {
           type: "success",
           text: "Pago registrado exitosamente. Recibirá una confirmación por correo.",
         });
-        setFormData({ nombre: "", correo: "", referencia: "" });
+        setFormData({ nombre: "", correo: "" });
+        setComprobante(null);
         setAcceptedTerms(false);
+        setReceiveWhatsapp(false);
+        document.getElementById("comprobante").value = "";
       } else {
         throw new Error(result.message || "Error al procesar el pago.");
       }
@@ -216,7 +214,6 @@ function App() {
 
           <div className='payment-info'>
             <label>Datos del Pago Móvil</label>
-
             {Object.entries(paymentData).map(([key, value]) => (
               <div key={key} className='info-row'>
                 <span className='info-label'>
@@ -241,18 +238,14 @@ function App() {
           </div>
 
           <div className='form-group'>
-            <label htmlFor='referencia'>Últimos 4 Dígitos de Referencia</label>
+            <label htmlFor='comprobante'>Sube el comprobante</label>
             <input
-              type='text'
-              id='referencia'
-              name='referencia'
-              value={formData.referencia}
-              onChange={handleInputChange}
-              placeholder='0000'
-              maxLength='4'
-              pattern='[0-9]*'
-              inputMode='numeric'
+              type='file'
+              id='comprobante'
+              name='comprobante'
+              onChange={handleFileChange}
               disabled={isSubmitting}
+              accept='image/*,.pdf'
             />
           </div>
 
@@ -279,6 +272,15 @@ function App() {
                 </a>
                 .
               </span>
+            </label>
+            <label className='checkbox-label' style={{ marginTop: "10px" }}>
+              <input
+                type='checkbox'
+                checked={receiveWhatsapp}
+                onChange={(e) => setReceiveWhatsapp(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              <span>Recibir Material por Whatsapp (Opcional)</span>
             </label>
           </div>
 
