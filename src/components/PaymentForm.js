@@ -24,7 +24,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   });
   const [comprobante, setComprobante] = useState(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [receiveWhatsapp, setReceiveWhatsapp] = useState(false);
   const [errors, setErrors] = useState({});
   const [copiedField, setCopiedField] = useState("");
   const [dollarRate, setDollarRate] = useState(null);
@@ -75,12 +74,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     fetchDollarRate();
   }, []);
 
-  useEffect(() => {
-    if (receiveWhatsapp && whatsappInputRef.current) {
-      whatsappInputRef.current.focus();
-    }
-  }, [receiveWhatsapp]);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -113,8 +106,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     if (!formData.correo.trim() || !formData.correo.includes("@"))
       newErrors.correo = true;
     if (!comprobante) newErrors.comprobante = true;
-    if (receiveWhatsapp && !formData.whatsappNumber.trim())
-      newErrors.whatsappNumber = true;
     if (!acceptedTerms) newErrors.terms = true;
 
     setErrors(newErrors);
@@ -144,7 +135,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
       await onSubmit({
         formData,
         comprobante,
-        receiveWhatsapp,
         paymentData,
       });
     }
@@ -154,7 +144,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     setFormData({ nombre: "", correo: "", whatsappNumber: "" });
     setComprobante(null);
     setAcceptedTerms(false);
-    setReceiveWhatsapp(false);
     setErrors({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -297,36 +286,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
         </div>
 
         <div className='terms-container'>
-          <label className='checkbox-label'>
-            <input
-              type='checkbox'
-              checked={receiveWhatsapp}
-              onChange={(e) => setReceiveWhatsapp(e.target.checked)}
-              disabled={isSubmitting}
-            />
-            <span>Recibir Material por Whatsapp (Opcional)</span>
-          </label>
-          <div
-            className={`whatsapp-input-container ${
-              receiveWhatsapp ? "open" : ""
-            }`}
-          >
-            <div
-              className={`form-group ${errors.whatsappNumber ? "error" : ""}`}
-            >
-              <label htmlFor='whatsappNumber'>Número de WhatsApp</label>
-              <input
-                ref={formRefs.whatsappNumber}
-                type='tel'
-                id='whatsappNumber'
-                name='whatsappNumber'
-                value={formData.whatsappNumber}
-                onChange={handleInputChange}
-                placeholder='Ej: 04123456789'
-                disabled={isSubmitting}
-              />
-            </div>
-          </div>
           <label className='checkbox-label' ref={formRefs.terms}>
             <input
               type='checkbox'

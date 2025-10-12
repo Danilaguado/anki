@@ -15,12 +15,12 @@ body {
 }
 
 .app-container {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 40px 20px; /* Aumentado el padding superior */
   gap: 24px;
   overflow-y: auto;
 }
@@ -32,7 +32,7 @@ body {
   padding: 32px;
   max-width: 480px;
   width: 100%;
-  margin-top: 20px;
+  margin: 20px 0; /* Agregado margen vertical */
 }
 
 .secure-badge {
@@ -59,6 +59,18 @@ body {
 .header {
   text-align: center;
   margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-logo {
+  width: 50%;
+  max-width: 150px;
+  height: auto;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .header h1 {
@@ -148,24 +160,29 @@ body {
 .file-input-button {
   display: flex;
   align-items: center;
-  gap: 6px; /* Cambiado de 8px a 6px */
-  padding: 8px 12px; /* Cambiado de 10px 16px */
-  background-color: #e5e7eb; /* Cambiado de #4f46e5 a gris claro */
-  color: #374151; /* Cambiado de white a gris oscuro */
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: #e5e7eb;
+  color: #374151;
   border: none;
   border-radius: 6px;
-  font-size: 13px; /* Cambiado de 14px */
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
+.file-input-button svg {
+  width: 16px;
+  height: 16px;
+}
+
 .file-input-button:hover {
-  background-color: #d1d5db; /* Cambiado de #4338ca a gris más oscuro */
+  background-color: #d1d5db;
 }
 
 .file-input-button:disabled {
-  background-color: #f3f4f6; /* Gris más claro cuando está deshabilitado */
+  background-color: #f3f4f6;
   color: #9ca3af;
   cursor: not-allowed;
 }
@@ -267,7 +284,7 @@ body {
   color: #10b981;
 }
 
-/* Dollar Rate */
+/* Dollar Rate - SIN FONDO Y SIN BORDES LATERALES */
 .dollar-rate-container {
   display: flex;
   align-items: center;
@@ -397,8 +414,18 @@ body {
 }
 
 @media (max-width: 640px) {
+  .app-container {
+    padding: 30px 16px; /* Más padding en móvil */
+  }
+
   .payment-card {
     padding: 24px 20px;
+    margin: 10px 0; /* Margen reducido en móvil */
+  }
+
+  .header-logo {
+    width: 40%;
+    max-width: 120px;
   }
 
   .file-input-wrapper {
@@ -408,11 +435,6 @@ body {
 
   .file-input-button {
     justify-content: center;
-  }
-
-  .file-input-button svg {
-    width: 16px; /* AGREGAR ESTA LÍNEA */
-    height: 16px; /* AGREGAR ESTA LÍNEA */
   }
 
   .secure-badge img {
