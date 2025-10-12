@@ -23,10 +23,11 @@ body {
 
 .app-container {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 20px 16px;
+  padding: 40px 16px;
   overflow-y: auto;
+  min-height: 100vh;
 }
 
 .payment-card {
@@ -209,24 +210,33 @@ body {
 
 /* Estilos para la cotización del dólar */
 .dollar-rate-container {
-  margin-top: 16px;
-  padding: 12px 16px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .dollar-rate {
-  color: #dc2626;
-  font-size: 15px;
+  color: #111827;
+  font-size: 14px;
   font-weight: 500;
   margin: 0;
+  flex: 1;
 }
 
 .dollar-rate strong {
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dollar-icon {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .dollar-rate-loading {
