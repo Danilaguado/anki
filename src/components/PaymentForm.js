@@ -50,7 +50,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     const fetchDollarRate = async () => {
       try {
         const response = await fetch(
-          "https://ve.dolarapi.com/v1/dolares/oficial"
+          "https://ve.dolarapi.com/v1/dolares/paralelo"
         );
         const data = await response.json();
         setDollarRate(data.promedio);
