@@ -1,0 +1,313 @@
+/* src/styles/Home.css */
+
+.home-container {
+  min-height: 100vh;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+}
+
+/* Hero Section */
+.home-hero-section {
+  background-color: #1a1a1a;
+  background-image: radial-gradient(
+      circle at top right,
+      rgba(212, 175, 55, 0.08),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(212, 175, 55, 0.04),
+      transparent 50%
+    );
+  padding: 80px 24px 128px;
+}
+
+.home-hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.home-hero-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.home-hero-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  margin-bottom: 24px;
+}
+
+.home-hero-subtitle {
+  font-size: clamp(16px, 2vw, 20px);
+  color: #d1d5db;
+  max-width: 900px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+}
+
+.home-cta-button {
+  display: inline-block;
+  background-color: #d4af37;
+  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 16px 40px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  text-decoration: none;
+}
+
+.home-cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+  background-color: #c9a336;
+}
+
+.home-cta-button.final {
+  font-size: 20px;
+  padding: 20px 48px;
+}
+
+/* Section Styles */
+.home-section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.home-section-header {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 48px;
+}
+
+.home-section-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+.home-section-subtitle {
+  font-size: 16px;
+  color: #9ca3af;
+  line-height: 1.6;
+}
+
+/* Problem Section */
+.home-problem-section {
+  padding: 80px 24px;
+  background-color: #262626;
+}
+
+/* Books Section */
+.home-books-section {
+  padding: 80px 24px 112px;
+  background-color: #1a1a1a;
+  background-image: radial-gradient(
+      circle at top right,
+      rgba(212, 175, 55, 0.08),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(212, 175, 55, 0.04),
+      transparent 50%
+    );
+}
+
+.home-books-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(32px, 5vw, 50px);
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.home-books-subtitle {
+  font-size: 18px;
+  color: #d1d5db;
+  margin-top: 24px;
+  line-height: 1.6;
+}
+
+.home-books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 40px;
+  margin-top: 64px;
+}
+
+/* Book Card */
+.home-book-card {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.home-book-card:hover {
+  transform: translateY(-8px);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.home-book-cover {
+  width: 192px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  margin-bottom: 24px;
+}
+
+.home-book-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.home-book-badge {
+  font-size: 14px;
+  font-weight: 600;
+  color: #d4af37;
+  margin-bottom: 16px;
+}
+
+.home-book-description {
+  font-size: 15px;
+  color: #d1d5db;
+  line-height: 1.6;
+  flex-grow: 1;
+  margin-bottom: 24px;
+}
+
+.home-book-link {
+  font-size: 16px;
+  font-weight: 700;
+  color: #d4af37;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+}
+
+.home-book-link:hover {
+  color: #ffffff;
+}
+
+/* Final CTA Section */
+.home-final-cta-section {
+  padding: 80px 24px 112px;
+  background-color: #262626;
+}
+
+.home-final-cta-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.home-final-cta-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(32px, 5vw, 50px);
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 24px;
+}
+
+.home-final-cta-text {
+  font-size: 18px;
+  color: #d1d5db;
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+/* Footer */
+.home-footer {
+  padding: 32px 24px;
+  background-color: #000000;
+  text-align: center;
+  color: #6b7280;
+}
+
+.home-footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.home-footer-subtitle {
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+/* Scroll Reveal Animations */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.delay-100 {
+  transition-delay: 100ms;
+}
+
+.delay-200 {
+  transition-delay: 200ms;
+}
+
+.delay-300 {
+  transition-delay: 300ms;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .home-books-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-hero-section {
+    padding: 60px 20px 80px;
+  }
+
+  .home-problem-section,
+  .home-books-section,
+  .home-final-cta-section {
+    padding: 60px 20px 80px;
+  }
+
+  .home-books-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .home-book-cover {
+    width: 160px;
+  }
+}

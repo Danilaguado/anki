@@ -57,6 +57,51 @@
   border-color: rgba(59, 130, 246, 0.5);
 }
 
+/* Variante Habla, Corrige y Conquista - Rojo */
+.landing-container.habla-corrige-conquista .hero-section,
+.landing-container.habla-corrige-conquista .revelation-section,
+.landing-container.habla-corrige-conquista .final-cta-section {
+  background-color: #1a1a1a;
+  background-image: radial-gradient(
+      circle at top right,
+      rgba(220, 38, 38, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(153, 27, 27, 0.05),
+      transparent 50%
+    );
+}
+
+.landing-container.habla-corrige-conquista .problem-section,
+.landing-container.habla-corrige-conquista .mastery-section {
+  background-color: #262626;
+}
+
+.landing-container.habla-corrige-conquista .problem-icon,
+.landing-container.habla-corrige-conquista .quote-mark {
+  color: #dc2626;
+}
+
+.landing-container.habla-corrige-conquista .feature-title {
+  color: #ef4444;
+}
+
+.landing-container.habla-corrige-conquista .cta-button {
+  background-color: #dc2626;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+.landing-container.habla-corrige-conquista .cta-button:hover {
+  background-color: #b91c1c;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+}
+
+.landing-container.habla-corrige-conquista .feature-card:hover {
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
 /* Hero Section */
 .hero-section {
   background-color: #1a1a1a;
