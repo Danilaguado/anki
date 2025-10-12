@@ -1,0 +1,414 @@
+/* src/styles/PaymentForm.css */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f3f4f6;
+}
+
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.payment-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  max-width: 480px;
+  width: 100%;
+}
+
+.secure-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.secure-badge img {
+  max-width: 120px;
+  width: 60%;
+  height: auto;
+}
+
+.secure-text {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Form Groups */
+.form-group {
+  position: relative;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+.form-group.error label {
+  color: #ef4444;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.form-group.error input {
+  border-color: #ef4444;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+/* File Input */
+.file-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-input-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.file-input-button:hover {
+  background-color: #4338ca;
+}
+
+.file-input-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.file-name-display {
+  flex: 1;
+  font-size: 14px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.file-upload-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #f0fdf4;
+  border: 1px solid #d1fae5;
+  border-radius: 6px;
+  color: #065f46;
+  font-size: 13px;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+/* Payment Info */
+.payment-info {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.payment-info > label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.info-label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.info-value-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.copy-button {
+  padding: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.copy-button.copied {
+  color: #10b981;
+}
+
+/* Dollar Rate */
+.dollar-rate-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dollar-icon {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.dollar-rate-content {
+  flex: 1;
+}
+
+.dollar-rate {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.dollar-rate strong {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dollar-rate-loading {
+  color: #6b7280;
+  font-size: 14px;
+  font-style: italic;
+  margin: 0;
+}
+
+.dollar-rate-error {
+  color: #991b1b;
+  font-size: 13px;
+  margin: 0;
+}
+
+.last-update {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+/* Terms */
+.terms-container {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-label a {
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+.checkbox-label a:hover {
+  text-decoration: underline;
+}
+
+.whatsapp-input-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, margin-top 0.3s ease-in-out;
+}
+
+.whatsapp-input-container.open {
+  max-height: 100px;
+  margin-top: -8px;
+}
+
+/* Submit Button */
+.submit-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #4338ca;
+}
+
+.submit-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .secure-badge img {
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 640px) {
+  .payment-card {
+    padding: 24px 20px;
+  }
+
+  .file-input-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-input-button {
+    justify-content: center;
+  }
+
+  .secure-badge img {
+    max-width: 90px;
+  }
+}
