@@ -16,7 +16,7 @@ import {
   UploadIcon,
 } from "./Icons";
 
-const PaymentForm = forwardRef(({ onProcessPayment }, ref) => {
+const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
@@ -25,7 +25,6 @@ const PaymentForm = forwardRef(({ onProcessPayment }, ref) => {
   const [comprobante, setComprobante] = useState(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [receiveWhatsapp, setReceiveWhatsapp] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [copiedField, setCopiedField] = useState("");
   const [dollarRate, setDollarRate] = useState(null);
@@ -104,6 +103,7 @@ const PaymentForm = forwardRef(({ onProcessPayment }, ref) => {
       setTimeout(() => setCopiedField(""), 2000);
     } catch (err) {
       console.error("Error al copiar:", err);
+      alert("No se pudo copiar. Por favor copie manualmente.");
     }
   };
 
@@ -139,17 +139,15 @@ const PaymentForm = forwardRef(({ onProcessPayment }, ref) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    setIsSubmitting(true);
-    await onProcessPayment({
-      ...formData,
-      comprobante,
-      whatsapp: receiveWhatsapp ? "Sí" : "No",
-      fecha: new Date().toISOString(),
-      banco: paymentData.banco.value,
-      telefono: paymentData.telefono.value,
-      cedula: paymentData.cedula.value,
-    });
-    setIsSubmitting(false);
+
+    if (onSubmit) {
+      await onSubmit({
+        formData,
+        comprobante,
+        receiveWhatsapp,
+        paymentData,
+      });
+    }
   };
 
   const resetForm = () => {
@@ -172,7 +170,7 @@ const PaymentForm = forwardRef(({ onProcessPayment }, ref) => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className='payment-form' noValidate>
+      <form onSubmit={handleSubmit} className='payment-form'>
         <div className={`form-group ${errors.nombre ? "error" : ""}`}>
           <label htmlFor='nombre'>Nombre</label>
           <input
@@ -255,7 +253,7 @@ const PaymentForm = forwardRef(({ onProcessPayment }, ref) => {
               </>
             ) : (
               <p className='dollar-rate-error'>
-                No se pudo cargar la cotización
+                No se pudo cargar la cotización del dólar
               </p>
             )}
           </div>
@@ -287,13 +285,13 @@ const PaymentForm = forwardRef(({ onProcessPayment }, ref) => {
               Seleccionar archivo
             </button>
             <span className='file-name-display'>
-              {comprobante ? comprobante.name : "Ningún archivo"}
+              {comprobante ? comprobante.name : "Ningún archivo seleccionado"}
             </span>
           </div>
           {comprobante && (
             <div className='file-upload-success'>
               <FileCheckIcon />
-              <span>Archivo cargado</span>
+              <span>Archivo cargado correctamente</span>
             </div>
           )}
         </div>
