@@ -70,6 +70,10 @@ body {
   object-fit: contain; /* Sin redondeo, mantiene la forma original */
 }
 
+.header-banner {
+  background: black;
+}
+
 .header h1 {
   font-size: 22px;
   font-weight: 600;
@@ -414,11 +418,12 @@ body {
 
   .header-banner {
     padding: 15px;
+    background: black;
   }
 
   .header-logo {
     width: 25%;
-    max-width: 80px;
+    max-width: 60px;
   }
 
   .header {
