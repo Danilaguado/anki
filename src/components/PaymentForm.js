@@ -153,7 +153,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   useImperativeHandle(ref, () => ({ resetForm }));
 
   // Calcular el total a pagar (multiplicar por 2)
-  const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
+  const totalAmount = dollarRate ? (dollarRate * 3).toFixed(2) : null;
 
   return (
     <div className='payment-card'>
