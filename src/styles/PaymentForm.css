@@ -148,24 +148,25 @@ body {
 .file-input-button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: #4f46e5;
-  color: white;
+  gap: 6px; /* Cambiado de 8px a 6px */
+  padding: 8px 12px; /* Cambiado de 10px 16px */
+  background-color: #e5e7eb; /* Cambiado de #4f46e5 a gris claro */
+  color: #374151; /* Cambiado de white a gris oscuro */
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px; /* Cambiado de 14px */
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .file-input-button:hover {
-  background-color: #4338ca;
+  background-color: #d1d5db; /* Cambiado de #4338ca a gris más oscuro */
 }
 
 .file-input-button:disabled {
-  background-color: #9ca3af;
+  background-color: #f3f4f6; /* Gris más claro cuando está deshabilitado */
+  color: #9ca3af;
   cursor: not-allowed;
 }
 
@@ -407,6 +408,11 @@ body {
 
   .file-input-button {
     justify-content: center;
+  }
+
+  .file-input-button svg {
+    width: 16px; /* AGREGAR ESTA LÍNEA */
+    height: 16px; /* AGREGAR ESTA LÍNEA */
   }
 
   .secure-badge img {
