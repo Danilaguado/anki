@@ -8,6 +8,55 @@
     sans-serif;
 }
 
+/* Variantes de color para cada producto */
+.landing-container.musculo-voluntad {
+  background-color: #111827;
+}
+
+.landing-container.musculo-voluntad .hero-section,
+.landing-container.musculo-voluntad .revelation-section,
+.landing-container.musculo-voluntad .final-cta-section {
+  background-color: #111827;
+  background-image: radial-gradient(
+      circle at top right,
+      rgba(59, 130, 246, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(139, 92, 246, 0.05),
+      transparent 50%
+    );
+}
+
+.landing-container.musculo-voluntad .problem-section,
+.landing-container.musculo-voluntad .mastery-section {
+  background-color: #1f2937;
+}
+
+.landing-container.musculo-voluntad .problem-icon,
+.landing-container.musculo-voluntad .quote-mark {
+  color: #3b82f6;
+}
+
+.landing-container.musculo-voluntad .feature-title {
+  color: #60a5fa;
+}
+
+.landing-container.musculo-voluntad .cta-button {
+  background-color: #3b82f6;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.landing-container.musculo-voluntad .cta-button:hover {
+  background-color: #2563eb;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.landing-container.musculo-voluntad .feature-card:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
 /* Hero Section */
 .hero-section {
   background-color: #1a1a1a;
