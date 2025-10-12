@@ -86,6 +86,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 0 32px 32px; /* Padding lateral y abajo para el formulario */
 }
 
 /* Form Groups */
@@ -407,12 +408,25 @@ body {
   }
 
   .payment-card {
-    padding: 24px 20px;
+    padding: 0;
+    margin: 20px 0;
+  }
+
+  .header-banner {
+    padding: 15px;
   }
 
   .header-logo {
-    width: 40%;
-    max-width: 120px;
+    width: 25%;
+    max-width: 80px;
+  }
+
+  .header {
+    padding: 20px 20px 0;
+  }
+
+  .payment-form {
+    padding: 0 20px 20px;
   }
 
   .file-input-wrapper {
