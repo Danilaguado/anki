@@ -153,6 +153,11 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   return (
     <div className='payment-card'>
       <div className='header'>
+        <img
+          src='/assets/kaizenjpg.jpg'
+          alt='Kaizen Logo'
+          className='header-logo'
+        />
         <h1>Registro de Pago</h1>
         <p className='subtitle'>
           Complete el formulario para registrar su pago móvil.
