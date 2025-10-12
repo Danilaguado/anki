@@ -29,9 +29,11 @@ body {
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 32px;
+  padding: 0; /* Cambiado de 32px a 0 para el banner */
   max-width: 480px;
   width: 100%;
+  margin: 40px 0;
+  overflow: hidden; /* Para que el banner respete el border-radius */
 }
 
 .secure-badge {
@@ -58,18 +60,14 @@ body {
 .header {
   text-align: center;
   margin-bottom: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  padding: 24px 32px 0; /* Padding solo para el contenido del header */
 }
 
 .header-logo {
-  width: 50%;
-  max-width: 150px;
+  width: 30%;
+  max-width: 100px;
   height: auto;
-  border-radius: 50%;
-  object-fit: cover;
+  object-fit: contain; /* Sin redondeo, mantiene la forma original */
 }
 
 .header h1 {
