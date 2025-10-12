@@ -6,17 +6,20 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
+import { useSearchParams } from "react-router-dom";
 import "../styles/PaymentForm.css";
 import {
   CopyIcon,
   CheckIcon,
   FileCheckIcon,
-  DollarIcon,
   LockIcon,
   UploadIcon,
 } from "./Icons";
 
 const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
+  const [searchParams] = useSearchParams();
+  const productName = searchParams.get("product") || "Producto Digital";
+
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
@@ -29,7 +32,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   const [dollarRate, setDollarRate] = useState(null);
   const [loadingDollar, setLoadingDollar] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const whatsappInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const formRefs = {
     nombre: useRef(null),
@@ -150,6 +152,9 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
 
   useImperativeHandle(ref, () => ({ resetForm }));
 
+  // Calcular el total a pagar (multiplicar por 2)
+  const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
+
   return (
     <div className='payment-card'>
       <div className='header-banner'>
@@ -163,7 +168,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
       <div className='header'>
         <h1>Registro de Pago</h1>
         <p className='subtitle'>
-          Complete el formulario para registrar su pago móvil.
+          Complete el formulario para adquirir: <strong>{productName}</strong>
         </p>
       </div>
 
@@ -229,18 +234,14 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
           ))}
         </div>
 
-        <div className='dollar-rate-container'>
-          <div className='dollar-icon'>
-            <DollarIcon />
-          </div>
-          <div className='dollar-rate-content'>
+        <div className='total-amount-container'>
+          <div className='total-amount-content'>
             {loadingDollar ? (
-              <p className='dollar-rate-loading'>Cargando cotización...</p>
-            ) : dollarRate ? (
+              <p className='total-amount-loading'>Calculando monto...</p>
+            ) : totalAmount ? (
               <>
-                <p className='dollar-rate'>
-                  $USD Cotización BCV:{" "}
-                  <strong>Bs. {dollarRate.toFixed(2)}</strong>
+                <p className='total-amount'>
+                  Total a pagar: <strong>Bs. {totalAmount}</strong>
                 </p>
                 {lastUpdate && (
                   <p className='last-update'>
@@ -249,9 +250,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
                 )}
               </>
             ) : (
-              <p className='dollar-rate-error'>
-                No se pudo cargar la cotización del dólar
-              </p>
+              <p className='total-amount-error'>No se pudo calcular el monto</p>
             )}
           </div>
         </div>

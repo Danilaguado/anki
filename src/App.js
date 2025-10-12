@@ -1,86 +1,18 @@
 // src/App.js
 import React, { useState, useRef } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./styles/PaymentForm.css";
-import PaymentForm from "./components/PaymentForm";
-import SecureBadge from "./components/SecureBadge";
-import { ProcessingModal } from "./components/ProcessingModal";
-import { PaymentProcessor } from "./services/PaymentProcessor";
+import Landing from "./pages/Landing";
+import PaymentPage from "./pages/PaymentPage";
 
 function App() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [processingStatus, setProcessingStatus] = useState(null);
-  const paymentProcessor = useRef(new PaymentProcessor()).current;
-  const formRef = useRef(null);
-
-  const processPayment = async (data) => {
-    setProcessingStatus({ stage: "processing" });
-    setIsSubmitting(true);
-
-    try {
-      // Para modo simulado (pruebas), usa esta línea:
-      // const validationResult = await paymentProcessor.mockValidation(data.comprobante);
-
-      // Para OCR real, usa esta línea:
-      const validationResult = await paymentProcessor.processImage(
-        data.comprobante
-      );
-
-      if (validationResult.success) {
-        const response = await fetch("/api/submit-payment", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nombre: data.formData.nombre,
-            correo: data.formData.correo,
-            comprobante: data.comprobante.name,
-            whatsapp: data.receiveWhatsapp ? "Sí" : "No",
-            whatsappNumber: data.formData.whatsappNumber,
-            fecha: new Date().toISOString(),
-            banco: data.paymentData.banco.value,
-            telefono: data.paymentData.telefono.value,
-            cedula: data.paymentData.cedula.value,
-            ocrResult: validationResult,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          setProcessingStatus({ stage: "success" });
-          // Resetear el formulario
-          if (formRef.current) {
-            formRef.current.resetForm();
-          }
-        } else {
-          throw new Error(result.message || "Error al procesar el pago.");
-        }
-      } else {
-        setProcessingStatus({ stage: "error" });
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setProcessingStatus({ stage: "error" });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setProcessingStatus(null);
-  };
-
   return (
-    <div className='app-container'>
-      <PaymentForm
-        ref={formRef}
-        onSubmit={processPayment}
-        isSubmitting={isSubmitting}
-      />
-      <SecureBadge />
-      <ProcessingModal status={processingStatus} onClose={handleCloseModal} />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path='/' element={<Landing />} />
+        <Route path='/payment' element={<PaymentPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
