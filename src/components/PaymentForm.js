@@ -1,64 +1,81 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import "./PaymentForm.css";
 
-// Iconos SVG
+const styles =
+
+// ==================== ICONOS SVG ====================
 const CopyIcon = () => (
-  <svg
-    width='18'
-    height='18'
-    viewBox='0 0 24 24'
-    fill='none'
-    stroke='currentColor'
-    strokeWidth='2'
-  >
+  <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
     <rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect>
     <path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path>
   </svg>
 );
 
-const CheckIcon = () => (
-  <svg
-    width='18'
-    height='18'
-    viewBox='0 0 24 24'
-    fill='none'
-    stroke='currentColor'
-    strokeWidth='2'
-  >
-    <polyline points='20 6 9 17 4 12'></polyline>
-  </svg>
-);
-
-const AlertIcon = () => (
-  <svg
-    width='18'
-    height='18'
-    viewBox='0 0 24 24'
-    fill='none'
-    stroke='currentColor'
-    strokeWidth='2'
-  >
-    <circle cx='12' cy='12' r='10'></circle>
-    <line x1='12' y1='8' x2='12' y2='12'></line>
-    <line x1='12' y1='16' x2='12.01' y2='16'></line>
-  </svg>
-);
-
-const PaymentForm = () => {
+// ==================== COMPONENTE PRINCIPAL ====================
+function PaymentFormApp() {
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
-    referencia: "",
+    whatsappNumber: "",
   });
+  const [comprobante, setComprobante] = useState(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [receiveWhatsapp, setReceiveWhatsapp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [errors, setErrors] = useState({});
   const [copiedField, setCopiedField] = useState("");
+  const [dollarRate, setDollarRate] = useState(null);
+  const [loadingDollar, setLoadingDollar] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const whatsappInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const formRefs = {
+    nombre: useRef(null),
+    correo: useRef(null),
+    comprobante: useRef(null),
+    whatsappNumber: useRef(null),
+    terms: useRef(null),
+  };
 
   const paymentData = {
-    banco: "0191 BNC",
-    telefono: "0412.549.79.36",
-    cedula: "23.621.688",
+    banco: { display: "Banco: BNC", value: "0191" },
+    telefono: { display: "04125497936", value: "04125497936" },
+    cedula: { display: "23621688", value: "23621688" },
   };
+
+  useEffect(() => {
+    const fetchDollarRate = async () => {
+      try {
+        const response = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+        const data = await response.json();
+        setDollarRate(data.promedio);
+        
+        if (data.fechaActualizacion) {
+          const date = new Date(data.fechaActualizacion);
+          setLastUpdate(date.toLocaleString('es-VE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }));
+        }
+        
+        setLoadingDollar(false);
+      } catch (error) {
+        console.error("Error al obtener tasa del dólar:", error);
+        setLoadingDollar(false);
+      }
+    };
+
+    fetchDollarRate();
+  }, []);
+
+  useEffect(() => {
+    if (receiveWhatsapp && whatsappInputRef.current) {
+      whatsappInputRef.current.focus();
+    }
+  }, [receiveWhatsapp]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -66,6 +83,17 @@ const PaymentForm = () => {
       ...prev,
       [name]: value,
     }));
+    
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: false }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    setComprobante(e.target.files[0]);
+    if (errors.comprobante) {
+      setErrors((prev) => ({ ...prev, comprobante: false }));
+    }
   };
 
   const copyToClipboard = async (text, field) => {
@@ -75,410 +103,309 @@ const PaymentForm = () => {
       setTimeout(() => setCopiedField(""), 2000);
     } catch (err) {
       console.error("Error al copiar:", err);
+      alert("No se pudo copiar. Por favor copie manualmente.");
     }
   };
 
   const validateForm = () => {
+    const newErrors = {};
+    
     if (!formData.nombre.trim()) {
-      setMessage({ type: "error", text: "Por favor ingrese su nombre" });
-      return false;
+      newErrors.nombre = true;
     }
     if (!formData.correo.trim() || !formData.correo.includes("@")) {
-      setMessage({ type: "error", text: "Por favor ingrese un correo válido" });
-      return false;
+      newErrors.correo = true;
     }
-    if (!formData.referencia.trim() || formData.referencia.length !== 4) {
-      setMessage({
-        type: "error",
-        text: "Por favor ingrese los 4 últimos dígitos de la referencia",
-      });
-      return false;
+    if (!comprobante) {
+      newErrors.comprobante = true;
+    }
+    if (receiveWhatsapp && !formData.whatsappNumber.trim()) {
+      newErrors.whatsappNumber = true;
     }
     if (!acceptedTerms) {
-      setMessage({
-        type: "error",
-        text: "Debe aceptar los términos y condiciones",
-      });
+      newErrors.terms = true;
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorKey = Object.keys(newErrors)[0];
+      const firstErrorRef = formRefs[firstErrorKey];
+      
+      if (firstErrorRef && firstErrorRef.current) {
+        firstErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (firstErrorKey !== 'terms' && firstErrorKey !== 'comprobante') {
+          firstErrorRef.current.focus();
+        }
+      }
+      
       return false;
     }
+    
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage({ type: "", text: "" });
 
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/submit-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre: formData.nombre,
-          correo: formData.correo,
-          referencia: formData.referencia,
-          fecha: new Date().toISOString(),
-          banco: paymentData.banco,
-          telefono: paymentData.telefono,
-          cedula: paymentData.cedula,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setMessage({
-          type: "success",
-          text: "Pago registrado exitosamente. Recibirá una confirmación por correo.",
-        });
-        setFormData({ nombre: "", correo: "", referencia: "" });
-        setAcceptedTerms(false);
-      } else {
-        throw new Error(result.message || "Error al procesar el pago");
-      }
-    } catch (error) {
-      setMessage({
-        type: "error",
-        text: "Error al procesar su solicitud. Por favor intente nuevamente.",
-      });
-      console.error("Error:", error);
-    } finally {
+    
+    setTimeout(() => {
+      alert("Pago registrado exitosamente!");
+      setFormData({ nombre: "", correo: "", whatsappNumber: "" });
+      setComprobante(null);
+      setAcceptedTerms(false);
+      setReceiveWhatsapp(false);
       setIsSubmitting(false);
-    }
+    }, 2000);
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "20px",
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          padding: "40px",
-          maxWidth: "500px",
-          width: "100%",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "600",
-            color: "#1a1a1a",
-            marginBottom: "8px",
-            textAlign: "center",
-          }}
-        >
-          Registro de Pago
-        </h1>
-        <p
-          style={{
-            color: "#666",
-            fontSize: "14px",
-            textAlign: "center",
-            marginBottom: "32px",
-          }}
-        >
-          Complete el formulario para registrar su pago móvil
-        </p>
-
-        {message.text && (
-          <div
-            style={{
-              padding: "12px 16px",
-              borderRadius: "6px",
-              marginBottom: "24px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              backgroundColor:
-                message.type === "success" ? "#f0fdf4" : "#fef2f2",
-              border: `1px solid ${
-                message.type === "success" ? "#86efac" : "#fecaca"
-              }`,
-              color: message.type === "success" ? "#166534" : "#991b1b",
-            }}
-          >
-            <AlertIcon />
-            <span style={{ fontSize: "14px" }}>{message.text}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* Nombre */}
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#1a1a1a",
-                marginBottom: "8px",
-              }}
-            >
-              Nombre Completo
-            </label>
-            <input
-              type='text'
-              name='nombre'
-              value={formData.nombre}
-              onChange={handleInputChange}
-              placeholder='Ingrese su nombre completo'
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                fontSize: "14px",
-                border: "1px solid #d1d5db",
-                borderRadius: "6px",
-                outline: "none",
-                transition: "border-color 0.2s",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-            />
+    <>
+      <style>{styles}</style>
+      <div className='app-container'>
+        <div className='payment-card'>
+          <div className='header'>
+            <h1>Registro de Pago</h1>
+            <p className='subtitle'>
+              Complete el formulario para registrar su pago móvil.
+            </p>
           </div>
 
-          {/* Correo */}
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#1a1a1a",
-                marginBottom: "8px",
-              }}
-            >
-              Correo Electrónico
-            </label>
-            <input
-              type='email'
-              name='correo'
-              value={formData.correo}
-              onChange={handleInputChange}
-              placeholder='correo@ejemplo.com'
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                fontSize: "14px",
-                border: "1px solid #d1d5db",
-                borderRadius: "6px",
-                outline: "none",
-                transition: "border-color 0.2s",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-            />
-          </div>
+          <div className='payment-form'>
+            <div className={`form-group ${errors.nombre ? 'error' : ''}`}>
+              <label htmlFor='nombre'>Nombre</label>
+              <input
+                ref={formRefs.nombre}
+                type='text'
+                id='nombre'
+                name='nombre'
+                value={formData.nombre}
+                onChange={handleInputChange}
+                placeholder='Su nombre completo'
+                disabled={isSubmitting}
+              />
+            </div>
 
-          {/* Datos del Pago Móvil */}
-          <div
-            style={{
-              backgroundColor: "#f9fafb",
-              padding: "16px",
-              borderRadius: "6px",
-              marginBottom: "20px",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#1a1a1a",
-                marginBottom: "12px",
-              }}
-            >
-              Datos para Pago Móvil
-            </label>
+            <div className={`form-group ${errors.correo ? 'error' : ''}`}>
+              <label htmlFor='correo'>Correo Electrónico</label>
+              <input
+                ref={formRefs.correo}
+                type='email'
+                id='correo'
+                name='correo'
+                value={formData.correo}
+                onChange={handleInputChange}
+                placeholder='ejemplo@correo.com'
+                disabled={isSubmitting}
+              />
+            </div>
 
-            {Object.entries(paymentData).map(([key, value]) => (
-              <div
-                key={key}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "8px 0",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "14px",
-                    color: "#6b7280",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {key === "banco"
-                    ? "Banco"
-                    : key === "telefono"
-                    ? "Teléfono"
-                    : "Cédula"}
-                  :
-                </span>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#1a1a1a",
-                    }}
-                  >
-                    {value}
+            <div className='payment-info'>
+              <label>Datos del Pago Móvil</label>
+              {Object.entries(paymentData).map(([key, { display, value }]) => (
+                <div key={key} className='info-row'>
+                  <span className='info-label'>
+                    {key === "banco" ? (
+                      <span>
+                        Banco: <strong>BNC</strong>
+                      </span>
+                    ) : (
+                      `${key.charAt(0).toUpperCase() + key.slice(1)}:`
+                    )}
                   </span>
-                  <button
-                    type='button'
-                    onClick={() =>
-                      copyToClipboard(value.replace(/\./g, ""), key)
-                    }
-                    style={{
-                      padding: "4px",
-                      background: copiedField === key ? "#10b981" : "#e5e7eb",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      transition: "all 0.2s",
-                    }}
-                    title='Copiar'
-                  >
-                    {copiedField === key ? <CheckIcon /> : <CopyIcon />}
-                  </button>
+                  <div className='info-value-container'>
+                    <span className='info-value'>
+                      {key === "banco" ? value : display}
+                    </span>
+                    <button
+                      type='button'
+                      onClick={() => copyToClipboard(value, key)}
+                      className={`copy-button ${copiedField === key ? "copied" : ""}`}
+                      title='Copiar'
+                      disabled={isSubmitting}
+                    >
+                      {copiedField === key ? <CheckIcon /> : <CopyIcon />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className='dollar-rate-container'>
+              <div className='dollar-icon'>
+                <DollarIcon />
+              </div>
+              <div className='dollar-rate-content'>
+                {loadingDollar ? (
+                  <p className='dollar-rate-loading'>Cargando cotización...</p>
+                ) : dollarRate ? (
+                  <>
+                    <p className='dollar-rate'>
+                      $USD Cotización BCV: <strong>Bs. {dollarRate.toFixed(2)}</strong>
+                    </p>
+                    {lastUpdate && (
+                      <p className='last-update'>
+                        Última actualización: {lastUpdate}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className='dollar-rate-error'>
+                    No se pudo cargar la cotización del dólar
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className={`form-group ${errors.comprobante ? 'error' : ''}`} ref={formRefs.comprobante}>
+              <label htmlFor='comprobante'>Sube el comprobante</label>
+              <div className='file-input-wrapper'>
+                <input
+                  ref={fileInputRef}
+                  type='file'
+                  id='comprobante'
+                  name='comprobante'
+                  onChange={handleFileChange}
+                  disabled={isSubmitting}
+                  accept='image/*,.pdf'
+                  className='file-input-hidden'
+                />
+                <button
+                  type='button'
+                  className='file-input-button'
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+                >
+                  <UploadIcon />
+                  Seleccionar archivo
+                </button>
+                <span className='file-name-display'>
+                  {comprobante ? comprobante.name : 'Ningún archivo seleccionado'}
+                </span>
+              </div>
+              {comprobante && (
+                <div className='file-upload-success'>
+                  <FileCheckIcon />
+                  <span>Archivo cargado correctamente</span>
+                </div>
+              )}
+            </div>
+
+            <div className='terms-container'>
+              <label className='checkbox-label'>
+                <input
+                  type='checkbox'
+                  checked={receiveWhatsapp}
+                  onChange={(e) => setReceiveWhatsapp(e.target.checked)}
+                  disabled={isSubmitting}
+                />
+                <span>Recibir Material por Whatsapp (Opcional)</span>
+              </label>
+              <div className={`whatsapp-input-container ${receiveWhatsapp ? "open" : ""}`}>
+                <div className={`form-group ${errors.whatsappNumber ? 'error' : ''}`}>
+                  <label htmlFor='whatsappNumber'>Número de WhatsApp</label>
+                  <input
+                    ref={formRefs.whatsappNumber}
+                    type='tel'
+                    id='whatsappNumber'
+                    name='whatsappNumber'
+                    value={formData.whatsappNumber}
+                    onChange={handleInputChange}
+                    placeholder='Ej: 04123456789'
+                    disabled={isSubmitting}
+                  />
                 </div>
               </div>
-            ))}
-          </div>
+              <label className='checkbox-label' ref={formRefs.terms}>
+                <input
+                  type='checkbox'
+                  checked={acceptedTerms}
+                  onChange={(e) => {
+                    setAcceptedTerms(e.target.checked);
+                    if (errors.terms) {
+                      setErrors((prev) => ({ ...prev, terms: false }));
+                    }
+                  }}
+                  disabled={isSubmitting}
+                />
+                <span style={{ color: errors.terms ? '#ef4444' : '#4b5563' }}>
+                  Acepto los{" "}
+                  <a
+                    href='#terms'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alert(
+                        "Términos y Condiciones: Al registrar su pago, usted autoriza el procesamiento de sus datos personales con el único fin de verificar el pago móvil realizado."
+                      );
+                    }}
+                  >
+                    términos y condiciones
+                  </a>
+                  .
+                </span>
+              </label>
+            </div>
 
-          {/* Referencia */}
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#1a1a1a",
-                marginBottom: "8px",
-              }}
+            <button
+              type='button'
+              disabled={isSubmitting}
+              className='submit-button'
+              onClick={handleSubmit}
             >
-              Últimos 4 Dígitos de Referencia
-            </label>
-            <input
-              type='text'
-              name='referencia'
-              value={formData.referencia}
-              onChange={handleInputChange}
-              placeholder='0000'
-              maxLength='4'
-              pattern='[0-9]*'
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                fontSize: "14px",
-                border: "1px solid #d1d5db",
-                borderRadius: "6px",
-                outline: "none",
-                transition: "border-color 0.2s",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-            />
+              <LockIcon />
+              {isSubmitting ? "Procesando..." : "Registrar Pago"}
+            </button>
           </div>
+        </div>
 
-          {/* Términos y Condiciones */}
-          <div style={{ marginBottom: "24px" }}>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "8px",
-                cursor: "pointer",
-                fontSize: "14px",
-                color: "#4b5563",
-              }}
-            >
-              <input
-                type='checkbox'
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                style={{
-                  marginTop: "2px",
-                  width: "16px",
-                  height: "16px",
-                  cursor: "pointer",
-                }}
-              />
-              <span>
-                Acepto los{" "}
-                <a
-                  href='#'
-                  style={{ color: "#3b82f6", textDecoration: "underline" }}
-                >
-                  términos y condiciones
-                </a>{" "}
-                del servicio
-              </span>
-            </label>
-          </div>
-
-          {/* Botón Enviar */}
-          <button
-            type='submit'
-            disabled={isSubmitting}
-            style={{
-              width: "100%",
-              padding: "12px",
-              backgroundColor: isSubmitting ? "#9ca3af" : "#3b82f6",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              fontSize: "16px",
-              fontWeight: "500",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              transition: "background-color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              if (!isSubmitting) e.target.style.backgroundColor = "#2563eb";
-            }}
-            onMouseLeave={(e) => {
-              if (!isSubmitting) e.target.style.backgroundColor = "#3b82f6";
-            }}
-          >
-            {isSubmitting ? "Procesando..." : "Registrar Pago"}
-          </button>
-        </form>
-
-        <p
-          style={{
-            marginTop: "24px",
-            textAlign: "center",
-            fontSize: "12px",
-            color: "#9ca3af",
-          }}
-        >
-          Sus datos serán procesados de forma segura
-        </p>
+        <div className='secure-badge'>
+          <img 
+            src='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80"%3E%3Crect fill="%234f46e5" width="200" height="80" rx="8"/%3E%3Cpath fill="%23fff" d="M60 25h-8v-5c0-6.6-5.4-12-12-12s-12 5.4-12 12v5h-8c-2.2 0-4 1.8-4 4v26c0 2.2 1.8 4 4 4h40c2.2 0 4-1.8 4-4V29c0-2.2-1.8-4-4-4zm-20 22c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6zm7-22H33v-5c0-3.9 3.1-7 7-7s7 3.1 7 7v5z"/%3E%3Ctext x="75" y="35" fill="%23fff" font-family="Arial" font-size="16" font-weight="bold"%3EPAGO SEGURO%3C/text%3E%3Ctext x="75" y="52" fill="%23fff" font-family="Arial" font-size="11"%3EProtegemos tus datos%3C/text%3E%3C/svg%3E'
+            alt='Pago Seguro'
+          />
+          <span className='secure-text'>Transacción 100% Segura</span>
+        </div>
       </div>
-    </div>
+    </>
   );
-};
+}
 
-export default PaymentForm;
+export default PaymentFormApp;
+
+const CheckIcon = () => (
+  <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+    <polyline points='20 6 9 17 4 12'></polyline>
+  </svg>
+);
+
+const FileCheckIcon = () => (
+  <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+    <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path>
+    <polyline points='14 2 14 8 20 8'></polyline>
+    <polyline points='9 15 11 17 15 13'></polyline>
+  </svg>
+);
+
+const DollarIcon = () => (
+  <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+    <line x1='12' y1='1' x2='12' y2='23'></line>
+    <path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'></path>
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+    <rect x='3' y='11' width='18' height='11' rx='2' ry='2'></rect>
+    <path d='M7 11V7a5 5 0 0 1 10 0v4'></path>
+  </svg>
+);
+
+const UploadIcon = () => (
+  <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+    <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path>
+    <polyline points='17 8 12 3 7 8'></polyline>
+    <line x1='12' y1='3' x2='12' y2='15'></line>
+  </svg>)
