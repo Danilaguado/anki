@@ -403,12 +403,12 @@ body {
 
 @media (max-width: 640px) {
   .app-container {
-    padding: 30px;
+    padding: 5px 20px;
   }
 
   .payment-card {
     padding: 0;
-    margin: 20px 0;
+    margin: 0;
   }
 
   .header-logo {
@@ -430,10 +430,10 @@ body {
   }
 
   .secure-badge img {
-    max-width: 90px;
+    max-width: 100px;
   }
 
   .secure-badge {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
   }
 }
