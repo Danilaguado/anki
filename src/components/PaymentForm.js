@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./PaymentForm.css";
 
-const styles =
-
 // ==================== ICONOS SVG ====================
 const CopyIcon = () => (
-  <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+  <svg
+    width='18'
+    height='18'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
     <rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect>
     <path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path>
   </svg>
@@ -46,21 +51,25 @@ function PaymentFormApp() {
   useEffect(() => {
     const fetchDollarRate = async () => {
       try {
-        const response = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+        const response = await fetch(
+          "https://ve.dolarapi.com/v1/dolares/oficial"
+        );
         const data = await response.json();
         setDollarRate(data.promedio);
-        
+
         if (data.fechaActualizacion) {
           const date = new Date(data.fechaActualizacion);
-          setLastUpdate(date.toLocaleString('es-VE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          }));
+          setLastUpdate(
+            date.toLocaleString("es-VE", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          );
         }
-        
+
         setLoadingDollar(false);
       } catch (error) {
         console.error("Error al obtener tasa del dólar:", error);
@@ -83,7 +92,7 @@ function PaymentFormApp() {
       ...prev,
       [name]: value,
     }));
-    
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: false }));
     }
@@ -109,7 +118,7 @@ function PaymentFormApp() {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.nombre.trim()) {
       newErrors.nombre = true;
     }
@@ -131,17 +140,20 @@ function PaymentFormApp() {
     if (Object.keys(newErrors).length > 0) {
       const firstErrorKey = Object.keys(newErrors)[0];
       const firstErrorRef = formRefs[firstErrorKey];
-      
+
       if (firstErrorRef && firstErrorRef.current) {
-        firstErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        if (firstErrorKey !== 'terms' && firstErrorKey !== 'comprobante') {
+        firstErrorRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        if (firstErrorKey !== "terms" && firstErrorKey !== "comprobante") {
           firstErrorRef.current.focus();
         }
       }
-      
+
       return false;
     }
-    
+
     return true;
   };
 
@@ -151,7 +163,7 @@ function PaymentFormApp() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    
+
     setTimeout(() => {
       alert("Pago registrado exitosamente!");
       setFormData({ nombre: "", correo: "", whatsappNumber: "" });
@@ -175,7 +187,7 @@ function PaymentFormApp() {
           </div>
 
           <div className='payment-form'>
-            <div className={`form-group ${errors.nombre ? 'error' : ''}`}>
+            <div className={`form-group ${errors.nombre ? "error" : ""}`}>
               <label htmlFor='nombre'>Nombre</label>
               <input
                 ref={formRefs.nombre}
@@ -189,7 +201,7 @@ function PaymentFormApp() {
               />
             </div>
 
-            <div className={`form-group ${errors.correo ? 'error' : ''}`}>
+            <div className={`form-group ${errors.correo ? "error" : ""}`}>
               <label htmlFor='correo'>Correo Electrónico</label>
               <input
                 ref={formRefs.correo}
@@ -223,7 +235,9 @@ function PaymentFormApp() {
                     <button
                       type='button'
                       onClick={() => copyToClipboard(value, key)}
-                      className={`copy-button ${copiedField === key ? "copied" : ""}`}
+                      className={`copy-button ${
+                        copiedField === key ? "copied" : ""
+                      }`}
                       title='Copiar'
                       disabled={isSubmitting}
                     >
@@ -244,7 +258,8 @@ function PaymentFormApp() {
                 ) : dollarRate ? (
                   <>
                     <p className='dollar-rate'>
-                      $USD Cotización BCV: <strong>Bs. {dollarRate.toFixed(2)}</strong>
+                      $USD Cotización BCV:{" "}
+                      <strong>Bs. {dollarRate.toFixed(2)}</strong>
                     </p>
                     {lastUpdate && (
                       <p className='last-update'>
@@ -260,7 +275,10 @@ function PaymentFormApp() {
               </div>
             </div>
 
-            <div className={`form-group ${errors.comprobante ? 'error' : ''}`} ref={formRefs.comprobante}>
+            <div
+              className={`form-group ${errors.comprobante ? "error" : ""}`}
+              ref={formRefs.comprobante}
+            >
               <label htmlFor='comprobante'>Sube el comprobante</label>
               <div className='file-input-wrapper'>
                 <input
@@ -283,7 +301,9 @@ function PaymentFormApp() {
                   Seleccionar archivo
                 </button>
                 <span className='file-name-display'>
-                  {comprobante ? comprobante.name : 'Ningún archivo seleccionado'}
+                  {comprobante
+                    ? comprobante.name
+                    : "Ningún archivo seleccionado"}
                 </span>
               </div>
               {comprobante && (
@@ -304,8 +324,16 @@ function PaymentFormApp() {
                 />
                 <span>Recibir Material por Whatsapp (Opcional)</span>
               </label>
-              <div className={`whatsapp-input-container ${receiveWhatsapp ? "open" : ""}`}>
-                <div className={`form-group ${errors.whatsappNumber ? 'error' : ''}`}>
+              <div
+                className={`whatsapp-input-container ${
+                  receiveWhatsapp ? "open" : ""
+                }`}
+              >
+                <div
+                  className={`form-group ${
+                    errors.whatsappNumber ? "error" : ""
+                  }`}
+                >
                   <label htmlFor='whatsappNumber'>Número de WhatsApp</label>
                   <input
                     ref={formRefs.whatsappNumber}
@@ -331,7 +359,7 @@ function PaymentFormApp() {
                   }}
                   disabled={isSubmitting}
                 />
-                <span style={{ color: errors.terms ? '#ef4444' : '#4b5563' }}>
+                <span style={{ color: errors.terms ? "#ef4444" : "#4b5563" }}>
                   Acepto los{" "}
                   <a
                     href='#terms'
@@ -362,7 +390,7 @@ function PaymentFormApp() {
         </div>
 
         <div className='secure-badge'>
-          <img 
+          <img
             src='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80"%3E%3Crect fill="%234f46e5" width="200" height="80" rx="8"/%3E%3Cpath fill="%23fff" d="M60 25h-8v-5c0-6.6-5.4-12-12-12s-12 5.4-12 12v5h-8c-2.2 0-4 1.8-4 4v26c0 2.2 1.8 4 4 4h40c2.2 0 4-1.8 4-4V29c0-2.2-1.8-4-4-4zm-20 22c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6zm7-22H33v-5c0-3.9 3.1-7 7-7s7 3.1 7 7v5z"/%3E%3Ctext x="75" y="35" fill="%23fff" font-family="Arial" font-size="16" font-weight="bold"%3EPAGO SEGURO%3C/text%3E%3Ctext x="75" y="52" fill="%23fff" font-family="Arial" font-size="11"%3EProtegemos tus datos%3C/text%3E%3C/svg%3E'
             alt='Pago Seguro'
           />
@@ -376,13 +404,27 @@ function PaymentFormApp() {
 export default PaymentFormApp;
 
 const CheckIcon = () => (
-  <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+  <svg
+    width='18'
+    height='18'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
     <polyline points='20 6 9 17 4 12'></polyline>
   </svg>
 );
 
 const FileCheckIcon = () => (
-  <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+  <svg
+    width='18'
+    height='18'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
     <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'></path>
     <polyline points='14 2 14 8 20 8'></polyline>
     <polyline points='9 15 11 17 15 13'></polyline>
@@ -390,22 +432,44 @@ const FileCheckIcon = () => (
 );
 
 const DollarIcon = () => (
-  <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+  <svg
+    width='20'
+    height='20'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
     <line x1='12' y1='1' x2='12' y2='23'></line>
     <path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'></path>
   </svg>
 );
 
 const LockIcon = () => (
-  <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+  <svg
+    width='18'
+    height='18'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
     <rect x='3' y='11' width='18' height='11' rx='2' ry='2'></rect>
     <path d='M7 11V7a5 5 0 0 1 10 0v4'></path>
   </svg>
 );
 
 const UploadIcon = () => (
-  <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+  <svg
+    width='20'
+    height='20'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+  >
     <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path>
     <polyline points='17 8 12 3 7 8'></polyline>
     <line x1='12' y1='3' x2='12' y2='15'></line>
-  </svg>)
+  </svg>
+);
