@@ -40,13 +40,12 @@ body {
   justify-content: center;
   flex-direction: column;
   gap: 12px;
-  margin-top: 16px;
   margin-bottom: 40px; /* Agregado margen inferior */
 }
 
 .secure-badge img {
   max-width: 120px;
-  width: 60%;
+  width: 100%;
   height: auto;
 }
 
@@ -406,7 +405,7 @@ body {
 
 @media (max-width: 640px) {
   .app-container {
-    padding: 50px 16px 30px; /* MÁS padding superior en móvil */
+    padding: 30px;
   }
 
   .payment-card {
