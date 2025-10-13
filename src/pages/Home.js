@@ -86,7 +86,17 @@ const Home = () => {
 
           <div className='home-books-grid'>
             {/* Book 1: El Código de la Conexión */}
-            <div className='home-book-card scroll-reveal delay-100'>
+            <div
+              className='home-book-card scroll-reveal delay-100'
+              onClick={() => handleBookClick("/codigo-conexion")}
+              role='button'
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  handleBookClick("/codigo-conexion");
+                }
+              }}
+            >
               <img
                 src='/assets/codigo-conexion-cover.jpg'
                 alt='Portada del libro El Código de la Conexión'
@@ -103,16 +113,23 @@ const Home = () => {
                 relaciones, transformar el conflicto en intimidad y convertirte
                 en el hombre que ella admira y desea.
               </p>
-              <button
-                onClick={() => handleBookClick("/codigo-conexion")}
-                className='home-book-link'
-              >
-                Saber Más →
+              <button className='home-book-button'>
+                Ver Detalles del Libro
               </button>
             </div>
 
             {/* Book 2: El Músculo de la Voluntad */}
-            <div className='home-book-card scroll-reveal delay-200'>
+            <div
+              className='home-book-card scroll-reveal delay-200'
+              onClick={() => handleBookClick("/musculo-voluntad")}
+              role='button'
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  handleBookClick("/musculo-voluntad");
+                }
+              }}
+            >
               <img
                 src='/assets/musculo-voluntad-cover.jpg'
                 alt='Portada del libro El Músculo de la Voluntad'
@@ -129,16 +146,23 @@ const Home = () => {
                 prueba de excusas. Deja de depender de la motivación y construye
                 sistemas que te hagan imparable.
               </p>
-              <button
-                onClick={() => handleBookClick("/musculo-voluntad")}
-                className='home-book-link'
-              >
-                Saber Más →
+              <button className='home-book-button'>
+                Ver Detalles del Libro
               </button>
             </div>
 
             {/* Book 3: Habla, Corrige y Conquista */}
-            <div className='home-book-card scroll-reveal delay-300'>
+            <div
+              className='home-book-card scroll-reveal delay-300'
+              onClick={() => handleBookClick("/habla-corrige-conquista")}
+              role='button'
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  handleBookClick("/habla-corrige-conquista");
+                }
+              }}
+            >
               <img
                 src='/assets/habla-corrige-conquista-cover.jpg'
                 alt='Portada del libro Habla, Corrige y Conquista'
@@ -155,11 +179,8 @@ const Home = () => {
                 destruir, a inspirar sin exigir y a construir lealtad en cada
                 conversación.
               </p>
-              <button
-                onClick={() => handleBookClick("/habla-corrige-conquista")}
-                className='home-book-link'
-              >
-                Saber Más →
+              <button className='home-book-button'>
+                Ver Detalles del Libro
               </button>
             </div>
           </div>
