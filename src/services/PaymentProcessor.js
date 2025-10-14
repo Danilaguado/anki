@@ -27,7 +27,16 @@ export class PaymentProcessor {
   containsCedula(text) {
     const cleanedText = this.cleanText(text);
     const cedula = this.cleanText(this.expectedCedula);
-    return cleanedText.includes(cedula);
+
+    // Buscar la cédula con o sin "V" al inicio
+    const cedulaVariations = [
+      cedula, // 23621688
+      `v${cedula}`, // v23621688 (con V-)
+    ];
+
+    return cedulaVariations.some((variation) =>
+      cleanedText.includes(variation)
+    );
   }
 
   // Verifica si contiene el teléfono
