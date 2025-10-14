@@ -157,7 +157,7 @@ export default async function handler(req, res) {
           </div>
 
           <!-- Contenido -->
-          <div style="padding: 40px 30px; color: #333333; line-height: 1.8;">
+          <div style="padding: 40px 30px; line-height: 1.8;">
             
             <p style="font-size: 16px; margin-bottom: 20px;">Hola <strong>${nombre}</strong>,</p>
             
