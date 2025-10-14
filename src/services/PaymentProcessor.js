@@ -104,12 +104,20 @@ export class PaymentProcessor {
     console.log("Monto esperado:", expected);
     console.log("Montos encontrados en el comprobante:", amounts);
 
-    // Busca el monto exacto o con un margen de error de 0.5 (por errores de OCR)
-    const foundAmount = amounts.find(
+    // Busca el monto exacto (± 0.5)
+    const exactMatch = amounts.find(
       (amount) => Math.abs(amount - expected) <= 0.5
     );
 
-    return !!foundAmount;
+    if (exactMatch) return true;
+
+    // Si no hay match exacto, busca montos que difieran en menos del 15%
+    // (para errores de OCR como 889 → 989)
+    const closeMatch = amounts.find(
+      (amount) => Math.abs(amount - expected) <= expected * 0.15
+    );
+
+    return !!closeMatch;
   }
 
   // Procesa la imagen con OCR
