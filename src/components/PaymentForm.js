@@ -178,6 +178,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
       });
     }
   };
+
   const resetForm = () => {
     setFormData({ nombre: "", correo: "", whatsappNumber: "" });
     setComprobante(null);

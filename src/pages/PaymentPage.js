@@ -13,16 +13,20 @@ function PaymentPage() {
   const formRef = useRef(null);
 
   const processPayment = async (data) => {
+    // AGREGAR ESTE LOG AL INICIO
+    console.log("=== DATOS RECIBIDOS EN PAYMENTPAGE ===");
+    console.log("data completo:", data);
+    console.log("data.expectedAmount:", data.expectedAmount);
+    console.log("=====================================");
+
     setProcessingStatus({ stage: "processing" });
     setIsSubmitting(true);
 
     try {
-      // Para modo simulado (pruebas), usa esta línea:
-      // const validationResult = await paymentProcessor.mockValidation(data.comprobante);
-
-      // Para OCR real, usa esta línea:
+      // Validar el comprobante con OCR
       const validationResult = await paymentProcessor.processImage(
-        data.comprobante
+        data.comprobante,
+        data.expectedAmount // ← Verifica que esto esté así
       );
 
       if (validationResult.success) {
