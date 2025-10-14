@@ -12,6 +12,16 @@ function PaymentPage() {
   const paymentProcessor = useRef(new PaymentProcessor()).current;
   const formRef = useRef(null);
 
+  // Función auxiliar para convertir File a Base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const processPayment = async (data) => {
     console.log("=== INICIANDO PROCESO DE PAGO ===");
     console.log("Monto esperado:", data.expectedAmount);
@@ -36,6 +46,7 @@ function PaymentPage() {
       console.log("===================================");
 
       if (validationResult.success) {
+        // PAGO APROBADO
         const response = await fetch("/api/submit-payment", {
           method: "POST",
           headers: {
@@ -49,6 +60,8 @@ function PaymentPage() {
             producto:
               new URLSearchParams(window.location.search).get("product") ||
               "El Código de la Conexión",
+            montoEsperado: data.expectedAmount,
+            isRejected: false,
           }),
         });
         const result = await response.json();
@@ -62,7 +75,33 @@ function PaymentPage() {
           throw new Error(result.message || "Error al procesar el pago.");
         }
       } else {
+        // PAGO RECHAZADO - Notificar al admin
         console.error("Validación fallida:", validationResult);
+
+        // Convertir la imagen a Base64 para enviarla al admin
+        const comprobanteBase64 = await fileToBase64(data.comprobante);
+
+        // Enviar notificación al administrador
+        await fetch("/api/submit-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nombre: data.formData.nombre,
+            correo: data.formData.correo,
+            fecha: new Date().toISOString(),
+            producto:
+              new URLSearchParams(window.location.search).get("product") ||
+              "El Código de la Conexión",
+            montoEsperado: data.expectedAmount,
+            validationError: validationResult,
+            comprobanteBase64: comprobanteBase64,
+            isRejected: true,
+          }),
+        });
+
+        // Mostrar modal de error al usuario
         setProcessingStatus({ stage: "error" });
       }
     } catch (error) {

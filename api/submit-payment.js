@@ -2,6 +2,178 @@
 import { google } from "googleapis";
 import nodemailer from "nodemailer";
 
+// Función auxiliar para enviar email al admin sobre pago rechazado
+async function notifyAdminRejectedPayment(transporter, data) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  // Preparar los attachments si existe la imagen
+  const attachments = [];
+  if (data.comprobanteBase64) {
+    const base64Data = data.comprobanteBase64.replace(
+      /^data:image\/\w+;base64,/,
+      ""
+    );
+    attachments.push({
+      filename: `comprobante_${data.nombre.replace(/\s/g, "_")}.png`,
+      content: base64Data,
+      encoding: "base64",
+    });
+  }
+
+  const adminMailOptions = {
+    from: process.env.EMAIL_USER,
+    to: adminEmail,
+    subject: `❌ Pago Rechazado - ${data.nombre}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;">
+        <div style="background-color: #ef4444; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0;">❌ Pago Rechazado - Verificación Manual Requerida</h1>
+        </div>
+        
+        <div style="padding: 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px;">
+          <h2 style="color: #1a1a1a; margin-top: 0;">Detalles del intento de pago</h2>
+          
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Fecha:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${new Date(
+                data.fecha
+              ).toLocaleString("es-ES", { timeZone: "America/Caracas" })}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Nombre:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+                data.nombre
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+                data.correo
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Producto:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+                data.producto
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Monto Esperado:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">Bs. ${
+                data.montoEsperado || "N/A"
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; font-weight: 600;">Estado:</td>
+              <td style="padding: 12px;"><span style="background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600;">RECHAZADO</span></td>
+            </tr>
+          </table>
+
+          <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 16px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="color: #991b1b; margin: 0 0 8px 0;">Razón del rechazo:</h3>
+            <pre style="color: #7f1d1d; font-family: monospace; white-space: pre-wrap; margin: 0;">${JSON.stringify(
+              data.validationError,
+              null,
+              2
+            )}</pre>
+          </div>
+
+          ${
+            data.comprobanteBase64
+              ? '<p style="color: #6b7280; margin-top: 20px;"><strong>📎 El comprobante está adjunto a este correo.</strong></p>'
+              : '<p style="color: #ef4444;">⚠️ No se recibió imagen del comprobante.</p>'
+          }
+
+          <div style="margin-top: 24px; padding: 16px; background-color: #fef3c7; border-radius: 4px;">
+            <p style="margin: 0; color: #92400e;">
+              <strong>Acción requerida:</strong> Verificar manualmente el comprobante y contactar al cliente si el pago es válido.
+            </p>
+          </div>
+        </div>
+      </div>
+    `,
+    attachments: attachments,
+  };
+
+  await transporter.sendMail(adminMailOptions);
+}
+
+// Función auxiliar para enviar email al admin sobre pago aprobado
+async function notifyAdminApprovedPayment(transporter, data) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  const adminMailOptions = {
+    from: process.env.EMAIL_USER,
+    to: adminEmail,
+    subject: `✅ Pago Aprobado - ${data.nombre}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;">
+        <div style="background-color: #10b981; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0;">✅ Pago Aprobado Automáticamente</h1>
+        </div>
+        
+        <div style="padding: 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px;">
+          <h2 style="color: #1a1a1a; margin-top: 0;">Detalles del pago</h2>
+          
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Fecha:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${new Date(
+                data.fecha
+              ).toLocaleString("es-ES", { timeZone: "America/Caracas" })}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Nombre:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+                data.nombre
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+                data.correo
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Producto:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+                data.producto
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Monto:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">Bs. ${
+                data.montoEsperado || "N/A"
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Referencia:</td>
+              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+                data.referencia || "N/A"
+              }</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; font-weight: 600;">Estado:</td>
+              <td style="padding: 12px;"><span style="background-color: #10b981; color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600;">APROBADO</span></td>
+            </tr>
+          </table>
+
+          <div style="margin-top: 24px; padding: 16px; background-color: #d1fae5; border-radius: 4px;">
+            <p style="margin: 0; color: #065f46;">
+              ✓ El cliente ha recibido el material digital automáticamente.
+            </p>
+          </div>
+        </div>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(adminMailOptions);
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -10,8 +182,55 @@ export default async function handler(req, res) {
     });
   }
 
-  const { nombre, correo, referencia, fecha, producto } = req.body;
+  const {
+    nombre,
+    correo,
+    referencia,
+    fecha,
+    producto,
+    validationError,
+    comprobanteBase64,
+    montoEsperado,
+    isRejected,
+  } = req.body;
 
+  // Configurar transporter de correo
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+
+  // Si el pago fue rechazado, solo notificar al admin
+  if (isRejected) {
+    try {
+      await notifyAdminRejectedPayment(transporter, {
+        nombre,
+        correo,
+        fecha,
+        producto,
+        montoEsperado,
+        validationError,
+        comprobanteBase64,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Notificación de rechazo enviada al administrador",
+      });
+    } catch (error) {
+      console.error("Error al notificar pago rechazado:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error al notificar el rechazo",
+        error: error.message,
+      });
+    }
+  }
+
+  // Validaciones normales para pagos aprobados
   if (!nombre || !correo) {
     return res.status(400).json({
       success: false,
@@ -136,14 +355,6 @@ export default async function handler(req, res) {
       `;
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: correo,
@@ -237,6 +448,16 @@ export default async function handler(req, res) {
     };
 
     await transporter.sendMail(mailOptions);
+
+    // ✅ NOTIFICACIÓN AL ADMIN - PAGO APROBADO
+    await notifyAdminApprovedPayment(transporter, {
+      nombre,
+      correo,
+      fecha,
+      producto,
+      montoEsperado,
+      referencia: referenciaUltimos4,
+    });
 
     return res.status(200).json({
       success: true,
