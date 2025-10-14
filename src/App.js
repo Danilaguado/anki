@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import CodigoConexion from "./pages/CodigoConexion";
 import MusculoVoluntad from "./pages/MusculoVoluntad";
 import HablaCorrigeConquista from "./pages/HablaCorrigeConquista";
+import ElAscenso from "./pages/ElAscenso";
 import PaymentPage from "./pages/PaymentPage";
 import TermsAndConditions from "./pages/TermsAndConditions";
 
@@ -22,6 +23,7 @@ function App() {
           path='/habla-corrige-conquista'
           element={<HablaCorrigeConquista />}
         />
+        <Route path='/el-ascenso' element={<ElAscenso />} />
         <Route path='/payment' element={<PaymentPage />} />
         <Route path='/terms' element={<TermsAndConditions />} />
       </Routes>

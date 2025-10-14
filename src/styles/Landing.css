@@ -102,6 +102,56 @@
   border-color: rgba(220, 38, 38, 0.5);
 }
 
+/* Variante El Ascenso - Morado */
+.landing-container.el-ascenso .hero-section,
+.landing-container.el-ascenso .revelation-section,
+.landing-container.el-ascenso .final-cta-section {
+  background-color: #111827;
+  background-image: radial-gradient(
+      circle at top right,
+      rgba(139, 92, 246, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(109, 40, 217, 0.05),
+      transparent 50%
+    );
+}
+
+.landing-container.el-ascenso .problem-section,
+.landing-container.el-ascenso .mastery-section {
+  background-color: #1f2937;
+}
+
+.landing-container.el-ascenso .problem-icon,
+.landing-container.el-ascenso .quote-mark {
+  color: #8b5cf6;
+}
+
+.landing-container.el-ascenso .feature-title {
+  color: #a78bfa;
+}
+
+.landing-container.el-ascenso .cta-button {
+  background-color: #8b5cf6;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.landing-container.el-ascenso .cta-button:hover {
+  background-color: #7c3aed;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+.landing-container.el-ascenso .feature-card:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.landing-container.el-ascenso .quote-block {
+  background-color: #111827;
+  border: 1px solid #374151;
+}
+
 /* Hero Section */
 .hero-section {
   background-color: #1a1a1a;

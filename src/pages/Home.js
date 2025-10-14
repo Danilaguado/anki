@@ -9,201 +9,174 @@ const Home = () => {
   useEffect(() => {
     const revealElements = document.querySelectorAll(".scroll-reveal");
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-      }
-    );
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
 
-    revealElements.forEach((el) => {
-      observer.observe(el);
-    });
+      revealElements.forEach((el) => observer.observe(el));
 
-    return () => observer.disconnect();
+      return () => observer.disconnect();
+    } else {
+      revealElements.forEach((el) => el.classList.add("visible"));
+    }
   }, []);
+
+  const books = [
+    {
+      id: "codigo-conexion",
+      title: "El Código de la Conexión",
+      badge: "Comunicación",
+      description:
+        "Descubre las claves para conectar auténticamente con cualquier persona y construir relaciones significativas que transformen tu vida.",
+      cover: "/assets/codigo-conexion-cover.jpg",
+      route: "/codigo-conexion",
+    },
+    {
+      id: "musculo-voluntad",
+      title: "El Músculo de la Voluntad",
+      badge: "Autodisciplina",
+      description:
+        "Aprende a fortalecer tu disciplina y construir hábitos que te lleven a alcanzar tus metas más ambiciosas de manera sostenible.",
+      cover: "/assets/musculo-voluntad-cover.jpg",
+      route: "/musculo-voluntad",
+    },
+    {
+      id: "habla-corrige-conquista",
+      title: "Habla, Corrige y Conquista",
+      badge: "Liderazgo",
+      description:
+        "Domina el arte de la comunicación asertiva y aprende a dar feedback que transforma conflictos en oportunidades de crecimiento.",
+      cover: "/assets/habla-corrige-conquista-cover.jpg",
+      route: "/habla-corrige-conquista",
+    },
+    {
+      id: "el-ascenso",
+      title: "El Ascenso",
+      badge: "Liderazgo",
+      description:
+        "El manual definitivo para el nuevo líder. Aprende a transformar la duda en confianza y la gestión en verdadero impacto.",
+      cover: "/assets/el-ascenso-cover.jpg",
+      route: "/el-ascenso",
+    },
+  ];
 
   const handleBookClick = (route) => {
     navigate(route);
   };
 
+  const handleMainCTA = () => {
+    document.getElementById("libros")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className='home-container'>
       {/* Hero Section */}
-      <header className='home-hero-section'>
+      <section className='home-hero-section'>
         <div className='home-hero-content'>
           <div className='home-hero-inner'>
-            <h1 className='home-hero-title'>
-              Domina las 3 áreas clave de tu vida.
+            <h1 className='home-hero-title scroll-reveal'>
+              Transforma tu vida con las herramientas que necesitas para crecer
+              cada día
             </h1>
-            <p className='home-hero-subtitle'>
-              La colección definitiva para construir relaciones inquebrantables,
-              forjar una disciplina de élite e influir con poder y empatía. Deja
-              de reaccionar. Empieza a construir.
+            <p className='home-hero-subtitle scroll-reveal delay-100'>
+              Descubre nuestra colección de libros diseñados para ayudarte a
+              dominar la comunicación, la autodisciplina y el liderazgo.
+              Estrategias prácticas respaldadas por ciencia y experiencia real.
             </p>
-            <a href='#trilogia' className='home-cta-button'>
-              Descubre la Trilogía
-            </a>
+            <button
+              onClick={handleMainCTA}
+              className='home-cta-button scroll-reveal delay-200'
+            >
+              Explorar Libros
+            </button>
           </div>
         </div>
-      </header>
+      </section>
 
       {/* Problem Section */}
       <section className='home-problem-section'>
         <div className='home-section-container'>
           <div className='home-section-header scroll-reveal'>
             <h2 className='home-section-title'>
-              ¿Sientes que te falta el manual de instrucciones?
+              ¿Sientes que te falta algo para alcanzar tu siguiente nivel?
             </h2>
             <p className='home-section-subtitle'>
-              Te esfuerzas por mejorar, pero caes en los mismos ciclos: la
-              confusión en tus relaciones, los proyectos que nunca terminas y
-              las conversaciones que acaban en conflicto. No es falta de ganas,
-              es falta de estrategia.
+              No estás solo. Miles de personas enfrentan estos mismos desafíos
+              cada día. La diferencia está en tomar acción.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Books Showcase Section */}
-      <section id='trilogia' className='home-books-section'>
+      {/* Books Section */}
+      <section id='libros' className='home-books-section'>
         <div className='home-section-container'>
           <div className='home-section-header scroll-reveal'>
-            <h2 className='home-books-title'>La Trilogía del Crecimiento</h2>
+            <h2 className='home-books-title'>Nuestra Colección</h2>
             <p className='home-books-subtitle'>
-              Tres manuales prácticos, basados en ciencia y psicología,
-              diseñados para darte el control en las áreas que definen tu éxito
-              y bienestar.
+              Cada libro es una herramienta poderosa diseñada para un área
+              específica de tu desarrollo personal. Elige el que más resuene
+              contigo o descubre la trilogía completa.
             </p>
           </div>
 
           <div className='home-books-grid'>
-            {/* Book 1: El Código de la Conexión */}
-            <div
-              className='home-book-card scroll-reveal delay-100'
-              onClick={() => handleBookClick("/codigo-conexion")}
-              role='button'
-              tabIndex={0}
-              onKeyPress={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleBookClick("/codigo-conexion");
-                }
-              }}
-            >
-              <img
-                src='/assets/codigo-conexion-cover.jpg'
-                alt='Portada del libro El Código de la Conexión'
-                className='home-book-cover'
-                onError={(e) => {
-                  e.target.src =
-                    "https://placehold.co/250x380/1a1a1a/e0e0e0?text=El+C%C3%B3digo+de+la%0AConexi%C3%B3n";
+            {books.map((book, index) => (
+              <div
+                key={book.id}
+                className={`home-book-card scroll-reveal delay-${
+                  (index + 1) * 100
+                }`}
+                onClick={() => handleBookClick(book.route)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleBookClick(book.route);
+                  }
                 }}
-              />
-              <h3 className='home-book-title'>El Código de la Conexión</h3>
-              <p className='home-book-badge'>Domina tus Relaciones</p>
-              <p className='home-book-description'>
-                La guía definitiva para entender el lenguaje no hablado de las
-                relaciones, transformar el conflicto en intimidad y convertirte
-                en el hombre que ella admira y desea.
-              </p>
-              <button className='home-book-button'>
-                Ver Detalles del Libro
-              </button>
-            </div>
-
-            {/* Book 2: El Músculo de la Voluntad */}
-            <div
-              className='home-book-card scroll-reveal delay-200'
-              onClick={() => handleBookClick("/musculo-voluntad")}
-              role='button'
-              tabIndex={0}
-              onKeyPress={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleBookClick("/musculo-voluntad");
-                }
-              }}
-            >
-              <img
-                src='/assets/musculo-voluntad-cover.jpg'
-                alt='Portada del libro El Músculo de la Voluntad'
-                className='home-book-cover'
-                onError={(e) => {
-                  e.target.src =
-                    "https://placehold.co/250x380/1a1a1a/e0e0e0?text=El+M%C3%BAsculo+de+la%0AVoluntad";
-                }}
-              />
-              <h3 className='home-book-title'>El Músculo de la Voluntad</h3>
-              <p className='home-book-badge'>Domina tu Disciplina</p>
-              <p className='home-book-description'>
-                El manual de entrenamiento para forjar una autodisciplina a
-                prueba de excusas. Deja de depender de la motivación y construye
-                sistemas que te hagan imparable.
-              </p>
-              <button className='home-book-button'>
-                Ver Detalles del Libro
-              </button>
-            </div>
-
-            {/* Book 3: Habla, Corrige y Conquista */}
-            <div
-              className='home-book-card scroll-reveal delay-300'
-              onClick={() => handleBookClick("/habla-corrige-conquista")}
-              role='button'
-              tabIndex={0}
-              onKeyPress={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleBookClick("/habla-corrige-conquista");
-                }
-              }}
-            >
-              <img
-                src='/assets/habla-corrige-conquista-cover.jpg'
-                alt='Portada del libro Habla, Corrige y Conquista'
-                className='home-book-cover'
-                onError={(e) => {
-                  e.target.src =
-                    "https://placehold.co/250x380/1a1a1a/e0e0e0?text=Habla%2C+Corrige%0AY+Conquista";
-                }}
-              />
-              <h3 className='home-book-title'>Habla, Corrige y Conquista</h3>
-              <p className='home-book-badge'>Domina tu Influencia</p>
-              <p className='home-book-description'>
-                El arte de comunicar con poder y empatía. Aprende a corregir sin
-                destruir, a inspirar sin exigir y a construir lealtad en cada
-                conversación.
-              </p>
-              <button className='home-book-button'>
-                Ver Detalles del Libro
-              </button>
-            </div>
+                tabIndex={0}
+                role='button'
+                aria-label={`Ver detalles de ${book.title}`}
+              >
+                <img
+                  src={book.cover}
+                  alt={`Portada de ${book.title}`}
+                  className='home-book-cover'
+                />
+                <h3 className='home-book-title'>{book.title}</h3>
+                <p className='home-book-badge'>{book.badge}</p>
+                <p className='home-book-description'>{book.description}</p>
+                <button className='home-book-button' aria-hidden='true'>
+                  Ver Detalles
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Final CTA Section */}
-      <section id='comprar' className='home-final-cta-section'>
+      <section className='home-final-cta-section'>
         <div className='home-section-container'>
           <div className='home-final-cta-content scroll-reveal'>
             <h2 className='home-final-cta-title'>
-              Tu transformación empieza aquí.
+              Da el primer paso hacia la versión que quieres ser
             </h2>
             <p className='home-final-cta-text'>
-              Adquiere la colección completa y obtén el sistema integral para
-              construir la vida que deseas. Deja de ser un espectador y
-              conviértete en el arquitecto de tu futuro.
+              No esperes más. Cada día que pasa es una oportunidad perdida de
+              crecimiento. Invierte en ti mismo y comienza tu transformación
+              hoy.
             </p>
-            <button
-              onClick={() => navigate("/payment?product=Trilogía Completa")}
-              className='home-cta-button final'
-            >
-              Adquirir la Trilogía Completa
+            <button onClick={handleMainCTA} className='home-cta-button final'>
+              Comenzar Ahora
             </button>
           </div>
         </div>

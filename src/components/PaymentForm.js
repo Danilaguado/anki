@@ -31,7 +31,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   const [dollarRate, setDollarRate] = useState(null);
   const [loadingDollar, setLoadingDollar] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [testAmount, setTestAmount] = useState("");
   const fileInputRef = useRef(null);
   const formRefs = {
     nombre: useRef(null),
@@ -49,18 +48,15 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   useEffect(() => {
     const fetchDollarRate = async () => {
       try {
-        // Primero verifica si ya hay un precio guardado en esta sesión
         const sessionRate = sessionStorage.getItem("dollarRate");
         const sessionTimestamp = sessionStorage.getItem("dollarRateTimestamp");
 
-        // Si existe un precio de esta sesión (menos de 1 hora), úsalo
         if (sessionRate && sessionTimestamp) {
           const timestamp = new Date(sessionTimestamp);
           const now = new Date();
           const hoursDiff = (now - timestamp) / (1000 * 60 * 60);
 
           if (hoursDiff < 1) {
-            // Si tiene menos de 1 hora
             setDollarRate(parseFloat(sessionRate));
             setLastUpdate(
               timestamp.toLocaleString("es-VE", {
@@ -72,17 +68,15 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
               })
             );
             setLoadingDollar(false);
-            return; // NO consulta la API, usa el precio guardado
+            return;
           }
         }
 
-        // Si no hay precio guardado o ya expiró, consulta la API
         const response = await fetch(
           "https://ve.dolarapi.com/v1/dolares/paralelo"
         );
         const data = await response.json();
 
-        // Guarda el nuevo precio en sessionStorage
         sessionStorage.setItem("dollarRate", data.promedio);
         sessionStorage.setItem("dollarRateTimestamp", new Date().toISOString());
 
@@ -164,21 +158,16 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // AGREGAR ESTE LOG
-    console.log("=== ENVIANDO PAGO ===");
-    console.log("totalAmount antes de enviar:", totalAmount);
-    console.log("expectedAmount que se envía:", totalAmount);
-    console.log("=====================");
-
     if (onSubmit) {
       await onSubmit({
         formData,
         comprobante,
         paymentData,
-        expectedAmount: totalAmount, // ← Verifica que esto esté así
+        expectedAmount: totalAmount,
       });
     }
   };
+
   const resetForm = () => {
     setFormData({ nombre: "", correo: "", whatsappNumber: "" });
     setComprobante(null);
@@ -188,20 +177,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
 
   useImperativeHandle(ref, () => ({ resetForm }));
 
-  // Calcular el total a pagar (usar testAmount si existe, sino el cálculo normal)
-  const totalAmount = testAmount
-    ? parseFloat(testAmount).toFixed(2)
-    : dollarRate
-    ? (dollarRate * 2).toFixed(2)
-    : null;
-  // Calcular el total a pagar (multiplicar por 3)
-  // const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
-  // AGREGAR ESTE LOG
-  console.log("=== DEBUG MONTO ===");
-  console.log("dollarRate:", dollarRate);
-  console.log("totalAmount:", totalAmount);
-  console.log("loadingDollar:", loadingDollar);
-  console.log("===================");
+  const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
 
   return (
     <div className='payment-card'>
@@ -301,21 +277,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
               <p className='total-amount-error'>No se pudo calcular el monto</p>
             )}
           </div>
-        </div>
-
-        {/* NUEVO INPUT PARA TESTING */}
-        <div className='form-group' style={{ marginTop: "12px" }}>
-          <label htmlFor='testAmount'>🔧 Monto de Prueba (Testing)</label>
-          <input
-            type='number'
-            step='0.01'
-            id='testAmount'
-            name='testAmount'
-            value={testAmount}
-            onChange={(e) => setTestAmount(e.target.value)}
-            placeholder='Ej: 889.35'
-            disabled={isSubmitting}
-          />
         </div>
 
         <div
