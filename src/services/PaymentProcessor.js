@@ -21,7 +21,7 @@ export class PaymentProcessor {
   extractReference(text) {
     // Patrones para buscar la referencia
     const patterns = [
-      /(?:referencia|identificaci[oó]n|nro\.?\s*de\s*referencia)[:\s]*(\d+)/gi,
+      /(?:referencia|operaci[oó]n|nro\.?\s*de\s*referencia)[:\s]*(\d+)/gi,
       /(?:operaci[oó]n)[:\s]*(\d+)/gi,
       /(?:ref)[:\s]*(\d+)/gi,
     ];
