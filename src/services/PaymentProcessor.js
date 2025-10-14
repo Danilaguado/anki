@@ -10,7 +10,11 @@ export class PaymentProcessor {
 
   // Limpia texto para comparación
   cleanText(text) {
-    return text.replace(/[\s.\-()]/g, "").toLowerCase();
+    return text
+      .normalize("NFD") // Descompone caracteres con acentos
+      .replace(/[\u0300-\u036f]/g, "") // Elimina los acentos
+      .replace(/[\s.\-()]/g, "") // Elimina espacios, puntos, guiones
+      .toLowerCase();
   }
 
   // Extrae números de un texto
