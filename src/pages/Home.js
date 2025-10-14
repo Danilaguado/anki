@@ -186,19 +186,17 @@ const Home = () => {
       <footer className='home-footer'>
         <div className='home-footer-container'>
           <p>
-            <br>
-              Este sitio web provee de herramientas para el crecimiento personal
-              y relacional.{" "}
-            </br>
-            <br>
-              Su contenido es educativo y no garantiza resultados específicos.
-              El lector asume toda la responsabilidad por la aplicación de la
-              información.
-            </br>
+            Este sitio web provee de herramientas para el crecimiento personal y
+            relacional. <br />
+            Su contenido es educativo y no garantiza resultados específicos. El
+            lector asume toda la responsabilidad por la aplicación de la
+            información.
+            <br />
             <a href='https://es-kaizen.vercel.app/terms'>
               Ver Términos y Condiciones{" "}
             </a>
-            <br>&copy; 2025 Proyecto Kaizen. Todos los derechos reservados.</br>
+            <br />
+            &copy; 2025 Proyecto Kaizen. Todos los derechos reservados.
           </p>
           <p className='home-footer-subtitle'>
             Herramientas para una vida de crecimiento continuo.
