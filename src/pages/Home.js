@@ -186,15 +186,21 @@ const Home = () => {
       <footer className='home-footer'>
         <div className='home-footer-container'>
           <p>
-            &copy; 2025 Proyecto Kaizen. Todos los derechos reservados. Este
-            libro es una herramienta para el crecimiento personal y relacional.{" "}
-            <br></br>
-            Su contenido es educativo y no garantiza resultados específicos. El
-            lector asume toda la responsabilidad por la aplicación de la
-            información.
+            <br>
+              Este libro es una herramienta para el crecimiento personal y
+              relacional.{" "}
+            </br>
+            <br>
+              Su contenido es educativo y no garantiza resultados específicos.
+              El lector asume toda la responsabilidad por la aplicación de la
+              información.
+            </br>
             <a href='https://es-kaizen.vercel.app/terms'>
               {" "}
               Ver Términos y Condiciones
+              <br>
+                &copy; 2025 Proyecto Kaizen. Todos los derechos reservados.
+              </br>
             </a>
           </p>
           <p className='home-footer-subtitle'>
