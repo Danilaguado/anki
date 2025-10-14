@@ -113,6 +113,7 @@ export class PaymentProcessor {
   }
 
   // Procesa la imagen con OCR
+  // Procesa la imagen con OCR
   async processImage(file, expectedAmount = null) {
     try {
       // Fase 1: Iniciando OCR
@@ -129,13 +130,33 @@ export class PaymentProcessor {
       );
 
       const extractedText = result.data.text;
-      console.log("Texto extraído:", extractedText);
+      console.log("========== TEXTO EXTRAÍDO ==========");
+      console.log(extractedText);
+      console.log("====================================");
 
       // Fase 2: Validando datos
       const hasCedula = this.containsCedula(extractedText);
       const hasPhone = this.containsPhone(extractedText);
       const hasBank = this.containsBank(extractedText);
       const hasAmount = this.containsAmount(extractedText, expectedAmount);
+
+      // LOGS DETALLADOS
+      console.log("========== VALIDACIÓN ==========");
+      console.log("✓ Cédula esperada:", this.expectedCedula);
+      console.log("✓ Cédula encontrada:", hasCedula ? "SÍ" : "NO");
+
+      console.log("✓ Teléfono esperado:", this.expectedPhone);
+      console.log("✓ Teléfono encontrado:", hasPhone ? "SÍ" : "NO");
+
+      console.log("✓ Bancos esperados:", this.expectedBanks);
+      console.log("✓ Banco encontrado:", hasBank ? "SÍ" : "NO");
+
+      console.log("✓ Monto esperado:", expectedAmount);
+      console.log("✓ Montos encontrados:", this.extractAmounts(extractedText));
+      console.log("✓ Monto validado:", hasAmount ? "SÍ" : "NO");
+
+      console.log("✓ Texto limpio:", this.cleanText(extractedText));
+      console.log("================================");
 
       return {
         success: hasCedula && hasPhone && hasBank && hasAmount,
