@@ -13,11 +13,12 @@ function PaymentPage() {
   const formRef = useRef(null);
 
   const processPayment = async (data) => {
-    // AGREGAR ESTE LOG AL INICIO
-    console.log("=== DATOS RECIBIDOS EN PAYMENTPAGE ===");
-    console.log("data completo:", data);
-    console.log("data.expectedAmount:", data.expectedAmount);
-    console.log("=====================================");
+    console.log("=== INICIANDO PROCESO DE PAGO ===");
+    console.log("Monto esperado:", data.expectedAmount);
+    console.log(
+      "Producto:",
+      new URLSearchParams(window.location.search).get("product")
+    );
 
     setProcessingStatus({ stage: "processing" });
     setIsSubmitting(true);
@@ -26,8 +27,13 @@ function PaymentPage() {
       // Validar el comprobante con OCR
       const validationResult = await paymentProcessor.processImage(
         data.comprobante,
-        data.expectedAmount // ← Verifica que esto esté así
+        data.expectedAmount
       );
+
+      console.log("=== RESULTADO DE VALIDACIÓN OCR ===");
+      console.log("Success:", validationResult.success);
+      console.log("Details:", validationResult.details);
+      console.log("===================================");
 
       if (validationResult.success) {
         const response = await fetch("/api/submit-payment", {
@@ -42,14 +48,13 @@ function PaymentPage() {
             fecha: new Date().toISOString(),
             producto:
               new URLSearchParams(window.location.search).get("product") ||
-              "El Código de la Conexión", // NUEVO
+              "El Código de la Conexión",
           }),
         });
         const result = await response.json();
 
         if (result.success) {
           setProcessingStatus({ stage: "success" });
-          // Resetear el formulario
           if (formRef.current) {
             formRef.current.resetForm();
           }
@@ -57,10 +62,11 @@ function PaymentPage() {
           throw new Error(result.message || "Error al procesar el pago.");
         }
       } else {
+        console.error("Validación fallida:", validationResult);
         setProcessingStatus({ stage: "error" });
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error en processPayment:", error);
       setProcessingStatus({ stage: "error" });
     } finally {
       setIsSubmitting(false);
