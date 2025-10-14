@@ -192,7 +192,7 @@ const Home = () => {
             Su contenido es educativo y no garantiza resultados específicos. El
             lector asume toda la responsabilidad por la aplicación de la
             información.
-            <a ref='https://es-kaizen.vercel.app/terms'>
+            <a href='https://es-kaizen.vercel.app/terms'>
               {" "}
               Ver Términos y Condiciones
             </a>
