@@ -163,12 +163,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // AGREGAR ESTE LOG
-    console.log("=== ENVIANDO PAGO ===");
-    console.log("totalAmount antes de enviar:", totalAmount);
-    console.log("expectedAmount que se envía:", totalAmount);
-    console.log("=====================");
-
     if (onSubmit) {
       await onSubmit({
         formData,
@@ -188,14 +182,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
 
   useImperativeHandle(ref, () => ({ resetForm }));
 
-  // Calcular el total a pagar (multiplicar por 3)
-  const totalAmount = dollarRate ? (dollarRate * 3).toFixed(2) : null;
-  // AGREGAR ESTE LOG
-  console.log("=== DEBUG MONTO ===");
-  console.log("dollarRate:", dollarRate);
-  console.log("totalAmount:", totalAmount);
-  console.log("loadingDollar:", loadingDollar);
-  console.log("===================");
+  const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
 
   return (
     <div className='payment-card'>
