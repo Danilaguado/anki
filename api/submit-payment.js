@@ -108,7 +108,7 @@ export default async function handler(req, res) {
     }
 
     // Generar URLs de descarga (CAMBIA "tu-dominio.netlify.app" por tu dominio real)
-    const baseURL = "https://tu-dominio.netlify.app";
+    const baseURL = "https://es-kaizen.vercel.app/";
 
     let downloadLinksHTML = "";
     if (Array.isArray(pdfFiles)) {
