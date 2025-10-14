@@ -87,7 +87,32 @@ const TermsAndConditions = () => {
           </section>
 
           <section className='terms-section'>
-            <h2>3. Política de No Reembolso</h2>
+            <h2>3. Precios, Moneda y Formas de Pago</h2>
+            <p>
+              <strong>Modificación de Precios:</strong> Siendo los Ebooks
+              productos digitales de nuestra autoría, Proyecto Kaizen se reserva
+              el derecho de modificar sus precios en cualquier momento y a su
+              entera discreción, sin necesidad de notificación previa. El precio
+              aplicable a la compra será el que se muestre en el sitio web en el
+              momento de la transacción.
+            </p>
+            <p>
+              <strong>Moneda y Legislación:</strong> En cumplimiento con la
+              legislación venezolana, todos los precios serán mostrados y
+              procesados en la moneda de curso legal local.
+            </p>
+            <p>
+              <strong>Métodos de Pago Alternativos:</strong> Con el fin de
+              facilitar el acceso a nuestro material a usuarios internacionales
+              y promover el libre comercio, también aceptamos pagos a través de
+              criptomonedas seleccionadas. Las condiciones y la tasa de cambio
+              aplicable para pagos con criptomonedas serán las especificadas
+              durante el proceso de pago.
+            </p>
+          </section>
+
+          <section className='terms-section'>
+            <h2>4. Política de No Reembolso</h2>
             <p>
               Debido a la naturaleza digital e intangible de nuestros Ebooks y a
               su entrega inmediata, que permite el consumo completo del producto
@@ -102,7 +127,7 @@ const TermsAndConditions = () => {
           </section>
 
           <section className='terms-section'>
-            <h2>4. Propiedad Intelectual y Derechos de Autor</h2>
+            <h2>5. Propiedad Intelectual y Derechos de Autor</h2>
             <p>
               <strong>Copyright:</strong> Todo el contenido de los Ebooks,
               incluyendo texto, imágenes, diseño y estructura, está protegido
@@ -251,9 +276,9 @@ const TermsAndConditions = () => {
 
           <div className='terms-acceptance'>
             <p>
-              Al marcar la casilla de aceptación y hacer clic en el botón de
-              "Comprar", usted confirma que es mayor de edad y que acepta de
-              forma vinculante todos los términos aquí expuestos.
+              Al hacer clic en el botón de "Comprar", usted confirma que es
+              mayor de edad y que acepta de forma vinculante todos los términos
+              aquí expuestos.
             </p>
           </div>
         </div>
