@@ -327,38 +327,37 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generar URLs de descarga - CAMBIA POR TU DOMINIO DE VERCEL
-    const baseURL = "https://es-kaizen.vercel.app";
+    // Preparar los PDFs como attachments
+    const fs = require("fs");
+    const path = require("path");
 
-    let downloadLinksHTML = "";
+    const attachments = [];
+
     if (Array.isArray(pdfFiles)) {
-      // Para trilogía completa
-      downloadLinksHTML = pdfFiles
-        .map(
-          (pdf) => `
-        <a href="${baseURL}/assets/${pdf}" 
-           download="${pdf}"
-           style="display: inline-block; background-color: #d4af37; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 8px;">
-          Descargar ${pdf.replace("-cover.pdf", "").replace(/-/g, " ")}
-        </a>
-      `
-        )
-        .join("<br>");
+      // Para trilogía completa - adjuntar todos los PDFs
+      for (const pdf of pdfFiles) {
+        const pdfPath = path.join(process.cwd(), "public", "assets", pdf);
+        attachments.push({
+          filename: pdf,
+          path: pdfPath,
+          contentType: "application/pdf",
+        });
+      }
     } else {
       // Para un solo libro
-      downloadLinksHTML = `
-        <a href="${baseURL}/assets/${pdfFiles}" 
-           download="${pdfFiles}"
-           style="display: inline-block; background-color: #d4af37; color: #1a1a1a; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">
-          Descargar mi eBook
-        </a>
-      `;
+      const pdfPath = path.join(process.cwd(), "public", "assets", pdfFiles);
+      attachments.push({
+        filename: pdfFiles,
+        path: pdfPath,
+        contentType: "application/pdf",
+      });
     }
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: correo,
       subject: "¡Bienvenido a Proyecto Kaizen! 🚀 - Tu material está aquí",
+      attachments: attachments,
       html: `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           
@@ -382,11 +381,20 @@ export default async function handler(req, res) {
             </p>
 
             <!-- Descarga Material -->
-            <div style="padding: 24px 0; margin: 30px 0; text-align: center;">
+            <div style="padding: 24px 0; margin: 30px 0; text-align: center; background-color: #f0f9ff; border-radius: 8px;">
               <p style="margin: 0 0 16px 0; font-weight: 600; color: #1a1a1a; font-size: 17px;">
-                Descarga tu material
+                📎 Tu material está adjunto en este correo
               </p>
-              ${downloadLinksHTML}
+              <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                ${
+                  Array.isArray(pdfFiles)
+                    ? `Encontrarás ${pdfFiles.length} archivos PDF adjuntos a este correo.`
+                    : "Encontrarás tu eBook adjunto a este correo."
+                }
+              </p>
+              <p style="margin: 12px 0 0 0; color: #6b7280; font-size: 13px;">
+                💡 Revisa los archivos adjuntos al final de este email
+              </p>
             </div>
 
             <p style="font-size: 16px; margin-bottom: 20px;">
