@@ -64,7 +64,7 @@ export default async function handler(req, res) {
     }
 
     // Obtener últimos 4 dígitos de la referencia
-    const referenciaUltimos4 = referencia ? referencia.slice(-4) : "N/A";
+    const referenciaUltimos4 = referencia ? referencia : "N/A";
 
     const newRow = [
       new Date(fecha).toLocaleString("es-ES", {
