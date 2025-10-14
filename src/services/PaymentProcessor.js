@@ -5,7 +5,6 @@ export class PaymentProcessor {
   constructor() {
     this.expectedCedula = "23621688";
     this.expectedPhone = "04125497936";
-    // Más variaciones del banco
     this.expectedBanks = [
       "bnc",
       "0191",
@@ -30,34 +29,41 @@ export class PaymentProcessor {
       /(?:referencia|operaci[oó]n|nro\.?\s*de\s*referencia)[:\s]*(\d+)/gi,
       /(?:operaci[oó]n)[:\s]*(\d+)/gi,
       /(?:ref)[:\s]*(\d+)/gi,
+      /\b(\d{6,})\b/g, // Números largos que podrían ser referencias
     ];
 
+    const allReferences = [];
+
     for (const pattern of patterns) {
-      const match = text.match(pattern);
-      if (match) {
+      const matches = [...text.matchAll(pattern)];
+      matches.forEach((match) => {
         const numbers = match[0].match(/\d+/g);
         if (numbers && numbers.length > 0) {
-          const reference = numbers.sort((a, b) => b.length - a.length)[0];
-          console.log("📋 Referencia encontrada:", reference);
-          return reference;
+          numbers.forEach((num) => {
+            if (num.length >= 6) {
+              // Referencias típicamente tienen al menos 6 dígitos
+              allReferences.push(num);
+            }
+          });
         }
-      }
+      });
+    }
+
+    // Retornar la referencia más larga (probablemente la correcta)
+    if (allReferences.length > 0) {
+      const reference = allReferences.sort((a, b) => b.length - a.length)[0];
+      console.log("📋 Referencia encontrada:", reference);
+      return reference;
     }
 
     console.log("📋 Referencia: NO encontrada");
     return null;
   }
 
-  extractNumbers(text) {
-    const numbers = text.match(/\d+/g) || [];
-    return numbers.join("");
-  }
-
   containsCedula(text) {
     const cleanedText = this.cleanText(text);
     const cedula = this.cleanText(this.expectedCedula);
-
-    const cedulaVariations = [cedula, `v${cedula}`];
+    const cedulaVariations = [cedula, `v${cedula}`, `v-${cedula}`];
 
     return cedulaVariations.some((variation) =>
       cleanedText.includes(variation)
@@ -67,7 +73,6 @@ export class PaymentProcessor {
   containsPhone(text) {
     const cleanedText = this.cleanText(text);
     const phone = this.cleanText(this.expectedPhone);
-
     const phoneVariations = [phone, phone.substring(1), phone.substring(2)];
 
     return phoneVariations.some(
@@ -77,7 +82,6 @@ export class PaymentProcessor {
 
   containsBank(text) {
     const cleanedText = this.cleanText(text);
-
     console.log("🏦 Texto limpio para buscar banco:", cleanedText);
     console.log("🏦 Buscando variaciones:", this.expectedBanks);
 
@@ -95,7 +99,7 @@ export class PaymentProcessor {
   extractAmounts(text) {
     const amounts = [];
 
-    // Patrón 1: números con formato decimal
+    // Patrón 1: números con formato decimal (punto o coma)
     const pattern1 = /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g;
     let matches = text.match(pattern1);
 
@@ -109,19 +113,17 @@ export class PaymentProcessor {
       });
     }
 
-    // Si no encontró nada con decimales, busca números enteros
-    if (amounts.length === 0) {
-      const pattern2 = /\b(\d{2,4})\b/g;
-      matches = text.match(pattern2);
+    // Patrón 2: números enteros grandes
+    const pattern2 = /\b(\d{2,6})\b/g;
+    matches = text.match(pattern2);
 
-      if (matches) {
-        matches.forEach((match) => {
-          const amount = parseFloat(match);
-          if (!isNaN(amount) && amount > 10 && amount < 100000) {
-            amounts.push(amount);
-          }
-        });
-      }
+    if (matches) {
+      matches.forEach((match) => {
+        const amount = parseFloat(match);
+        if (!isNaN(amount) && amount > 10 && amount < 100000) {
+          amounts.push(amount);
+        }
+      });
     }
 
     return [...new Set(amounts)];
@@ -139,9 +141,9 @@ export class PaymentProcessor {
     console.log("💰 Monto esperado:", expected);
     console.log("💰 Montos encontrados:", amounts);
 
-    // Busca el monto exacto (± 0.5)
+    // Match exacto (± 1)
     const exactMatch = amounts.find(
-      (amount) => Math.abs(amount - expected) <= 0.5
+      (amount) => Math.abs(amount - expected) <= 1
     );
 
     if (exactMatch) {
@@ -149,9 +151,9 @@ export class PaymentProcessor {
       return true;
     }
 
-    // Busca montos cercanos (± 15%)
+    // Match cercano (± 20%)
     const closeMatch = amounts.find(
-      (amount) => Math.abs(amount - expected) <= expected * 0.15
+      (amount) => Math.abs(amount - expected) <= expected * 0.2
     );
 
     if (closeMatch) {
@@ -163,56 +165,126 @@ export class PaymentProcessor {
     return false;
   }
 
+  // FUNCIÓN MEJORADA: Preprocesamiento más inteligente
+  preprocessImage(ctx, width, height) {
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+
+    // Calcular brillo promedio
+    let totalBrightness = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      totalBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+    }
+    const avgBrightness = totalBrightness / (data.length / 4);
+
+    console.log("📊 Brillo promedio de la imagen:", avgBrightness);
+
+    // Ajustar contraste y brillo
+    const contrast = 1.5;
+    const brightness = avgBrightness < 128 ? 30 : -10;
+
+    for (let i = 0; i < data.length; i += 4) {
+      // Aplicar contraste y brillo
+      data[i] = Math.min(
+        255,
+        Math.max(0, contrast * (data[i] - 128) + 128 + brightness)
+      );
+      data[i + 1] = Math.min(
+        255,
+        Math.max(0, contrast * (data[i + 1] - 128) + 128 + brightness)
+      );
+      data[i + 2] = Math.min(
+        255,
+        Math.max(0, contrast * (data[i + 2] - 128) + 128 + brightness)
+      );
+    }
+
+    // Convertir a escala de grises
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      data[i] = gray;
+      data[i + 1] = gray;
+      data[i + 2] = gray;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
   loadImage(file) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
+      img.onload = () => {
+        console.log("✓ Imagen cargada:", img.width, "x", img.height);
+        resolve(img);
+      };
+      img.onerror = (error) => {
+        console.error("✗ Error al cargar imagen:", error);
+        reject(error);
+      };
       img.src = URL.createObjectURL(file);
     });
   }
 
   async processImage(file, expectedAmount = null) {
+    console.log("========== INICIANDO OCR ==========");
+    console.log("Archivo:", file.name, "Tamaño:", file.size, "bytes");
+
     try {
+      // Cargar imagen
       const img = await this.loadImage(file);
+
+      // Crear canvas
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      canvas.width = img.width;
-      canvas.height = img.height;
+      // Escalar si es muy grande
+      let width = img.width;
+      let height = img.height;
+      const maxDimension = 2000;
 
-      ctx.drawImage(img, 0, 0);
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        const threshold = avg > 128 ? 255 : 0;
-        data[i] = threshold;
-        data[i + 1] = threshold;
-        data[i + 2] = threshold;
+      if (width > maxDimension || height > maxDimension) {
+        const scale = maxDimension / Math.max(width, height);
+        width = Math.floor(width * scale);
+        height = Math.floor(height * scale);
+        console.log("📐 Escalando imagen a:", width, "x", height);
       }
 
-      ctx.putImageData(imageData, 0, 0);
+      canvas.width = width;
+      canvas.height = height;
 
+      // Dibujar imagen
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Preprocesar
+      console.log("🎨 Aplicando preprocesamiento...");
+      this.preprocessImage(ctx, width, height);
+
+      // Convertir a blob
       const processedBlob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png")
+        canvas.toBlob(resolve, "image/png", 1.0)
       );
 
+      console.log("🔍 Iniciando reconocimiento OCR...");
+
+      // Ejecutar OCR con mejores configuraciones
       const result = await Tesseract.recognize(processedBlob, "spa", {
         logger: (m) => {
           if (m.status === "recognizing text") {
-            console.log(`Progreso OCR: ${Math.round(m.progress * 100)}%`);
+            console.log(`⏳ Progreso OCR: ${Math.round(m.progress * 100)}%`);
           }
         },
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+        tessedit_char_whitelist:
+          "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ.,:-() ",
       });
 
       const extractedText = result.data.text;
       console.log("========== TEXTO EXTRAÍDO ==========");
       console.log(extractedText);
+      console.log("Confianza OCR:", result.data.confidence + "%");
       console.log("====================================");
 
+      // Validaciones
       const hasCedula = this.containsCedula(extractedText);
       const hasPhone = this.containsPhone(extractedText);
       const hasBank = this.containsBank(extractedText);
@@ -221,17 +293,17 @@ export class PaymentProcessor {
 
       console.log("========== VALIDACIÓN ==========");
       console.log("✓ Cédula esperada:", this.expectedCedula);
-      console.log("✓ Cédula encontrada:", hasCedula ? "SÍ" : "NO");
+      console.log("✓ Cédula encontrada:", hasCedula ? "✅ SÍ" : "❌ NO");
       console.log("✓ Teléfono esperado:", this.expectedPhone);
-      console.log("✓ Teléfono encontrado:", hasPhone ? "SÍ" : "NO");
-      console.log("✓ Bancos esperados:", this.expectedBanks);
-      console.log("✓ Banco encontrado:", hasBank ? "SÍ" : "NO");
+      console.log("✓ Teléfono encontrado:", hasPhone ? "✅ SÍ" : "❌ NO");
+      console.log("✓ Banco encontrado:", hasBank ? "✅ SÍ" : "⚠️ NO");
       console.log("✓ Monto esperado:", expectedAmount);
-      console.log("✓ Monto validado:", hasAmount ? "SÍ" : "NO");
-      console.log("📋 Referencia:", reference || "NO encontrada");
+      console.log("✓ Monto validado:", hasAmount ? "✅ SÍ" : "❌ NO");
+      console.log("📋 Referencia:", reference || "❌ NO encontrada");
       console.log("================================");
 
-      // IMPORTANTE: Si falta el banco pero todo lo demás está bien, igual aprobar
+      // Validación: requiere cédula, teléfono y monto
+      // El banco es opcional porque a veces no se detecta bien
       const isValid = hasCedula && hasPhone && hasAmount;
 
       if (isValid && !hasBank) {
@@ -240,10 +312,14 @@ export class PaymentProcessor {
         );
       }
 
+      if (isValid && !reference) {
+        console.log("⚠️ ADVERTENCIA: Referencia no detectada");
+      }
+
       return {
         success: isValid,
         text: extractedText,
-        reference: reference,
+        reference: reference || "N/A",
         details: {
           hasCedula,
           hasPhone,
@@ -253,10 +329,19 @@ export class PaymentProcessor {
         },
       };
     } catch (error) {
-      console.error("Error en OCR:", error);
+      console.error("❌ Error en OCR:", error);
       return {
         success: false,
         error: error.message,
+        text: "",
+        reference: null,
+        details: {
+          hasCedula: false,
+          hasPhone: false,
+          hasBank: false,
+          hasAmount: false,
+          confidence: 0,
+        },
       };
     }
   }
