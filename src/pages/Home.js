@@ -196,12 +196,9 @@ const Home = () => {
               información.
             </br>
             <a href='https://es-kaizen.vercel.app/terms'>
-              {" "}
-              Ver Términos y Condiciones
-              <br>
-                &copy; 2025 Proyecto Kaizen. Todos los derechos reservados.
-              </br>
+              Ver Términos y Condiciones{" "}
             </a>
+            <br>&copy; 2025 Proyecto Kaizen. Todos los derechos reservados.</br>
           </p>
           <p className='home-footer-subtitle'>
             Herramientas para una vida de crecimiento continuo.
