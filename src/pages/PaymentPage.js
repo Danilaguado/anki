@@ -38,15 +38,8 @@ function PaymentPage() {
           body: JSON.stringify({
             nombre: data.formData.nombre,
             correo: data.formData.correo,
-            comprobante: data.comprobante.name,
-            whatsapp: data.receiveWhatsapp ? "Sí" : "No",
-            whatsappNumber: data.formData.whatsappNumber,
+            referencia: validationResult.reference, // ← NUEVO
             fecha: new Date().toISOString(),
-            banco: data.paymentData.banco.value,
-            telefono: data.paymentData.telefono.value,
-            cedula: data.paymentData.cedula.value,
-            montoEsperado: data.expectedAmount,
-            ocrResult: validationResult,
           }),
         });
         const result = await response.json();
