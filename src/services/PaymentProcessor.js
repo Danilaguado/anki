@@ -42,8 +42,56 @@ export class PaymentProcessor {
     );
   }
 
+  // NUEVO: Extrae montos del texto (busca patrones numéricos)
+  extractAmounts(text) {
+    // Busca patrones de montos: números con comas o puntos decimales
+    const amountPatterns = [
+      /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g, // Formato: 1.234,56 o 1,234.56
+      /(\d+[.,]\d{2})/g, // Formato simple: 123.45 o 123,45
+      /(\d+)/g, // Solo números enteros
+    ];
+
+    const amounts = [];
+    for (const pattern of amountPatterns) {
+      const matches = text.match(pattern);
+      if (matches) {
+        matches.forEach((match) => {
+          // Normaliza el formato (convierte todo a punto decimal)
+          const normalized = match.replace(/\./g, "").replace(",", ".");
+          const amount = parseFloat(normalized);
+          if (!isNaN(amount) && amount > 0) {
+            amounts.push(amount);
+          }
+        });
+        // Si encontramos con este patrón, no seguimos buscando
+        if (amounts.length > 0) break;
+      }
+    }
+    return amounts;
+  }
+
+  // NUEVO: Verifica si el monto está presente en el texto
+  containsAmount(text, expectedAmount) {
+    if (!expectedAmount) {
+      return false;
+    }
+
+    const expected = parseFloat(expectedAmount);
+    const amounts = this.extractAmounts(text);
+
+    console.log("Monto esperado:", expected);
+    console.log("Montos encontrados en el comprobante:", amounts);
+
+    // Busca el monto exacto o con un margen de error de 0.5 (por errores de OCR)
+    const foundAmount = amounts.find(
+      (amount) => Math.abs(amount - expected) <= 0.5
+    );
+
+    return !!foundAmount;
+  }
+
   // Procesa la imagen con OCR
-  async processImage(file) {
+  async processImage(file, expectedAmount = null) {
     try {
       // Fase 1: Iniciando OCR
       const result = await Tesseract.recognize(
@@ -64,13 +112,15 @@ export class PaymentProcessor {
       // Fase 2: Validando datos
       const hasCedula = this.containsCedula(extractedText);
       const hasPhone = this.containsPhone(extractedText);
+      const hasAmount = this.containsAmount(extractedText, expectedAmount);
 
       return {
-        success: hasCedula && hasPhone,
+        success: hasCedula && hasPhone && hasAmount,
         text: extractedText,
         details: {
           hasCedula,
           hasPhone,
+          hasAmount,
           confidence: result.data.confidence,
         },
       };
@@ -81,24 +131,5 @@ export class PaymentProcessor {
         error: error.message,
       };
     }
-  }
-
-  // Simula validación (para testing sin OCR real)
-  async mockValidation(file) {
-    // Simula delay de procesamiento
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    // Simula 80% de éxito
-    const success = Math.random() > 0.2;
-
-    return {
-      success,
-      text: "Texto simulado del comprobante",
-      details: {
-        hasCedula: success,
-        hasPhone: success,
-        confidence: 85,
-      },
-    };
   }
 }
