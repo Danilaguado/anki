@@ -15,12 +15,20 @@ export default async function handler(req, res) {
     correo,
     referencia, // Nueva referencia del OCR
     fecha,
+    producto,
   } = req.body;
 
   if (!nombre || !correo) {
     return res.status(400).json({
       success: false,
       message: "Nombre y correo son requeridos.",
+    });
+  }
+
+  if (!producto) {
+    return res.status(400).json({
+      success: false,
+      message: "No se especificó el producto.",
     });
   }
 
@@ -41,6 +49,38 @@ export default async function handler(req, res) {
     const sheetExists = spreadsheetInfo.data.sheets.some(
       (s) => s.properties.title === sheetName
     );
+    const productoPDFMap = {
+      "El Código de la Conexión": "codigo-conexion-cover.pdf",
+      "El Músculo de la Voluntad": "musculo-voluntad-cover.pdf",
+      "Habla, Corrige y Conquista": "habla-corrige-conquista-cover.pdf",
+      "Trilogía Completa": [
+        "codigo-conexion-cover.pdf",
+        "musculo-voluntad-cover.pdf",
+        "habla-corrige-conquista-cover.pdf",
+      ],
+    };
+
+    const pdfFiles = productoPDFMap[producto];
+    if (!pdfFiles) {
+      console.error("Producto no encontrado:", producto);
+      return res.status(400).json({
+        success: false,
+        message: `Producto "${producto}" no encontrado. No se puede enviar el material.`,
+      });
+    }
+
+    // Configurar archivos adjuntos
+    const attachments = Array.isArray(pdfFiles)
+      ? pdfFiles.map((pdf) => ({
+          filename: pdf,
+          path: `./public/assets/${pdf}`,
+        }))
+      : [
+          {
+            filename: pdfFiles,
+            path: `./public/assets/${pdfFiles}`,
+          },
+        ];
 
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
@@ -92,7 +132,8 @@ export default async function handler(req, res) {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: correo,
-      subject: "¡Bienvenido a Proyecto Kaizen! 🚀 - Tu eBook está listo",
+      subject: "¡Bienvenido a Proyecto Kaizen! 🚀 - Tu material está aquí",
+      attachments: attachments, // NUEVO - archivos adjuntos
       html: `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
       
@@ -115,12 +156,14 @@ export default async function handler(req, res) {
           Gracias por confiar en nosotros y adquirir este material. Sabemos que le sacarás mucho provecho y que será una herramienta poderosa en tu camino de crecimiento personal.
         </p>
 
-        <!-- Botón Descargar eBook -->
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="TU_ENLACE_DE_DESCARGA_AQUI" 
-             style="display: inline-block; background-color: #4f46e5; color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);">
-            📚 Descargar mi eBook
-          </a>
+        <!-- Aviso Material Adjunto -->
+        <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; margin: 30px 0; border-radius: 4px;">
+          <p style="margin: 0 0 8px 0; font-weight: 600; color: #065f46; font-size: 16px;">
+            📎 Tu material está adjunto en este correo
+          </p>
+          <p style="margin: 0; font-size: 14px; color: #047857;">
+            Busca el archivo PDF al final de este mensaje y descárgalo en tu dispositivo.
+          </p>
         </div>
 
         <p style="font-size: 16px; margin-bottom: 20px;">
@@ -166,32 +209,43 @@ export default async function handler(req, res) {
           <p style="margin: 0 0 16px 0; font-size: 14px; color: #666; font-weight: 600;">
             Síguenos en nuestras redes sociales
           </p>
-          <div style="display: flex; justify-content: center; gap: 20px; align-items: center;">
-            <!-- Facebook -->
-            <a href="TU_ENLACE_FACEBOOK" style="text-decoration: none;">
-              <div style="width: 40px; height: 40px; background-color: #1877F2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </div>
-            </a>
-            <!-- Instagram -->
-            <a href="TU_ENLACE_INSTAGRAM" style="text-decoration: none;">
-              <div style="width: 40px; height: 40px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
-              </div>
-            </a>
-            <!-- TikTok -->
-            <a href="TU_ENLACE_TIKTOK" style="text-decoration: none;">
-              <div style="width: 40px; height: 40px; background-color: #000000; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                </svg>
-              </div>
-            </a>
-          </div>
+          <table style="margin: 0 auto;">
+            <tr>
+              <td style="padding: 0 10px;">
+                <a href="TU_ENLACE_FACEBOOK" style="text-decoration: none;">
+                  <table style="width: 40px; height: 40px; background-color: #1877F2; border-radius: 50%;">
+                    <tr>
+                      <td style="text-align: center; vertical-align: middle;">
+                        <span style="color: white; font-size: 20px; font-weight: bold;">f</span>
+                      </td>
+                    </tr>
+                  </table>
+                </a>
+              </td>
+              <td style="padding: 0 10px;">
+                <a href="TU_ENLACE_INSTAGRAM" style="text-decoration: none;">
+                  <table style="width: 40px; height: 40px; background: linear-gradient(45deg, #f09433 0%, #dc2743 50%, #bc1888 100%); border-radius: 50%;">
+                    <tr>
+                      <td style="text-align: center; vertical-align: middle;">
+                        <span style="color: white; font-size: 20px; font-weight: bold;">📷</span>
+                      </td>
+                    </tr>
+                  </table>
+                </a>
+              </td>
+              <td style="padding: 0 10px;">
+                <a href="TU_ENLACE_TIKTOK" style="text-decoration: none;">
+                  <table style="width: 40px; height: 40px; background-color: #000000; border-radius: 50%;">
+                    <tr>
+                      <td style="text-align: center; vertical-align: middle;">
+                        <span style="color: white; font-size: 20px; font-weight: bold;">♪</span>
+                      </td>
+                    </tr>
+                  </table>
+                </a>
+              </td>
+            </tr>
+          </table>
         </div>
 
       </div>

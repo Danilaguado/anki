@@ -38,8 +38,11 @@ function PaymentPage() {
           body: JSON.stringify({
             nombre: data.formData.nombre,
             correo: data.formData.correo,
-            referencia: validationResult.reference, // ← NUEVO
+            referencia: validationResult.reference,
             fecha: new Date().toISOString(),
+            producto:
+              new URLSearchParams(window.location.search).get("product") ||
+              "El Código de la Conexión", // NUEVO
           }),
         });
         const result = await response.json();
