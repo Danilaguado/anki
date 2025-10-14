@@ -13,27 +13,17 @@ function PaymentPage() {
   const formRef = useRef(null);
 
   const processPayment = async (data) => {
-    console.log("=== INICIANDO PROCESO DE PAGO ===");
-    console.log("Monto esperado:", data.expectedAmount);
-    console.log(
-      "Producto:",
-      new URLSearchParams(window.location.search).get("product")
-    );
-
     setProcessingStatus({ stage: "processing" });
     setIsSubmitting(true);
 
     try {
-      // Validar el comprobante con OCR
-      const validationResult = await paymentProcessor.processImage(
-        data.comprobante,
-        data.expectedAmount
-      );
+      // Para modo simulado (pruebas), usa esta línea:
+      // const validationResult = await paymentProcessor.mockValidation(data.comprobante);
 
-      console.log("=== RESULTADO DE VALIDACIÓN OCR ===");
-      console.log("Success:", validationResult.success);
-      console.log("Details:", validationResult.details);
-      console.log("===================================");
+      // Para OCR real, usa esta línea:
+      const validationResult = await paymentProcessor.processImage(
+        data.comprobante
+      );
 
       if (validationResult.success) {
         const response = await fetch("/api/submit-payment", {
@@ -44,17 +34,22 @@ function PaymentPage() {
           body: JSON.stringify({
             nombre: data.formData.nombre,
             correo: data.formData.correo,
-            referencia: validationResult.reference,
+            comprobante: data.comprobante.name,
+            whatsapp: data.receiveWhatsapp ? "Sí" : "No",
+            whatsappNumber: data.formData.whatsappNumber,
             fecha: new Date().toISOString(),
-            producto:
-              new URLSearchParams(window.location.search).get("product") ||
-              "El Código de la Conexión",
+            banco: data.paymentData.banco.value,
+            telefono: data.paymentData.telefono.value,
+            cedula: data.paymentData.cedula.value,
+            ocrResult: validationResult,
           }),
         });
+
         const result = await response.json();
 
         if (result.success) {
           setProcessingStatus({ stage: "success" });
+          // Resetear el formulario
           if (formRef.current) {
             formRef.current.resetForm();
           }
@@ -62,11 +57,10 @@ function PaymentPage() {
           throw new Error(result.message || "Error al procesar el pago.");
         }
       } else {
-        console.error("Validación fallida:", validationResult);
         setProcessingStatus({ stage: "error" });
       }
     } catch (error) {
-      console.error("Error en processPayment:", error);
+      console.error("Error:", error);
       setProcessingStatus({ stage: "error" });
     } finally {
       setIsSubmitting(false);
