@@ -297,7 +297,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
           <p>
             Al hacer clic en "Registrar Pago", usted confirma que es mayor de
             edad y acepta nuestros{" "}
-            <a href='/terms' target='_blank' rel='noopener noreferrer'>
+            <a href='/terms' rel='noopener noreferrer'>
               Términos y Condiciones
             </a>{" "}
             y nuestra Política de Privacidad. Acepta que sus datos personales
