@@ -45,10 +45,40 @@ export const ProcessingModal = ({ status, onClose }) => {
         return {
           icon: <SuccessIcon />,
           title: "¡Pago Aprobado!",
-          message:
-            "Su pago ha sido verificado exitosamente. El material será enviado en breve.",
+          message: (
+            <>
+              <p style={{ marginBottom: "16px" }}>
+                Su pago ha sido verificado exitosamente. En breve recibirás el
+                material en tu correo. Revisa tu bandeja de entrada (no olvides
+                la carpeta de spam).
+              </p>
+              <p
+                style={{
+                  marginBottom: "8px",
+                  fontWeight: "600",
+                  color: "#059669",
+                }}
+              >
+                Te invitamos a unirte al Canal de WhatsApp del Proyecto Kaizen.
+              </p>
+              <p style={{ marginBottom: "4px" }}>
+                Aquí es donde la magia realmente sucede:
+              </p>
+              <ul
+                style={{
+                  textAlign: "left",
+                  paddingLeft: "20px",
+                  margin: "8px 0",
+                }}
+              >
+                <li>Talleres exclusivos</li>
+                <li>Comunidad de alto valor</li>
+                <li>Material que no encontrarás en ningún otro lugar</li>
+              </ul>
+            </>
+          ),
           showButton: true,
-          buttonText: "Unirse al Grupo de WhatsApp",
+          buttonText: "Unirse al Canal de WhatsApp",
           buttonLink: "https://whatsapp.com/channel/0029VbBQrlRF1YlOxxbDT30X",
           buttonClass: "success-button",
         };
