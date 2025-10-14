@@ -165,6 +165,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
 
     // AGREGAR ESTE LOG
     console.log("=== ENVIANDO PAGO ===");
+    console.log("totalAmount antes de enviar:", totalAmount);
     console.log("expectedAmount que se envía:", totalAmount);
     console.log("=====================");
 
@@ -173,11 +174,10 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
         formData,
         comprobante,
         paymentData,
-        expectedAmount: totalAmount,
+        expectedAmount: totalAmount, // ← Verifica que esto esté así
       });
     }
   };
-
   const resetForm = () => {
     setFormData({ nombre: "", correo: "", whatsappNumber: "" });
     setComprobante(null);
