@@ -91,31 +91,74 @@ export default async function handler(req, res) {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: "daniellaguado90@gmail.com",
-      subject: `Nuevo Pago Registrado - ${nombre}`,
+      to: correo,
+      subject: "¡Bienvenido a Proyecto Kaizen! 🚀",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
-          <div style="background-color: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-            <h1 style="margin: 0;">Nuevo Pago Registrado</h1>
-          </div>
-          <div style="padding: 20px;">
-            <p>Se ha registrado un nuevo pago con los siguientes detalles:</p>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Fecha:</td><td style="padding: 8px;">${new Date(
-                fecha
-              ).toLocaleString("es-ES", {
-                timeZone: "America/Caracas",
-              })}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Nombre:</td><td style="padding: 8px;">${nombre}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Correo:</td><td style="padding: 8px;">${correo}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Referencia:</td><td style="padding: 8px;">${referenciaUltimos4}</td></tr>
-            </table>
-          </div>
-          <div style="text-align: center; padding: 10px; font-size: 12px; color: #999; background-color: #f9f9f9; border-radius: 0 0 8px 8px;">
-            <p>Este es un correo automático, por favor no responder.</p>
-          </div>
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+      
+      <!-- Header -->
+      <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 40px 20px; text-align: center;">
+        <h1 style="color: #d4af37; margin: 0; font-size: 32px; font-family: Georgia, serif;">Proyecto Kaizen</h1>
+        <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Bienvenido a la comunidad</p>
+      </div>
+
+      <!-- Contenido -->
+      <div style="padding: 40px 30px; color: #333333; line-height: 1.8;">
+        
+        <p style="font-size: 16px; margin-bottom: 20px;">Hola <strong>${nombre}</strong>,</p>
+        
+        <p style="font-size: 16px; margin-bottom: 20px;">
+          Soy <strong>Daniel</strong>, fundador de Proyecto Kaizen junto a Nelson, y quiero darte la bienvenida personalmente.
+        </p>
+
+        <p style="font-size: 16px; margin-bottom: 20px;">
+          Gracias por confiar en nosotros y adquirir este material. Sabemos que le sacarás mucho provecho y que será una herramienta poderosa en tu camino de crecimiento personal.
+        </p>
+
+        <p style="font-size: 16px; margin-bottom: 20px;">
+          Este libro es solo el inicio. La verdadera transformación sucede cuando aplicas lo aprendido y te rodeas de una comunidad que te impulsa hacia adelante.
+        </p>
+
+        <!-- CTA Box -->
+        <div style="background-color: #f0f9ff; border-left: 4px solid #d4af37; padding: 20px; margin: 30px 0; border-radius: 4px;">
+          <p style="margin: 0 0 12px 0; font-weight: 600; color: #1a1a1a; font-size: 16px;">
+            📢 Únete a nuestra comunidad exclusiva
+          </p>
+          <p style="margin: 0 0 16px 0; font-size: 14px; color: #555;">
+            Accede a talleres, material premium y una red de personas comprometidas con crecer cada día.
+          </p>
+          <a href="https://whatsapp.com/channel/0029VbBQrlRF1YlOxxbDT30X" 
+             style="display: inline-block; background-color: #25D366; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">
+            Unirme al Canal de WhatsApp →
+          </a>
         </div>
-      `,
+
+        <p style="font-size: 16px; margin-bottom: 20px;">
+          Si tienes alguna pregunta o necesitas ayuda, estoy a tu disposición. No dudes en escribirme al canal.
+        </p>
+
+        <p style="font-size: 16px; margin-bottom: 8px;">
+          Nos vemos del otro lado,
+        </p>
+        <p style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin: 0;">
+          Daniel<br>
+          <span style="font-size: 14px; color: #666; font-weight: 400;">Fundador, Proyecto Kaizen</span>
+        </p>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0; font-size: 12px; color: #6b7280;">
+          © 2025 Proyecto Kaizen. Todos los derechos reservados.
+        </p>
+        <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
+          Herramientas para una vida de crecimiento continuo.
+        </p>
+      </div>
+
+    </div>
+  `,
     };
 
     await transporter.sendMail(mailOptions);
