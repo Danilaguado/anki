@@ -19,7 +19,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-start; /* Cambiado de center a flex-start */
   padding: 40px 20px;
   gap: 24px;
   overflow-y: auto;
@@ -29,11 +29,11 @@ body {
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 0;
+  padding: 0; /* Cambiado de 32px a 0 para el banner */
   max-width: 480px;
   width: 100%;
   margin: 40px 0;
-  overflow: hidden;
+  overflow: hidden; /* Para que el banner respete el border-radius */
 }
 
 .secure-badge {
@@ -42,7 +42,7 @@ body {
   justify-content: center;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 40px;
+  margin-bottom: 40px; /* Agregado margen inferior */
 }
 
 .secure-badge img {
@@ -62,21 +62,11 @@ body {
   margin-bottom: 24px;
 }
 
-.header-banner {
-  width: 100%;
-  background-color: #f9fafb;
-  padding: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-bottom: 1px solid #e5e7eb;
-}
-
 .header-logo {
   width: 30%;
   max-width: 100px;
   height: auto;
-  object-fit: contain;
+  object-fit: contain; /* Sin redondeo, mantiene la forma original */
 }
 
 .header h1 {
@@ -95,7 +85,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 0 32px 32px;
+  padding: 0 32px 32px; /* Padding lateral y abajo para el formulario */
 }
 
 /* Form Groups */
@@ -291,49 +281,89 @@ body {
   color: #10b981;
 }
 
-/* Total Amount Container */
-.total-amount-container {
-  padding: 12px 0;
+/* Dollar Rate - SIN FONDO Y SOLO BORDES SUPERIOR E INFERIOR */
+.dollar-rate-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
   border-top: 1px solid #e5e7eb;
   border-bottom: 1px solid #e5e7eb;
+  /* NO HAY background-color */
+  /* NO HAY border-left ni border-right */
 }
 
-.total-amount-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.dollar-icon {
+  color: #10b981;
+  flex-shrink: 0;
 }
 
-.total-amount {
+.dollar-rate-content {
+  flex: 1;
+}
+
+.dollar-rate {
   color: #111827;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   margin: 0;
 }
 
-.total-amount strong {
-  font-weight: 700;
-  font-size: 18px;
-  color: #10b981;
+.dollar-rate strong {
+  font-weight: 600;
+  font-size: 14px;
 }
 
-.total-amount-loading {
+.dollar-rate-loading {
   color: #6b7280;
   font-size: 14px;
   font-style: italic;
   margin: 0;
 }
 
-.total-amount-error {
+.dollar-rate-error {
   color: #991b1b;
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
 }
 
 .last-update {
   font-size: 12px;
   color: #9ca3af;
-  margin: 0;
+  margin-top: 4px;
+}
+
+/* Terms */
+.terms-container {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-label a {
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+.checkbox-label a:hover {
+  text-decoration: underline;
 }
 
 /* Submit Button */
@@ -362,35 +392,6 @@ body {
 .submit-button:disabled {
   background-color: #9ca3af;
   cursor: not-allowed;
-}
-
-/* Terms Disclaimer */
-.terms-disclaimer {
-  margin-top: 16px;
-  padding: 16px;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-}
-
-.terms-disclaimer p {
-  font-size: 12px;
-  line-height: 1.6;
-  color: #9ca3af;
-  margin: 0;
-  text-align: center;
-}
-
-.terms-disclaimer a {
-  color: #4f46e5;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-
-.terms-disclaimer a:hover {
-  color: #4338ca;
-  text-decoration: underline;
 }
 
 /* Responsive */
@@ -434,13 +435,5 @@ body {
 
   .secure-badge {
     margin-bottom: 20px;
-  }
-
-  .terms-disclaimer {
-    padding: 12px;
-  }
-
-  .terms-disclaimer p {
-    font-size: 11px;
   }
 }
