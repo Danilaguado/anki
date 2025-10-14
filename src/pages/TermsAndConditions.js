@@ -274,13 +274,13 @@ const TermsAndConditions = () => {
             </p>
           </section>
 
-          <div className='terms-acceptance'>
+          <section className='terms-section'>
             <p>
               Al hacer clic en el botón de "Comprar", usted confirma que es
               mayor de edad y que acepta de forma vinculante todos los términos
               aquí expuestos.
             </p>
-          </div>
+          </section>
         </div>
 
         {/* Botón de regreso al final */}
