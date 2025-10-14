@@ -31,6 +31,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   const [dollarRate, setDollarRate] = useState(null);
   const [loadingDollar, setLoadingDollar] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [testAmount, setTestAmount] = useState("");
   const fileInputRef = useRef(null);
   const formRefs = {
     nombre: useRef(null),
@@ -187,8 +188,14 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
 
   useImperativeHandle(ref, () => ({ resetForm }));
 
+  // Calcular el total a pagar (usar testAmount si existe, sino el cálculo normal)
+  const totalAmount = testAmount
+    ? parseFloat(testAmount).toFixed(2)
+    : dollarRate
+    ? (dollarRate * 2).toFixed(2)
+    : null;
   // Calcular el total a pagar (multiplicar por 3)
-  const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
+  // const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
   // AGREGAR ESTE LOG
   console.log("=== DEBUG MONTO ===");
   console.log("dollarRate:", dollarRate);
@@ -294,6 +301,21 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
               <p className='total-amount-error'>No se pudo calcular el monto</p>
             )}
           </div>
+        </div>
+
+        {/* NUEVO INPUT PARA TESTING */}
+        <div className='form-group' style={{ marginTop: "12px" }}>
+          <label htmlFor='testAmount'>🔧 Monto de Prueba (Testing)</label>
+          <input
+            type='number'
+            step='0.01'
+            id='testAmount'
+            name='testAmount'
+            value={testAmount}
+            onChange={(e) => setTestAmount(e.target.value)}
+            placeholder='Ej: 889.35'
+            disabled={isSubmitting}
+          />
         </div>
 
         <div
