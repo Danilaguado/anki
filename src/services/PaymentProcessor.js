@@ -1,4 +1,5 @@
 // Agregar estas mejoras a tu PaymentProcessor.js
+import Tesseract from "tesseract.js";
 
 export class PaymentProcessor {
   constructor() {
