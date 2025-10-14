@@ -1,0 +1,385 @@
+/* src/styles/TermsAndConditions.css */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.terms-container {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 40px 20px;
+}
+
+.terms-content {
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Header */
+.terms-header {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  padding: 40px 32px;
+  color: #ffffff;
+  position: relative;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 24px;
+}
+
+.back-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateX(-4px);
+}
+
+.back-button:active {
+  transform: translateX(-2px);
+}
+
+.back-button svg {
+  transition: transform 0.3s ease;
+}
+
+.back-button:hover svg {
+  transform: translateX(-4px);
+}
+
+.terms-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.terms-subtitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #d4af37;
+  margin-bottom: 8px;
+}
+
+.terms-date {
+  font-size: 14px;
+  color: #d1d5db;
+  font-style: italic;
+}
+
+/* Body */
+.terms-body {
+  padding: 40px 32px;
+}
+
+.terms-intro {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #374151;
+  margin-bottom: 32px;
+  padding: 20px;
+  background-color: #f3f4f6;
+  border-left: 4px solid #d4af37;
+  border-radius: 4px;
+}
+
+.terms-section {
+  margin-bottom: 32px;
+}
+
+.terms-section h2 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.terms-section p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 12px;
+}
+
+.terms-section p:last-child {
+  margin-bottom: 0;
+}
+
+.terms-section strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.terms-section ul {
+  margin-left: 24px;
+  margin-bottom: 12px;
+  list-style-type: disc;
+}
+
+.terms-section ul li {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+.terms-section ul li:last-child {
+  margin-bottom: 0;
+}
+
+.terms-section a {
+  color: #4f46e5;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.terms-section a:hover {
+  text-decoration: underline;
+  color: #4338ca;
+}
+
+/* Acceptance Box */
+.terms-acceptance {
+  margin-top: 40px;
+  padding: 24px;
+  background-color: #fef3c7;
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+}
+
+.terms-acceptance p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #92400e;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Footer */
+.terms-footer {
+  padding: 24px 32px;
+  background-color: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: center;
+}
+
+.back-button-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 32px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-button-footer:hover {
+  background-color: #2d2d2d;
+  transform: translateX(-4px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.back-button-footer:active {
+  transform: translateX(-2px);
+}
+
+.back-button-footer svg {
+  transition: transform 0.3s ease;
+}
+
+.back-button-footer:hover svg {
+  transform: translateX(-4px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .terms-container {
+    padding: 20px 16px;
+  }
+
+  .terms-header {
+    padding: 32px 24px;
+  }
+
+  .terms-body {
+    padding: 32px 24px;
+  }
+
+  .terms-title {
+    font-size: 28px;
+  }
+
+  .terms-subtitle {
+    font-size: 18px;
+  }
+
+  .terms-section h2 {
+    font-size: 20px;
+  }
+
+  .terms-section p,
+  .terms-section ul li {
+    font-size: 14px;
+  }
+
+  .terms-intro {
+    padding: 16px;
+    font-size: 14px;
+  }
+
+  .terms-acceptance {
+    padding: 20px;
+  }
+
+  .terms-acceptance p {
+    font-size: 14px;
+  }
+
+  .terms-footer {
+    padding: 20px 24px;
+  }
+
+  .back-button,
+  .back-button-footer {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .terms-container {
+    padding: 16px 12px;
+  }
+
+  .terms-header {
+    padding: 24px 16px;
+  }
+
+  .terms-body {
+    padding: 24px 16px;
+  }
+
+  .terms-title {
+    font-size: 24px;
+  }
+
+  .terms-subtitle {
+    font-size: 16px;
+  }
+
+  .terms-date {
+    font-size: 12px;
+  }
+
+  .terms-section h2 {
+    font-size: 18px;
+  }
+
+  .terms-section ul {
+    margin-left: 20px;
+  }
+
+  .terms-intro {
+    padding: 14px;
+    font-size: 13px;
+  }
+
+  .terms-acceptance {
+    padding: 16px;
+  }
+
+  .terms-acceptance p {
+    font-size: 13px;
+  }
+
+  .terms-footer {
+    padding: 16px;
+  }
+
+  .back-button {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+
+  .back-button-footer {
+    font-size: 14px;
+    padding: 10px 24px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .terms-container {
+    padding: 0;
+    background-color: white;
+  }
+
+  .back-button,
+  .terms-footer {
+    display: none;
+  }
+
+  .terms-content {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .terms-header {
+    background: white;
+    color: black;
+    padding: 20px 0;
+  }
+
+  .terms-subtitle {
+    color: #333;
+  }
+
+  .terms-date {
+    color: #666;
+  }
+
+  .terms-body {
+    padding: 20px 0;
+  }
+
+  .terms-section {
+    page-break-inside: avoid;
+  }
+
+  .terms-acceptance {
+    background-color: white;
+    border: 2px solid #333;
+  }
+
+  .terms-acceptance p {
+    color: #333;
+  }
+}

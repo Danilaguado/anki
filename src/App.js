@@ -8,6 +8,7 @@ import CodigoConexion from "./pages/CodigoConexion";
 import MusculoVoluntad from "./pages/MusculoVoluntad";
 import HablaCorrigeConquista from "./pages/HablaCorrigeConquista";
 import PaymentPage from "./pages/PaymentPage";
+import TermsAndConditions from "./pages/TermsAndConditions";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           element={<HablaCorrigeConquista />}
         />
         <Route path='/payment' element={<PaymentPage />} />
+        <Route path='/terms' element={<TermsAndConditions />} />
       </Routes>
     </BrowserRouter>
   );

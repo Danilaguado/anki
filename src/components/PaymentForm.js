@@ -26,7 +26,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     whatsappNumber: "",
   });
   const [comprobante, setComprobante] = useState(null);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState({});
   const [copiedField, setCopiedField] = useState("");
   const [dollarRate, setDollarRate] = useState(null);
@@ -38,7 +37,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     correo: useRef(null),
     comprobante: useRef(null),
     whatsappNumber: useRef(null),
-    terms: useRef(null),
   };
 
   const paymentData = {
@@ -108,7 +106,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     if (!formData.correo.trim() || !formData.correo.includes("@"))
       newErrors.correo = true;
     if (!comprobante) newErrors.comprobante = true;
-    if (!acceptedTerms) newErrors.terms = true;
 
     setErrors(newErrors);
 
@@ -120,7 +117,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
           behavior: "smooth",
           block: "center",
         });
-        if (firstErrorKey !== "terms" && firstErrorKey !== "comprobante") {
+        if (firstErrorKey !== "comprobante") {
           firstErrorRef.current.focus();
         }
       }
@@ -145,15 +142,14 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   const resetForm = () => {
     setFormData({ nombre: "", correo: "", whatsappNumber: "" });
     setComprobante(null);
-    setAcceptedTerms(false);
     setErrors({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   useImperativeHandle(ref, () => ({ resetForm }));
 
-  // Calcular el total a pagar (multiplicar por 2)
-  const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
+  // Calcular el total a pagar (multiplicar por 3)
+  const totalAmount = dollarRate ? (dollarRate * 3).toFixed(2) : null;
 
   return (
     <div className='payment-card'>
@@ -292,41 +288,23 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
           )}
         </div>
 
-        <div className='terms-container'>
-          <label className='checkbox-label' ref={formRefs.terms}>
-            <input
-              type='checkbox'
-              checked={acceptedTerms}
-              onChange={(e) => {
-                setAcceptedTerms(e.target.checked);
-                if (errors.terms) {
-                  setErrors((prev) => ({ ...prev, terms: false }));
-                }
-              }}
-              disabled={isSubmitting}
-            />
-            <span style={{ color: errors.terms ? "#ef4444" : "#4b5563" }}>
-              Acepto los{" "}
-              <a
-                href='#terms'
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert(
-                    "Términos y Condiciones: Al registrar su pago, usted autoriza el procesamiento de sus datos personales con el único fin de verificar el pago móvil realizado."
-                  );
-                }}
-              >
-                términos y condiciones
-              </a>
-              .
-            </span>
-          </label>
-        </div>
-
         <button type='submit' disabled={isSubmitting} className='submit-button'>
           <LockIcon />
           {isSubmitting ? "Procesando..." : "Registrar Pago"}
         </button>
+
+        <div className='terms-disclaimer'>
+          <p>
+            Al hacer clic en "Registrar Pago", usted confirma que es mayor de
+            edad y acepta nuestros{" "}
+            <a href='/terms' target='_blank' rel='noopener noreferrer'>
+              Términos y Condiciones
+            </a>{" "}
+            y nuestra Política de Privacidad. Acepta que sus datos personales
+            sean procesados para verificar el pago y enviar el producto digital
+            adquirido.
+          </p>
+        </div>
       </form>
     </div>
   );
