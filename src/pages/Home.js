@@ -187,8 +187,8 @@ const Home = () => {
         <div className='home-footer-container'>
           <p>
             <br>
-              Este libro es una herramienta para el crecimiento personal y
-              relacional.{" "}
+              Este sitio web provee de herramientas para el crecimiento personal
+              y relacional.{" "}
             </br>
             <br>
               Su contenido es educativo y no garantiza resultados específicos.
