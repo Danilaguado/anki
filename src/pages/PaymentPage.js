@@ -45,10 +45,10 @@ function PaymentPage() {
             banco: data.paymentData.banco.value,
             telefono: data.paymentData.telefono.value,
             cedula: data.paymentData.cedula.value,
+            montoEsperado: data.expectedAmount,
             ocrResult: validationResult,
           }),
         });
-
         const result = await response.json();
 
         if (result.success) {
