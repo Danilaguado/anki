@@ -128,22 +128,59 @@ export class PaymentProcessor {
     return !!closeMatch;
   }
 
+  // Método auxiliar para cargar imagen
+  loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
   // Procesa la imagen con OCR
   // Procesa la imagen con OCR
   async processImage(file, expectedAmount = null) {
     try {
-      // Fase 1: Iniciando OCR
-      const result = await Tesseract.recognize(
-        file,
-        "spa", // Español
-        {
-          logger: (m) => {
-            if (m.status === "recognizing text") {
-              console.log(`Progreso: ${Math.round(m.progress * 100)}%`);
-            }
-          },
-        }
+      // Crear un canvas para preprocesar la imagen
+      const img = await this.loadImage(file);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      // Dibujar la imagen
+      ctx.drawImage(img, 0, 0);
+
+      // Aumentar contraste y convertir a escala de grises
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        // Convertir a escala de grises
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        // Aumentar contraste (umbral)
+        const threshold = avg > 128 ? 255 : 0;
+        data[i] = threshold; // R
+        data[i + 1] = threshold; // G
+        data[i + 2] = threshold; // B
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      // Convertir canvas a blob
+      const processedBlob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/png")
       );
+
+      // Fase 1: Iniciando OCR con imagen procesada
+      const result = await Tesseract.recognize(processedBlob, "spa", {
+        logger: (m) => {
+          if (m.status === "recognizing text") {
+            console.log(`Progreso: ${Math.round(m.progress * 100)}%`);
+          }
+        },
+      });
 
       const extractedText = result.data.text;
       console.log("========== TEXTO EXTRAÍDO ==========");
