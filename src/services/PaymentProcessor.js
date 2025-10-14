@@ -66,30 +66,33 @@ export class PaymentProcessor {
 
   // NUEVO: Extrae montos del texto (busca patrones numéricos)
   extractAmounts(text) {
-    // Busca patrones de montos: números con comas o puntos decimales
-    const amountPatterns = [
-      /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g, // Formato: 1.234,56 o 1,234.56
-      /(\d+[.,]\d{2})/g, // Formato simple: 123.45 o 123,45
-      /(\d+)/g, // Solo números enteros
+    const amounts = [];
+
+    // Busca patrones más específicos para montos en bolívares
+    const patterns = [
+      /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*(?:Bs|bs|BS)/gi, // "583,00 Bs"
+      /(?:Bs|bs|BS)\s*(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/gi, // "Bs 583,00"
+      /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g, // Solo números con decimales
+      /(\d+[.,]\d{2})/g, // Números simples con 2 decimales
     ];
 
-    const amounts = [];
-    for (const pattern of amountPatterns) {
-      const matches = text.match(pattern);
-      if (matches) {
-        matches.forEach((match) => {
-          // Normaliza el formato (convierte todo a punto decimal)
-          const normalized = match.replace(/\./g, "").replace(",", ".");
-          const amount = parseFloat(normalized);
-          if (!isNaN(amount) && amount > 0) {
-            amounts.push(amount);
-          }
-        });
-        // Si encontramos con este patrón, no seguimos buscando
-        if (amounts.length > 0) break;
+    const textClean = text.replace(/\s+/g, " "); // Normaliza espacios
+
+    for (const pattern of patterns) {
+      const matches = textClean.matchAll(pattern);
+      for (const match of matches) {
+        const numStr = match[1] || match[0];
+        const normalized = numStr.replace(/\./g, "").replace(",", ".");
+        const amount = parseFloat(normalized);
+
+        if (!isNaN(amount) && amount > 0 && amount < 1000000) {
+          amounts.push(amount);
+        }
       }
+      if (amounts.length > 0) break; // Si encontró con este patrón, no sigue
     }
-    return amounts;
+
+    return [...new Set(amounts)]; // Elimina duplicados
   }
 
   // NUEVO: Verifica si el monto está presente en el texto
