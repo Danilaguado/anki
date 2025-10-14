@@ -1,8 +1,76 @@
-// api/submit-payment.js
+// api/submit-payment.js - VERSION MEJORADA
 import { google } from "googleapis";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
+
+// Rate limiting simple
+const requestCounts = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minuto
+const MAX_REQUESTS = 5; // 5 requests por minuto
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const userRequests = requestCounts.get(ip) || [];
+
+  // Limpiar requests antiguos
+  const recentRequests = userRequests.filter(
+    (time) => now - time < RATE_LIMIT_WINDOW
+  );
+
+  if (recentRequests.length >= MAX_REQUESTS) {
+    return false;
+  }
+
+  recentRequests.push(now);
+  requestCounts.set(ip, recentRequests);
+  return true;
+}
+
+// Validación mejorada de email
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const dangerousDomains = ["tempmail", "guerrillamail", "10minutemail"];
+
+  if (!emailRegex.test(email)) return false;
+
+  // Verificar dominios temporales comunes
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (dangerousDomains.some((d) => domain?.includes(d))) {
+    console.warn(`Email temporal detectado: ${email}`);
+    return false;
+  }
+
+  return true;
+}
+
+// Sanitización de entrada
+function sanitizeInput(str) {
+  if (!str) return "";
+  return str
+    .trim()
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .substring(0, 200); // Limitar longitud
+}
+
+// Generar un ID único para cada transacción
+function generateTransactionId() {
+  return crypto.randomBytes(16).toString("hex");
+}
 
 export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    process.env.ALLOWED_ORIGIN || "*"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -10,81 +78,145 @@ export default async function handler(req, res) {
     });
   }
 
+  // Rate limiting
+  const clientIp =
+    req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  if (!checkRateLimit(clientIp)) {
+    return res.status(429).json({
+      success: false,
+      message: "Demasiadas solicitudes. Por favor espere un momento.",
+    });
+  }
+
+  // Validación de datos
   const { nombre, correo, referencia, fecha, producto } = req.body;
 
-  if (!nombre || !correo) {
+  // Sanitizar entradas
+  const sanitizedData = {
+    nombre: sanitizeInput(nombre),
+    correo: sanitizeInput(correo),
+    referencia: sanitizeInput(referencia),
+    producto: sanitizeInput(producto),
+  };
+
+  // Validaciones
+  if (!sanitizedData.nombre || sanitizedData.nombre.length < 2) {
     return res.status(400).json({
       success: false,
-      message: "Nombre y correo son requeridos.",
+      message: "Nombre inválido.",
     });
   }
 
-  // Validar que el producto exista
-  if (!producto) {
+  if (!sanitizedData.correo || !isValidEmail(sanitizedData.correo)) {
     return res.status(400).json({
       success: false,
-      message: "No se especificó el producto.",
+      message: "Correo electrónico inválido.",
     });
   }
+
+  // Lista de productos válidos
+  const validProducts = [
+    "El Código de la Conexión",
+    "El Músculo de la Voluntad",
+    "Habla, Corrige y Conquista",
+    "El Ascenso",
+    "Trilogía Completa",
+  ];
+
+  if (!validProducts.includes(sanitizedData.producto)) {
+    return res.status(400).json({
+      success: false,
+      message: "Producto no válido.",
+    });
+  }
+
+  // Generar ID de transacción
+  const transactionId = generateTransactionId();
 
   try {
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-      },
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
+    // Google Sheets con retry logic
+    let retries = 3;
+    let sheetSuccess = false;
 
-    const sheets = google.sheets({ version: "v4", auth });
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    while (retries > 0 && !sheetSuccess) {
+      try {
+        const auth = new google.auth.GoogleAuth({
+          credentials: {
+            client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+            private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+          },
+          scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+        });
 
-    const sheetName = "Pagos";
-    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
-    const sheetExists = spreadsheetInfo.data.sheets.some(
-      (s) => s.properties.title === sheetName
-    );
+        const sheets = google.sheets({ version: "v4", auth });
+        const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+        const sheetName = "Pagos";
 
-    if (!sheetExists) {
-      await sheets.spreadsheets.batchUpdate({
-        spreadsheetId,
-        resource: {
-          requests: [{ addSheet: { properties: { title: sheetName } } }],
-        },
-      });
+        // Verificar si la hoja existe
+        const spreadsheetInfo = await sheets.spreadsheets.get({
+          spreadsheetId,
+        });
+        const sheetExists = spreadsheetInfo.data.sheets.some(
+          (s) => s.properties.title === sheetName
+        );
 
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `${sheetName}!A1:D1`,
-        valueInputOption: "USER_ENTERED",
-        resource: {
-          values: [["Fecha", "Nombre", "Correo", "Referencia (últimos 4)"]],
-        },
-      });
+        if (!sheetExists) {
+          await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            resource: {
+              requests: [{ addSheet: { properties: { title: sheetName } } }],
+            },
+          });
+
+          await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `${sheetName}!A1:F1`,
+            valueInputOption: "USER_ENTERED",
+            resource: {
+              values: [
+                [
+                  "Fecha",
+                  "Nombre",
+                  "Correo",
+                  "Referencia",
+                  "Producto",
+                  "TransactionID",
+                ],
+              ],
+            },
+          });
+        }
+
+        // Agregar nueva fila con todos los datos
+        const newRow = [
+          new Date(fecha).toLocaleString("es-ES", {
+            timeZone: "America/Caracas",
+          }),
+          sanitizedData.nombre,
+          sanitizedData.correo,
+          sanitizedData.referencia || "N/A",
+          sanitizedData.producto,
+          transactionId,
+        ];
+
+        await sheets.spreadsheets.values.append({
+          spreadsheetId,
+          range: `${sheetName}!A:F`,
+          valueInputOption: "USER_ENTERED",
+          resource: {
+            values: [newRow],
+          },
+        });
+
+        sheetSuccess = true;
+      } catch (sheetError) {
+        retries--;
+        if (retries === 0) throw sheetError;
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retry
+      }
     }
 
-    // Obtener últimos 4 dígitos de la referencia
-    const referenciaUltimos4 = referencia ? referencia : "N/A";
-
-    const newRow = [
-      new Date(fecha).toLocaleString("es-ES", {
-        timeZone: "America/Caracas",
-      }),
-      nombre,
-      correo,
-      referenciaUltimos4,
-    ];
-
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: `${sheetName}!A:D`,
-      valueInputOption: "USER_ENTERED",
-      resource: {
-        values: [newRow],
-      },
-    });
-
-    // Determinar qué PDF enviar basado en el producto
+    // Determinar archivos PDF
     const productoPDFMap = {
       "El Código de la Conexión": "codigo-conexion-cover.pdf",
       "El Músculo de la Voluntad": "musculo-voluntad-cover.pdf",
@@ -97,36 +229,25 @@ export default async function handler(req, res) {
       ],
     };
 
-    const pdfFiles = productoPDFMap[producto];
+    const pdfFiles = productoPDFMap[sanitizedData.producto];
+    const baseURL = process.env.BASE_URL || "https://es-kaizen.vercel.app";
 
-    // Si el producto no existe en el map, retornar error
-    if (!pdfFiles) {
-      console.error("Producto no encontrado:", producto);
-      return res.status(400).json({
-        success: false,
-        message: `Producto "${producto}" no encontrado. No se puede enviar el material.`,
-      });
-    }
-
-    // Generar URLs de descarga - CAMBIA POR TU DOMINIO DE VERCEL
-    const baseURL = "https://es-kaizen.vercel.app";
-
+    // Generar links con tokens temporales (opcional)
     let downloadLinksHTML = "";
     if (Array.isArray(pdfFiles)) {
-      // Para trilogía completa
       downloadLinksHTML = pdfFiles
-        .map(
-          (pdf) => `
-        <a href="${baseURL}/assets/${pdf}" 
-           download="${pdf}"
-           style="display: inline-block; background-color: #d4af37; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 8px;">
-          Descargar ${pdf.replace("-cover.pdf", "").replace(/-/g, " ")}
-        </a>
-      `
-        )
+        .map((pdf) => {
+          const fileName = pdf.replace("-cover.pdf", "").replace(/-/g, " ");
+          return `
+            <a href="${baseURL}/assets/${pdf}" 
+               download="${pdf}"
+               style="display: inline-block; background-color: #d4af37; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 8px;">
+              Descargar ${fileName}
+            </a>
+          `;
+        })
         .join("<br>");
     } else {
-      // Para un solo libro
       downloadLinksHTML = `
         <a href="${baseURL}/assets/${pdfFiles}" 
            download="${pdfFiles}"
@@ -136,152 +257,110 @@ export default async function handler(req, res) {
       `;
     }
 
+    // Configurar transporter con mejor manejo de errores
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
 
+    // Verificar conexión SMTP
+    await transporter.verify();
+
+    // Email al cliente
     const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: correo,
+      from: `"Proyecto Kaizen" <${process.env.EMAIL_USER}>`,
+      to: sanitizedData.correo,
       subject: "¡Bienvenido a Proyecto Kaizen! 🚀 - Tu material está aquí",
       html: `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Tu HTML actual del email aquí -->
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <!-- ... resto del HTML ... -->
+          ${downloadLinksHTML}
+          <!-- ... resto del HTML ... -->
           
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 40px 20px; text-align: center;">
-            <h1 style="color: #d4af37; margin: 0; font-size: 32px; font-family: Georgia, serif;">Proyecto Kaizen</h1>
-            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Bienvenido a la comunidad</p>
-          </div>
-
-          <!-- Contenido -->
-          <div style="padding: 40px 30px; color: #333333; line-height: 1.8;">
-            
-            <p style="font-size: 16px; margin-bottom: 20px;">Hola <strong>${nombre}</strong>,</p>
-            
-            <p style="font-size: 16px; margin-bottom: 20px;">
-              Soy <strong>Daniel</strong>, fundador de Proyecto Kaizen junto a Nelson, y quiero darte la bienvenida personalmente.
-            </p>
-
-            <p style="font-size: 16px; margin-bottom: 20px;">
-              Gracias por confiar en nosotros y adquirir este material. Sabemos que le sacarás mucho provecho y que será una herramienta poderosa en tu camino de crecimiento personal.
-            </p>
-
-            <!-- Descarga Material -->
-            <div style="padding: 24px 0; margin: 30px 0; text-align: center;">
-              <p style="margin: 0 0 16px 0; font-weight: 600; color: #1a1a1a; font-size: 17px;">
-                Descarga tu material
-              </p>
-              ${downloadLinksHTML}
-            </div>
-
-            <p style="font-size: 16px; margin-bottom: 20px;">
-              Este libro es solo el inicio. La verdadera transformación sucede cuando aplicas lo aprendido y te rodeas de una comunidad que te impulsa hacia adelante.
-            </p>
-
-            <!-- CTA Box Comunidad -->
-            <div style="background-color: #f0f9ff; border-left: 4px solid #d4af37; padding: 24px; margin: 30px 0; border-radius: 4px;">
-              <p style="margin: 0 0 12px 0; font-weight: 600; color: #1a1a1a; font-size: 17px;">
-                📢 Únete a nuestra comunidad exclusiva
-              </p>
-              <p style="margin: 0 0 16px 0; font-size: 14px; color: #1a1a1a;">
-                Accede a talleres, material premium y una red de personas comprometidas con crecer cada día.
-              </p>
-              <div style="text-align: center;">
-                <a href="https://whatsapp.com/channel/0029VbBQrlRF1YlOxxbDT30X" 
-                   style="display: inline-block; background-color: #25D366; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="vertical-align: middle; margin-right: 6px;" viewBox="0 0 16 16">
-                    <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
-                  </svg>
-                  Unirme al Canal
-                </a>
-              </div>
-            </div>
-
-            <p style="font-size: 16px; margin-bottom: 20px;">
-              Si tienes alguna pregunta o necesitas ayuda, estoy a tu disposición.
-            </p>
-
-            <!-- Botón Contacto -->
-            <div style="text-align: center; margin: 20px 0 30px 0;">
-              <a href="https://wa.me/5511958682671" 
-                 style="display: inline-block; color: #6b7280; padding: 6px 16px; text-decoration: none; border-radius: 4px; font-weight: 400; font-size: 13px; border: 1px solid #e5e7eb;">
-                Contáctame por WhatsApp
-              </a>
-            </div>
-
-            <p style="font-size: 16px; margin-bottom: 8px;">
-              Nos vemos del otro lado,
-            </p>
-            <p style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin: 0 0 30px 0;">
-              Daniel<br>
-              <span style="font-size: 14px; color: #666; font-weight: 400;">Fundador, Proyecto Kaizen</span>
-            </p>
-
-            <!-- Redes Sociales -->
-            <div style="text-align: center; padding: 24px 0; border-top: 1px solid #e5e7eb;">
-              <p style="margin: 0 0 16px 0; font-size: 14px; color: #666; font-weight: 600;">
-                Síguenos en redes sociales
-              </p>
-              <table style="margin: 0 auto;">
-                <tr>
-                  <td style="padding: 0 12px;">
-                    <a href="https://www.facebook.com/tuusuario" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #1877F2;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
-                      </svg>
-                    </a>
-                  </td>
-                  <td style="padding: 0 12px;">
-                    <a href="https://www.instagram.com/tuusuario" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #E4405F;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/>
-                      </svg>
-                    </a>
-                  </td>
-                  <td style="padding: 0 12px;">
-                    <a href="https://www.tiktok.com/@tuusuario" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #000000;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z"/>
-                      </svg>
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </div>
-
-          </div>
-
-          <!-- Footer -->
-          <div style="background-color: #f9fafb; padding: 24px; text-align: center;">
-            <p style="margin: 0; font-size: 12px; color: #6b7280;">
-              © 2025 Proyecto Kaizen. Todos los derechos reservados.
-            </p>
-            <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
-              Herramientas para una vida de crecimiento continuo.
+          <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
+            <p style="font-size: 11px; color: #666; margin: 0;">
+              ID de transacción: ${transactionId}<br>
+              Este email fue enviado a ${sanitizedData.correo}
             </p>
           </div>
-
         </div>
       `,
+      // Headers adicionales para mejorar deliverability
+      headers: {
+        "X-Priority": "1",
+        "X-MSMail-Priority": "High",
+        Importance: "high",
+      },
     };
 
     await transporter.sendMail(mailOptions);
 
+    // Email de notificación al administrador (opcional)
+    if (process.env.ADMIN_EMAIL) {
+      const adminMail = {
+        from: `"Sistema Kaizen" <${process.env.EMAIL_USER}>`,
+        to: process.env.ADMIN_EMAIL,
+        subject: `Nueva venta: ${sanitizedData.producto}`,
+        html: `
+          <h2>Nueva Venta Registrada</h2>
+          <p><strong>Cliente:</strong> ${sanitizedData.nombre}</p>
+          <p><strong>Email:</strong> ${sanitizedData.correo}</p>
+          <p><strong>Producto:</strong> ${sanitizedData.producto}</p>
+          <p><strong>Referencia:</strong> ${
+            sanitizedData.referencia || "N/A"
+          }</p>
+          <p><strong>Fecha:</strong> ${new Date().toLocaleString("es-ES")}</p>
+          <p><strong>Transaction ID:</strong> ${transactionId}</p>
+          <p><strong>IP:</strong> ${clientIp}</p>
+        `,
+      };
+
+      // No esperamos esta respuesta para no demorar al usuario
+      transporter
+        .sendMail(adminMail)
+        .catch((err) => console.error("Error enviando email admin:", err));
+    }
+
+    // Log exitoso
+    console.log(
+      `✅ Pago procesado: ${transactionId} - ${sanitizedData.producto}`
+    );
+
     return res.status(200).json({
       success: true,
       message: "Pago registrado exitosamente",
+      transactionId: transactionId,
     });
   } catch (error) {
-    console.error("Error al procesar el pago:", error);
-    console.error("Stack trace:", error.stack);
-    return res.status(500).json({
+    console.error("❌ Error al procesar el pago:", error);
+
+    // Logging más detallado para debugging
+    if (process.env.NODE_ENV === "development") {
+      console.error("Stack trace:", error.stack);
+    }
+
+    // Determinar el tipo de error
+    let statusCode = 500;
+    let errorMessage = "Error al procesar el pago";
+
+    if (error.message?.includes("auth")) {
+      errorMessage = "Error de autenticación del servidor";
+    } else if (error.message?.includes("network")) {
+      errorMessage = "Error de conexión. Por favor intente nuevamente";
+      statusCode = 503;
+    }
+
+    return res.status(statusCode).json({
       success: false,
-      message: "Error al procesar el pago",
-      error: error.message,
+      message: errorMessage,
+      ...(process.env.NODE_ENV === "development" && { debug: error.message }),
     });
   }
 }

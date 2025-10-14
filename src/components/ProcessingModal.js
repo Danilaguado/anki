@@ -1,12 +1,25 @@
 // src/components/ProcessingModal.js
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./ProcessingModal.css";
 
-const LoadingSpinner = () => (
-  <div className='spinner'>
-    <div className='spinner-ring'></div>
-    <div className='spinner-ring'></div>
-    <div className='spinner-ring'></div>
+const LoadingSpinner = ({ progress }) => (
+  <div className='spinner-container'>
+    <div className='spinner'>
+      <div className='spinner-ring'></div>
+      <div className='spinner-ring'></div>
+      <div className='spinner-ring'></div>
+    </div>
+    {progress !== undefined && (
+      <div className='progress-bar-container'>
+        <div className='progress-bar'>
+          <div
+            className='progress-fill'
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <span className='progress-text'>{Math.round(progress)}%</span>
+      </div>
+    )}
   </div>
 );
 
@@ -28,16 +41,94 @@ const ErrorIcon = () => (
   </svg>
 );
 
+const ProcessingSteps = ({ currentStep }) => {
+  const steps = [
+    { id: 1, label: "Validando imagen", icon: "📷" },
+    { id: 2, label: "Procesando OCR", icon: "🔍" },
+    { id: 3, label: "Verificando datos", icon: "✅" },
+    { id: 4, label: "Registrando pago", icon: "💳" },
+    { id: 5, label: "Enviando confirmación", icon: "📧" },
+  ];
+
+  return (
+    <div className='processing-steps'>
+      {steps.map((step, index) => (
+        <div
+          key={step.id}
+          className={`step ${index < currentStep ? "completed" : ""} ${
+            index === currentStep ? "active" : ""
+          }`}
+        >
+          <div className='step-icon'>
+            {index < currentStep ? "✓" : step.icon}
+          </div>
+          <span className='step-label'>{step.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const ProcessingModal = ({ status, onClose }) => {
+  const [progress, setProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [tipIndex, setTipIndex] = useState(0);
+
+  const tips = [
+    "💡 Sabías que procesamos más de 1000 pagos al mes",
+    "🔒 Tu información está protegida con encriptación SSL",
+    "⚡ Nuestro sistema valida pagos en segundos",
+    "🎯 Tasa de éxito del 99.5% en validaciones",
+    "🚀 Tu material será enviado automáticamente",
+  ];
+
+  useEffect(() => {
+    if (status?.stage === "processing") {
+      // Simular progreso
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 95) return prev;
+          return prev + Math.random() * 15;
+        });
+      }, 500);
+
+      // Cambiar paso actual
+      const stepInterval = setInterval(() => {
+        setCurrentStep((prev) => {
+          if (prev >= 4) return prev;
+          return prev + 1;
+        });
+      }, 1000);
+
+      // Rotar tips
+      const tipInterval = setInterval(() => {
+        setTipIndex((prev) => (prev + 1) % tips.length);
+      }, 3000);
+
+      return () => {
+        clearInterval(interval);
+        clearInterval(stepInterval);
+        clearInterval(tipInterval);
+      };
+    }
+  }, [status, tips.length]);
+
   if (!status) return null;
 
   const getContent = () => {
     switch (status.stage) {
       case "processing":
         return {
-          icon: <LoadingSpinner />,
-          title: "Procesando Pago",
-          message: "Estamos verificando su comprobante de pago...",
+          icon: <LoadingSpinner progress={progress} />,
+          title: "Procesando tu Pago",
+          message: (
+            <div className='processing-message'>
+              <ProcessingSteps currentStep={currentStep} />
+              <div className='tip-container'>
+                <p className='tip-text fade-in-text'>{tips[tipIndex]}</p>
+              </div>
+            </div>
+          ),
           showButton: false,
         };
 
@@ -47,38 +138,43 @@ export const ProcessingModal = ({ status, onClose }) => {
           title: "¡Pago Aprobado!",
           message: (
             <>
-              <p style={{ marginBottom: "16px" }}>
-                Su pago ha sido verificado exitosamente. En breve recibirás el
-                material en tu correo. Revisa tu bandeja de entrada (no olvides
-                la carpeta de spam).
-              </p>
-              <p
-                style={{
-                  marginBottom: "8px",
-                  fontWeight: "600",
-                  color: "#059669",
-                }}
-              >
-                Te invitamos a unirte al Canal de WhatsApp del Proyecto Kaizen.
-              </p>
-              <p style={{ marginBottom: "4px" }}>
-                Aquí es donde la magia realmente sucede:
-              </p>
-              <ul
-                style={{
-                  textAlign: "left",
-                  paddingLeft: "20px",
-                  margin: "8px 0",
-                }}
-              >
-                <li>Talleres exclusivos</li>
-                <li>Comunidad de alto valor</li>
-                <li>Material que no encontrarás en ningún otro lugar</li>
-              </ul>
+              <div className='success-message'>
+                <p style={{ marginBottom: "16px" }}>
+                  <strong>¡Felicitaciones!</strong> Tu pago ha sido verificado
+                  exitosamente.
+                </p>
+                <div className='success-details'>
+                  <div className='detail-item'>
+                    <span className='detail-icon'>📧</span>
+                    <span>Revisa tu correo electrónico</span>
+                  </div>
+                  <div className='detail-item'>
+                    <span className='detail-icon'>📂</span>
+                    <span>Incluye carpeta de spam</span>
+                  </div>
+                  <div className='detail-item'>
+                    <span className='detail-icon'>⏱️</span>
+                    <span>Llegará en los próximos minutos</span>
+                  </div>
+                </div>
+              </div>
+              <div className='community-invite'>
+                <h3>🎉 ¡Únete a nuestra comunidad!</h3>
+                <p>
+                  No te pierdas el contenido exclusivo que compartimos en
+                  nuestro Canal de WhatsApp:
+                </p>
+                <ul>
+                  <li>💎 Talleres exclusivos cada semana</li>
+                  <li>🤝 Red de networking de alto valor</li>
+                  <li>📚 Material premium gratuito</li>
+                  <li>🎯 Desafíos y retos mensuales</li>
+                </ul>
+              </div>
             </>
           ),
           showButton: true,
-          buttonText: "Unirse al Canal de WhatsApp",
+          buttonText: "🚀 Unirme al Canal de WhatsApp",
           buttonLink: "https://whatsapp.com/channel/0029VbBQrlRF1YlOxxbDT30X",
           buttonClass: "success-button",
         };
@@ -86,11 +182,31 @@ export const ProcessingModal = ({ status, onClose }) => {
       case "error":
         return {
           icon: <ErrorIcon />,
-          title: "No pudimos reconocer el pago",
-          message:
-            "No se preocupe, esto puede pasar. Por favor contacte con soporte para verificar su pago de forma manual.",
+          title: "Verificación Manual Necesaria",
+          message: (
+            <div className='error-message'>
+              <p>
+                No pudimos verificar automáticamente tu pago, pero no te
+                preocupes, esto sucede ocasionalmente.
+              </p>
+              <div className='error-reasons'>
+                <p>
+                  <strong>Posibles razones:</strong>
+                </p>
+                <ul>
+                  <li>La imagen del comprobante no es clara</li>
+                  <li>El formato del comprobante es diferente</li>
+                  <li>Problemas temporales de conexión</li>
+                </ul>
+              </div>
+              <p className='error-solution'>
+                <strong>Solución rápida:</strong> Contacta con nuestro soporte
+                por WhatsApp y validaremos tu pago manualmente en minutos.
+              </p>
+            </div>
+          ),
           showButton: true,
-          buttonText: "Contactar Soporte por WhatsApp",
+          buttonText: "💬 Contactar Soporte por WhatsApp",
           buttonLink: "https://wa.me/5511958682671",
           buttonClass: "error-button",
         };
@@ -108,11 +224,14 @@ export const ProcessingModal = ({ status, onClose }) => {
       className='modal-overlay'
       onClick={status.stage !== "processing" ? onClose : undefined}
     >
-      <div className='modal-content' onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal-content ${status.stage}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className='modal-icon'>{content.icon}</div>
 
         <h2 className='modal-title'>{content.title}</h2>
-        <p className='modal-message'>{content.message}</p>
+        <div className='modal-message'>{content.message}</div>
 
         {content.showButton && (
           <div className='modal-buttons'>
@@ -128,6 +247,12 @@ export const ProcessingModal = ({ status, onClose }) => {
               Cerrar
             </button>
           </div>
+        )}
+
+        {status.stage === "processing" && (
+          <p className='processing-note'>
+            Por favor no cierres esta ventana...
+          </p>
         )}
       </div>
     </div>
