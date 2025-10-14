@@ -17,6 +17,32 @@ export class PaymentProcessor {
       .toLowerCase();
   }
 
+  // Extrae el número de referencia del comprobante
+  extractReference(text) {
+    // Patrones para buscar la referencia
+    const patterns = [
+      /(?:referencia|identificaci[oó]n|nro\.?\s*de\s*referencia)[:\s]*(\d+)/gi,
+      /(?:operaci[oó]n)[:\s]*(\d+)/gi,
+      /(?:ref)[:\s]*(\d+)/gi,
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        // Extrae solo los números
+        const numbers = match[0].match(/\d+/g);
+        if (numbers && numbers.length > 0) {
+          // Toma el número más largo (probablemente sea la referencia)
+          const reference = numbers.sort((a, b) => b.length - a.length)[0];
+          console.log("📋 Referencia encontrada:", reference);
+          return reference;
+        }
+      }
+    }
+
+    console.log("📋 Referencia: NO encontrada");
+    return null;
+  }
   // Extrae números de un texto
   extractNumbers(text) {
     const numbers = text.match(/\d+/g) || [];
@@ -192,6 +218,7 @@ export class PaymentProcessor {
       const hasPhone = this.containsPhone(extractedText);
       const hasBank = this.containsBank(extractedText);
       const hasAmount = this.containsAmount(extractedText, expectedAmount);
+      const reference = this.extractReference(extractedText);
 
       // LOGS DETALLADOS
       console.log("========== VALIDACIÓN ==========");
@@ -206,6 +233,7 @@ export class PaymentProcessor {
 
       console.log("✓ Monto esperado:", expectedAmount);
       console.log("✓ Montos encontrados:", this.extractAmounts(extractedText));
+      console.log("📋 Referencia:", reference || "NO encontrada");
       console.log("✓ Monto validado:", hasAmount ? "SÍ" : "NO");
 
       console.log("✓ Texto limpio:", this.cleanText(extractedText));
@@ -214,6 +242,7 @@ export class PaymentProcessor {
       return {
         success: hasCedula && hasPhone && hasBank && hasAmount,
         text: extractedText,
+        reference: reference,
         details: {
           hasCedula,
           hasPhone,
