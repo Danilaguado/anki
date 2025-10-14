@@ -48,10 +48,43 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   useEffect(() => {
     const fetchDollarRate = async () => {
       try {
+        // Primero verifica si ya hay un precio guardado en esta sesión
+        const sessionRate = sessionStorage.getItem("dollarRate");
+        const sessionTimestamp = sessionStorage.getItem("dollarRateTimestamp");
+
+        // Si existe un precio de esta sesión (menos de 1 hora), úsalo
+        if (sessionRate && sessionTimestamp) {
+          const timestamp = new Date(sessionTimestamp);
+          const now = new Date();
+          const hoursDiff = (now - timestamp) / (1000 * 60 * 60);
+
+          if (hoursDiff < 1) {
+            // Si tiene menos de 1 hora
+            setDollarRate(parseFloat(sessionRate));
+            setLastUpdate(
+              timestamp.toLocaleString("es-VE", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            );
+            setLoadingDollar(false);
+            return; // NO consulta la API, usa el precio guardado
+          }
+        }
+
+        // Si no hay precio guardado o ya expiró, consulta la API
         const response = await fetch(
           "https://ve.dolarapi.com/v1/dolares/paralelo"
         );
         const data = await response.json();
+
+        // Guarda el nuevo precio en sessionStorage
+        sessionStorage.setItem("dollarRate", data.promedio);
+        sessionStorage.setItem("dollarRateTimestamp", new Date().toISOString());
+
         setDollarRate(data.promedio);
         if (data.fechaActualizacion) {
           const date = new Date(data.fechaActualizacion);
