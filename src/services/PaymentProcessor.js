@@ -52,11 +52,9 @@ export class PaymentProcessor {
     // Retornar la referencia más larga (probablemente la correcta)
     if (allReferences.length > 0) {
       const reference = allReferences.sort((a, b) => b.length - a.length)[0];
-      console.log("📋 Referencia encontrada:", reference);
       return reference;
     }
 
-    console.log("📋 Referencia: NO encontrada");
     return null;
   }
 
@@ -82,13 +80,9 @@ export class PaymentProcessor {
 
   containsBank(text) {
     const cleanedText = this.cleanText(text);
-    console.log("🏦 Texto limpio para buscar banco:", cleanedText);
-    console.log("🏦 Buscando variaciones:", this.expectedBanks);
-
     const found = this.expectedBanks.some((bank) => {
       const isFound = cleanedText.includes(bank);
       if (isFound) {
-        console.log(`🏦 ✓ Encontrado: "${bank}"`);
       }
       return isFound;
     });
@@ -131,15 +125,11 @@ export class PaymentProcessor {
 
   containsAmount(text, expectedAmount) {
     if (!expectedAmount) {
-      console.log("⚠️ No hay monto esperado");
       return false;
     }
 
     const expected = parseFloat(expectedAmount);
     const amounts = this.extractAmounts(text);
-
-    console.log("💰 Monto esperado:", expected);
-    console.log("💰 Montos encontrados:", amounts);
 
     // Match exacto (± 1)
     const exactMatch = amounts.find(
@@ -147,7 +137,6 @@ export class PaymentProcessor {
     );
 
     if (exactMatch) {
-      console.log("✓ Match exacto encontrado:", exactMatch);
       return true;
     }
 
@@ -157,11 +146,9 @@ export class PaymentProcessor {
     );
 
     if (closeMatch) {
-      console.log("✓ Match cercano encontrado:", closeMatch);
       return true;
     }
 
-    console.log("✗ No se encontró match de monto");
     return false;
   }
 
@@ -176,8 +163,6 @@ export class PaymentProcessor {
       totalBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
     }
     const avgBrightness = totalBrightness / (data.length / 4);
-
-    console.log("📊 Brillo promedio de la imagen:", avgBrightness);
 
     // Ajustar contraste y brillo
     const contrast = 1.5;
@@ -214,11 +199,9 @@ export class PaymentProcessor {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        console.log("✓ Imagen cargada:", img.width, "x", img.height);
         resolve(img);
       };
       img.onerror = (error) => {
-        console.error("✗ Error al cargar imagen:", error);
         reject(error);
       };
       img.src = URL.createObjectURL(file);
@@ -226,9 +209,6 @@ export class PaymentProcessor {
   }
 
   async processImage(file, expectedAmount = null) {
-    console.log("========== INICIANDO OCR ==========");
-    console.log("Archivo:", file.name, "Tamaño:", file.size, "bytes");
-
     try {
       // Cargar imagen
       const img = await this.loadImage(file);
@@ -246,7 +226,6 @@ export class PaymentProcessor {
         const scale = maxDimension / Math.max(width, height);
         width = Math.floor(width * scale);
         height = Math.floor(height * scale);
-        console.log("📐 Escalando imagen a:", width, "x", height);
       }
 
       canvas.width = width;
@@ -256,7 +235,6 @@ export class PaymentProcessor {
       ctx.drawImage(img, 0, 0, width, height);
 
       // Preprocesar
-      console.log("🎨 Aplicando preprocesamiento...");
       this.preprocessImage(ctx, width, height);
 
       // Convertir a blob
@@ -264,13 +242,10 @@ export class PaymentProcessor {
         canvas.toBlob(resolve, "image/png", 1.0)
       );
 
-      console.log("🔍 Iniciando reconocimiento OCR...");
-
       // Ejecutar OCR con mejores configuraciones
       const result = await Tesseract.recognize(processedBlob, "spa", {
         logger: (m) => {
           if (m.status === "recognizing text") {
-            console.log(`⏳ Progreso OCR: ${Math.round(m.progress * 100)}%`);
           }
         },
         tessedit_pageseg_mode: Tesseract.PSM.AUTO,
@@ -279,11 +254,6 @@ export class PaymentProcessor {
       });
 
       const extractedText = result.data.text;
-      console.log("========== TEXTO EXTRAÍDO ==========");
-      console.log(extractedText);
-      console.log("Confianza OCR:", result.data.confidence + "%");
-      console.log("====================================");
-
       // Validaciones
       const hasCedula = this.containsCedula(extractedText);
       const hasPhone = this.containsPhone(extractedText);
@@ -291,30 +261,9 @@ export class PaymentProcessor {
       const hasAmount = this.containsAmount(extractedText, expectedAmount);
       const reference = this.extractReference(extractedText);
 
-      console.log("========== VALIDACIÓN ==========");
-      console.log("✓ Cédula esperada:", this.expectedCedula);
-      console.log("✓ Cédula encontrada:", hasCedula ? "✅ SÍ" : "❌ NO");
-      console.log("✓ Teléfono esperado:", this.expectedPhone);
-      console.log("✓ Teléfono encontrado:", hasPhone ? "✅ SÍ" : "❌ NO");
-      console.log("✓ Banco encontrado:", hasBank ? "✅ SÍ" : "⚠️ NO");
-      console.log("✓ Monto esperado:", expectedAmount);
-      console.log("✓ Monto validado:", hasAmount ? "✅ SÍ" : "❌ NO");
-      console.log("📋 Referencia:", reference || "❌ NO encontrada");
-      console.log("================================");
-
       // Validación: requiere cédula, teléfono y monto
       // El banco es opcional porque a veces no se detecta bien
       const isValid = hasCedula && hasPhone && hasAmount;
-
-      if (isValid && !hasBank) {
-        console.log(
-          "⚠️ ADVERTENCIA: Banco no detectado pero otros datos válidos"
-        );
-      }
-
-      if (isValid && !reference) {
-        console.log("⚠️ ADVERTENCIA: Referencia no detectada");
-      }
 
       return {
         success: isValid,
@@ -329,7 +278,6 @@ export class PaymentProcessor {
         },
       };
     } catch (error) {
-      console.error("❌ Error en OCR:", error);
       return {
         success: false,
         error: error.message,
