@@ -203,7 +203,7 @@ export default async function handler(req, res) {
             <!-- Botón Contacto -->
             <div style="text-align: center; margin: 20px 0 30px 0;">
               <a href="https://wa.me/5511958682671" 
-                 style="display: inline-block; background-color: #52b157ff; color: #d3d5daff; padding: 6px 16px; text-decoration: none; border-radius: 4px; font-weight: 400; font-size: 13px; border: 1px solid #e5e7eb;">
+                 style="display: inline-block; background-color: #52b157ff; color: #ffffffff; padding: 6px 16px; text-decoration: none; border-radius: 4px; font-weight: 400; font-size: 13px;">
                 Contáctame por WhatsApp
               </a>
             </div>
