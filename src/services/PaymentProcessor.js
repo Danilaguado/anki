@@ -5,6 +5,7 @@ export class PaymentProcessor {
   constructor() {
     this.expectedCedula = "23621688";
     this.expectedPhone = "04125497936";
+    this.expectedBanks = ["bnc", "0191", "banconacionaldecredito"]; // Variaciones del banco
   }
 
   // Limpia texto para comparación
@@ -40,6 +41,14 @@ export class PaymentProcessor {
     return phoneVariations.some(
       (variation) => cleanedText.includes(variation) && variation.length >= 10
     );
+  }
+
+  // NUEVO: Verifica si contiene el banco
+  containsBank(text) {
+    const cleanedText = this.cleanText(text);
+
+    // Busca cualquiera de las variaciones del banco
+    return this.expectedBanks.some((bank) => cleanedText.includes(bank));
   }
 
   // NUEVO: Extrae montos del texto (busca patrones numéricos)
@@ -112,14 +121,16 @@ export class PaymentProcessor {
       // Fase 2: Validando datos
       const hasCedula = this.containsCedula(extractedText);
       const hasPhone = this.containsPhone(extractedText);
+      const hasBank = this.containsBank(extractedText);
       const hasAmount = this.containsAmount(extractedText, expectedAmount);
 
       return {
-        success: hasCedula && hasPhone && hasAmount,
+        success: hasCedula && hasPhone && hasBank && hasAmount,
         text: extractedText,
         details: {
           hasCedula,
           hasPhone,
+          hasBank,
           hasAmount,
           confidence: result.data.confidence,
         },
