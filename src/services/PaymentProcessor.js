@@ -68,28 +68,33 @@ export class PaymentProcessor {
   extractAmounts(text) {
     const amounts = [];
 
-    // Busca patrones más específicos para montos en bolívares
-    const patterns = [
-      /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*(?:Bs|bs|BS)/gi, // "583,00 Bs"
-      /(?:Bs|bs|BS)\s*(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/gi, // "Bs 583,00"
-      /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g, // Solo números con decimales
-      /(\d+[.,]\d{2})/g, // Números simples con 2 decimales
-    ];
+    // Patrón 1: Busca números con formato decimal (583,00 o 583.00)
+    const pattern1 = /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g;
+    let matches = text.match(pattern1);
 
-    const textClean = text.replace(/\s+/g, " "); // Normaliza espacios
-
-    for (const pattern of patterns) {
-      const matches = textClean.matchAll(pattern);
-      for (const match of matches) {
-        const numStr = match[1] || match[0];
-        const normalized = numStr.replace(/\./g, "").replace(",", ".");
+    if (matches) {
+      matches.forEach((match) => {
+        const normalized = match.replace(/\./g, "").replace(",", ".");
         const amount = parseFloat(normalized);
-
         if (!isNaN(amount) && amount > 0 && amount < 1000000) {
           amounts.push(amount);
         }
+      });
+    }
+
+    // Si no encontró nada con decimales, busca números enteros grandes
+    if (amounts.length === 0) {
+      const pattern2 = /\b(\d{2,4})\b/g;
+      matches = text.match(pattern2);
+
+      if (matches) {
+        matches.forEach((match) => {
+          const amount = parseFloat(match);
+          if (!isNaN(amount) && amount > 10 && amount < 100000) {
+            amounts.push(amount);
+          }
+        });
       }
-      if (amounts.length > 0) break; // Si encontró con este patrón, no sigue
     }
 
     return [...new Set(amounts)]; // Elimina duplicados
