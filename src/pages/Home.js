@@ -185,7 +185,13 @@ const Home = () => {
       {/* Footer */}
       <footer className='home-footer'>
         <div className='home-footer-container'>
-          <p>&copy; 2025 Proyecto Kaizen. Todos los derechos reservados.</p>
+          <p>
+            &copy; © 2025 Proyecto Kaizen. Todos los derechos reservados. Este
+            libro es una herramienta para el crecimiento personal y relacional.
+            Su contenido es educativo y no garantiza resultados específicos. El
+            lector asume toda la responsabilidad por la aplicación de la
+            información. Ver Términos y Condiciones
+          </p>
           <p className='home-footer-subtitle'>
             Herramientas para una vida de crecimiento continuo.
           </p>
