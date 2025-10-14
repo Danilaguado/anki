@@ -13,19 +13,14 @@ export default async function handler(req, res) {
   const {
     nombre,
     correo,
-    comprobante,
-    whatsapp,
-    whatsappNumber,
+    referencia, // Nueva referencia del OCR
     fecha,
-    banco,
-    telefono,
-    cedula,
   } = req.body;
 
-  if (!nombre || !correo || !comprobante) {
+  if (!nombre || !correo) {
     return res.status(400).json({
       success: false,
-      message: "Nombre, correo y comprobante son requeridos.",
+      message: "Nombre y correo son requeridos.",
     });
   }
 
@@ -57,25 +52,16 @@ export default async function handler(req, res) {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `${sheetName}!A1:I1`,
+        range: `${sheetName}!A1:D1`,
         valueInputOption: "USER_ENTERED",
         resource: {
-          values: [
-            [
-              "Fecha",
-              "Nombre",
-              "Correo",
-              "Banco",
-              "Teléfono",
-              "Cédula",
-              "Comprobante (Nombre de archivo)",
-              "Recibir por Whatsapp",
-              "Número de Whatsapp",
-            ],
-          ],
+          values: [["Fecha", "Nombre", "Correo", "Referencia (últimos 4)"]],
         },
       });
     }
+
+    // Obtener últimos 4 dígitos de la referencia
+    const referenciaUltimos4 = referencia ? referencia.slice(-4) : "N/A";
 
     const newRow = [
       new Date(fecha).toLocaleString("es-ES", {
@@ -83,17 +69,12 @@ export default async function handler(req, res) {
       }),
       nombre,
       correo,
-      banco,
-      telefono,
-      cedula,
-      comprobante,
-      whatsapp,
-      whatsappNumber || "No proporcionado",
+      referenciaUltimos4,
     ];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `${sheetName}!A:I`,
+      range: `${sheetName}!A:D`,
       valueInputOption: "USER_ENTERED",
       resource: {
         values: [newRow],
@@ -127,14 +108,7 @@ export default async function handler(req, res) {
               })}</td></tr>
               <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Nombre:</td><td style="padding: 8px;">${nombre}</td></tr>
               <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Correo:</td><td style="padding: 8px;">${correo}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Banco:</td><td style="padding: 8px;">${banco}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Teléfono:</td><td style="padding: 8px;">${telefono}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Cédula:</td><td style="padding: 8px;">${cedula}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Comprobante:</td><td style="padding: 8px;">${comprobante}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Recibir por Whatsapp:</td><td style="padding: 8px;">${whatsapp}</td></tr>
-              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Número de Whatsapp:</td><td style="padding: 8px;">${
-                whatsappNumber || "No proporcionado"
-              }</td></tr>
+              <tr style="border-bottom: 1px solid #eee;"><td style="padding: 8px; font-weight: bold; color: #555;">Referencia:</td><td style="padding: 8px;">${referenciaUltimos4}</td></tr>
             </table>
           </div>
           <div style="text-align: center; padding: 10px; font-size: 12px; color: #999; background-color: #f9f9f9; border-radius: 0 0 8px 8px;">
