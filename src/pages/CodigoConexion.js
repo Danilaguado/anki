@@ -1,10 +1,27 @@
-// src/pages/CodigoConexion.js
-import React, { useEffect } from "react";
+// src/pages/CodigoConexion.js - VERSIÓN CORRECTA
+import React, { useEffect, useState } from "react"; // 👈 Agregar useState aquí
 import { useNavigate } from "react-router-dom";
 import "../styles/Landing.css";
+import BookPreviewModal from "../components/BookPreviewModal";
 
 const CodigoConexion = () => {
   const navigate = useNavigate();
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handlePreviewClick = () => {
+    setShowPreview(true);
+  };
+
+  useEffect(() => {
+    if (showPreview) {
+      document.body.classList.add("preview-modal-open");
+    } else {
+      document.body.classList.remove("preview-modal-open");
+    }
+    return () => {
+      document.body.classList.remove("preview-modal-open");
+    };
+  }, [showPreview]);
 
   useEffect(() => {
     const revealElements = document.querySelectorAll(".scroll-reveal");
@@ -63,9 +80,20 @@ const CodigoConexion = () => {
                   "El manual que desearías haber tenido hace años para navegar
                   las complejidades de la intimidad y el deseo."
                 </p>
+
+                {/* BOTÓN PRINCIPAL */}
                 <button onClick={handleCTAClick} className='cta-button'>
                   Domina el Código Hoy
                 </button>
+
+                {/* 👇 BOTÓN DE VISTA PREVIA */}
+                <button
+                  onClick={handlePreviewClick}
+                  className='cta-button-preview'
+                >
+                  Ver Vista Previa Gratuita
+                </button>
+
                 <p className='cta-badge'>
                   BEST SELLER • Basado en décadas de investigación.
                 </p>
@@ -305,6 +333,15 @@ const CodigoConexion = () => {
           </p>
         </div>
       </footer>
+
+      {/* 👇 MODAL DE VISTA PREVIA - DEBE IR AQUÍ AL FINAL */}
+      <BookPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        bookTitle='El Código de la Conexión'
+        pdfPath='/assets/codigo-conexion-cover.pdf'
+        productName='El Código de la Conexión'
+      />
     </div>
   );
 };
