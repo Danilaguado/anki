@@ -8,6 +8,7 @@ import CodigoConexion from "./pages/CodigoConexion";
 import MusculoVoluntad from "./pages/MusculoVoluntad";
 import HablaCorrigeConquista from "./pages/HablaCorrigeConquista";
 import ElAscenso from "./pages/ElAscenso";
+import GambitoRey from "./pages/GambitoRey";
 import PaymentPage from "./pages/PaymentPage";
 import TermsAndConditions from "./pages/TermsAndConditions";
 
@@ -24,6 +25,7 @@ function App() {
           element={<HablaCorrigeConquista />}
         />
         <Route path='/el-ascenso' element={<ElAscenso />} />
+        <Route path='/gambito-rey' element={<GambitoRey />} />
         <Route path='/payment' element={<PaymentPage />} />
         <Route path='/terms' element={<TermsAndConditions />} />
       </Routes>

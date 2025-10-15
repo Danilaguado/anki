@@ -67,6 +67,15 @@ const Home = () => {
       cover: "/assets/el-ascenso-cover.jpg",
       route: "/el-ascenso",
     },
+    {
+      id: "gambito-rey",
+      title: "El Gambito del Rey",
+      badge: "Estrategia",
+      description:
+        "El manual de guerra para corregir un error, cambiar un comportamiento y ganar influencia sin crear un enemigo.",
+      cover: "/assets/gambito-rey-cover.jpg",
+      route: "/gambito-rey",
+    },
   ];
 
   const handleBookClick = (route) => {
@@ -125,7 +134,7 @@ const Home = () => {
             <p className='home-books-subtitle'>
               Cada libro es una herramienta poderosa diseñada para un área
               específica de tu desarrollo personal. Elige el que más resuene
-              contigo o descubre la trilogía completa.
+              contigo o descubre la colección completa.
             </p>
           </div>
 

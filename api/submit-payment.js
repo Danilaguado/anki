@@ -309,6 +309,7 @@ export default async function handler(req, res) {
       "El Músculo de la Voluntad": "musculo-voluntad-cover.pdf",
       "Habla, Corrige y Conquista": "habla-corrige-conquista-cover.pdf",
       "El Ascenso": "el-ascenso-cover.pdf",
+      "El Gambito del Rey": "gambito-rey-cover.pdf", // 👈 NUEVO
       "Trilogía Completa": [
         "codigo-conexion-cover.pdf",
         "musculo-voluntad-cover.pdf",
