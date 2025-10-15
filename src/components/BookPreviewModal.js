@@ -11,7 +11,7 @@ const BookPreviewModal = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [imageError, setImageError] = useState(false);
-  const maxPages = 5;
+  const maxPages = 8;
 
   if (!isOpen) return null;
 
