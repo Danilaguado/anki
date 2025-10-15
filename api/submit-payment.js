@@ -305,15 +305,15 @@ export default async function handler(req, res) {
 
     // Determinar qué PDF enviar basado en el producto
     const productoPDFMap = {
-      "El Código de la Conexión": "codigo-conexion-cover.pdf",
+      "Descifrando a Eva": "descifrando-eva-cover.pdf",
       "El Músculo de la Voluntad": "musculo-voluntad-cover.pdf",
-      "Habla, Corrige y Conquista": "habla-corrige-conquista-cover.pdf",
+      "Habla y Conquista": "habla-conquista-cover.pdf",
       "El Ascenso": "el-ascenso-cover.pdf",
-      "El Gambito del Rey": "gambito-rey-cover.pdf", // 👈 NUEVO
+      "El Gambito del Rey": "gambito-rey-cover.pdf",
       "Trilogía Completa": [
-        "codigo-conexion-cover.pdf",
+        "descifrando-eva-cover.pdf",
         "musculo-voluntad-cover.pdf",
-        "habla-corrige-conquista-cover.pdf",
+        "habla-conquista-cover.pdf",
       ],
     };
 

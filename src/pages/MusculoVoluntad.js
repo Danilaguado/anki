@@ -1,10 +1,28 @@
 // src/pages/MusculoVoluntad.js
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Landing.css";
+import BookPreviewModal from "../components/BookPreviewModal";
+import Footer from "../components/Footer";
 
 const MusculoVoluntad = () => {
   const navigate = useNavigate();
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handlePreviewClick = () => {
+    setShowPreview(true);
+  };
+
+  useEffect(() => {
+    if (showPreview) {
+      document.body.classList.add("preview-modal-open");
+    } else {
+      document.body.classList.remove("preview-modal-open");
+    }
+    return () => {
+      document.body.classList.remove("preview-modal-open");
+    };
+  }, [showPreview]);
 
   useEffect(() => {
     const revealElements = document.querySelectorAll(".scroll-reveal");
@@ -41,12 +59,11 @@ const MusculoVoluntad = () => {
         <div className='hero-content'>
           <div className='hero-inner'>
             <h1 className='hero-title'>
-              La motivación te abandona. La disciplina te construye.
+              La disciplina no es un don. Es un músculo. Y tú puedes entrenarlo.
             </h1>
             <p className='hero-subtitle'>
-              El manual de entrenamiento, basado en ciencia, para forjar una
-              autodisciplina a prueba de excusas y dejar de ser un esclavo de
-              tus impulsos.
+              Descubre el sistema científico para construir autodisciplina
+              inquebrantable y convertir tus metas en realidad inevitable.
             </p>
             <div className='hero-cta-container'>
               <img
@@ -55,19 +72,28 @@ const MusculoVoluntad = () => {
                 className='book-cover'
                 onError={(e) => {
                   e.target.src =
-                    "https://placehold.co/250x380/111827/e0e0e0?text=El+M%C3%BAsculo+de+la%0AVoluntad";
+                    "https://placehold.co/250x380/1a1a1a/e0e0e0?text=El+M%C3%BAsculo+de+la%0AVoluntad";
                 }}
               />
               <div className='cta-content'>
                 <p className='cta-quote'>
-                  "Deja de empezar cada lunes y empieza a construir cada día. La
-                  disciplina es un músculo, y este es tu gimnasio."
+                  "El manual definitivo para dominar tus impulsos, construir
+                  hábitos duraderos y alcanzar cualquier meta que te propongas."
                 </p>
+
                 <button onClick={handleCTAClick} className='cta-button'>
-                  Forja tu Voluntad Hoy
+                  Fortalecer mi Disciplina
                 </button>
+
+                <button
+                  onClick={handlePreviewClick}
+                  className='cta-button-preview'
+                >
+                  Ver Vista Previa Gratuita
+                </button>
+
                 <p className='cta-badge'>
-                  BEST SELLER • Basado en psicología y neurociencia.
+                  BEST SELLER • Respaldado por neurociencia y psicología.
                 </p>
               </div>
             </div>
@@ -80,12 +106,13 @@ const MusculoVoluntad = () => {
         <div className='section-container'>
           <div className='section-header scroll-reveal'>
             <h2 className='section-title'>
-              Si este ciclo te destruye, no es tu culpa. Es tu sistema.
+              ¿Empiezas con fuego pero terminas en humo? No es falta de
+              voluntad. Es falta de sistema.
             </h2>
             <p className='section-subtitle'>
-              Has sido víctima de la gran mentira: que la disciplina es un don.
-              En realidad, es una habilidad que se entrena. Estás perdiendo una
-              batalla neurológica que no sabías que estabas luchando.
+              La motivación es emocional y volátil. La disciplina es estratégica
+              y confiable. Es hora de dejar de depender de lo primero y dominar
+              lo segundo.
             </p>
           </div>
           <div className='problems-grid'>
@@ -100,14 +127,14 @@ const MusculoVoluntad = () => {
                   strokeLinecap='round'
                   strokeLinejoin='round'
                   strokeWidth='2'
-                  d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'
+                  d='M13 10V3L4 14h7v7l9-11h-7z'
                 ></path>
               </svg>
-              <h3 className='problem-title'>El Proyecto Abandonado</h3>
+              <h3 className='problem-title'>El Ciclo de la Motivación</h3>
               <p className='problem-description'>
-                Empiezas con una energía arrolladora, pero a la tercera semana,
-                ese curso, dieta o rutina es un recuerdo incómodo que alimenta
-                tu frustración.
+                Comienzas lleno de energía, pero a los pocos días la llama se
+                apaga. Vuelves a tus viejos hábitos, sintiéndote derrotado una
+                vez más.
               </p>
             </div>
 
@@ -125,10 +152,11 @@ const MusculoVoluntad = () => {
                   d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
                 ></path>
               </svg>
-              <h3 className='problem-title'>La Procrastinación Crónica</h3>
+              <h3 className='problem-title'>La Tiranía de "Mañana"</h3>
               <p className='problem-description'>
-                Aplazas lo importante por el alivio temporal de la distracción,
-                solo para que la tarea regrese más grande y cargada de ansiedad.
+                Sabes lo que debes hacer, pero lo postergás una y otra vez. Tu
+                yo del futuro paga el precio de las decisiones de tu yo del
+                presente.
               </p>
             </div>
 
@@ -143,14 +171,13 @@ const MusculoVoluntad = () => {
                   strokeLinecap='round'
                   strokeLinejoin='round'
                   strokeWidth='2'
-                  d='M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z'
+                  d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
                 ></path>
               </svg>
-              <h3 className='problem-title'>La Fatiga de Decisión</h3>
+              <h3 className='problem-title'>La Ilusión del Esfuerzo</h3>
               <p className='problem-description'>
-                Llegas al final del día con la intención de avanzar, pero tu
-                "fuerza de voluntad" está agotada y eliges, una vez más, la
-                comodidad inmediata.
+                Te esfuerzas, pero no ves resultados. Te preguntas si vale la
+                pena. La respuesta es sí, pero solo si entrenas correctamente.
               </p>
             </div>
           </div>
@@ -162,15 +189,14 @@ const MusculoVoluntad = () => {
         <div className='section-container'>
           <div className='section-header scroll-reveal'>
             <h2 className='revelation-title'>
-              La Voluntad no es Magia.
+              La Fuerza de Voluntad es como un Músculo.
               <br />
-              Es un Músculo.
+              Úsala Mal y se Agota. Entrénala Bien y se Multiplica.
             </h2>
             <p className='revelation-subtitle'>
-              Este libro no te dará motivación barata. Te entregará el manual de
-              operaciones de tu cerebro para que ganes la batalla contra tus
-              impulsos y construyas sistemas que funcionen incluso en tus peores
-              días.
+              Este libro te enseña el método científico para construir
+              autodisciplina sostenible. No se trata de represión brutal, sino
+              de arquitectura inteligente de hábitos.
             </p>
           </div>
 
@@ -178,18 +204,17 @@ const MusculoVoluntad = () => {
             <div className='quote-block scroll-reveal'>
               <div className='quote-mark'>"</div>
               <blockquote className='quote-text'>
-                "La fuerza de voluntad es un recurso finito que se agota. Deja
-                de culparte por ello y empieza a usar estrategias inteligentes
-                para conservarla para lo que de verdad importa."
+                "No se trata de ser perfecto. Se trata de ser consistente. La
+                consistencia mediocre supera a la perfección esporádica."
               </blockquote>
             </div>
 
             <div className='quote-block quote-reverse scroll-reveal'>
               <div className='quote-mark'>"</div>
               <blockquote className='quote-text'>
-                "Cada vez que eliges la incomodidad a corto plazo de la
-                disciplina, estás comprando una porción de libertad a largo
-                plazo. Estás votando por tu futuro yo."
+                "Tu futuro no está determinado por un gran acto heroico. Está
+                construido por pequeñas decisiones diarias que nadie ve pero que
+                todos eventualmente sentirán."
               </blockquote>
             </div>
           </div>
@@ -201,61 +226,66 @@ const MusculoVoluntad = () => {
         <div className='section-container'>
           <div className='section-header scroll-reveal'>
             <h2 className='section-title'>
-              Conviértete en el Arquitecto de tu Disciplina
+              Construye el Sistema que Te Hace Imparable
             </h2>
             <p className='section-subtitle'>
-              Aprenderás a ser más inteligente, no más duro. A construir
-              sistemas, no a depender de la inspiración fugaz.
+              Aprende las estrategias específicas que usan las personas más
+              disciplinadas del mundo para mantener el rumbo incluso cuando la
+              motivación desaparece.
             </p>
           </div>
 
           <div className='features-grid'>
             <div className='feature-card scroll-reveal delay-100'>
-              <h3 className='feature-title'>El Sistema Anti-Inercia</h3>
+              <h3 className='feature-title'>Arquitectura de Hábitos</h3>
               <p className='feature-description'>
-                Domina la "Regla de los 2 Minutos" para hacer que empezar sea
-                tan fácil que sea imposible decir que no.
+                Diseña tu entorno para que la acción correcta sea la más fácil.
+                Deja de confiar en tu fuerza de voluntad y empieza a confiar en
+                tu sistema.
               </p>
             </div>
 
             <div className='feature-card scroll-reveal delay-200'>
-              <h3 className='feature-title'>Hábitos en Piloto Automático</h3>
+              <h3 className='feature-title'>El Poder del Mínimo Viable</h3>
               <p className='feature-description'>
-                Usa el "Apilamiento de Hábitos" para anclar nuevas rutinas a las
-                que ya tienes, construyendo sobre una base sólida.
+                Descubre por qué hacer "2 minutos" es más poderoso que
+                proponerse "1 hora". La consistencia microscópica construye
+                momentum imparable.
               </p>
             </div>
 
             <div className='feature-card scroll-reveal delay-300'>
-              <h3 className='feature-title'>Arquitectura de la Elección</h3>
+              <h3 className='feature-title'>Dominar la Recompensa Retrasada</h3>
               <p className='feature-description'>
-                Diseña tu entorno para que los buenos hábitos sean inevitables y
-                los malos, casi imposibles.
+                Aprende a reprogramar tu cerebro para disfrutar del proceso, no
+                solo del resultado. Esta es la clave de la disciplina
+                sostenible.
               </p>
             </div>
 
             <div className='feature-card scroll-reveal delay-400'>
-              <h3 className='feature-title'>La Mentalidad "Anti-Fracaso"</h3>
+              <h3 className='feature-title'>El Reseteo Estratégico</h3>
               <p className='feature-description'>
-                Aprende a usar la autocompasión como una herramienta estratégica
-                para recuperarte de los fallos y nunca saltarte un hábito dos
-                veces.
+                Qué hacer cuando fallas. Cómo levantarte sin autodestrucción.
+                Las caídas son inevitables; el abandono es opcional.
               </p>
             </div>
 
             <div className='feature-card scroll-reveal delay-500'>
-              <h3 className='feature-title'>El Arte de la Consistencia</h3>
+              <h3 className='feature-title'>Identidad sobre Resultados</h3>
               <p className='feature-description'>
-                Implementa el método de Seinfeld "No Rompas la Cadena" para
-                enfocarte en el progreso diario, no en la perfección.
+                No te enfoques en "bajar 10 kilos". Conviértete en "una persona
+                que entrena". El cambio de identidad hace que los hábitos sean
+                automáticos.
               </p>
             </div>
 
             <div className='feature-card scroll-reveal delay-600'>
-              <h3 className='feature-title'>Ganar la Guerra a las Excusas</h3>
+              <h3 className='feature-title'>La Matriz de Energía</h3>
               <p className='feature-description'>
-                Domina el reencuadre cognitivo para cambiar la narrativa que te
-                cuentas y transformar los obstáculos en oportunidades.
+                Administra tu fuerza de voluntad como un recurso limitado.
+                Aprende cuándo gastarla y cuándo automatizar para no depender de
+                ella.
               </p>
             </div>
           </div>
@@ -272,33 +302,33 @@ const MusculoVoluntad = () => {
               className='final-book-cover'
               onError={(e) => {
                 e.target.src =
-                  "https://placehold.co/300x450/111827/e0e0e0?text=El+M%C3%BAsculo+de+la%0AVoluntad";
+                  "https://placehold.co/300x450/1a1a1a/e0e0e0?text=El+M%C3%BAsculo+de+la%0AVoluntad";
               }}
             />
             <h2 className='final-cta-title'>
-              La disciplina no es una prisión. Es el precio de tu libertad.
+              La versión disciplinada de ti ya existe. Solo necesitas el mapa.
             </h2>
             <p className='final-cta-text'>
-              La libertad financiera, física y profesional se construye con la
-              disciplina diaria. Deja de desearlo. Empieza a construirlo. Tu yo
-              del futuro te lo agradecerá.
+              Deja de esperar el momento perfecto. Empieza a construir el
+              sistema que te llevará a donde quieres estar. La disciplina es el
+              puente entre tus metas y tus logros.
             </p>
             <button onClick={handleCTAClick} className='cta-button final'>
-              Empieza a Construir Ahora
+              Quiero mi Guía Ahora
             </button>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className='footer'>
-        <div className='footer-container'>
-          <p>&copy; 2025 Proyecto Kaizen. Todos los derechos reservados.</p>
-          <p className='footer-subtitle'>
-            Un sistema para el crecimiento personal y la consecución de metas.
-          </p>
-        </div>
-      </footer>
+      <Footer />
+
+      <BookPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        bookTitle='El Músculo de la Voluntad'
+        previewFolder='musculo-voluntad'
+        productName='El Músculo de la Voluntad'
+      />
     </div>
   );
 };

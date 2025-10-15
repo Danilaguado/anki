@@ -1,10 +1,28 @@
 // src/pages/ElAscenso.js
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Landing.css";
+import BookPreviewModal from "../components/BookPreviewModal";
+import Footer from "../components/Footer";
 
 const ElAscenso = () => {
   const navigate = useNavigate();
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handlePreviewClick = () => {
+    setShowPreview(true);
+  };
+
+  useEffect(() => {
+    if (showPreview) {
+      document.body.classList.add("preview-modal-open");
+    } else {
+      document.body.classList.remove("preview-modal-open");
+    }
+    return () => {
+      document.body.classList.remove("preview-modal-open");
+    };
+  }, [showPreview]);
 
   useEffect(() => {
     const revealElements = document.querySelectorAll(".scroll-reveal");
@@ -63,9 +81,18 @@ const ElAscenso = () => {
                 "El manual definitivo para el nuevo líder que busca transformar
                 la duda en confianza y la gestión en verdadero impacto."
               </p>
+
               <button onClick={handleCTA} className='cta-button'>
                 Iniciar mi Ascenso
               </button>
+
+              <button
+                onClick={handlePreviewClick}
+                className='cta-button-preview'
+              >
+                Ver Vista Previa Gratuita
+              </button>
+
               <p className='cta-badge'>
                 Basado en psicología, neurociencia y lecciones reales.
               </p>
@@ -239,16 +266,15 @@ const ElAscenso = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className='footer'>
-        <div className='footer-container'>
-          <p>&copy; 2025 Proyecto Kaizen. Todos los derechos reservados.</p>
-          <p className='footer-subtitle'>
-            Estrategias para dominar la confianza, la comunicación y el
-            conflicto.
-          </p>
-        </div>
-      </footer>
+      <Footer />
+
+      <BookPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        bookTitle='El Ascenso'
+        previewFolder='el-ascenso'
+        productName='El Ascenso'
+      />
     </div>
   );
 };

@@ -1,10 +1,28 @@
 // src/pages/GambitoRey.js
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/GambitoRey.css";
+import BookPreviewModal from "../components/BookPreviewModal";
+import Footer from "../components/Footer";
 
 const GambitoRey = () => {
   const navigate = useNavigate();
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handlePreviewClick = () => {
+    setShowPreview(true);
+  };
+
+  useEffect(() => {
+    if (showPreview) {
+      document.body.classList.add("preview-modal-open");
+    } else {
+      document.body.classList.remove("preview-modal-open");
+    }
+    return () => {
+      document.body.classList.remove("preview-modal-open");
+    };
+  }, [showPreview]);
 
   useEffect(() => {
     const revealElements = document.querySelectorAll(".scroll-reveal");
@@ -64,9 +82,18 @@ const GambitoRey = () => {
               Esta es la guía para que se lo entreguen voluntariamente, incluso
               después de una corrección."
             </p>
+
             <button onClick={handleCTA} className='gambito-cta-button'>
               Dominar el Juego
             </button>
+
+            <button
+              onClick={handlePreviewClick}
+              className='gambito-cta-button-preview'
+            >
+              Ver Vista Previa Gratuita
+            </button>
+
             <p className='gambito-cta-badge'>
               Tácticas probadas por emperadores, diplomáticos y líderes.
             </p>
@@ -252,13 +279,15 @@ const GambitoRey = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className='gambito-footer'>
-        <p>&copy; 2025 Proyecto Kaizen. Todos los derechos reservados.</p>
-        <p className='gambito-footer-subtitle'>
-          El arte estratégico de corregir sin perder la partida.
-        </p>
-      </footer>
+      <Footer />
+
+      <BookPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        bookTitle='El Gambito del Rey'
+        previewFolder='gambito-rey'
+        productName='El Gambito del Rey'
+      />
     </div>
   );
 };

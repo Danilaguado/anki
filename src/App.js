@@ -4,9 +4,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./styles/PaymentForm.css";
 import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
-import CodigoConexion from "./pages/CodigoConexion";
+import DescifrandoEva from "./pages/DescifrandoEva";
 import MusculoVoluntad from "./pages/MusculoVoluntad";
-import HablaCorrigeConquista from "./pages/HablaCorrigeConquista";
+import HablaConquista from "./pages/HablaConquista";
 import ElAscenso from "./pages/ElAscenso";
 import GambitoRey from "./pages/GambitoRey";
 import PaymentPage from "./pages/PaymentPage";
@@ -18,12 +18,9 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path='/' element={<Home />} />
-        <Route path='/codigo-conexion' element={<CodigoConexion />} />
+        <Route path='/descifrando-eva' element={<DescifrandoEva />} />
         <Route path='/musculo-voluntad' element={<MusculoVoluntad />} />
-        <Route
-          path='/habla-corrige-conquista'
-          element={<HablaCorrigeConquista />}
-        />
+        <Route path='/habla-conquista' element={<HablaConquista />} />
         <Route path='/el-ascenso' element={<ElAscenso />} />
         <Route path='/gambito-rey' element={<GambitoRey />} />
         <Route path='/payment' element={<PaymentPage />} />

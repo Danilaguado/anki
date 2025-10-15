@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
+import Footer from "../components/Footer";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -32,13 +33,13 @@ const Home = () => {
 
   const books = [
     {
-      id: "codigo-conexion",
-      title: "El Código de la Conexión",
+      id: "descifrando-eva",
+      title: "Descifrando a Eva",
       badge: "Comunicación",
       description:
         "Descubre las claves para conectar auténticamente con cualquier persona y construir relaciones significativas que transformen tu vida.",
-      cover: "/assets/codigo-conexion-cover.jpg",
-      route: "/codigo-conexion",
+      cover: "/assets/descifrando-eva-cover.jpg",
+      route: "/descifrando-eva",
     },
     {
       id: "musculo-voluntad",
@@ -50,13 +51,13 @@ const Home = () => {
       route: "/musculo-voluntad",
     },
     {
-      id: "habla-corrige-conquista",
-      title: "Habla, Corrige y Conquista",
+      id: "habla-conquista",
+      title: "Habla y Conquista",
       badge: "Liderazgo",
       description:
         "Domina el arte de la comunicación asertiva y aprende a dar feedback que transforma conflictos en oportunidades de crecimiento.",
-      cover: "/assets/habla-corrige-conquista-cover.jpg",
-      route: "/habla-corrige-conquista",
+      cover: "/assets/habla-conquista-cover.jpg",
+      route: "/habla-conquista",
     },
     {
       id: "el-ascenso",
@@ -191,27 +192,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className='home-footer'>
-        <div className='home-footer-container'>
-          <p>
-            Este sitio web provee de herramientas para el crecimiento personal y
-            relacional. <br />
-            Su contenido es educativo y no garantiza resultados específicos. El
-            lector asume toda la responsabilidad por la aplicación de la
-            información.
-            <br />
-            <a href='https://es-kaizen.vercel.app/terms'>
-              Ver Términos y Condiciones{" "}
-            </a>
-            <br />
-            &copy; 2025 Proyecto Kaizen. Todos los derechos reservados.
-          </p>
-          <p className='home-footer-subtitle'>
-            Herramientas para una vida de crecimiento continuo.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
