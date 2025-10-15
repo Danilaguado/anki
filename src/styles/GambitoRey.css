@@ -152,6 +152,20 @@
   display: inline-block;
   text-decoration: none;
 }
+.gambito-cta-button-preview {
+  background-color: #ffffff1a;
+  border: 1px solid #fff3;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 16px;
+  padding: 14px 32px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
 
 .gambito-cta-button:hover {
   transform: translateY(-3px);
