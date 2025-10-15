@@ -339,7 +339,7 @@ const CodigoConexion = () => {
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
         bookTitle='El Código de la Conexión'
-        pdfPath='/assets/codigo-conexion-cover.pdf'
+        previewFolder='codigo-conexion'
         productName='El Código de la Conexión'
       />
     </div>

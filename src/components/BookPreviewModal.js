@@ -6,10 +6,11 @@ const BookPreviewModal = ({
   isOpen,
   onClose,
   bookTitle,
-  pdfPath,
+  previewFolder,
   productName,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [imageError, setImageError] = useState(false);
   const maxPages = 5;
 
   if (!isOpen) return null;
@@ -17,18 +18,19 @@ const BookPreviewModal = ({
   const handleNextPage = () => {
     if (currentPage < maxPages) {
       setCurrentPage(currentPage + 1);
+      setImageError(false);
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
+      setImageError(false);
     }
   };
 
   const handleUnlock = () => {
     onClose();
-    // Redirigir a la página de pago con el producto
     window.location.href = `/payment?product=${encodeURIComponent(
       productName
     )}`;
@@ -39,6 +41,13 @@ const BookPreviewModal = ({
       onClose();
     }
   };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Construir la ruta de la imagen
+  const imagePath = `/assets/previews/${previewFolder}-page-${currentPage}.jpg`;
 
   return (
     <div className='preview-modal-overlay' onClick={handleOverlayClick}>
@@ -70,25 +79,86 @@ const BookPreviewModal = ({
           </button>
         </div>
 
-        {/* PDF Viewer */}
+        {/* Image Viewer */}
         <div className='preview-modal-body'>
           {currentPage < maxPages ? (
-            <div className='preview-pdf-container'>
-              <iframe
-                src={`${pdfPath}#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0`}
-                className='preview-pdf-frame'
-                title={`Página ${currentPage} de ${bookTitle}`}
-              />
+            <div className='preview-image-container'>
+              {imageError ? (
+                <div className='preview-image-error'>
+                  <svg
+                    width='64'
+                    height='64'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                  >
+                    <rect
+                      x='3'
+                      y='3'
+                      width='18'
+                      height='18'
+                      rx='2'
+                      ry='2'
+                    ></rect>
+                    <circle cx='8.5' cy='8.5' r='1.5'></circle>
+                    <polyline points='21 15 16 10 5 21'></polyline>
+                  </svg>
+                  <p>No se pudo cargar la página {currentPage}</p>
+                  <p className='preview-image-error-hint'>
+                    Asegúrate de que las imágenes estén en: <br />
+                    <code>
+                      /public/assets/previews/{previewFolder}-page-{currentPage}
+                      .jpg
+                    </code>
+                  </p>
+                </div>
+              ) : (
+                <img
+                  key={currentPage}
+                  src={imagePath}
+                  alt={`Página ${currentPage} de ${bookTitle}`}
+                  className='preview-page-image'
+                  onError={handleImageError}
+                />
+              )}
             </div>
           ) : (
             // Página 5 con overlay de desbloqueo
             <div className='preview-unlock-container'>
-              <div className='preview-pdf-container preview-blurred'>
-                <iframe
-                  src={`${pdfPath}#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0`}
-                  className='preview-pdf-frame'
-                  title={`Página ${currentPage} de ${bookTitle}`}
-                />
+              <div className='preview-image-container preview-blurred'>
+                {imageError ? (
+                  <div className='preview-image-error'>
+                    <svg
+                      width='64'
+                      height='64'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                    >
+                      <rect
+                        x='3'
+                        y='3'
+                        width='18'
+                        height='18'
+                        rx='2'
+                        ry='2'
+                      ></rect>
+                      <circle cx='8.5' cy='8.5' r='1.5'></circle>
+                      <polyline points='21 15 16 10 5 21'></polyline>
+                    </svg>
+                    <p>No se pudo cargar la página {currentPage}</p>
+                  </div>
+                ) : (
+                  <img
+                    key={currentPage}
+                    src={imagePath}
+                    alt={`Página ${currentPage} de ${bookTitle}`}
+                    className='preview-page-image'
+                    onError={handleImageError}
+                  />
+                )}
               </div>
 
               {/* Overlay de desbloqueo */}
