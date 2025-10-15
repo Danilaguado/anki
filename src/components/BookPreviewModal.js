@@ -225,7 +225,7 @@ const BookPreviewModal = ({
             </button>
 
             <div className='preview-page-indicators'>
-              {[1, 2, 3, 4, 5].map((page) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((page) => (
                 <div
                   key={page}
                   className={`preview-page-dot ${
