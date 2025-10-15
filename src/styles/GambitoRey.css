@@ -145,7 +145,7 @@
   font-weight: 700;
   font-size: 1.1rem;
   padding: 1rem 2.5rem;
-  border-radius: 50px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
