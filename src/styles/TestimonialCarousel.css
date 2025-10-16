@@ -1,11 +1,13 @@
 /* src/styles/TestimonialCarousel.css */
 
+/* Contenedor principal de la sección */
 .testimonial-carousel-section {
   padding: 80px 24px;
   background-color: #212121;
   text-align: center;
 }
 
+/* Título de la sección */
 .testimonial-carousel-title {
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(28px, 4vw, 40px);
@@ -14,14 +16,15 @@
   margin-bottom: 48px;
 }
 
-/* Contenedor que controla el ancho máximo y centrado */
+/* Contenedor que establece el ancho MÁXIMO y centra todo */
 .testimonial-carousel-wrapper {
-  max-width: 400px;
+  max-width: 400px; /* Ancho fijo para consistencia */
   margin: 0 auto;
+  position: relative; /* Posicionamiento para las flechas */
 }
 
+/* Contenedor del carrusel que oculta el overflow */
 .testimonial-carousel {
-  position: relative;
   width: 100%;
   overflow: hidden;
 }
@@ -33,8 +36,8 @@
 
 .testimonial-carousel-slide {
   flex: 0 0 100%;
-  padding: 0 50px; /* Espacio para que se asomen las otras imágenes */
   box-sizing: border-box;
+  padding: 0 15px; /* Pequeño espacio para que se asomen las imágenes */
 }
 
 .testimonial-carousel-image {
@@ -45,12 +48,12 @@
   user-select: none;
 }
 
-/* --- ESTILOS REFORZADOS PARA LAS FLECHAS --- */
-.testimonial-carousel .carousel-button {
+/* --- ESTILOS REFORZADOS Y DEFINITIVOS PARA LAS FLECHAS --- */
+.testimonial-carousel-wrapper .carousel-button {
   position: absolute !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  background-color: rgba(30, 30, 30, 0.7) !important;
+  background-color: rgba(30, 30, 30, 0.8) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
   font-size: 24px !important;
@@ -67,27 +70,24 @@
   line-height: 1 !important;
 }
 
-.testimonial-carousel .carousel-button:hover {
-  background-color: rgba(50, 50, 50, 0.9) !important;
+.testimonial-carousel-wrapper .carousel-button:hover {
+  background-color: rgba(50, 50, 50, 1) !important;
 }
 
-.testimonial-carousel .carousel-button.prev {
-  left: 0px; /* Posicionado justo en el borde del slide */
+.testimonial-carousel-wrapper .carousel-button.prev {
+  left: -25px;
 }
 
-.testimonial-carousel .carousel-button.next {
-  right: 0px; /* Posicionado justo en el borde del slide */
+.testimonial-carousel-wrapper .carousel-button.next {
+  right: -25px;
 }
 
-/* En pantallas más anchas, sacamos un poco las flechas */
-@media (min-width: 600px) {
-  .testimonial-carousel-wrapper {
-    overflow: visible;
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 550px) {
+  .testimonial-carousel-wrapper .carousel-button.prev {
+    left: 5px;
   }
-  .testimonial-carousel .carousel-button.prev {
-    left: -60px;
-  }
-  .testimonial-carousel .carousel-button.next {
-    right: -60px;
+  .testimonial-carousel-wrapper .carousel-button.next {
+    right: 5px;
   }
 }
