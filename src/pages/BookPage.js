@@ -47,17 +47,18 @@ const BookPage = () => {
   // --- Lógica del componente después de los hooks ---
 
   const book = bookData.find((b) => b.id === bookId);
-
-  // AHORA sí podemos hacer el return anticipado si el libro no se encuentra.
-  if (!book) {
-    // Opcional: podrías redirigir a una página 404
-    useEffect(() => {
+  // Effect for redirection if book not found
+  useEffect(() => {
+    if (!book) {
       navigate("/");
-    }, [navigate]);
+    }
+  }, [book, navigate]);
+
+  // Render null or a loading indicator if book is not found yet, or if it's redirecting
+  if (!book)
     return (
       <div>Libro no encontrado, redirigiendo a la página principal...</div>
     );
-  }
 
   const handlePreviewClick = () => setShowPreview(true);
   const handleCTAClick = () =>
