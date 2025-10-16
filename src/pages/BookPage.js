@@ -220,7 +220,7 @@ const BookPage = () => {
       </section>
       <TestimonialCarousel />
       {/* Final CTA Section */}
-      {/* <section id='comprar' className='book-final-cta-section'>
+      <section id='comprar' className='book-final-cta-section'>
         <div className='book-section-container'>
           <div className='book-final-cta-content scroll-reveal'>
             <img
@@ -241,7 +241,7 @@ const BookPage = () => {
             </div>
           </div>
         </div>
-      </section> */}
+      </section>
 
       <Footer />
 
