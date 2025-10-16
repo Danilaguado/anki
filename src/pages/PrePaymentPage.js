@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; // <-- Asegúrate de importar useEffect
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import "../styles/PrePaymentPage.css";
 
@@ -10,7 +10,6 @@ const PrePaymentPage = () => {
   const [searchParams] = useSearchParams();
   const product = searchParams.get("product");
 
-  // 👇 INICIA LA NUEVA LÓGICA 👇
   useEffect(() => {
     const handleFocus = () => {
       document.body.classList.add("prepayment-keyboard-active");
@@ -25,17 +24,14 @@ const PrePaymentPage = () => {
       phoneInput.addEventListener("blur", handleBlur);
     }
 
-    // Función de limpieza para cuando el usuario abandona la página
     return () => {
       if (phoneInput) {
         phoneInput.removeEventListener("focus", handleFocus);
         phoneInput.removeEventListener("blur", handleBlur);
       }
-      // Asegurarnos de que la clase se elimine al salir
       document.body.classList.remove("prepayment-keyboard-active");
     };
-  }, []); // El array vacío asegura que esto se ejecute solo una vez
-  // ☝️ FINALIZA LA NUEVA LÓGICA ☝️
+  }, []);
 
   const handlePhoneChange = (e) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
@@ -77,16 +73,19 @@ const PrePaymentPage = () => {
           alt='Proyecto Kaizen Logo'
           className='prepayment-logo'
         />
-        <h1 className='prepayment-title'>Accede a tu compra</h1>
+        {/* 👇 INICIA EL TEXTO ACTUALIZADO 👇 */}
+        <h1 className='prepayment-title'>Ingresa o crea una cuenta</h1>
         <p className='prepayment-subtitle'>
-          Ingresa tu número de celular para continuar
+          Es rápido, solo ingresa tu número de celular para continuar.
         </p>
+        {/* ☝️ FINALIZA EL TEXTO ACTUALIZADO ☝️ */}
+
         <form onSubmit={handleSubmit} className='prepayment-form'>
           <div className='form-group'>
             <label htmlFor='phone-input'>Número de Celular</label>
             <input
               type='tel'
-              id='phone-input' // El ID que usamos para encontrar el input
+              id='phone-input'
               name='phone'
               value={phone}
               onChange={handlePhoneChange}
@@ -106,6 +105,7 @@ const PrePaymentPage = () => {
             {isSubmitting ? "Procesando..." : "Continuar"}
           </button>
         </form>
+
         <div className='prepayment-footer'>
           <p>
             Al continuar, usted concuerda con las{" "}
