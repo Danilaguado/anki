@@ -66,6 +66,10 @@
     );
 }
 
+.book-final-cta-section {
+  padding: 80px 24px 112px;
+}
+
 .book-hero-content,
 .book-section-container {
   max-width: 1200px;
