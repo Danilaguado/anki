@@ -217,7 +217,7 @@ const BookPage = () => {
           </div>
         </div>
       </section>
-
+      <TestimonialCarousel />
       {/* Final CTA Section */}
       <section id='comprar' className='book-final-cta-section'>
         <div className='book-section-container'>
