@@ -51,10 +51,10 @@
    HERO & FINAL CTA SECTIONS - Con el degradado correcto
    ============================================ */
 .book-hero-section,
-.book-final-cta-section,
-.book-revelation-section {
+.book-revelation-section,
+.book-final-cta-section {
   padding: 80px 24px 128px;
-  background-color: #1a1a1a; /* Color de base oscuro */
+  background-color: #1a1a1a; /* Color de base por si las imágenes no cargan */
   background-image: radial-gradient(
       circle at top right,
       rgba(217, 119, 6, 0.1),
@@ -65,6 +65,10 @@
       rgba(59, 130, 246, 0.05),
       transparent 50%
     );
+}
+
+.book-revelation-section {
+  padding: 80px 24px 112px;
 }
 
 .book-final-cta-section {
