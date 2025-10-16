@@ -53,7 +53,7 @@ const PriceDisplay = () => {
   }
 
   // Tomamos el precio base de 1 USD como está en tu lógica de PaymentForm
-  const priceInBolivares = dollarRate * 1;
+  const priceInBolivares = dollarRate * 3;
   // Calculamos el precio original sumando el 33% al precio con descuento
   const originalPrice = priceInBolivares / (1 - 0.33);
 
