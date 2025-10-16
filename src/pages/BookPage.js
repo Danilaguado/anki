@@ -41,10 +41,15 @@ const BookPage = () => {
     return () => document.body.classList.remove("preview-modal-open");
   }, [showPreview]);
 
-  if (!book) {
-    useEffect(() => {
+  // Redirigir si el libro no se encuentra.
+  // Este useEffect debe estar después de la definición de 'book' y no debe ser condicional.
+  useEffect(() => {
+    if (!book) {
       navigate("/");
-    }, [navigate]);
+    }
+  }, [book, navigate]);
+
+  if (!book) {
     return <div>Libro no encontrado, redirigiendo...</div>;
   }
 
