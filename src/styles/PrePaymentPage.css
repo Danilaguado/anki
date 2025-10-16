@@ -1,0 +1,106 @@
+.prepayment-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #1a1a1a;
+  padding: 20px;
+}
+
+.prepayment-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 40px 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+.prepayment-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+}
+
+.prepayment-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.prepayment-subtitle {
+  color: #6b7280;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.prepayment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prepayment-form .form-group {
+  text-align: left;
+}
+
+.prepayment-form label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.prepayment-form input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.prepayment-form input:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+
+.prepayment-error {
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: -8px;
+}
+
+.prepayment-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #d4af37;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 8px;
+}
+
+.prepayment-button:hover:not(:disabled) {
+  background-color: #f0c674;
+}
+
+.prepayment-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.prepayment-footer {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 24px;
+}
