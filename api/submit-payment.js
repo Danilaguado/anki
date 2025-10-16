@@ -313,7 +313,7 @@ export default async function handler(req, res) {
       nombre,
       correo,
       referenciaUltimos4,
-      phone || "N/A", // Incluir teléfono si está disponible
+      phone || "", // Incluir teléfono si está disponible
     ];
 
     if (rowIndexToUpdate !== -1) {
