@@ -48,10 +48,11 @@
 }
 
 /* ============================================
-   HERO SECTION
+   HERO & FINAL CTA SECTIONS - Con el degradado correcto
    ============================================ */
 .book-hero-section,
-.book-final-cta-section {
+.book-final-cta-section,
+.book-revelation-section {
   padding: 80px 24px 128px;
   background-color: #1a1a1a; /* Color de base oscuro */
   background-image: radial-gradient(
@@ -70,6 +71,9 @@
   padding: 80px 24px 112px;
 }
 
+/* ============================================
+   HERO CONTENT
+   ============================================ */
 .book-hero-content,
 .book-section-container {
   max-width: 1200px;
@@ -132,6 +136,9 @@
   line-height: 1.6;
 }
 
+/* ============================================
+   BOTONES - Estilo Amarillo
+   ============================================ */
 .book-cta-button {
   width: 100%;
   display: inline-block;
@@ -144,7 +151,7 @@
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  /* box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2); */
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
   margin-bottom: 12px;
   text-decoration: none;
 }
@@ -152,7 +159,7 @@
 .book-cta-button:hover {
   background-color: #f0c674;
   transform: translateY(-3px);
-  /* box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3); */
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
 }
 
 .book-cta-button-preview {
@@ -206,11 +213,17 @@
 }
 
 /* ============================================
-   PROBLEM SECTION
+   PROBLEM & MASTERY SECTIONS
    ============================================ */
-.book-problem-section {
+.book-problem-section,
+.book-mastery-section {
   padding: 80px 24px;
-  background-color: #212121; /* CORREGIDO */
+  background-color: #212121;
+}
+
+.book-problem-section .book-section-title,
+.book-mastery-section .book-section-title {
+  color: #ffffff; /* Asegura que el título sea blanco en secciones oscuras */
 }
 
 .book-problems-grid {
@@ -229,7 +242,7 @@
   width: 48px;
   height: 48px;
   margin: 0 auto 16px;
-  color: #d97706;
+  color: #d4af37;
 }
 
 .book-problem-title {
@@ -248,21 +261,6 @@
 /* ============================================
    REVELATION SECTION
    ============================================ */
-.book-revelation-section {
-  padding: 80px 24px 112px;
-  background-color: #1a1a1a;
-  background-image: radial-gradient(
-      circle at top right,
-      rgba(217, 119, 6, 0.1),
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at bottom left,
-      rgba(59, 130, 246, 0.05),
-      transparent 50%
-    );
-}
-
 .book-revelation-title {
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(32px, 5vw, 50px);
@@ -283,17 +281,23 @@
   display: flex;
   align-items: center;
   gap: 24px;
+  border-left: 4px solid #d4af37;
+  padding-left: 24px;
 }
 
 .book-quote-reverse {
   flex-direction: row-reverse;
   text-align: right;
+  border-left: none;
+  border-right: 4px solid #d4af37;
+  padding-left: 0;
+  padding-right: 24px;
 }
 
 .book-quote-mark {
   font-size: 80px;
   font-weight: 700;
-  color: #d97706;
+  color: #d4af37;
   line-height: 0.8;
   flex-shrink: 0;
   width: 80px;
@@ -311,11 +315,6 @@
 /* ============================================
    MASTERY SECTION
    ============================================ */
-.book-mastery-section {
-  padding: 80px 24px;
-  background-color: #212121; /* CORREGIDO */
-}
-
 .book-features-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -334,13 +333,13 @@
 .book-feature-card:hover {
   transform: translateY(-5px);
   background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(217, 119, 6, 0.5);
+  border-color: rgba(212, 175, 55, 0.5);
 }
 
 .book-feature-title {
   font-size: 20px;
   font-weight: 700;
-  color: #d97706;
+  color: #d4af37;
   margin-bottom: 12px;
 }
 
@@ -353,21 +352,6 @@
 /* ============================================
    FINAL CTA SECTION
    ============================================ */
-.book-final-cta-section {
-  padding: 80px 24px 112px;
-  background-color: #1a1a1a;
-  background-image: radial-gradient(
-      circle at top right,
-      rgba(217, 119, 6, 0.1),
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at bottom left,
-      rgba(59, 130, 246, 0.05),
-      transparent 50%
-    );
-}
-
 .book-final-cta-content {
   max-width: 1100px;
   margin: 0 auto;
@@ -437,7 +421,7 @@
   .book-quote-block {
     flex-direction: column !important;
     text-align: center !important;
-    border-left: 4px solid #d97706;
+    border-left: 4px solid #d4af37;
     border-right: none;
     padding: 24px;
   }
