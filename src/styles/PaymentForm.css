@@ -429,9 +429,9 @@ body {
     justify-content: center;
   }
 
-  .secure-badge img {
+  /* .secure-badge img {
     max-width: 100px;
-  }
+  } */
 
   .secure-badge {
     margin-bottom: 20px;
