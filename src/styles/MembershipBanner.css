@@ -1,65 +1,89 @@
 /* src/styles/MembershipBanner.css */
 
-.membership-banner-section {
-  padding: 60px 24px;
-  background: linear-gradient(45deg, #1a1a1a 0%, #2d2d2d 100%);
+.membership-banner-container {
+  padding: 40px 24px;
+  background-color: #1a1a1a; /* Mismo fondo que la sección de libros para integrar */
 }
 
-.membership-banner-content {
-  max-width: 1000px;
+.membership-banner {
+  max-width: 900px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #d4af37, #b88a2e);
+  background: linear-gradient(
+    135deg,
+    #2d2d2d,
+    #1f1f1f
+  ); /* Degradado oscuro y sutil */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 40px;
+  padding: 24px 32px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+  gap: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.membership-banner-text h3 {
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: clamp(24px, 4vw, 32px);
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 8px 0;
+.membership-icon {
+  flex-shrink: 0;
+  color: #d4af37;
+  background-color: rgba(212, 175, 55, 0.1);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.membership-banner-text p {
-  font-size: 16px;
-  color: #333;
+.membership-text {
+  flex-grow: 1;
+}
+
+.membership-text h3 {
+  font-family: "Inter", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+}
+
+.membership-text p {
+  font-size: 15px;
+  color: #9ca3af;
   margin: 0;
 }
 
-.membership-banner-button {
-  background-color: #1a1a1a;
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 16px;
-  padding: 14px 32px;
+.membership-button {
+  background-color: transparent;
+  color: #d4af37;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 10px 24px;
   border-radius: 8px;
-  border: 2px solid #1a1a1a;
+  border: 2px solid #d4af37;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
-  margin-left: 24px;
 }
 
-.membership-banner-button:hover {
-  background-color: transparent;
+.membership-button:hover {
+  background-color: #d4af37;
   color: #1a1a1a;
 }
 
 @media (max-width: 768px) {
-  .membership-banner-content {
+  .membership-banner {
     flex-direction: column;
     text-align: center;
+    gap: 16px;
     padding: 32px;
   }
 
-  .membership-banner-button {
-    margin-left: 0;
-    margin-top: 24px;
+  .membership-text p {
+    margin-top: 8px;
+  }
+
+  .membership-button {
+    margin-top: 16px;
     width: 100%;
   }
 }

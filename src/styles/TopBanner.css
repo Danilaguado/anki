@@ -1,18 +1,16 @@
 /* src/styles/TopBanner.css */
 
 .top-banner {
-  background: linear-gradient(
-    90deg,
-    #4338ca,
-    #6d28d9
-  ); /* Un degradado violeta/púrpura que complementa el tema */
+  background: linear-gradient(90deg, #4338ca, #6d28d9);
   color: #ffffff;
   text-align: center;
   padding: 12px 20px;
   font-size: 15px;
   font-weight: 500;
-  position: sticky; /* Se mantiene fijo al hacer scroll */
+  position: fixed; /* Cambiado de sticky a fixed */
   top: 0;
+  left: 0; /* Asegura que empiece desde la izquierda */
+  right: 0; /* Asegura que ocupe todo el ancho */
   z-index: 9998;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
