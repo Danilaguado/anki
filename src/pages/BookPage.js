@@ -234,6 +234,7 @@ const BookPage = () => {
                 onClick={handleCTAClick}
                 className='book-cta-button final'
               >
+                <PriceDisplay priceUSD={book.priceUSD} />
                 {book.finalCta.cta}
               </button>
             </div>

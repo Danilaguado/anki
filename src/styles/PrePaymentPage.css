@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start; /* Alinea el contenido arriba */
-  min-height: 100vh;
+  /* min-height: 100vh; */
   background-color: #f3f4f6;
   padding-top: 5vh; /* Un poco de espacio superior */
   padding-left: 20px;
