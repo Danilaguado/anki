@@ -1,0 +1,149 @@
+/* src/styles/BookThemes.css - Variables de color personalizadas por libro */
+
+/* ==================== DESCIFRANDO A EVA ==================== */
+.theme-descifrando-eva {
+  --book-primary: #d4af37;
+  --book-primary-hover: #f0c674;
+  --book-accent: #8b7355;
+  --book-gradient-start: #1a1a1a;
+  --book-gradient-end: #2d2d2d;
+}
+
+/* ==================== EL MÚSCULO DE LA VOLUNTAD ==================== */
+.theme-musculo-voluntad {
+  --book-primary: #ef4444;
+  --book-primary-hover: #f87171;
+  --book-accent: #dc2626;
+  --book-gradient-start: #7f1d1d;
+  --book-gradient-end: #991b1b;
+}
+
+/* ==================== HABLA Y CONQUISTA ==================== */
+.theme-habla-conquista {
+  --book-primary: #3b82f6;
+  --book-primary-hover: #60a5fa;
+  --book-accent: #2563eb;
+  --book-gradient-start: #1e3a8a;
+  --book-gradient-end: #1e40af;
+}
+
+/* ==================== EL ASCENSO ==================== */
+.theme-el-ascenso {
+  --book-primary: #8b5cf6;
+  --book-primary-hover: #a78bfa;
+  --book-accent: #7c3aed;
+  --book-gradient-start: #4c1d95;
+  --book-gradient-end: #5b21b6;
+}
+
+/* ==================== EL GAMBITO DEL REY ==================== */
+.theme-gambito-rey {
+  --book-primary: #d4af37;
+  --book-primary-hover: #f0c674;
+  --book-accent: #b8860b;
+  --book-gradient-start: #1e1e1e;
+  --book-gradient-end: #2a2a2a;
+}
+
+/* ==================== APLICAR GRADIENTES A HERO ==================== */
+.theme-descifrando-eva .book-hero-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+.theme-musculo-voluntad .book-hero-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+.theme-habla-conquista .book-hero-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+.theme-el-ascenso .book-hero-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+.theme-gambito-rey .book-hero-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+/* ==================== APLICAR GRADIENTES A FINAL CTA ==================== */
+.theme-descifrando-eva .book-final-cta-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+.theme-musculo-voluntad .book-final-cta-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+.theme-habla-conquista .book-final-cta-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+.theme-el-ascenso .book-final-cta-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+.theme-gambito-rey .book-final-cta-section {
+  background: linear-gradient(
+    135deg,
+    var(--book-gradient-start) 0%,
+    var(--book-gradient-end) 100%
+  );
+}
+
+/* ==================== COLORES DE REVELATION SECTION ==================== */
+.theme-descifrando-eva .book-revelation-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.theme-musculo-voluntad .book-revelation-section {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.theme-habla-conquista .book-revelation-section {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.theme-el-ascenso .book-revelation-section {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
+.theme-gambito-rey .book-revelation-section {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
