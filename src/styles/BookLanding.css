@@ -50,9 +50,10 @@
 /* ============================================
    HERO SECTION
    ============================================ */
-.book-hero-section {
+.book-hero-section,
+.book-final-cta-section {
   padding: 80px 24px 128px;
-  background-color: #1a1a1a;
+  background-color: #1a1a1a; /* Color de base oscuro */
   background-image: radial-gradient(
       circle at top right,
       rgba(217, 119, 6, 0.1),
@@ -139,7 +140,7 @@
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+  /* box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2); */
   margin-bottom: 12px;
   text-decoration: none;
 }
@@ -147,7 +148,7 @@
 .book-cta-button:hover {
   background-color: #f0c674;
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+  /* box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3); */
 }
 
 .book-cta-button-preview {
