@@ -5,9 +5,10 @@ import "./App.css";
 import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import BookPage from "./pages/BookPage";
-import PrePaymentPage from "./pages/PrePaymentPage"; // <-- IMPORTAR
+import PrePaymentPage from "./pages/PrePaymentPage";
 import PaymentPage from "./pages/PaymentPage";
 import TermsAndConditions from "./pages/TermsAndConditions";
+import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton"; // <-- 1. Importar
 
 function App() {
   return (
@@ -15,12 +16,12 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path='/' element={<Home />} />
-        <Route path='/start-purchase' element={<PrePaymentPage />} />{" "}
-        {/* <-- AÑADIR RUTA */}
+        <Route path='/start-purchase' element={<PrePaymentPage />} />
         <Route path='/payment' element={<PaymentPage />} />
         <Route path='/terms' element={<TermsAndConditions />} />
         <Route path='/:bookId' element={<BookPage />} />
       </Routes>
+      <FloatingWhatsAppButton /> {/* <-- 2. Añadir el componente aquí */}
     </BrowserRouter>
   );
 }
