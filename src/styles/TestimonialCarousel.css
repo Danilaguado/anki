@@ -1,12 +1,12 @@
 /* src/styles/TestimonialCarousel.css */
 
-.testimonial-section {
+.testimonial-carousel-section {
   padding: 80px 0;
   background-color: #212121;
   text-align: center;
 }
 
-.testimonial-title {
+.testimonial-carousel-title {
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
@@ -16,43 +16,28 @@
 
 .testimonial-carousel {
   position: relative;
-  max-width: 800px;
+  max-width: 400px;
   margin: 0 auto;
   overflow: hidden;
 }
 
-.testimonial-slides {
+.testimonial-carousel-slides {
   display: flex;
   transition: transform 0.5s ease-in-out;
 }
 
-.testimonial-slide {
+.testimonial-carousel-slide {
   flex: 0 0 100%;
-  padding: 0 80px; /* Espacio para que se asomen las otras imágenes */
+  padding: 0 50px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-.testimonial-image {
-  width: 60%;
-  object-fit: cover;
-  margin-bottom: 24px;
-}
-
-.testimonial-text {
-  font-size: 18px;
-  font-style: italic;
-  color: #d1d5db;
-  line-height: 1.6;
-  max-width: 600px;
-  margin-bottom: 16px;
-}
-
-.testimonial-author {
-  font-weight: 600;
-  color: #f0c674;
+.testimonial-carousel-image {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .carousel-button {
@@ -71,6 +56,7 @@
   align-items: center;
   justify-content: center;
   transition: background-color 0.3s ease;
+  z-index: 10;
 }
 
 .carousel-button:hover {
@@ -78,23 +64,9 @@
 }
 
 .carousel-button.prev {
-  left: 20px;
+  left: 10px;
 }
 
 .carousel-button.next {
-  right: 20px;
-}
-
-@media (max-width: 768px) {
-  .testimonial-slide {
-    padding: 0 50px;
-  }
-
-  .carousel-button.prev {
-    left: 10px;
-  }
-
-  .carousel-button.next {
-    right: 10px;
-  }
+  right: 10px;
 }

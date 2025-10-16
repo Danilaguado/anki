@@ -1,0 +1,99 @@
+/* src/styles/NewsletterSubscribe.css */
+.newsletter-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.newsletter-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.newsletter-subtitle {
+  font-size: 16px;
+  color: #9ca3af;
+  margin-bottom: 24px;
+}
+
+.newsletter-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.newsletter-input {
+  flex-grow: 1;
+  padding: 12px 16px;
+  font-size: 15px;
+  background-color: #2d2d2d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.newsletter-input::placeholder {
+  color: #6b7280;
+}
+
+.newsletter-input:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+
+.newsletter-button {
+  background-color: #d4af37;
+  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.newsletter-button:hover:not(:disabled) {
+  background-color: #f0c674;
+}
+
+.newsletter-button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.newsletter-message {
+  font-size: 14px;
+  font-weight: 500;
+}
+.newsletter-message.success {
+  color: #10b981;
+}
+.newsletter-message.error {
+  color: #ef4444;
+}
+
+.newsletter-disclaimer {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 16px;
+}
+.newsletter-disclaimer a {
+  color: #9ca3af;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .newsletter-form {
+    flex-direction: column;
+  }
+}

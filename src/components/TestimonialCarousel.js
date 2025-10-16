@@ -1,23 +1,12 @@
 import React, { useState } from "react";
 import "../styles/TestimonialCarousel.css";
 
-const testimonials = [
-  {
-    image: "/assets/carrusel/testimonial-1.jpg",
-    text: "Este libro cambió por completo la forma en que me comunico. Las técnicas son prácticas y fáciles de aplicar. ¡Totalmente recomendado!",
-    author: "Carlos G.",
-  },
-  {
-    image: "/assets/carrusel/testimonial-2.jpg",
-    text: "La sección sobre autodisciplina es oro puro. Me ha ayudado a mantenerme enfocado y a construir hábitos que realmente perduran.",
-    author: "Ana M.",
-  },
-  {
-    image: "/assets/carrusel/testimonial-3.jpg",
-    text: 'Como nuevo líder, me sentía perdido. "El Ascenso" me dio la confianza y las herramientas que necesitaba para guiar a mi equipo.',
-    author: "Javier P.",
-  },
-];
+// Genera una lista de imágenes basada en el patrón y la cantidad que mencionaste
+const totalTestimonials = 7;
+const testimonials = Array.from({ length: totalTestimonials }, (_, i) => ({
+  image: `/assets/carrusel/testimonial-${i + 1}.jpg`,
+  id: i + 1,
+}));
 
 const TestimonialCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -35,24 +24,22 @@ const TestimonialCarousel = () => {
   };
 
   return (
-    <section className='testimonial-section'>
-      <h2 className='testimonial-title'>Lo que dicen nuestros lectores</h2>
+    <section className='testimonial-carousel-section'>
+      <h2 className='testimonial-carousel-title'>
+        Lo que dicen nuestros lectores
+      </h2>
       <div className='testimonial-carousel'>
         <div
-          className='testimonial-slides'
+          className='testimonial-carousel-slides'
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         >
-          {testimonials.map((testimonial, index) => (
-            <div className='testimonial-slide' key={index}>
+          {testimonials.map((testimonial) => (
+            <div className='testimonial-carousel-slide' key={testimonial.id}>
               <img
                 src={testimonial.image}
-                alt={`Testimonio de ${testimonial.author}`}
-                className='testimonial-image'
+                alt={`Testimonio ${testimonial.id}`}
+                className='testimonial-carousel-image'
               />
-              <blockquote className='testimonial-text'>
-                "{testimonial.text}"
-              </blockquote>
-              <p className='testimonial-author'>- {testimonial.author}</p>
             </div>
           ))}
         </div>

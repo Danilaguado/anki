@@ -161,7 +161,12 @@ const Home = () => {
           </div>
         </div>
       </section>
-
+      <section
+        className='home-newsletter-section'
+        style={{ padding: "80px 24px", backgroundColor: "#1a1a1a" }}
+      >
+        <NewsletterSubscribe /> {/* <-- 2. Añadir el componente */}
+      </section>
       <Footer />
     </div>
   );
