@@ -230,11 +230,11 @@ const BookPage = () => {
             <div>
               <h2 className='book-final-cta-title'>{book.finalCta.title}</h2>
               <p className='book-final-cta-text'>{book.finalCta.text}</p>
+              <PriceDisplay priceUSD={book.priceUSD} />
               <button
                 onClick={handleCTAClick}
                 className='book-cta-button final'
               >
-                <PriceDisplay priceUSD={book.priceUSD} />
                 {book.finalCta.cta}
               </button>
             </div>
