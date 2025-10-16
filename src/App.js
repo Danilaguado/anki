@@ -1,10 +1,10 @@
 // src/App.js
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "./styles/PaymentForm.css"; // Estilos globales necesarios
+import "./App.css"; // Estilos globales
 import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
-import BookPage from "./pages/BookPage"; // El nuevo componente genérico
+import BookPage from "./pages/BookPage";
 import PaymentPage from "./pages/PaymentPage";
 import TermsAndConditions from "./pages/TermsAndConditions";
 
@@ -19,8 +19,6 @@ function App() {
         <Route path='/terms' element={<TermsAndConditions />} />
 
         {/* Ruta dinámica para todos los libros */}
-        {/* React Router v6 es lo suficientemente inteligente como para no confundir esto
-            con las rutas de arriba. Probará las rutas en orden. */}
         <Route path='/:bookId' element={<BookPage />} />
       </Routes>
     </BrowserRouter>

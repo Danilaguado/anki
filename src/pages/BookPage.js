@@ -10,46 +10,29 @@ import bookData from "../data/bookData.json";
 const BookPage = () => {
   const navigate = useNavigate();
   const [showPreview, setShowPreview] = useState(false);
-  const { bookId } = useParams(); // Usamos useParams para obtener el ID del libro de la URL
+  const { bookId } = useParams(); // Obtenemos el ID del libro desde la URL
 
-  // Encontrar los datos del libro actual
-  const book = bookData.find((b) => b.id === bookId);
-
+  // TODOS los hooks deben ir aquí, antes de cualquier return.
   useEffect(() => {
     const revealElements = document.querySelectorAll(".scroll-reveal");
 
-    if ("IntersectionObserver" in window) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("visible");
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.1 }
-      );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
 
-      revealElements.forEach((el) => observer.observe(el));
+    revealElements.forEach((el) => observer.observe(el));
 
-      return () => observer.disconnect();
-    } else {
-      // Fallback para navegadores antiguos
-      revealElements.forEach((el) => el.classList.add("visible"));
-    }
+    return () => observer.disconnect();
   }, [bookId]); // Re-ejecutar el efecto si el bookId cambia
 
-  // Si no se encuentra el libro, podrías mostrar un error o redirigir
-  if (!book) {
-    return <div>Libro no encontrado</div>;
-  }
-
-  const handlePreviewClick = () => setShowPreview(true);
-  const handleCTAClick = () =>
-    navigate(`/payment?product=${encodeURIComponent(book.productName)}`);
-
-  // Efecto para manejar el scroll y la clase del body
   useEffect(() => {
     if (showPreview) {
       document.body.classList.add("preview-modal-open");
@@ -61,10 +44,29 @@ const BookPage = () => {
     };
   }, [showPreview]);
 
-  // Problemas con múltiples iconos
+  // --- Lógica del componente después de los hooks ---
+
+  const book = bookData.find((b) => b.id === bookId);
+
+  // AHORA sí podemos hacer el return anticipado si el libro no se encuentra.
+  if (!book) {
+    // Opcional: podrías redirigir a una página 404
+    useEffect(() => {
+      navigate("/");
+    }, [navigate]);
+    return (
+      <div>Libro no encontrado, redirigiendo a la página principal...</div>
+    );
+  }
+
+  const handlePreviewClick = () => setShowPreview(true);
+  const handleCTAClick = () =>
+    navigate(`/payment?product=${encodeURIComponent(book.productName)}`);
+
+  // Iconos genéricos para la sección de problemas
   const problemIcons = [
-    // Icono genérico 1
     <svg
+      key='icon1'
       className='book-problem-icon'
       fill='none'
       stroke='currentColor'
@@ -77,8 +79,8 @@ const BookPage = () => {
         d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
       ></path>
     </svg>,
-    // Icono genérico 2
     <svg
+      key='icon2'
       className='book-problem-icon'
       fill='none'
       stroke='currentColor'
@@ -91,8 +93,8 @@ const BookPage = () => {
         d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
       ></path>
     </svg>,
-    // Icono genérico 3
     <svg
+      key='icon3'
       className='book-problem-icon'
       fill='none'
       stroke='currentColor'
@@ -159,8 +161,7 @@ const BookPage = () => {
                   (index + 1) * 100
                 }`}
               >
-                {problemIcons[index % problemIcons.length]}{" "}
-                {/* Asigna un icono genérico */}
+                {problemIcons[index % problemIcons.length]}
                 <h3 className='book-problem-title'>{item.title}</h3>
                 <p className='book-problem-description'>{item.description}</p>
               </div>
