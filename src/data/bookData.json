@@ -1,7 +1,6 @@
 [
   {
     "id": "descifrando-eva",
-    "theme": "descifrando-eva",
     "productName": "Descifrando a Eva",
     "hero": {
       "title": "¿Cansado de no entenderla? Existe un código. Y ha sido descifrado.",
@@ -75,7 +74,6 @@
   },
   {
     "id": "musculo-voluntad",
-    "theme": "musculo-voluntad",
     "productName": "El Músculo de la Voluntad",
     "hero": {
       "title": "La disciplina no es un don. Es un músculo. Y tú puedes entrenarlo.",
@@ -149,7 +147,6 @@
   },
   {
     "id": "habla-conquista",
-    "theme": "habla-corrige-conquista",
     "productName": "Habla y Conquista",
     "hero": {
       "title": "Tus palabras construyen o destruyen. Es tu elección.",
@@ -223,10 +220,9 @@
   },
   {
     "id": "el-ascenso",
-    "theme": "el-ascenso",
     "productName": "El Ascenso",
     "hero": {
-      "title": "Le ascendieron por ser un experto en <span style={{ color: \"#8b5cf6\" }}>hacer</span>. El éxito ahora exige que domine el arte de <span style={{ color: \"#8b5cf6\" }}>liderar</span>.",
+      "title": "Le ascendieron por ser un experto en <strong>hacer</strong>. El éxito ahora exige que domine el arte de <strong>liderar</strong>.",
       "subtitle": "Bienvenido a la paradoja del ascenso. Este es el manual de supervivencia y el mapa para prosperar en su nuevo rol.",
       "coverImage": "/assets/el-ascenso-cover.jpg",
       "quote": "El manual definitivo para el nuevo líder que busca transformar la duda en confianza y la gestión en verdadero impacto.",
@@ -284,7 +280,6 @@
   },
   {
     "id": "gambito-rey",
-    "theme": "gambito-rey",
     "productName": "El Gambito del Rey",
     "hero": {
       "title": "La Crítica es el Arma del Amateur. <span class='gambito-highlight'>La Estrategia es el Arma del Maestro.</span>",

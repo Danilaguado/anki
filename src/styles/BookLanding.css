@@ -1,4 +1,4 @@
-/* src/styles/BookLanding.css - Estilos base para todas las landing pages */
+/* src/styles/BookLanding.css - Estilo ÚNICO para todas las páginas de libros */
 
 /* ============================================
    RESET Y BASE
@@ -8,8 +8,8 @@
     sans-serif;
   line-height: 1.6;
   overflow-x: hidden;
-  background-color: var(--book-bg-dark, #1a1a1a);
-  color: var(--book-text-light, #e0e0e0);
+  background-color: #1a1a1a;
+  color: #e0e0e0;
 }
 
 .book-landing-container * {
@@ -56,10 +56,7 @@
    ============================================ */
 .book-hero-section {
   padding: 80px 24px 128px;
-  background: var(
-    --book-bg-gradient,
-    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)
-  );
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
 .book-hero-content {
@@ -125,8 +122,8 @@
 .book-cta-button {
   width: 100%;
   display: inline-block;
-  background-color: var(--book-primary, #d97706);
-  color: var(--book-bg-dark, #1a1a1a);
+  background-color: #d4af37;
+  color: #1a1a1a;
   font-weight: 700;
   font-size: 18px;
   padding: 16px 40px;
@@ -134,22 +131,23 @@
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
   margin-bottom: 12px;
   text-decoration: none;
 }
 
 .book-cta-button:hover {
+  background-color: #f0c674;
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
 }
 
 .book-cta-button-preview {
   width: 100%;
   display: inline-block;
   background-color: transparent;
-  color: var(--book-primary, #d97706);
-  border: 2px solid var(--book-primary, #d97706);
+  color: #d4af37;
+  border: 2px solid #d4af37;
   font-weight: 600;
   font-size: 16px;
   padding: 14px 32px;
@@ -161,8 +159,8 @@
 }
 
 .book-cta-button-preview:hover {
-  background-color: var(--book-primary, #d97706);
-  color: var(--book-bg-dark, #1a1a1a);
+  background-color: #d4af37;
+  color: #1a1a1a;
 }
 
 .book-cta-badge {
@@ -190,13 +188,13 @@
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
-  color: #ffffff;
+  color: #1a1a1a;
   margin-bottom: 16px;
 }
 
 .book-section-subtitle {
   font-size: 16px;
-  color: #9ca3af;
+  color: #6b7280;
   line-height: 1.6;
 }
 
@@ -205,7 +203,8 @@
    ============================================ */
 .book-problem-section {
   padding: 80px 24px;
-  background-color: var(--book-bg-medium, #212121);
+  background-color: #f9fafb;
+  color: #1a1a1a;
 }
 
 .book-problems-grid {
@@ -224,19 +223,19 @@
   width: 48px;
   height: 48px;
   margin: 0 auto 16px;
-  color: var(--book-primary, #d97706);
+  color: #d4af37;
 }
 
 .book-problem-title {
   font-size: 20px;
   font-weight: 600;
-  color: #ffffff;
+  color: #1a1a1a;
   margin-bottom: 8px;
 }
 
 .book-problem-description {
   font-size: 14px;
-  color: #9ca3af;
+  color: #6b7280;
   line-height: 1.6;
 }
 
@@ -245,10 +244,7 @@
    ============================================ */
 .book-revelation-section {
   padding: 80px 24px 112px;
-  background: var(
-    --book-bg-gradient,
-    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)
-  );
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
 .book-revelation-title {
@@ -257,6 +253,10 @@
   font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
+}
+
+.book-revelation-section .book-section-subtitle {
+  color: #9ca3af;
 }
 
 .book-quotes-container {
@@ -271,7 +271,7 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  border-left: 4px solid var(--book-primary, #d97706);
+  border-left: 4px solid #d4af37;
   padding-left: 24px;
 }
 
@@ -279,7 +279,7 @@
   flex-direction: row-reverse;
   text-align: right;
   border-left: none;
-  border-right: 4px solid var(--book-primary, #d97706);
+  border-right: 4px solid #d4af37;
   padding-left: 0;
   padding-right: 24px;
 }
@@ -287,7 +287,7 @@
 .book-quote-mark {
   font-size: 80px;
   font-weight: 700;
-  color: var(--book-primary, #d97706);
+  color: #d4af37;
   line-height: 0.8;
   flex-shrink: 0;
   width: 80px;
@@ -308,7 +308,7 @@
    ============================================ */
 .book-mastery-section {
   padding: 80px 24px;
-  background-color: var(--book-bg-medium, #212121);
+  background-color: #f9fafb;
 }
 
 .book-features-grid {
@@ -319,8 +319,8 @@
 }
 
 .book-feature-card {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 24px;
   transition: all 0.3s ease;
@@ -328,20 +328,19 @@
 
 .book-feature-card:hover {
   transform: translateY(-5px);
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: var(--book-primary, #d97706);
+  border-color: #d4af37;
 }
 
 .book-feature-title {
   font-size: 20px;
   font-weight: 700;
-  color: var(--book-primary-hover, #f0c674);
+  color: #b8860b;
   margin-bottom: 12px;
 }
 
 .book-feature-description {
   font-size: 15px;
-  color: #d1d5db;
+  color: #6b7280;
   line-height: 1.6;
 }
 
@@ -350,10 +349,7 @@
    ============================================ */
 .book-final-cta-section {
   padding: 80px 24px 112px;
-  background: var(
-    --book-bg-gradient,
-    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)
-  );
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
 .book-final-cta-content {
@@ -429,7 +425,7 @@
   .book-quote-block {
     flex-direction: column !important;
     text-align: center !important;
-    border-left: 4px solid var(--book-primary, #d97706);
+    border-left: 4px solid #d4af37;
     border-right: none;
     padding: 24px;
   }
