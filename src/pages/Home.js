@@ -8,6 +8,7 @@ import bookData from "../data/bookData.json"; // Importar los datos
 import TestimonialCarousel from "../components/TestimonialCarousel";
 import MembershipBanner from "../components/MembershipBanner";
 import NewsletterSubscribe from "../components/NewsletterSubscribe";
+import SecureBadge from "../components/SecureBadge";
 
 const Home = () => {
   const navigate = useNavigate();
