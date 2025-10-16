@@ -31,10 +31,10 @@ const MembershipBanner = () => {
           </svg>
         </div>
         <div className='membership-text'>
-          <h3>Únete a la Membresía Kaizen</h3>
+          <h3>Desbloquea la Biblioteca Completa Kaizen</h3>
           <p>
-            Accede a contenido exclusivo, talleres en vivo y una comunidad de
-            alto valor.
+            Acceso ilimitado a todos nuestros libros y contenido futuro con un
+            solo plan.
           </p>
         </div>
         <button onClick={handleSaberMasClick} className='membership-button'>
