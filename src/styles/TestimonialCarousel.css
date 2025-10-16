@@ -1,7 +1,7 @@
 /* src/styles/TestimonialCarousel.css */
 
 .testimonial-carousel-section {
-  padding: 80px 0;
+  padding: 80px 24px;
   background-color: #212121;
   text-align: center;
 }
@@ -14,10 +14,15 @@
   margin-bottom: 48px;
 }
 
-.testimonial-carousel {
-  position: relative;
+/* Contenedor que controla el ancho máximo y centrado */
+.testimonial-carousel-wrapper {
   max-width: 400px;
   margin: 0 auto;
+}
+
+.testimonial-carousel {
+  position: relative;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -28,7 +33,7 @@
 
 .testimonial-carousel-slide {
   flex: 0 0 100%;
-  padding: 0 50px;
+  padding: 0 50px; /* Espacio para que se asomen las otras imágenes */
   box-sizing: border-box;
 }
 
@@ -40,54 +45,49 @@
   user-select: none;
 }
 
-/* --- ESTA ES LA SECCIÓN CORREGIDA --- */
+/* --- ESTILOS REFORZADOS PARA LAS FLECHAS --- */
 .testimonial-carousel .carousel-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: rgba(
-    255,
-    255,
-    255,
-    0.1
-  ) !important; /* !important para asegurar prioridad */
-  border: none !important;
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background-color: rgba(30, 30, 30, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: #fff !important;
   font-size: 24px !important;
   cursor: pointer;
-  border-radius: 50%;
-  width: 50px; /* Aumentado para mayor visibilidad */
-  height: 50px; /* Aumentado para mayor visibilidad */
-  display: flex;
+  border-radius: 50% !important;
+  width: 50px !important;
+  height: 50px !important;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   transition: background-color 0.3s ease;
   z-index: 10;
-  padding: 0; /* Reseteamos el padding */
-  line-height: 1; /* Centrado vertical del ícono */
+  padding: 0 !important;
+  line-height: 1 !important;
 }
 
 .testimonial-carousel .carousel-button:hover {
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(50, 50, 50, 0.9) !important;
 }
 
 .testimonial-carousel .carousel-button.prev {
-  left: -25px; /* Ajustado para que se vea fuera del slide principal */
+  left: 0px; /* Posicionado justo en el borde del slide */
 }
 
 .testimonial-carousel .carousel-button.next {
-  right: -25px; /* Ajustado para que se vea fuera del slide principal */
+  right: 0px; /* Posicionado justo en el borde del slide */
 }
 
-/* Ajustes para pantallas pequeñas */
-@media (max-width: 600px) {
-  .testimonial-carousel {
-    overflow: visible; /* Permitir que los botones se vean fuera del contenedor */
+/* En pantallas más anchas, sacamos un poco las flechas */
+@media (min-width: 600px) {
+  .testimonial-carousel-wrapper {
+    overflow: visible;
   }
   .testimonial-carousel .carousel-button.prev {
-    left: 0;
+    left: -60px;
   }
   .testimonial-carousel .carousel-button.next {
-    right: 0;
+    right: -60px;
   }
 }
