@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import bookData from "../data/bookData.json";
 import PriceDisplay from "../components/PriceDisplay";
 import "../styles/PriceDisplay.css";
+import TestimonialCarousel from "../components/TestimonialCarousel";
 
 const BookPage = () => {
   const navigate = useNavigate();
