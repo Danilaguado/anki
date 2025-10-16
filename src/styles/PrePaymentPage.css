@@ -6,13 +6,13 @@
 
 .prepayment-container {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: flex-start; /* Alinea el contenido arriba */
   min-height: 100vh;
-  height: 100vh; /* Fija la altura exacta */
   background-color: #f3f4f6;
-  padding: 20px;
-  overflow: hidden; /* Prevenir scroll */
+  padding-top: 5vh; /* Un poco de espacio superior */
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .prepayment-card {
@@ -22,28 +22,7 @@
   padding: 40px 32px;
   max-width: 420px;
   width: 100%;
-  max-height: 90vh; /* Limitar altura */
-  overflow-y: auto; /* Scroll solo si es necesario */
   text-align: center;
-}
-
-/* Estilos para que el scroll sea más limpio */
-.prepayment-card::-webkit-scrollbar {
-  width: 6px;
-}
-
-.prepayment-card::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.prepayment-card::-webkit-scrollbar-thumb {
-  background: #d4af37;
-  border-radius: 4px;
-}
-
-.prepayment-card::-webkit-scrollbar-thumb:hover {
-  background: #c9a336;
 }
 
 .prepayment-logo {
@@ -156,73 +135,13 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-  .prepayment-container {
-    min-height: 100vh;
-    padding: 16px;
-  }
-
-  .prepayment-card {
-    padding: 32px 24px;
-  }
-
-  .prepayment-logo {
-    width: 70px;
-    height: 70px;
-    margin-bottom: 20px;
-  }
-
-  .prepayment-title {
-    font-size: 22px;
-  }
-
-  .prepayment-subtitle {
-    font-size: 15px;
-  }
-}
-
 @media (max-width: 480px) {
   .prepayment-container {
-    padding: 12px;
+    padding-top: 20px;
+    align-items: flex-start;
   }
 
   .prepayment-card {
     padding: 28px 20px;
-    border-radius: 12px;
-  }
-
-  .prepayment-logo {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 16px;
-  }
-
-  .prepayment-title {
-    font-size: 20px;
-    margin-bottom: 4px;
-  }
-
-  .prepayment-subtitle {
-    font-size: 14px;
-    margin-bottom: 20px;
-  }
-
-  .prepayment-form {
-    gap: 12px;
-  }
-
-  .prepayment-button {
-    padding: 10px;
-    font-size: 15px;
-    margin-top: 4px;
-  }
-
-  .prepayment-footer {
-    margin-top: 16px;
   }
 }
-
-/* Prevenir que el body haga scroll */
-/* body { */
-/* overflow: hidden; */
-/* } */

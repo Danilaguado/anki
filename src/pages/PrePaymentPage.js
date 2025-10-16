@@ -10,10 +10,15 @@ const PrePaymentPage = () => {
   const [searchParams] = useSearchParams();
   const product = searchParams.get("product");
 
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, ""); // Solo permite números
+    setPhone(value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!phone.trim()) {
-      setError("Por favor, ingresa un número de teléfono o e-mail.");
+      setError("Por favor, ingresa un número de teléfono.");
       return;
     }
 
@@ -39,6 +44,7 @@ const PrePaymentPage = () => {
     } catch (err) {
       setError("No se pudo procesar tu solicitud. Intenta de nuevo más tarde.");
       console.error("Error submitting phone:", err);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -51,23 +57,25 @@ const PrePaymentPage = () => {
           alt='Proyecto Kaizen Logo'
           className='prepayment-logo'
         />
-        <h1 className='prepayment-title'>Inicia sesión o crea una cuenta</h1>
+        <h1 className='prepayment-title'>Accede a tu compra</h1>
         <p className='prepayment-subtitle'>
-          Ingresa tu número de celular o e-mail
+          Ingresa tu número de celular para continuar
         </p>
 
         <form onSubmit={handleSubmit} className='prepayment-form'>
           <div className='form-group'>
-            <label htmlFor='phone-input'>Número de celular o e-mail</label>
+            <label htmlFor='phone-input'>Número de Celular</label>
             <input
-              type='text'
+              type='tel'
               id='phone-input'
               name='phone'
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder='Número de celular o e-mail'
+              onChange={handlePhoneChange}
+              placeholder='Ej: 04121234567'
               disabled={isSubmitting}
               autoFocus
+              inputMode='numeric'
+              pattern='[0-9]*'
             />
           </div>
           {error && <p className='prepayment-error'>{error}</p>}
@@ -92,7 +100,6 @@ const PrePaymentPage = () => {
             </Link>{" "}
             de Proyecto Kaizen.
           </p>
-          {/* Este enlace te llevará a WhatsApp. Puedes cambiar el número si es necesario. */}
           <a
             href='https://wa.me/5511958682671'
             target='_blank'
