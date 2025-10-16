@@ -57,7 +57,7 @@
   background-color: #1a1a1a; /* Color de base por si las imágenes no cargan */
   background-image: radial-gradient(
       circle at top right,
-      rgba(217, 119, 6, 0.1),
+      rgba(51, 50, 50, 0.1),
       transparent 40%
     ),
     radial-gradient(
