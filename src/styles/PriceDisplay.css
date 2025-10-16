@@ -14,9 +14,9 @@
 }
 
 .discount {
-  font-family: "Roboto", sans-serif; /* <-- TIPO DE LETRA NUEVO */
+  font-family: "Roboto", sans-serif; 
   font-size: 1.75rem; /* 28px */
-  font-weight: 200; El peso "Light" para Roboto es 300
+  font-weight: 200; 
   color: #ef4444;
 }
 
