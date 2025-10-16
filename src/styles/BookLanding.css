@@ -1,21 +1,11 @@
-/* src/styles/BookLanding.css - Estilo ÚNICO para todas las páginas de libros */
+/* src/styles/BookLanding.css - Estilo ÚNICO y oscuro para todas las páginas */
 
-/* ============================================
-   RESET Y BASE
-   ============================================ */
 .book-landing-container {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  line-height: 1.6;
-  overflow-x: hidden;
+  min-height: 100vh;
   background-color: #1a1a1a;
   color: #e0e0e0;
-}
-
-.book-landing-container * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
 }
 
 /* ============================================
@@ -26,12 +16,10 @@
   transform: translateY(30px);
   transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
-
 .scroll-reveal.visible {
   opacity: 1;
   transform: translateY(0);
 }
-
 .delay-100 {
   transition-delay: 100ms;
 }
@@ -55,8 +43,18 @@
    HERO SECTION
    ============================================ */
 .book-hero-section {
+  background-color: #1a1a1a;
+  background-image: radial-gradient(
+      circle at top right,
+      rgba(217, 119, 6, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(59, 130, 246, 0.05),
+      transparent 50%
+    );
   padding: 80px 24px 128px;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
 .book-hero-content {
@@ -100,10 +98,6 @@
   height: auto;
   border-radius: 8px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
-}
-.book-cover:hover {
-  transform: translateY(-5px);
 }
 
 .book-cta-content {
@@ -120,47 +114,46 @@
 }
 
 .book-cta-button {
-  width: 100%;
   display: inline-block;
-  background-color: #d4af37;
-  color: #1a1a1a;
-  font-weight: 700;
+  background-color: #d97706;
+  color: #ffffff;
+  font-weight: 600;
   font-size: 18px;
   padding: 16px 40px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
-  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
   text-decoration: none;
+  width: 100%;
 }
 
 .book-cta-button:hover {
-  background-color: #f0c674;
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.4);
+  background-color: #b45309;
 }
 
 .book-cta-button-preview {
-  width: 100%;
   display: inline-block;
-  background-color: transparent;
-  color: #d4af37;
-  border: 2px solid #d4af37;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   font-weight: 600;
   font-size: 16px;
   padding: 14px 32px;
+  margin-top: 16px;
   border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
-  margin-bottom: 16px;
+  width: 100%;
 }
 
 .book-cta-button-preview:hover {
-  background-color: #d4af37;
-  color: #1a1a1a;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .book-cta-badge {
@@ -188,13 +181,13 @@
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 16px;
 }
 
 .book-section-subtitle {
   font-size: 16px;
-  color: #6b7280;
+  color: #9ca3af;
   line-height: 1.6;
 }
 
@@ -203,8 +196,7 @@
    ============================================ */
 .book-problem-section {
   padding: 80px 24px;
-  background-color: #f9fafb;
-  color: #1a1a1a;
+  background-color: #212121;
 }
 
 .book-problems-grid {
@@ -223,19 +215,19 @@
   width: 48px;
   height: 48px;
   margin: 0 auto 16px;
-  color: #d4af37;
+  color: #d97706;
 }
 
 .book-problem-title {
   font-size: 20px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 8px;
 }
 
 .book-problem-description {
   font-size: 14px;
-  color: #6b7280;
+  color: #9ca3af;
   line-height: 1.6;
 }
 
@@ -244,7 +236,17 @@
    ============================================ */
 .book-revelation-section {
   padding: 80px 24px 112px;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background-color: #1a1a1a;
+  background-image: radial-gradient(
+      circle at top right,
+      rgba(217, 119, 6, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(59, 130, 246, 0.05),
+      transparent 50%
+    );
 }
 
 .book-revelation-title {
@@ -253,10 +255,6 @@
   font-weight: 700;
   color: #ffffff;
   line-height: 1.2;
-}
-
-.book-revelation-section .book-section-subtitle {
-  color: #9ca3af;
 }
 
 .book-quotes-container {
@@ -271,28 +269,21 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  border-left: 4px solid #d4af37;
-  padding-left: 24px;
 }
 
 .book-quote-reverse {
   flex-direction: row-reverse;
   text-align: right;
-  border-left: none;
-  border-right: 4px solid #d4af37;
-  padding-left: 0;
-  padding-right: 24px;
 }
 
 .book-quote-mark {
   font-size: 80px;
   font-weight: 700;
-  color: #d4af37;
+  color: #d97706;
   line-height: 0.8;
   flex-shrink: 0;
   width: 80px;
   text-align: center;
-  opacity: 0.5;
 }
 
 .book-quote-text {
@@ -308,7 +299,7 @@
    ============================================ */
 .book-mastery-section {
   padding: 80px 24px;
-  background-color: #f9fafb;
+  background-color: #212121;
 }
 
 .book-features-grid {
@@ -319,8 +310,8 @@
 }
 
 .book-feature-card {
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 24px;
   transition: all 0.3s ease;
@@ -328,19 +319,20 @@
 
 .book-feature-card:hover {
   transform: translateY(-5px);
-  border-color: #d4af37;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(217, 119, 6, 0.5);
 }
 
 .book-feature-title {
   font-size: 20px;
   font-weight: 700;
-  color: #b8860b;
+  color: #d97706;
   margin-bottom: 12px;
 }
 
 .book-feature-description {
   font-size: 15px;
-  color: #6b7280;
+  color: #d1d5db;
   line-height: 1.6;
 }
 
@@ -349,7 +341,17 @@
    ============================================ */
 .book-final-cta-section {
   padding: 80px 24px 112px;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background-color: #1a1a1a;
+  background-image: radial-gradient(
+      circle at top right,
+      rgba(217, 119, 6, 0.1),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(59, 130, 246, 0.05),
+      transparent 50%
+    );
 }
 
 .book-final-cta-content {
@@ -372,7 +374,7 @@
 
 .book-final-cta-title {
   font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: clamp(28px, 4vw, 40px);
+  font-size: clamp(32px, 5vw, 50px);
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 24px;
@@ -411,13 +413,9 @@
 }
 
 @media (max-width: 640px) {
-  .book-hero-section {
-    padding: 60px 20px 80px;
-  }
+  .book-hero-section,
   .book-problem-section,
-  .book-mastery-section {
-    padding: 60px 20px;
-  }
+  .book-mastery-section,
   .book-revelation-section,
   .book-final-cta-section {
     padding: 60px 20px 80px;
@@ -425,7 +423,7 @@
   .book-quote-block {
     flex-direction: column !important;
     text-align: center !important;
-    border-left: 4px solid #d4af37;
+    border-left: 4px solid #d97706;
     border-right: none;
     padding: 24px;
   }
