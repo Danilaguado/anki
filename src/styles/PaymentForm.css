@@ -46,7 +46,7 @@ body {
 }
 
 .secure-badge img {
-  max-width: 120px;
+  max-width: 60%;
   width: 100%;
   height: auto;
 }
@@ -394,12 +394,12 @@ body {
   cursor: not-allowed;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .secure-badge img {
-    max-width: 100px;
-  }
-}
+/* Responsive
+  @media (max-width: 1024px) {
+    .secure-badge img {
+      max-width: 100px;
+    }
+  } */
 
 @media (max-width: 640px) {
   .app-container {
