@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import nodemailer from "nodemailer";
 
-// --- Funciones de notificación por correo ---
+// --- Funciones de notificación por correo (sin cambios) ---
 async function notifyAdminRejectedPayment(transporter, data) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
@@ -116,6 +116,7 @@ export default async function handler(req, res) {
       .json({ success: false, message: "Método no permitido" });
   }
 
+  // =====> CORRECCIÓN #1: Añadir 'phone' a la lista <=====
   const {
     nombre,
     correo,
@@ -148,6 +149,7 @@ export default async function handler(req, res) {
     }
   }
 
+  // =====> CORRECCIÓN #2: Añadir '!phone' a la validación <=====
   if (!nombre || !correo || !phone) {
     return res.status(400).json({
       success: false,
@@ -172,35 +174,8 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sheetName = "Pagos";
-
-    // ========== VERIFICAR SI LA HOJA EXISTE Y CREAR SI NO ==========
-    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
-    const sheetExists = spreadsheetInfo.data.sheets.some(
-      (s) => s.properties.title === sheetName
-    );
-
-    if (!sheetExists) {
-      await sheets.spreadsheets.batchUpdate({
-        spreadsheetId,
-        resource: {
-          requests: [{ addSheet: { properties: { title: sheetName } } }],
-        },
-      });
-
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `${sheetName}!A1:E1`,
-        valueInputOption: "USER_ENTERED",
-        resource: {
-          values: [
-            ["Fecha", "Nombre", "Correo", "Referencia (últimos 4)", "Teléfono"],
-          ],
-        },
-      });
-    }
-    // ========== FIN VERIFICACIÓN DE HOJA ==========
-
     const range = `${sheetName}!A:E`;
+
     const getRows = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,
@@ -210,7 +185,6 @@ export default async function handler(req, res) {
     let rowIndexToUpdate = -1;
     const phoneColumnIndex = 4; // Columna E, donde está el teléfono.
 
-    // Búsqueda de leads incompletos
     if (rows.length > 0) {
       for (let i = rows.length - 1; i > 0; i--) {
         const row = rows[i];
@@ -364,6 +338,8 @@ export default async function handler(req, res) {
     };
 
     await transporter.sendMail(mailOptions);
+
+    // --- Fin de la lógica de envío de correo ---
 
     // Notificar al admin sobre el pago aprobado
     await notifyAdminApprovedPayment(transporter, {
