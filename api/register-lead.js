@@ -26,7 +26,37 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sheetName = "Pagos";
-    const range = `${sheetName}!A:E`; // Asumimos que el teléfono está en la columna E
+
+    // ========== VERIFICAR SI LA HOJA EXISTE ==========
+    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetExists = spreadsheetInfo.data.sheets.some(
+      (s) => s.properties.title === sheetName
+    );
+
+    if (!sheetExists) {
+      // Crear la hoja si no existe
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        resource: {
+          requests: [{ addSheet: { properties: { title: sheetName } } }],
+        },
+      });
+
+      // Agregar headers
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${sheetName}!A1:E1`,
+        valueInputOption: "USER_ENTERED",
+        resource: {
+          values: [
+            ["Fecha", "Nombre", "Correo", "Referencia (últimos 4)", "Teléfono"],
+          ],
+        },
+      });
+    }
+    // ========== FIN VERIFICACIÓN DE HOJA ==========
+
+    const range = `${sheetName}!A:E`;
 
     const getRows = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -34,42 +64,24 @@ export default async function handler(req, res) {
     });
     const rows = getRows.data.values || [];
 
-    // Si la hoja está vacía, crea los encabezados
-    if (rows.length === 0) {
-      const HEADERS = [
-        "Fecha",
-        "Nombre",
-        "Correo",
-        "Referencia (últimos 4)",
-        "Telefono",
-      ];
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `${sheetName}!A1`,
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [HEADERS] },
-      });
-    }
-
     const phoneColumnIndex = 4; // Columna E
 
     // Busca si ya existe un "lead" abierto (teléfono registrado pero sin nombre/correo)
     const hasOpenLead = rows
-      .slice(1)
+      .slice(1) // Saltar header
       .some((row) => row[phoneColumnIndex] === phone && (!row[1] || !row[2]));
 
     if (hasOpenLead) {
       console.log(
         `Ya existe un lead abierto para ${phone}. No se agrega uno nuevo.`
       );
-      // Si ya hay un lead abierto, no hacemos nada y permitimos que el siguiente paso lo actualice.
+      // Si ya hay un lead abierto, permitir que el siguiente paso lo actualice
       return res
         .status(200)
         .json({ success: true, message: "Lead abierto ya existente." });
     }
 
-    // Si no hay un lead abierto (ya sea porque no existe o porque todas sus compras están completas),
-    // creamos una nueva fila de lead.
+    // Si no hay un lead abierto, crear una nueva fila
     console.log(`Creando nuevo lead para ${phone}.`);
     const newRow = [
       new Date().toLocaleString("es-ES", { timeZone: "America/Caracas" }),
@@ -79,11 +91,12 @@ export default async function handler(req, res) {
       phone, // Teléfono
     ];
 
+    // CORRECCIÓN: Agregar correctamente el array
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range,
       valueInputOption: "USER_ENTERED",
-      resource: { values: [[newRow]] },
+      resource: { values: [newRow] }, // newRow ya es un array, no necesita doble array
     });
 
     return res
@@ -91,8 +104,10 @@ export default async function handler(req, res) {
       .json({ success: true, message: "Nuevo lead registrado exitosamente" });
   } catch (error) {
     console.error("Error en /api/register-lead:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Error al procesar la solicitud" });
+    return res.status(500).json({
+      success: false,
+      message: "Error al procesar la solicitud",
+      error: error.message, // Para debug
+    });
   }
 }
