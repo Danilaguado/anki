@@ -74,9 +74,9 @@ const PrePaymentPage = () => {
           className='prepayment-logo'
         />
         {/* 👇 INICIA EL TEXTO ACTUALIZADO 👇 */}
-        <h1 className='prepayment-title'>Ingresa o crea una cuenta</h1>
+        <h1 className='prepayment-title'>Estás a un paso de tu libro</h1>
         <p className='prepayment-subtitle'>
-          Es rápido, solo ingresa tu número de celular para continuar.
+          Ingresa tu número de celular para proteger y darte acceso a tu compra.
         </p>
         {/* ☝️ FINALIZA EL TEXTO ACTUALIZADO ☝️ */}
 
