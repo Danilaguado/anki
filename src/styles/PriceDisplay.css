@@ -1,77 +1,71 @@
-.price-display-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 1.5rem;
-  text-align: left;
+/* src/styles/PriceDisplay.css */
+
+.price-container {
+  margin-bottom: 16px;
+  text-align: center;
 }
 
-.price-loading,
-.price-error {
-  color: #9ca3af;
-  margin-bottom: 1.5rem;
-  font-style: italic;
-}
-
-.price-error {
-  color: #ef4444;
-}
-
-.price-main {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  margin-bottom: 0.25rem;
-}
-
-.price-discount-badge {
-  font-size: 1.75rem; /* 28px */
-  font-weight: 400; /* <-- CAMBIO: Más fino */
-  color: #ef4444;
-}
-
-.price-current {
-  font-weight: 600; /* <-- CAMBIO: Menos grueso */
-  color: #ffffff;
-  line-height: 1;
-}
-
-.price-currency {
-  font-size: 1.875rem; /* 30px */
-  font-weight: 500;
-  color: #d1d5db;
-  margin-right: 0.25rem;
-  vertical-align: super;
-}
-
-.price-integer {
-  font-size: 3rem; /* 48px */
-}
-
-.price-decimal {
-  font-size: 1.875rem; /* 30px */
-  vertical-align: super;
-}
-
-.price-original-container {
+.price-display {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.price-original-label {
-  font-size: 0.875rem; /* 14px */
-  color: #9ca3af;
+.discount {
+  color: #ef4444;
+  font-size: 24px;
+  font-family: "Inter", sans-serif;
 }
 
-.price-original-value {
-  font-size: 0.875rem; /* 14px */
+.price {
+  color: #e0e0e0; /* Color blanco para temas oscuros */
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1;
+  font-family: "Inter", sans-serif;
+}
+
+.price sup {
+  font-size: 0.5em;
+  font-weight: 600;
+  vertical-align: super;
+  margin-left: 2px;
+}
+
+.original-price {
   color: #9ca3af;
+  font-size: 14px;
+  margin-top: 4px;
+  font-family: "Inter", sans-serif;
+}
+
+.original-price s {
   text-decoration: line-through;
 }
 
-/* Modificador para centrar en la página Home */
-.price-display-container.centered {
-  align-items: center;
-  text-align: center;
+.loading,
+.error {
+  font-style: italic;
+  color: #9ca3af;
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+/* Ajustes específicos para la card del Home */
+.home-book-card .price-display .price {
+  color: #fff; /* Blanco en el Home */
+}
+
+.home-book-card .price {
+  font-size: 32px;
+}
+
+.home-book-card .discount {
+  font-size: 20px;
+}
+
+.home-book-card .original-price {
+  font-size: 13px;
 }
