@@ -10,7 +10,6 @@ import PaymentPage from "./pages/PaymentPage";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton"; // <-- 1. Importar
 import TopBanner from "./components/TopBanner";
-import NewsletterSubscribe from "../components/NewsletterSubscribe";
 
 function App() {
   return (

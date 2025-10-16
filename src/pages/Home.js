@@ -7,6 +7,7 @@ import PriceDisplay from "../components/PriceDisplay"; // Importar el nuevo comp
 import bookData from "../data/bookData.json"; // Importar los datos
 import TestimonialCarousel from "../components/TestimonialCarousel";
 import MembershipBanner from "../components/MembershipBanner";
+import NewsletterSubscribe from "../components/NewsletterSubscribe";
 
 const Home = () => {
   const navigate = useNavigate();
