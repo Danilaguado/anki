@@ -15,8 +15,15 @@
   font-size: 30px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease; /* Transición para todos los cambios */
 }
+
+/* 👇 INICIA LA NUEVA REGLA 👇 */
+/* Cuando el teclado está visible, sube el botón */
+body.keyboard-visible .whatsapp-float {
+  bottom: 280px; /* Ajusta este valor si es necesario */
+}
+/* ☝️ FINALIZA LA NUEVA REGLA ☝️ */
 
 .whatsapp-float:hover {
   transform: scale(1.1);
@@ -100,6 +107,12 @@
     width: 55px;
     height: 55px;
   }
+
+  /* Sube el botón también en móviles cuando el teclado está activo */
+  body.keyboard-visible .whatsapp-float {
+    bottom: 280px;
+  }
+
   .whatsapp-bubble {
     bottom: 70px;
   }
