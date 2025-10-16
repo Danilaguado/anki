@@ -1,15 +1,14 @@
-// src/components/PriceDisplay.js
 import React, { useState, useEffect } from "react";
 import "../styles/PriceDisplay.css";
 
-const PriceDisplay = () => {
+const PriceDisplay = ({ centered = false }) => {
   const [dollarRate, setDollarRate] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDollarRate = async () => {
+      setLoading(true);
       try {
-        // Reutilizamos la lógica de caché de sessionStorage que ya tienes
         const sessionRate = sessionStorage.getItem("dollarRate");
         const sessionTimestamp = sessionStorage.getItem("dollarRateTimestamp");
 
@@ -35,6 +34,7 @@ const PriceDisplay = () => {
         setDollarRate(data.promedio);
       } catch (error) {
         console.error("Error fetching dollar rate:", error);
+        setDollarRate(40.0); // Fallback en caso de error
       } finally {
         setLoading(false);
       }
@@ -44,31 +44,41 @@ const PriceDisplay = () => {
   }, []);
 
   if (loading) {
-    return <div className='price-container loading'>Cargando precio...</div>;
+    return <div className='price-container loading'>Calculando precio...</div>;
   }
 
   if (!dollarRate) {
-    // Si no se puede cargar, no mostramos nada para no romper el diseño.
-    return null;
+    return null; // No mostrar nada si la API falla
   }
 
-  // Tomamos el precio base de 1 USD como está en tu lógica de PaymentForm
-  const priceInBolivares = dollarRate * 3;
-  // Calculamos el precio original sumando el 33% al precio con descuento
-  const originalPrice = priceInBolivares / (1 - 0.33);
+  // --- LÓGICA DE PRECIO ---
+  const priceInBolivares = dollarRate * 3; // Puedes ajustar el '3' para cambiar el precio en USD
+  const discount = 0.33;
+  const originalPrice = priceInBolivares * (1 + discount); // Cálculo corregido
+  const discountPercentage = Math.round(discount * 100);
+
+  const formatPrice = (price) => {
+    const parts = price.toFixed(2).split(".");
+    return {
+      integer: parts[0],
+      decimal: parts[1],
+    };
+  };
+
+  const formattedCurrent = formatPrice(priceInBolivares);
 
   return (
-    <div className='price-container'>
+    <div className={`price-container ${centered ? "centered" : ""}`}>
       <div className='price-display'>
-        <span className='discount'>-33%</span>
+        <span className='discount'>-{discountPercentage}%</span>
         <span className='price'>
           <sup>Bs.</sup>
-          {priceInBolivares.toFixed(2).replace(".", ",").split(",")[0]}
-          <sup>{priceInBolivares.toFixed(2).split(",")[1]}</sup>
+          {formattedCurrent.integer}
+          <sup>{formattedCurrent.decimal}</sup>
         </span>
       </div>
       <div className='original-price'>
-        Precio de capa sugerido:{" "}
+        Valor sin descuento:{" "}
         <s>Bs. {originalPrice.toFixed(2).replace(".", ",")}</s>
       </div>
     </div>
