@@ -114,41 +114,47 @@
 }
 
 .book-cta-button {
+  width: 100%;
   display: inline-block;
-  background-color: #d97706;
-  color: #ffffff;
-  font-weight: 600;
+  background-color: #d4af37; /* Color amarillo principal */
+  color: #1a1a1a; /* Texto oscuro para contraste */
+  font-weight: 700;
   font-size: 18px;
   padding: 16px 40px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+  margin-bottom: 12px;
   text-decoration: none;
-  width: 100%;
 }
 
 .book-cta-button:hover {
+  background-color: #f0c674; /* Un amarillo más claro al pasar el mouse */
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.4);
-  background-color: #b45309;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
 }
 
 .book-cta-button-preview {
+  width: 100%;
   display: inline-block;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background-color: transparent;
+  color: #d4af37; /* Color del texto y borde */
+  border: 2px solid #d4af37; /* Borde amarillo */
   font-weight: 600;
   font-size: 16px;
   padding: 14px 32px;
-  margin-top: 16px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
-  width: 100%;
+  margin-bottom: 16px;
+}
+
+.book-cta-button-preview:hover {
+  background-color: #d4af37; /* Fondo amarillo al pasar el mouse */
+  color: #1a1a1a; /* Texto oscuro */
 }
 
 .book-cta-button-preview:hover {
