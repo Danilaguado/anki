@@ -46,7 +46,7 @@ body {
 }
 
 .secure-badge img {
-  max-width: 60%;
+  max-width: 22rem;
   width: 100%;
   height: auto;
 }
