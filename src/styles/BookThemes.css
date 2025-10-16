@@ -40,7 +40,155 @@
 .theme-gambito-rey {
   --book-primary: #d4af37;
   --book-primary-hover: #f0c674;
-  --book-accent: #b8860b;
+  --book-accent: #b8860b
+    /* src/styles/BookThemes.css - Variables de color personalizadas por libro */
+    /* ==================== DESCIFRANDO A EVA (Default theme) ==================== */
+    .theme-descifrando-eva {
+    --book-primary: #d4af37;
+    --book-primary-hover: #f0c674;
+    --book-bg-dark: #1a1a1a;
+    --book-bg-medium: #212121;
+    --book-bg-light: #f9fafb;
+    --book-text-dark: #1a1a1a;
+    --book-text-light: #e0e0e0;
+    --book-bg-gradient: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  }
+
+  /* ==================== EL MÚSCULO DE LA VOLUNTAD ==================== */
+  .theme-musculo-voluntad {
+    --book-primary: #ef4444;
+    --book-primary-hover: #f87171;
+    --book-bg-dark: #111827;
+    --book-bg-medium: #1f2937;
+    --book-bg-gradient: radial-gradient(
+        circle at top right,
+        rgba(59, 130, 246, 0.1),
+        transparent 40%
+      ),
+      radial-gradient(
+        circle at bottom left,
+        rgba(139, 92, 246, 0.05),
+        transparent 50%
+      );
+  }
+
+  .theme-musculo-voluntad .book-hero-section,
+  .theme-musculo-voluntad .book-revelation-section,
+  .theme-musculo-voluntad .book-final-cta-section {
+    background-color: var(--book-bg-dark);
+  }
+
+  .theme-musculo-voluntad .book-cta-button {
+    background-color: var(--book-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  }
+  .theme-musculo-voluntad .book-cta-button:hover {
+    background-color: #dc2626;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  }
+
+  /* ==================== HABLA Y CONQUISTA ==================== */
+  .theme-habla-conquista {
+    --book-primary: #3b82f6;
+    --book-primary-hover: #60a5fa;
+    --book-bg-dark: #1a1a1a;
+    --book-bg-medium: #262626;
+    --book-bg-gradient: radial-gradient(
+        circle at top right,
+        rgba(59, 130, 246, 0.1),
+        transparent 40%
+      ),
+      radial-gradient(
+        circle at bottom left,
+        rgba(37, 99, 235, 0.05),
+        transparent 50%
+      );
+  }
+
+  .theme-habla-conquista .book-cta-button {
+    background-color: var(--book-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  }
+  .theme-habla-conquista .book-cta-button:hover {
+    background-color: #2563eb;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  }
+
+  /* ==================== EL ASCENSO ==================== */
+  .theme-el-ascenso {
+    --book-primary: #8b5cf6;
+    --book-primary-hover: #a78bfa;
+    --book-bg-dark: #0a0a0a;
+    --book-bg-medium: #141414;
+    --book-bg-gradient: radial-gradient(
+        circle at top right,
+        rgba(139, 92, 246, 0.15),
+        transparent 40%
+      ),
+      radial-gradient(
+        circle at bottom left,
+        rgba(167, 139, 250, 0.08),
+        transparent 50%
+      );
+  }
+
+  .theme-el-ascenso .book-hero-title {
+    color: var(--book-primary-hover);
+  }
+
+  .theme-el-ascenso .book-cta-button {
+    background-color: var(--book-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  }
+
+  .theme-el-ascenso .book-cta-button:hover {
+    background-color: #7c3aed;
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  }
+
+  /* ==================== EL GAMBITO DEL REY ==================== */
+  .theme-gambito-rey {
+    --book-primary: #d4af37;
+    --book-primary-hover: #e0e0e0;
+    --book-bg-dark: #121212;
+    --book-bg-medium: #1e1e1e;
+    --book-bg-gradient: radial-gradient(
+      circle at 50% 20%,
+      rgba(30, 30, 30, 0.9),
+      var(--book-bg-dark) 70%
+    );
+  }
+
+  .theme-gambito-rey .book-hero-title .gambito-highlight {
+    color: var(--book-primary);
+  }
+
+  .theme-gambito-rey .book-cta-button {
+    background-color: var(--book-primary);
+    color: #000000;
+    box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
+  }
+
+  .theme-gambito-rey .book-cta-button:hover {
+    box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
+  }
+
+  .theme-gambito-rey .book-cta-quote {
+    border-left: 3px solid var(--book-primary);
+    padding-left: 1.5rem;
+  }
+
+  @media (max-width: 767px) {
+    .theme-gambito-rey .book-cta-quote {
+      border-left: none;
+      border-top: 3px solid var(--book-primary);
+      padding-left: 0;
+      padding-top: 1rem;
+    }
+  }
   --book-gradient-start: #1e1e1e;
   --book-gradient-end: #2a2a2a;
 }

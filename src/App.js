@@ -1,14 +1,10 @@
 // src/App.js
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "./styles/PaymentForm.css";
+import "./styles/PaymentForm.css"; // Estilos globales necesarios
 import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
-import DescifrandoEva from "./pages/DescifrandoEva";
-import MusculoVoluntad from "./pages/MusculoVoluntad";
-import HablaConquista from "./pages/HablaConquista";
-import ElAscenso from "./pages/ElAscenso";
-import GambitoRey from "./pages/GambitoRey";
+import BookPage from "./pages/BookPage"; // El nuevo componente genérico
 import PaymentPage from "./pages/PaymentPage";
 import TermsAndConditions from "./pages/TermsAndConditions";
 
@@ -17,14 +13,15 @@ function App() {
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
+        {/* Rutas principales */}
         <Route path='/' element={<Home />} />
-        <Route path='/descifrando-eva' element={<DescifrandoEva />} />
-        <Route path='/musculo-voluntad' element={<MusculoVoluntad />} />
-        <Route path='/habla-conquista' element={<HablaConquista />} />
-        <Route path='/el-ascenso' element={<ElAscenso />} />
-        <Route path='/gambito-rey' element={<GambitoRey />} />
         <Route path='/payment' element={<PaymentPage />} />
         <Route path='/terms' element={<TermsAndConditions />} />
+
+        {/* Ruta dinámica para todos los libros */}
+        {/* React Router v6 es lo suficientemente inteligente como para no confundir esto
+            con las rutas de arriba. Probará las rutas en orden. */}
+        <Route path='/:bookId' element={<BookPage />} />
       </Routes>
     </BrowserRouter>
   );

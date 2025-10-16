@@ -1,387 +1,30 @@
 /* src/styles/BookLanding.css - Estilos base para todas las landing pages */
 
-/* ==================== VARIABLES BASE ==================== */
-:root {
-  --book-primary: #d4af37;
-  --book-primary-hover: #f0c674;
-  --book-bg-dark: #1a1a1a;
-  --book-bg-light: #f9fafb;
-  --book-text-dark: #1a1a1a;
-  --book-text-light: #e0e0e0;
-  --book-text-gray: #6b7280;
-  --book-border: #e5e7eb;
-}
-
-/* ==================== CONTAINER BASE ==================== */
+/* ============================================
+   RESET Y BASE
+   ============================================ */
 .book-landing-container {
-  min-height: 100vh;
-  width: 100%;
-}
-
-/* ==================== HERO SECTION ==================== */
-.book-hero-section {
-  padding: 80px 20px 60px;
-  background: linear-gradient(135deg, var(--book-bg-dark) 0%, #2d2d2d 100%);
-  color: var(--book-text-light);
-}
-
-.book-hero-content {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.book-hero-inner {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.book-hero-title {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 24px;
-  color: var(--book-text-light);
-}
-
-.book-hero-subtitle {
-  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
   line-height: 1.6;
-  color: #d1d5db;
-  max-width: 800px;
-  margin: 0 auto;
+  overflow-x: hidden;
+  background-color: var(--book-bg-dark, #1a1a1a);
+  color: var(--book-text-light, #e0e0e0);
 }
 
-.book-hero-cta-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-  margin-top: 60px;
+.book-landing-container * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (min-width: 768px) {
-  .book-hero-cta-container {
-    flex-direction: row;
-    justify-content: center;
-    align-items: flex-start;
-  }
-}
-
-.book-cover {
-  width: 250px;
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
-}
-
-.book-cover:hover {
-  transform: translateY(-5px);
-}
-
-.book-cta-content {
-  max-width: 500px;
-  text-align: left;
-}
-
-.book-cta-quote {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #d1d5db;
-  margin-bottom: 24px;
-  font-style: italic;
-}
-
-.book-cta-button {
-  width: 100%;
-  padding: 16px 32px;
-  background-color: var(--book-primary);
-  color: var(--book-bg-dark);
-  border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-bottom: 12px;
-}
-
-.book-cta-button:hover {
-  background-color: var(--book-primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
-}
-
-.book-cta-button-preview {
-  width: 100%;
-  padding: 14px 32px;
-  background-color: transparent;
-  color: var(--book-primary);
-  border: 2px solid var(--book-primary);
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-bottom: 16px;
-}
-
-.book-cta-button-preview:hover {
-  background-color: var(--book-primary);
-  color: var(--book-bg-dark);
-}
-
-.book-cta-badge {
-  font-size: 0.9rem;
-  color: var(--book-primary);
-  font-weight: 600;
-  text-align: center;
-}
-
-/* ==================== SECTION BASE ==================== */
-.book-section {
-  padding: 80px 20px;
-}
-
-.book-section-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.book-section-header {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.book-section-title {
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-  font-weight: 700;
-  color: var(--book-text-dark);
-  margin-bottom: 20px;
-  line-height: 1.3;
-}
-
-.book-section-subtitle {
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  color: var(--book-text-gray);
-  max-width: 800px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-/* ==================== PROBLEM SECTION ==================== */
-.book-problem-section {
-  background-color: var(--book-bg-light);
-  padding: 80px 20px;
-}
-
-.book-problems-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 30px;
-  margin-top: 40px;
-}
-
-@media (min-width: 768px) {
-  .book-problems-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .book-problems-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.book-problem-card {
-  background: white;
-  padding: 32px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-}
-
-.book-problem-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.book-problem-icon {
-  width: 48px;
-  height: 48px;
-  color: var(--book-primary);
-  margin-bottom: 20px;
-}
-
-.book-problem-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--book-text-dark);
-  margin-bottom: 12px;
-}
-
-.book-problem-description {
-  color: var(--book-text-gray);
-  line-height: 1.6;
-  font-size: 1rem;
-}
-
-/* ==================== REVELATION SECTION ==================== */
-.book-revelation-section {
-  padding: 80px 20px;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-}
-
-.book-revelation-title {
-  font-size: clamp(2rem, 4vw, 2.8rem);
-  font-weight: 700;
-  color: var(--book-text-dark);
-  margin-bottom: 24px;
-  line-height: 1.2;
-}
-
-.book-quotes-container {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
-  margin-top: 60px;
-}
-
-.book-quote-block {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  position: relative;
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.book-quote-reverse {
-  margin-left: auto;
-}
-
-.book-quote-mark {
-  font-size: 4rem;
-  color: var(--book-primary);
-  line-height: 1;
-  margin-bottom: 20px;
-  font-family: Georgia, serif;
-}
-
-.book-quote-text {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  color: var(--book-text-dark);
-  font-style: italic;
-}
-
-/* ==================== MASTERY SECTION ==================== */
-.book-mastery-section {
-  padding: 80px 20px;
-  background-color: white;
-}
-
-.book-features-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 30px;
-  margin-top: 40px;
-}
-
-@media (min-width: 768px) {
-  .book-features-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .book-features-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.book-feature-card {
-  background: var(--book-bg-light);
-  padding: 32px;
-  border-radius: 12px;
-  border-left: 4px solid var(--book-primary);
-  transition: all 0.3s ease;
-}
-
-.book-feature-card:hover {
-  background: white;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  transform: translateX(5px);
-}
-
-.book-feature-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--book-text-dark);
-  margin-bottom: 12px;
-}
-
-.book-feature-description {
-  color: var(--book-text-gray);
-  line-height: 1.6;
-  font-size: 1rem;
-}
-
-/* ==================== FINAL CTA SECTION ==================== */
-.book-final-cta-section {
-  padding: 80px 20px;
-  background: linear-gradient(135deg, var(--book-bg-dark) 0%, #2d2d2d 100%);
-  color: var(--book-text-light);
-}
-
-.book-final-cta-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-  text-align: center;
-}
-
-@media (min-width: 768px) {
-  .book-final-cta-content {
-    flex-direction: row;
-    text-align: left;
-  }
-}
-
-.book-final-book-cover {
-  width: 300px;
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-}
-
-.book-final-cta-title {
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-  font-weight: 700;
-  margin-bottom: 20px;
-  line-height: 1.3;
-}
-
-.book-final-cta-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #d1d5db;
-  margin-bottom: 32px;
-}
-
-.book-cta-button.final {
-  max-width: 400px;
-}
-
-/* ==================== SCROLL REVEAL ANIMATIONS ==================== */
+/* ============================================
+   ANIMACIONES SCROLL REVEAL
+   ============================================ */
 .scroll-reveal {
   opacity: 0;
   transform: translateY(30px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
 
 .scroll-reveal.visible {
@@ -389,52 +32,412 @@
   transform: translateY(0);
 }
 
-.scroll-reveal.delay-100 {
-  transition-delay: 0.1s;
+.delay-100 {
+  transition-delay: 100ms;
+}
+.delay-200 {
+  transition-delay: 200ms;
+}
+.delay-300 {
+  transition-delay: 300ms;
+}
+.delay-400 {
+  transition-delay: 400ms;
+}
+.delay-500 {
+  transition-delay: 500ms;
+}
+.delay-600 {
+  transition-delay: 600ms;
 }
 
-.scroll-reveal.delay-200 {
-  transition-delay: 0.2s;
+/* ============================================
+   HERO SECTION
+   ============================================ */
+.book-hero-section {
+  padding: 80px 24px 128px;
+  background: var(
+    --book-bg-gradient,
+    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)
+  );
 }
 
-.scroll-reveal.delay-300 {
-  transition-delay: 0.3s;
+.book-hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
 }
 
-.scroll-reveal.delay-400 {
-  transition-delay: 0.4s;
+.book-hero-inner {
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-.scroll-reveal.delay-500 {
-  transition-delay: 0.5s;
+.book-hero-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  margin-bottom: 24px;
 }
 
-.scroll-reveal.delay-600 {
-  transition-delay: 0.6s;
+.book-hero-subtitle {
+  font-size: clamp(16px, 2vw, 20px);
+  color: #d1d5db;
+  max-width: 800px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 767px) {
+.book-hero-cta-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  margin-top: 40px;
+}
+
+.book-cover {
+  width: 224px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease;
+}
+.book-cover:hover {
+  transform: translateY(-5px);
+}
+
+.book-cta-content {
+  max-width: 450px;
+  text-align: center;
+}
+
+.book-cta-quote {
+  color: #d1d5db;
+  font-style: italic;
+  margin-bottom: 24px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.book-cta-button {
+  width: 100%;
+  display: inline-block;
+  background-color: var(--book-primary, #d97706);
+  color: var(--book-bg-dark, #1a1a1a);
+  font-weight: 700;
+  font-size: 18px;
+  padding: 16px 40px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  margin-bottom: 12px;
+  text-decoration: none;
+}
+
+.book-cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.book-cta-button-preview {
+  width: 100%;
+  display: inline-block;
+  background-color: transparent;
+  color: var(--book-primary, #d97706);
+  border: 2px solid var(--book-primary, #d97706);
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+
+.book-cta-button-preview:hover {
+  background-color: var(--book-primary, #d97706);
+  color: var(--book-bg-dark, #1a1a1a);
+}
+
+.book-cta-badge {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 12px;
+}
+
+/* ============================================
+   SECTIONES GENÉRICAS
+   ============================================ */
+.book-section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.book-section-header {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 48px;
+}
+
+.book-section-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+.book-section-subtitle {
+  font-size: 16px;
+  color: #9ca3af;
+  line-height: 1.6;
+}
+
+/* ============================================
+   PROBLEM SECTION
+   ============================================ */
+.book-problem-section {
+  padding: 80px 24px;
+  background-color: var(--book-bg-medium, #212121);
+}
+
+.book-problems-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.book-problem-card {
+  text-align: center;
+  padding: 24px;
+}
+
+.book-problem-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  color: var(--book-primary, #d97706);
+}
+
+.book-problem-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.book-problem-description {
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.6;
+}
+
+/* ============================================
+   REVELATION SECTION
+   ============================================ */
+.book-revelation-section {
+  padding: 80px 24px 112px;
+  background: var(
+    --book-bg-gradient,
+    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)
+  );
+}
+
+.book-revelation-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(32px, 5vw, 50px);
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.book-quotes-container {
+  max-width: 1000px;
+  margin: 64px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.book-quote-block {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  border-left: 4px solid var(--book-primary, #d97706);
+  padding-left: 24px;
+}
+
+.book-quote-reverse {
+  flex-direction: row-reverse;
+  text-align: right;
+  border-left: none;
+  border-right: 4px solid var(--book-primary, #d97706);
+  padding-left: 0;
+  padding-right: 24px;
+}
+
+.book-quote-mark {
+  font-size: 80px;
+  font-weight: 700;
+  color: var(--book-primary, #d97706);
+  line-height: 0.8;
+  flex-shrink: 0;
+  width: 80px;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.book-quote-text {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(20px, 3vw, 32px);
+  font-style: italic;
+  color: #ffffff;
+  line-height: 1.5;
+}
+
+/* ============================================
+   MASTERY SECTION
+   ============================================ */
+.book-mastery-section {
+  padding: 80px 24px;
+  background-color: var(--book-bg-medium, #212121);
+}
+
+.book-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.book-feature-card {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.book-feature-card:hover {
+  transform: translateY(-5px);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--book-primary, #d97706);
+}
+
+.book-feature-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--book-primary-hover, #f0c674);
+  margin-bottom: 12px;
+}
+
+.book-feature-description {
+  font-size: 15px;
+  color: #d1d5db;
+  line-height: 1.6;
+}
+
+/* ============================================
+   FINAL CTA SECTION
+   ============================================ */
+.book-final-cta-section {
+  padding: 80px 24px 112px;
+  background: var(
+    --book-bg-gradient,
+    linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)
+  );
+}
+
+.book-final-cta-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 32px;
+}
+
+.book-final-book-cover {
+  width: 224px;
+  height: auto;
+  margin: 0 auto 32px;
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.book-final-cta-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 24px;
+}
+
+.book-final-cta-text {
+  font-size: 18px;
+  color: #d1d5db;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 700px;
+}
+
+.book-cta-button.final {
+  font-size: 20px;
+  padding: 20px 48px;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (min-width: 768px) {
+  .book-hero-cta-container {
+    flex-direction: row;
+    justify-content: center;
+    gap: 48px;
+  }
+  .book-cta-content {
+    text-align: left;
+  }
+  .book-final-cta-content {
+    flex-direction: row;
+    text-align: left;
+    gap: 48px;
+  }
+}
+
+@media (max-width: 640px) {
   .book-hero-section {
-    padding: 60px 20px 40px;
+    padding: 60px 20px 80px;
   }
-
-  .book-section {
-    padding: 60px 20px;
-  }
-
   .book-problem-section,
-  .book-revelation-section,
-  .book-mastery-section,
-  .book-final-cta-section {
+  .book-mastery-section {
     padding: 60px 20px;
   }
-
-  .book-cover {
-    width: 200px;
+  .book-revelation-section,
+  .book-final-cta-section {
+    padding: 60px 20px 80px;
   }
-
-  .book-final-book-cover {
-    width: 250px;
+  .book-quote-block {
+    flex-direction: column !important;
+    text-align: center !important;
+    border-left: 4px solid var(--book-primary, #d97706);
+    border-right: none;
+    padding: 24px;
+  }
+  .book-quote-mark {
+    width: 60px;
+    font-size: 60px;
+  }
+  .book-features-grid {
+    grid-template-columns: 1fr;
   }
 }
