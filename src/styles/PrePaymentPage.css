@@ -223,6 +223,6 @@
 }
 
 /* Prevenir que el body haga scroll */
-body {
-  overflow: hidden;
-}
+/* body { */
+/* overflow: hidden; */
+/* } */
