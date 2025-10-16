@@ -1,8 +1,7 @@
-// api/submit-payment.js
 import { google } from "googleapis";
 import nodemailer from "nodemailer";
 
-// Función auxiliar para enviar email al admin sobre pago rechazado
+// --- Funciones de notificación por correo ---
 async function notifyAdminRejectedPayment(transporter, data) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
@@ -29,47 +28,28 @@ async function notifyAdminRejectedPayment(transporter, data) {
         <div style="background-color: #ef4444; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
           <h1 style="color: white; margin: 0;">❌ Pago Rechazado - Verificación Manual Requerida</h1>
         </div>
-        
         <div style="padding: 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px;">
           <h2 style="color: #1a1a1a; margin-top: 0;">Detalles del intento de pago</h2>
-          
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Fecha:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${new Date(
-                data.fecha
-              ).toLocaleString("es-ES", { timeZone: "America/Caracas" })}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Nombre:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-                data.nombre
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-                data.correo
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Producto:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-                data.producto
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Monto Esperado:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">Bs. ${
-                data.montoEsperado || "N/A"
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; font-weight: 600;">Estado:</td>
-              <td style="padding: 12px;"><span style="background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600;">RECHAZADO</span></td>
-            </tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Fecha:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${new Date(
+              data.fecha
+            ).toLocaleString("es-ES", {
+              timeZone: "America/Caracas",
+            })}</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Nombre:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.nombre
+            }</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.correo
+            }</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Teléfono:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.phone || "No provisto"
+            }</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Producto:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.producto
+            }</td></tr>
+            <tr><td style="padding: 12px; font-weight: 600;">Estado:</td><td style="padding: 12px;"><span style="background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600;">RECHAZADO</span></td></tr>
           </table>
-
           <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 16px; margin: 20px 0; border-radius: 4px;">
             <h3 style="color: #991b1b; margin: 0 0 8px 0;">Razón del rechazo:</h3>
             <pre style="color: #7f1d1d; font-family: monospace; white-space: pre-wrap; margin: 0;">${JSON.stringify(
@@ -78,28 +58,13 @@ async function notifyAdminRejectedPayment(transporter, data) {
               2
             )}</pre>
           </div>
-
-          ${
-            data.comprobanteBase64
-              ? '<p style="color: #6b7280; margin-top: 20px;"><strong>📎 El comprobante está adjunto a este correo.</strong></p>'
-              : '<p style="color: #ef4444;">⚠️ No se recibió imagen del comprobante.</p>'
-          }
-
-          <div style="margin-top: 24px; padding: 16px; background-color: #fef3c7; border-radius: 4px;">
-            <p style="margin: 0; color: #92400e;">
-              <strong>Acción requerida:</strong> Verificar manualmente el comprobante y contactar al cliente si el pago es válido.
-            </p>
-          </div>
         </div>
-      </div>
-    `,
+      </div>`,
     attachments: attachments,
   };
-
   await transporter.sendMail(adminMailOptions);
 }
 
-// Función auxiliar para enviar email al admin sobre pago aprobado
 async function notifyAdminApprovedPayment(transporter, data) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
@@ -113,72 +78,42 @@ async function notifyAdminApprovedPayment(transporter, data) {
         <div style="background-color: #10b981; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
           <h1 style="color: white; margin: 0;">✅ Pago Aprobado Automáticamente</h1>
         </div>
-        
         <div style="padding: 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px;">
           <h2 style="color: #1a1a1a; margin-top: 0;">Detalles del pago</h2>
-          
           <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Fecha:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${new Date(
-                data.fecha
-              ).toLocaleString("es-ES", { timeZone: "America/Caracas" })}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Nombre:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-                data.nombre
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-                data.correo
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Producto:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-                data.producto
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Monto:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">Bs. ${
-                data.montoEsperado || "N/A"
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Referencia:</td>
-              <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-                data.referencia || "N/A"
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px; font-weight: 600;">Estado:</td>
-              <td style="padding: 12px;"><span style="background-color: #10b981; color: white; padding: 4px 12px; border-radius: 4px; font-weight: 600;">APROBADO</span></td>
-            </tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Fecha:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${new Date(
+              data.fecha
+            ).toLocaleString("es-ES", {
+              timeZone: "America/Caracas",
+            })}</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Nombre:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.nombre
+            }</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.correo
+            }</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Teléfono:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.phone
+            }</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Producto:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.producto
+            }</td></tr>
+            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Referencia:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
+              data.referencia || "N/A"
+            }</td></tr>
           </table>
-
-          <div style="margin-top: 24px; padding: 16px; background-color: #d1fae5; border-radius: 4px;">
-            <p style="margin: 0; color: #065f46;">
-              ✓ El cliente ha recibido el material digital automáticamente.
-            </p>
-          </div>
         </div>
-      </div>
-    `,
+      </div>`,
   };
-
   await transporter.sendMail(adminMailOptions);
 }
 
+// --- Handler Principal ---
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({
-      success: false,
-      message: "Método no permitido",
-    });
+    return res
+      .status(405)
+      .json({ success: false, message: "Método no permitido" });
   }
 
   const {
@@ -191,59 +126,38 @@ export default async function handler(req, res) {
     comprobanteBase64,
     montoEsperado,
     isRejected,
-    phone, // Nuevo: teléfono para identificar leads
+    phone,
   } = req.body;
 
-  // Configurar transporter de correo
   const transporter = nodemailer.createTransport({
     service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD },
   });
 
-  // Si el pago fue rechazado, solo notificar al admin
   if (isRejected) {
     try {
-      await notifyAdminRejectedPayment(transporter, {
-        nombre,
-        correo,
-        fecha,
-        producto,
-        montoEsperado,
-        validationError,
-        comprobanteBase64,
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: "Notificación de rechazo enviada al administrador",
-      });
+      await notifyAdminRejectedPayment(transporter, req.body);
+      return res
+        .status(200)
+        .json({ success: true, message: "Notificación de rechazo enviada." });
     } catch (error) {
       console.error("Error al notificar pago rechazado:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Error al notificar el rechazo",
-        error: error.message,
-      });
+      return res
+        .status(500)
+        .json({ success: false, message: "Error al notificar rechazo." });
     }
   }
 
-  // Validaciones normales para pagos aprobados
-  if (!nombre || !correo) {
+  if (!nombre || !correo || !phone) {
     return res.status(400).json({
       success: false,
-      message: "Nombre y correo son requeridos.",
+      message: "Faltan datos (nombre, correo o teléfono).",
     });
   }
-
-  // Validar que el producto exista
   if (!producto) {
-    return res.status(400).json({
-      success: false,
-      message: "No se especificó el producto.",
-    });
+    return res
+      .status(400)
+      .json({ success: false, message: "No se especificó el producto." });
   }
 
   try {
@@ -257,8 +171,9 @@ export default async function handler(req, res) {
 
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
-
     const sheetName = "Pagos";
+
+    // ========== VERIFICAR SI LA HOJA EXISTE Y CREAR SI NO ==========
     const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
     const sheetExists = spreadsheetInfo.data.sheets.some(
       (s) => s.properties.title === sheetName
@@ -283,8 +198,8 @@ export default async function handler(req, res) {
         },
       });
     }
+    // ========== FIN VERIFICACIÓN DE HOJA ==========
 
-    // ========== NUEVA LÓGICA: Buscar y actualizar leads incompletos ==========
     const range = `${sheetName}!A:E`;
     const getRows = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -293,16 +208,15 @@ export default async function handler(req, res) {
     const rows = getRows.data.values || [];
 
     let rowIndexToUpdate = -1;
-    const phoneColumnIndex = 4; // Columna E, donde está el teléfono
+    const phoneColumnIndex = 4; // Columna E, donde está el teléfono.
 
-    // Buscamos de abajo hacia arriba la primera fila que coincida con el teléfono y esté incompleta
-    if (phone && rows.length > 0) {
+    // Búsqueda de leads incompletos
+    if (rows.length > 0) {
       for (let i = rows.length - 1; i > 0; i--) {
         const row = rows[i];
-        // Verificamos si la columna del teléfono existe y si coincide, y si el nombre o correo están vacíos
         if (row[phoneColumnIndex] === phone && (!row[1] || !row[2])) {
           rowIndexToUpdate = i;
-          break; // Encontramos la más reciente, así que salimos del bucle
+          break;
         }
       }
     }
@@ -313,11 +227,10 @@ export default async function handler(req, res) {
       nombre,
       correo,
       referenciaUltimos4,
-      phone || "", // Incluir teléfono si está disponible
+      phone,
     ];
 
     if (rowIndexToUpdate !== -1) {
-      // Si encontramos la fila del lead, la ACTUALIZAMOS
       const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:E${
         rowIndexToUpdate + 1
       }`;
@@ -331,7 +244,6 @@ export default async function handler(req, res) {
         `Fila ${rowIndexToUpdate + 1} actualizada para el teléfono ${phone}.`
       );
     } else {
-      // Como caso de emergencia (si no se encontró el lead), AÑADIMOS una nueva fila completa
       await sheets.spreadsheets.values.append({
         spreadsheetId,
         range,
@@ -342,7 +254,6 @@ export default async function handler(req, res) {
         `ADVERTENCIA: No se encontró un lead abierto para ${phone}, se agregó una nueva fila.`
       );
     }
-    // ========== FIN NUEVA LÓGICA ==========
 
     // Determinar qué PDF enviar basado en el producto
     const productoPDFMap = {
@@ -360,7 +271,6 @@ export default async function handler(req, res) {
 
     const pdfFiles = productoPDFMap[producto];
 
-    // Si el producto no existe en el map, retornar error
     if (!pdfFiles) {
       console.error("Producto no encontrado:", producto);
       return res.status(400).json({
@@ -369,14 +279,12 @@ export default async function handler(req, res) {
       });
     }
 
-    // Preparar los PDFs como attachments
     const fs = require("fs");
     const path = require("path");
 
     const attachments = [];
 
     if (Array.isArray(pdfFiles)) {
-      // Para trilogía completa - adjuntar todos los PDFs
       for (const pdf of pdfFiles) {
         const pdfPath = path.join(process.cwd(), "public", "assets", pdf);
         attachments.push({
@@ -386,7 +294,6 @@ export default async function handler(req, res) {
         });
       }
     } else {
-      // Para un solo libro
       const pdfPath = path.join(process.cwd(), "public", "assets", pdfFiles);
       attachments.push({
         filename: pdfFiles,
@@ -402,54 +309,32 @@ export default async function handler(req, res) {
       attachments: attachments,
       html: `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-          
-          <!-- Header -->
           <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 40px 20px; text-align: center;">
             <h1 style="color: #d4af37; margin: 0; font-size: 32px; font-family: Georgia, serif;">Proyecto Kaizen</h1>
             <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">Bienvenido a la comunidad</p>
           </div>
-
-          <!-- Contenido -->
           <div style="padding: 40px 30px; color: #333333; line-height: 1.8;">
-            
             <p style="font-size: 16px; margin-bottom: 20px;">Hola <strong>${nombre}</strong>,</p>
-            
             <p style="font-size: 16px; margin-bottom: 20px;">
               Soy <strong>Daniel</strong>, fundador de Proyecto Kaizen junto a Nelson, y quiero darte la bienvenida personalmente.
             </p>
-
             <p style="font-size: 16px; margin-bottom: 20px;">
               Gracias por confiar en nosotros y adquirir este material. Sabemos que le sacarás mucho provecho y que será una herramienta poderosa en tu camino de crecimiento personal.
             </p>
-
-            <!-- Descarga Material -->
             <div style="padding: 24px 0; margin: 30px 0; text-align: center; background-color: #f0f9ff; border-radius: 8px;">
               <p style="margin: 0 0 16px 0; font-weight: 600; color: #1a1a1a; font-size: 17px;">
                 📎 Tu material está adjunto en este correo
-              </p>
-              <p style="margin: 0; color: #6b7280; font-size: 14px;">
-                ${
-                  Array.isArray(pdfFiles)
-                    ? `Encontrarás ${pdfFiles.length} archivos PDF adjuntos a este correo.`
-                    : "Encontrarás tu eBook adjunto a este correo."
-                }
               </p>
               <p style="margin: 12px 0 0 0; color: #6b7280; font-size: 13px;">
                 💡 Revisa los archivos adjuntos al final de este email
               </p>
             </div>
-
             <p style="font-size: 16px; margin-bottom: 20px;">
               Este libro es solo el inicio. La verdadera transformación sucede cuando aplicas lo aprendido y te rodeas de una comunidad que te impulsa hacia adelante.
             </p>
-
-            <!-- CTA Box Comunidad -->
             <div style="background-color: #f0f9ff; border-left: 4px solid #d4af37; padding: 24px; margin: 30px 0; border-radius: 4px;">
               <p style="margin: 0 0 12px 0; font-weight: 600; color: #1a1a1a; font-size: 17px;">
                 📢 Únete a nuestra comunidad exclusiva
-              </p>
-              <p style="margin: 0 0 16px 0; font-size: 14px; color: #1a1a1a;">
-                Accede a talleres, material premium y una red de personas comprometidas con crecer cada día.
               </p>
               <div style="text-align: center;">
                 <a href="https://whatsapp.com/channel/0029VbBQrlRF1YlOxxbDT30X" 
@@ -461,19 +346,6 @@ export default async function handler(req, res) {
                 </a>
               </div>
             </div>
-
-            <p style="font-size: 16px; margin-bottom: 20px;">
-              Si tienes alguna pregunta o necesitas ayuda, estoy a tu disposición.
-            </p>
-
-            <!-- Botón Contacto -->
-            <div>
-              <a href="https://wa.me/5511958682671" 
-                 style="display: inline-block; color: #000000ff; font-weight: 400; font-size: 13px;">
-                Contáctame por WhatsApp
-              </a>
-            </div>
-
             <p style="font-size: 16px; margin-bottom: 8px;">
               Nos vemos del otro lado,
             </p>
@@ -482,44 +354,34 @@ export default async function handler(req, res) {
               <span style="font-size: 14px; color: #666; font-weight: 400;">Fundador, Proyecto Kaizen</span>
             </p>
           </div>
-
-          <!-- Footer -->
           <div style="background-color: #f9fafb; padding: 24px; text-align: center;">
             <p style="margin: 0; font-size: 12px; color: #6b7280;">
               © 2025 Proyecto Kaizen. Todos los derechos reservados.
             </p>
-            <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
-              Herramientas para una vida de crecimiento continuo.
-            </p>
           </div>
-
         </div>
       `,
     };
 
     await transporter.sendMail(mailOptions);
 
-    // ✅ NOTIFICACIÓN AL ADMIN - PAGO APROBADO
+    // Notificar al admin sobre el pago aprobado
     await notifyAdminApprovedPayment(transporter, {
-      nombre,
-      correo,
-      fecha,
-      producto,
-      montoEsperado,
+      ...req.body,
       referencia: referenciaUltimos4,
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "Pago registrado exitosamente",
-    });
+    return res
+      .status(200)
+      .json({ success: true, message: "Pago registrado exitosamente" });
   } catch (error) {
     console.error("Error al procesar el pago:", error);
-    console.error("Stack trace:", error.stack);
-    return res.status(500).json({
-      success: false,
-      message: "Error al procesar el pago",
-      error: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error al procesar el pago",
+        error: error.message,
+      });
   }
 }
