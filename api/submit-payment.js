@@ -7,7 +7,6 @@ async function notifyAdminRejectedPayment(transporter, data) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
 
-  // Preparar los attachments si existe la imagen
   const attachments = [];
   if (data.comprobanteBase64) {
     const base64Data = data.comprobanteBase64.replace(
@@ -192,6 +191,7 @@ export default async function handler(req, res) {
     comprobanteBase64,
     montoEsperado,
     isRejected,
+    phone, // Nuevo: teléfono para identificar leads
   } = req.body;
 
   // Configurar transporter de correo
@@ -274,34 +274,75 @@ export default async function handler(req, res) {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `${sheetName}!A1:D1`,
+        range: `${sheetName}!A1:E1`,
         valueInputOption: "USER_ENTERED",
         resource: {
-          values: [["Fecha", "Nombre", "Correo", "Referencia (últimos 4)"]],
+          values: [
+            ["Fecha", "Nombre", "Correo", "Referencia (últimos 4)", "Teléfono"],
+          ],
         },
       });
     }
 
-    // Obtener últimos 4 dígitos de la referencia
-    const referenciaUltimos4 = referencia ? referencia : "N/A";
+    // ========== NUEVA LÓGICA: Buscar y actualizar leads incompletos ==========
+    const range = `${sheetName}!A:E`;
+    const getRows = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
+    const rows = getRows.data.values || [];
 
-    const newRow = [
-      new Date(fecha).toLocaleString("es-ES", {
-        timeZone: "America/Caracas",
-      }),
+    let rowIndexToUpdate = -1;
+    const phoneColumnIndex = 4; // Columna E, donde está el teléfono
+
+    // Buscamos de abajo hacia arriba la primera fila que coincida con el teléfono y esté incompleta
+    if (phone && rows.length > 0) {
+      for (let i = rows.length - 1; i > 0; i--) {
+        const row = rows[i];
+        // Verificamos si la columna del teléfono existe y si coincide, y si el nombre o correo están vacíos
+        if (row[phoneColumnIndex] === phone && (!row[1] || !row[2])) {
+          rowIndexToUpdate = i;
+          break; // Encontramos la más reciente, así que salimos del bucle
+        }
+      }
+    }
+
+    const referenciaUltimos4 = referencia ? referencia : "N/A";
+    const rowData = [
+      new Date(fecha).toLocaleString("es-ES", { timeZone: "America/Caracas" }),
       nombre,
       correo,
       referenciaUltimos4,
+      phone || "N/A", // Incluir teléfono si está disponible
     ];
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: `${sheetName}!A:D`,
-      valueInputOption: "USER_ENTERED",
-      resource: {
-        values: [newRow],
-      },
-    });
+    if (rowIndexToUpdate !== -1) {
+      // Si encontramos la fila del lead, la ACTUALIZAMOS
+      const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:E${
+        rowIndexToUpdate + 1
+      }`;
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: updateRange,
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [rowData] },
+      });
+      console.log(
+        `Fila ${rowIndexToUpdate + 1} actualizada para el teléfono ${phone}.`
+      );
+    } else {
+      // Como caso de emergencia (si no se encontró el lead), AÑADIMOS una nueva fila completa
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range,
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [rowData] },
+      });
+      console.log(
+        `ADVERTENCIA: No se encontró un lead abierto para ${phone}, se agregó una nueva fila.`
+      );
+    }
+    // ========== FIN NUEVA LÓGICA ==========
 
     // Determinar qué PDF enviar basado en el producto
     const productoPDFMap = {
