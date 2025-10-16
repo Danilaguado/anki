@@ -1,7 +1,7 @@
 /* src/styles/TestimonialCarousel.css */
 
 .testimonial-carousel-section {
-  padding: 1rem;
+  padding: 80px 0;
   background-color: #212121;
   text-align: center;
 }
@@ -40,33 +40,54 @@
   user-select: none;
 }
 
-.carousel-button {
+/* --- ESTA ES LA SECCIÓN CORREGIDA --- */
+.testimonial-carousel .carousel-button {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #fff;
-  font-size: 24px;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.1
+  ) !important; /* !important para asegurar prioridad */
+  border: none !important;
+  color: #fff !important;
+  font-size: 24px !important;
   cursor: pointer;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 50px; /* Aumentado para mayor visibilidad */
+  height: 50px; /* Aumentado para mayor visibilidad */
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background-color 0.3s ease;
   z-index: 10;
+  padding: 0; /* Reseteamos el padding */
+  line-height: 1; /* Centrado vertical del ícono */
 }
 
-.carousel-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+.testimonial-carousel .carousel-button:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.carousel-button.prev {
-  left: 10px;
+.testimonial-carousel .carousel-button.prev {
+  left: -25px; /* Ajustado para que se vea fuera del slide principal */
 }
 
-.carousel-button.next {
-  right: 10px;
+.testimonial-carousel .carousel-button.next {
+  right: -25px; /* Ajustado para que se vea fuera del slide principal */
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 600px) {
+  .testimonial-carousel {
+    overflow: visible; /* Permitir que los botones se vean fuera del contenedor */
+  }
+  .testimonial-carousel .carousel-button.prev {
+    left: 0;
+  }
+  .testimonial-carousel .carousel-button.next {
+    right: 0;
+  }
 }
