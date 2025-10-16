@@ -219,7 +219,11 @@ const BookPage = () => {
         </div>
       </section>
       {/* Final CTA Section */}
-      <TestimonialCarousel />
+      <section className='book-mastery-section'>
+        <div className='book-section-container'>
+          <TestimonialCarousel />
+        </div>
+      </section>
 
       <section id='comprar' className='book-final-cta-section'>
         <div className='book-section-container'>
