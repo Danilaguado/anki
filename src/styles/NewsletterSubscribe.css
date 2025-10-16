@@ -42,8 +42,8 @@
 }
 
 .home-newsletter-section {
-  padding: "2rem";
-  backgroundcolor: "#1a1a1a";
+  padding: 2rem;
+  background-color: #1a1a1a;
 }
 
 .newsletter-input::placeholder {
