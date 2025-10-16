@@ -9,10 +9,12 @@ import PrePaymentPage from "./pages/PrePaymentPage";
 import PaymentPage from "./pages/PaymentPage";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton"; // <-- 1. Importar
+import TopBanner from "./components/TopBanner";
 
 function App() {
   return (
     <BrowserRouter>
+      <TopBanner />
       <ScrollToTop />
       <Routes>
         <Route path='/' element={<Home />} />

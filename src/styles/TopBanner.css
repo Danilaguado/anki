@@ -1,0 +1,31 @@
+/* src/styles/TopBanner.css */
+
+.top-banner {
+  background: linear-gradient(
+    90deg,
+    #4338ca,
+    #6d28d9
+  ); /* Un degradado violeta/púrpura que complementa el tema */
+  color: #ffffff;
+  text-align: center;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  position: sticky; /* Se mantiene fijo al hacer scroll */
+  top: 0;
+  z-index: 9998;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.top-banner strong {
+  font-weight: 700;
+  margin-left: 8px;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+  .top-banner {
+    font-size: 13px;
+    padding: 10px;
+  }
+}

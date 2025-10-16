@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import PriceDisplay from "../components/PriceDisplay"; // Importar el nuevo componente
 import bookData from "../data/bookData.json"; // Importar los datos
 import TestimonialCarousel from "../components/TestimonialCarousel";
+import MembershipBanner from "../components/MembershipBanner";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -140,6 +141,7 @@ const Home = () => {
           </div>
         </div>
       </section>
+      <MembershipBanner />
       <TestimonialCarousel />
       {/* Final CTA Section */}
       <section className='home-final-cta-section'>
