@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-// 👇 1. Importa useNavigate para una mejor navegación
+// 1. Importa useNavigate para manejar la navegación
 import { useNavigate } from "react-router-dom";
 import "../styles/BookPreviewModal.css";
 
@@ -13,7 +13,8 @@ const BookPreviewModal = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [imageError, setImageError] = useState(false);
   const maxPages = 8;
-  const navigate = useNavigate(); // <-- 2. Inicializa el hook
+  // 2. Inicializa el hook de navegación
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
 
@@ -31,10 +32,10 @@ const BookPreviewModal = ({
     }
   };
 
-  // 👇 3. Función de desbloqueo CORREGIDA
+  // 3. Función corregida para redirigir al pre-formulario
   const handleUnlock = () => {
-    onClose(); // Cierra el modal
-    // Navega a la página de pre-pago en lugar de la de pago
+    onClose(); // Primero cierra el modal
+    // Luego, navega a la página correcta
     navigate(`/start-purchase?product=${encodeURIComponent(productName)}`);
   };
 
@@ -48,6 +49,7 @@ const BookPreviewModal = ({
     setImageError(true);
   };
 
+  // Construir la ruta de la imagen
   const imagePath = `/assets/previews/${previewFolder}-page-${currentPage}.jpg`;
 
   return (
@@ -86,7 +88,33 @@ const BookPreviewModal = ({
             <div className='preview-image-container'>
               {imageError ? (
                 <div className='preview-image-error'>
-                  {/* ... (código sin cambios) ... */}
+                  <svg
+                    width='64'
+                    height='64'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                  >
+                    <rect
+                      x='3'
+                      y='3'
+                      width='18'
+                      height='18'
+                      rx='2'
+                      ry='2'
+                    ></rect>
+                    <circle cx='8.5' cy='8.5' r='1.5'></circle>
+                    <polyline points='21 15 16 10 5 21'></polyline>
+                  </svg>
+                  <p>No se pudo cargar la página {currentPage}</p>
+                  <p className='preview-image-error-hint'>
+                    Asegúrate de que las imágenes estén en: <br />
+                    <code>
+                      /public/assets/previews/{previewFolder}-page-{currentPage}
+                      .jpg
+                    </code>
+                  </p>
                 </div>
               ) : (
                 <img
@@ -99,12 +127,31 @@ const BookPreviewModal = ({
               )}
             </div>
           ) : (
-            // Página 8 con overlay de desbloqueo
+            // Overlay de desbloqueo en la última página
             <div className='preview-unlock-container'>
               <div className='preview-image-container preview-blurred'>
                 {imageError ? (
                   <div className='preview-image-error'>
-                    {/* ... (código sin cambios) ... */}
+                    <svg
+                      width='64'
+                      height='64'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                    >
+                      <rect
+                        x='3'
+                        y='3'
+                        width='18'
+                        height='18'
+                        rx='2'
+                        ry='2'
+                      ></rect>
+                      <circle cx='8.5' cy='8.5' r='1.5'></circle>
+                      <polyline points='21 15 16 10 5 21'></polyline>
+                    </svg>
+                    <p>No se pudo cargar la página {currentPage}</p>
                   </div>
                 ) : (
                   <img
@@ -145,7 +192,7 @@ const BookPreviewModal = ({
                   </h4>
                   <p className='preview-unlock-text'>
                     Desbloquea el libro completo y accede a todo el contenido
-                    exclusivo.
+                    exclusivo
                   </p>
                   <button
                     className='preview-unlock-button'
@@ -162,7 +209,52 @@ const BookPreviewModal = ({
         {/* Navigation Controls */}
         {currentPage < maxPages && (
           <div className='preview-modal-footer'>
-            {/* ... (código de navegación sin cambios) ... */}
+            <button
+              className='preview-nav-button preview-nav-prev'
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+            >
+              <svg
+                width='20'
+                height='20'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+              >
+                <polyline points='15 18 9 12 15 6'></polyline>
+              </svg>
+              Anterior
+            </button>
+
+            <div className='preview-page-indicators'>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((page) => (
+                <div
+                  key={page}
+                  className={`preview-page-dot ${
+                    page === currentPage ? "active" : ""
+                  } ${page <= currentPage ? "visited" : ""}`}
+                />
+              ))}
+            </div>
+
+            <button
+              className='preview-nav-button preview-nav-next'
+              onClick={handleNextPage}
+              disabled={currentPage === maxPages}
+            >
+              Siguiente
+              <svg
+                width='20'
+                height='20'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+              >
+                <polyline points='9 18 15 12 9 6'></polyline>
+              </svg>
+            </button>
           </div>
         )}
       </div>
