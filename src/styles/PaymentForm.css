@@ -45,6 +45,10 @@ body {
   margin-bottom: 40px; /* Agregado margen inferior */
 }
 
+.secure-footer-home {
+  background: ghostwhite;
+}
+
 .secure-badge img {
   max-width: 22rem;
   width: 100%;
