@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "../styles/BookLanding.css";
-import "../styles/BookThemes.css";
 import BookPreviewModal from "../components/BookPreviewModal";
 import Footer from "../components/Footer";
 import bookData from "../data/bookData.json";
