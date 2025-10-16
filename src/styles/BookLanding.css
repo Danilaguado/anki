@@ -52,19 +52,12 @@
    ============================================ */
 .book-hero-section,
 .book-revelation-section,
+.book-hero-section,
+.book-revelation-section,
 .book-final-cta-section {
   padding: 80px 24px 128px;
-  background-color: #1a1a1a; /* Color de base por si las imágenes no cargan */
-  background-image: radial-gradient(
-      circle at top right,
-      rgba(90, 87, 87, 0.1),
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at bottom left,
-      rgba(59, 130, 246, 0.05),
-      transparent 50%
-    );
+  /* Este gradiente crea el efecto oscuro y sutil que buscas */
+  background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
 }
 
 .book-revelation-section {

@@ -3,6 +3,8 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
 import Footer from "../components/Footer";
+import PriceDisplay from "../components/PriceDisplay"; // Importar el nuevo componente
+import bookData from "../data/bookData.json"; // Importar los datos
 
 const Home = () => {
   const navigate = useNavigate();
@@ -30,54 +32,6 @@ const Home = () => {
       revealElements.forEach((el) => el.classList.add("visible"));
     }
   }, []);
-
-  const books = [
-    {
-      id: "descifrando-eva",
-      title: "Descifrando a Eva",
-      badge: "Comunicación",
-      description:
-        "Descubre las claves para conectar auténticamente con cualquier persona y construir relaciones significativas que transformen tu vida.",
-      cover: "/assets/descifrando-eva-cover.jpg",
-      route: "/descifrando-eva",
-    },
-    {
-      id: "musculo-voluntad",
-      title: "El Músculo de la Voluntad",
-      badge: "Autodisciplina",
-      description:
-        "Aprende a fortalecer tu disciplina y construir hábitos que te lleven a alcanzar tus metas más ambiciosas de manera sostenible.",
-      cover: "/assets/musculo-voluntad-cover.jpg",
-      route: "/musculo-voluntad",
-    },
-    {
-      id: "habla-conquista",
-      title: "Habla y Conquista",
-      badge: "Liderazgo",
-      description:
-        "Domina el arte de la comunicación asertiva y aprende a dar feedback que transforma conflictos en oportunidades de crecimiento.",
-      cover: "/assets/habla-conquista-cover.jpg",
-      route: "/habla-conquista",
-    },
-    {
-      id: "el-ascenso",
-      title: "El Ascenso",
-      badge: "Liderazgo",
-      description:
-        "El manual definitivo para el nuevo líder. Aprende a transformar la duda en confianza y la gestión en verdadero impacto.",
-      cover: "/assets/el-ascenso-cover.jpg",
-      route: "/el-ascenso",
-    },
-    {
-      id: "gambito-rey",
-      title: "El Gambito del Rey",
-      badge: "Estrategia",
-      description:
-        "El manual de guerra para corregir un error, cambiar un comportamiento y ganar influencia sin crear un enemigo.",
-      cover: "/assets/gambito-rey-cover.jpg",
-      route: "/gambito-rey",
-    },
-  ];
 
   const handleBookClick = (route) => {
     navigate(route);
@@ -140,16 +94,16 @@ const Home = () => {
           </div>
 
           <div className='home-books-grid'>
-            {books.map((book, index) => (
+            {bookData.map((book, index) => (
               <div
                 key={book.id}
                 className={`home-book-card scroll-reveal delay-${
                   (index + 1) * 100
                 }`}
-                onClick={() => handleBookClick(book.route)}
+                onClick={() => handleBookClick(`/${book.id}`)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
-                    handleBookClick(book.route);
+                    handleBookClick(`/${book.id}`);
                   }
                 }}
                 tabIndex={0}
@@ -157,13 +111,26 @@ const Home = () => {
                 aria-label={`Ver detalles de ${book.title}`}
               >
                 <img
-                  src={book.cover}
+                  src={book.hero.coverImage}
                   alt={`Portada de ${book.title}`}
                   className='home-book-cover'
                 />
-                <h3 className='home-book-title'>{book.title}</h3>
-                <p className='home-book-badge'>{book.badge}</p>
-                <p className='home-book-description'>{book.description}</p>
+                <h3 className='home-book-title'>{book.productName}</h3>
+                <p className='home-book-badge'>
+                  {book.badge || "Desarrollo Personal"}
+                </p>
+                <p className='home-book-description'>{book.hero.subtitle}</p>
+
+                <div
+                  style={{
+                    marginTop: "auto",
+                    paddingTop: "20px",
+                    width: "100%",
+                  }}
+                >
+                  <PriceDisplay priceUSD={book.priceUSD || 5} />
+                </div>
+
                 <button className='home-book-button' aria-hidden='true'>
                   Ver Detalles
                 </button>

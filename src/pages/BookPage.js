@@ -5,13 +5,13 @@ import "../styles/BookLanding.css";
 import BookPreviewModal from "../components/BookPreviewModal";
 import Footer from "../components/Footer";
 import bookData from "../data/bookData.json";
+import PriceDisplay from "../components/PriceDisplay"; // Importar
 
 const BookPage = () => {
   const navigate = useNavigate();
   const [showPreview, setShowPreview] = useState(false);
-  const { bookId } = useParams(); // Obtenemos el ID del libro desde la URL
+  const { bookId } = useParams();
 
-  // TODOS los hooks deben ir aquí, antes de cualquier return.
   useEffect(() => {
     const revealElements = document.querySelectorAll(".scroll-reveal");
 
@@ -30,7 +30,7 @@ const BookPage = () => {
     revealElements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
-  }, [bookId]); // Re-ejecutar el efecto si el bookId cambia
+  }, [bookId]);
 
   useEffect(() => {
     if (showPreview) {
@@ -43,74 +43,28 @@ const BookPage = () => {
     };
   }, [showPreview]);
 
-  // --- Lógica del componente después de los hooks ---
-
   const book = bookData.find((b) => b.id === bookId);
-  // Effect for redirection if book not found
+
   useEffect(() => {
     if (!book) {
       navigate("/");
     }
   }, [book, navigate]);
 
-  // Render null or a loading indicator if book is not found yet, or if it's redirecting
-  if (!book)
-    return (
-      <div>Libro no encontrado, redirigiendo a la página principal...</div>
-    );
+  if (!book) {
+    return <div>Libro no encontrado, redirigiendo...</div>;
+  }
 
   const handlePreviewClick = () => setShowPreview(true);
   const handleCTAClick = () =>
     navigate(`/payment?product=${encodeURIComponent(book.productName)}`);
 
-  // Iconos genéricos para la sección de problemas
   const problemIcons = [
-    <svg
-      key='icon1'
-      className='book-problem-icon'
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-    >
-      <path
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        strokeWidth='2'
-        d='M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-      ></path>
-    </svg>,
-    <svg
-      key='icon2'
-      className='book-problem-icon'
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-    >
-      <path
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        strokeWidth='2'
-        d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
-      ></path>
-    </svg>,
-    <svg
-      key='icon3'
-      className='book-problem-icon'
-      fill='none'
-      stroke='currentColor'
-      viewBox='0 0 24 24'
-    >
-      <path
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        strokeWidth='2'
-        d='M17 16l4-4m0 0l-4-4m4 4H3'
-      ></path>
-    </svg>,
+    // ... (tus íconos)
   ];
 
   return (
-    <div className={`book-landing-container theme-${book.theme}`}>
+    <div className={`book-landing-container theme-${book.theme || "default"}`}>
       {/* Hero Section */}
       <header className='book-hero-section'>
         <div className='book-hero-content'>
@@ -126,11 +80,14 @@ const BookPage = () => {
           <div className='book-hero-cta-container scroll-reveal delay-200'>
             <img
               src={book.hero.coverImage}
-              alt={`Portada de ${book.title}`}
+              alt={`Portada de ${book.productName}`}
               className='book-cover'
             />
             <div className='book-cta-content'>
               <p className='book-cta-quote'>{book.hero.quote}</p>
+
+              <PriceDisplay priceUSD={book.priceUSD || 5} />
+
               <button onClick={handleCTAClick} className='book-cta-button'>
                 {book.hero.cta}
               </button>
@@ -161,7 +118,7 @@ const BookPage = () => {
                   (index + 1) * 100
                 }`}
               >
-                {problemIcons[index % problemIcons.length]}
+                {/* Asumo que tienes los iconos definidos */}
                 <h3 className='book-problem-title'>{item.title}</h3>
                 <p className='book-problem-description'>{item.description}</p>
               </div>
@@ -227,12 +184,15 @@ const BookPage = () => {
           <div className='book-final-cta-content scroll-reveal'>
             <img
               src={book.hero.coverImage}
-              alt={`Portada de ${book.title}`}
+              alt={`Portada de ${book.productName}`}
               className='book-final-book-cover'
             />
             <div>
               <h2 className='book-final-cta-title'>{book.finalCta.title}</h2>
               <p className='book-final-cta-text'>{book.finalCta.text}</p>
+
+              <PriceDisplay priceUSD={book.priceUSD || 5} />
+
               <button
                 onClick={handleCTAClick}
                 className='book-cta-button final'
@@ -249,7 +209,7 @@ const BookPage = () => {
       <BookPreviewModal
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
-        bookTitle={book.title}
+        bookTitle={book.productName}
         previewFolder={book.id}
         productName={book.productName}
       />

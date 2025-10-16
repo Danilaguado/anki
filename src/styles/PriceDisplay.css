@@ -1,0 +1,72 @@
+/* src/styles/PriceDisplay.css */
+
+.price-container {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.price-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.discount {
+  color: #ef4444;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+}
+
+.price {
+  color: #e0e0e0; /* Color blanco para temas oscuros */
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: "Inter", sans-serif;
+}
+
+.price sup {
+  font-size: 0.5em;
+  font-weight: 600;
+  vertical-align: super;
+  margin-left: 2px;
+}
+
+.original-price {
+  color: #9ca3af;
+  font-size: 14px;
+  margin-top: 4px;
+  font-family: "Inter", sans-serif;
+}
+
+.original-price s {
+  text-decoration: line-through;
+}
+
+.loading,
+.error {
+  font-style: italic;
+  color: #9ca3af;
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+/* Ajustes específicos para la card del Home */
+.home-book-card .price-display .price {
+  color: #fff; /* Blanco en el Home */
+}
+
+.home-book-card .price {
+  font-size: 32px;
+}
+
+.home-book-card .discount {
+  font-size: 20px;
+}
+
+.home-book-card .original-price {
+  font-size: 13px;
+}
