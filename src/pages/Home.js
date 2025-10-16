@@ -166,6 +166,7 @@ const Home = () => {
         <NewsletterSubscribe /> {/* <-- 2. Añadir el componente */}
       </section>
       <Footer />
+      <SecureBadge />
     </div>
   );
 };
