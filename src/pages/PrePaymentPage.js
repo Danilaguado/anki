@@ -92,7 +92,6 @@ const PrePaymentPage = () => {
               placeholder='Ej: tu número'
               disabled={isSubmitting}
               autoFocus
-              pattern='[0-9]*'
             />
           </div>
           {error && <p className='prepayment-error'>{error}</p>}
