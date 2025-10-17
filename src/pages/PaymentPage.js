@@ -1,5 +1,4 @@
-import React, { useState, useRef } from "react";
-import React, { useEffect } from "react"; // Importa useEffect
+import React, { useState, useRef, useEffect } from "react"; // 👈 Agregado useEffect
 import "../styles/PaymentForm.css";
 import PaymentForm from "../components/PaymentForm";
 import SecureBadge from "../components/SecureBadge";
