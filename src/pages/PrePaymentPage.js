@@ -85,7 +85,7 @@ const PrePaymentPage = () => {
           <div className='form-group'>
             <label htmlFor='phone-input'>Número de Celular</label>
             <input
-              type='tel'
+              type='text'
               id='phone-input'
               name='phone'
               value={phone}
