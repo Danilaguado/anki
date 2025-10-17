@@ -11,75 +11,76 @@
       "delivery": "Inmediata"
     },
     "hero": {
-      "title": "¿Cansado de no entenderla? Existe un código. Y ha sido descifrado.",
-      "subtitle": "La guía definitiva, basada en ciencia, para transformar la confusión en una conexión inquebrantable y convertirte en el hombre que ella admira y desea.",
+      "title": "No se trata de entenderla. Se trata de comprender la naturaleza de la conexión.",
+      "subtitle": "Un viaje hacia la inteligencia relacional: ciencia, psicología y práctica para quienes desean construir relaciones poderosas, conscientes y profundamente humanas.",
       "coverImage": "/assets/descifrando-eva-cover.jpg",
-      "quote": "El manual que desearías haber tenido hace años para navegar las complejidades de la intimidad y el deseo.",
-      "cta": "Domina el Código Hoy",
+      "quote": "El conocimiento que transforma la frustración en presencia, y la presencia en poder emocional.",
+      "cta": "Descubre el Código",
       "badge": "Inteligencia Relacional"
     },
     "problems": {
-      "title": "Si esto te resulta familiar, no estás solo. Y no es tu culpa.",
-      "subtitle": "Millones de hombres buenos se sienten frustrados en sus relaciones. Creen que el problema son ellos, cuando en realidad, solo están hablando un idioma diferente sin saberlo.",
+      "title": "¿Te suena familiar?",
+      "subtitle": "No es falta de amor. Es falta de lenguaje. La mayoría de los conflictos no nacen del desinterés, sino de una desconexión invisible: dos personas hablando idiomas emocionales distintos sin saberlo.",
       "items": [
         {
-          "title": "El \"Estoy bien\"",
-          "description": "Sientes que esa simple frase esconde un campo minado emocional y cualquier paso en falso puede detonar un conflicto."
+          "title": "El Silencio Incomprendido",
+          "description": "Intentas mantener la calma, pero ella lo interpreta como frialdad. Tú crees estar evitando el conflicto; ella siente distancia. Ambos pierden sin querer."
         },
         {
-          "title": "Soluciones vs. Conexión",
-          "description": "Tus intentos lógicos de \"arreglar\" sus problemas son recibidos con frustración. Te dice \"no me escuchas\" cuando es lo único que intentas hacer."
+          "title": "Solucionar en Lugar de Sentir",
+          "description": "Cada vez que ofreces una solución, ella dice que no la escuchas. No busca respuestas: busca resonancia. Y nadie nos enseñó a crearla."
         },
         {
-          "title": "La Retirada Inevitable",
-          "description": "Las discusiones escalan sin sentido hasta que te desconectas para protegerte, dejando a ambos sintiéndose solos y resentidos."
+          "title": "El Cansancio del Desencuentro",
+          "description": "Las discusiones parecen repetirse en bucle. Las mismas palabras, los mismos reproches. Hasta que uno se rinde y se instala el silencio que separa."
         }
       ]
     },
     "revelation": {
-      "title": "No es \"Lógica Femenina\".<br />Es la Ciencia de la Conexión.",
-      "subtitle": "Este libro no ofrece frases hechas ni trucos de manipulación. Te entrega el manual de operaciones de la conexión humana, basado en la psicología y la neurociencia.",
+      "title": "No es intuición femenina. Es neurociencia aplicada al vínculo humano.",
+      "subtitle": "Este libro desmonta mitos, expone la ciencia detrás de la comunicación emocional y revela las dinámicas invisibles que crean o destruyen la conexión. No promesas, solo claridad. No trucos, solo maestría relacional.",
       "quotes": [
-        "Las relaciones no mueren por grandes traiciones, sino por miles de pequeñas peticiones de conexión ignoradas. Aprende a verlas y a responder, y construirás una fortaleza de confianza.",
-        "La herramienta más poderosa no es dar tu opinión, es validar su emoción. Domina este arte y transformarás el conflicto en la más profunda intimidad."
+        "La mayoría de las relaciones no mueren por traición, sino por miles de microdesconexiones ignoradas. Aprende a verlas y transformarlas en confianza.",
+        "Validar no es ceder. Es reconocer la humanidad del otro. Y ese gesto, más que cualquier argumento, restaura la conexión perdida."
       ]
     },
     "mastery": {
-      "title": "Conviértete en el Arquitecto de tu Relación",
-      "subtitle": "Este conocimiento te dará las herramientas para dejar de reaccionar y empezar a liderar la dinámica emocional con calma y seguridad.",
+      "title": "De espectador a arquitecto de tus relaciones.",
+      "subtitle": "La comprensión es poder. No el poder de dominar, sino el de construir desde la conciencia. Esta guía te ofrece herramientas concretas para comunicar, liderar y amar con inteligencia emocional.",
       "features": [
         {
-          "title": "Decodificar el Lenguaje Emocional",
-          "description": "Entender lo que realmente necesita cuando sus palabras dicen otra cosa. Pasarás de la confusión a la claridad."
+          "title": "Decodifica el Lenguaje Emocional",
+          "description": "Aprende a escuchar lo que no se dice. Descifra los patrones detrás de las palabras y conecta más allá del razonamiento lógico."
         },
         {
-          "title": "Neutralizar la Toxicidad",
-          "description": "Identificar los 4 comportamientos que predicen el divorcio y aplicar sus antídotos específicos para detener las discusiones antes de que destruyan la conexión."
+          "title": "Domina el Conflicto sin Perderte",
+          "description": "Identifica los cuatro comportamientos que predicen el quiebre relacional y aprende a neutralizarlos antes de que destruyan el vínculo."
         },
         {
-          "title": "Construir una Confianza Inquebrantable",
-          "description": "Hacer depósitos diarios en la \"Cuenta Bancaria Emocional\" para que la relación prospere incluso en momentos de estrés."
+          "title": "Construye una Confianza que No Se Rompe",
+          "description": "Descubre cómo fortalecer el ‘banco emocional’ de tu relación día tras día, incluso en medio del estrés y las diferencias."
         },
         {
-          "title": "Reavivar la Pasión y el Deseo",
-          "description": "Comprender la psicología de la diferenciación: la clave para mantener la atracción y el misterio en una relación a largo plazo."
+          "title": "Reaviva la Atracción y la Presencia",
+          "description": "Comprende la psicología de la diferenciación: la clave para mantener deseo, respeto y admiración a largo plazo."
         },
         {
-          "title": "Comunicación No Violenta",
-          "description": "Un plan paso a paso para expresar tus necesidades sin culpa ni crítica, invitando a la colaboración en lugar de a la defensiva."
+          "title": "Comunicación No Violenta, Real y Profunda",
+          "description": "Aprende a expresar lo que sientes y necesitas sin culpa ni crítica. Di la verdad con compasión y verás cómo la conexión florece."
         },
         {
-          "title": "Ser su Puerto Seguro",
-          "description": "Convertirte en el hombre con el que se siente profundamente vista, escuchada y segura. La base para una lealtad y amor incondicional."
+          "title": "Sé un Puerto Seguro",
+          "description": "Convierte tu calma en el refugio donde el otro puede descansar. No porque te anule, sino porque te domina la claridad interior."
         }
       ]
     },
     "finalCta": {
-      "title": "La maestría está a un clic de distancia.",
-      "text": "Deja de adivinar. Empieza a entender. Abandona la frustración y da el primer paso para co-crear una relación de significado y vitalidad duraderos. Tu futuro yo y tu pareja te lo agradecerán.",
-      "cta": "Quiero mi Guía Ahora"
+      "title": "La comprensión es el nuevo poder.",
+      "text": "No se trata de ser el más fuerte ni el más sabio, sino el más consciente. Este libro es el mapa para quienes quieren amar sin perderse, conectar sin rendirse y liderar con empatía. Empieza hoy el camino hacia la maestría relacional.",
+      "cta": "Obtener mi Guía"
     }
   },
+
   {
     "id": "musculo-voluntad",
     "productName": "El Músculo de la Voluntad",
@@ -92,73 +93,73 @@
       "delivery": "Inmediata"
     },
     "hero": {
-      "title": "La disciplina no es un don. Es un músculo. Y tú puedes entrenarlo.",
-      "subtitle": "Descubre el sistema científico para construir autodisciplina inquebrantable y convertir tus metas en realidad inevitable.",
+      "title": "Dentro de ti vive un gladiador silencioso.",
+      "subtitle": "Cada mañana, libras una batalla invisible entre quien eres y quien podrías ser. Este libro te enseña la ciencia, la estrategia y la mentalidad para ganar esa batalla —una y otra vez.",
       "coverImage": "/assets/musculo-voluntad-cover.jpg",
-      "quote": "El manual definitivo para dominar tus impulsos, construir hábitos duraderos y alcanzar cualquier meta que te propongas.",
-      "cta": "Fortalecer mi Disciplina",
-      "badge": "Dominio Mental"
+      "quote": "No naciste disciplinado. Te forjaste cada vez que elegiste el camino difícil.",
+      "cta": "Entrenar mi Voluntad",
+      "badge": "Autodominio Mental"
     },
     "problems": {
-      "title": "¿Empiezas con fuego pero terminas en humo? No es falta de voluntad. Es falta de sistema.",
-      "subtitle": "La motivación es emocional y volátil. La disciplina es estratégica y confiable. Es hora de dejar de depender de lo primero y dominar lo segundo.",
+      "title": "¿Te falta disciplina o te falta sistema?",
+      "subtitle": "La fuerza de voluntad no es una virtud moral, es un recurso biológico. Y la mayoría la gasta mal. Este libro te muestra cómo entrenarla estratégicamente para dejar de depender de la motivación volátil.",
       "items": [
         {
-          "title": "El Ciclo de la Motivación",
-          "description": "Comienzas lleno de energía, pero a los pocos días la llama se apaga. Vuelves a tus viejos hábitos, sintiéndote derrotado una vez más."
+          "title": "El Ciclo de la Motivación Rota",
+          "description": "Empiezas con fuego, terminas en culpa. No porque seas débil, sino porque intentas correr un maratón sin haber entrenado el músculo de tu voluntad."
         },
         {
-          "title": "La Tiranía de \"Mañana\"",
-          "description": "Sabes lo que debes hacer, pero lo postergás una y otra vez. Tu yo del futuro paga el precio de las decisiones de tu yo del presente."
+          "title": "El Peso de la Culpa",
+          "description": "Te prometes cambiar, fallas, te castigas y vuelves al inicio. Un ciclo que destruye la confianza y refuerza la idea de que 'no tienes lo necesario'."
         },
         {
-          "title": "La Ilusión del Esfuerzo",
-          "description": "Te esfuerzas, pero no ves resultados. Te preguntas si vale la pena. La respuesta es sí, pero solo si entrenas correctamente."
+          "title": "El Caos Invisible",
+          "description": "Tu entorno está diseñado para distraerte, no para ayudarte. No fallas por falta de carácter, fallas porque tu entorno está programado para que falles."
         }
       ]
     },
     "revelation": {
-      "title": "La Fuerza de Voluntad es como un Músculo.<br />Úsala Mal y se Agota. Entrénala Bien y se Multiplica.",
-      "subtitle": "Este libro te enseña el método científico para construir autodisciplina sostenible. No se trata de represión brutal, sino de arquitectura inteligente de hábitos.",
+      "title": "La Voluntad no es un don. Es un músculo entrenable.",
+      "subtitle": "Basado en neurociencia, psicología y filosofía estoica, este libro desmonta el mito de la 'fuerza de carácter' y revela el entrenamiento real para construir autodisciplina inquebrantable.",
       "quotes": [
-        "No se trata de ser perfecto. Se trata de ser consistente. La consistencia mediocre supera a la perfección esporádica.",
-        "Tu futuro no está determinado por un gran acto heroico. Está construido por pequeñas decisiones diarias que nadie ve pero que todos eventualmente sentirán."
+        "El cerebro no distingue entre levantar una pesa o resistir una tentación. Ambos entrenan tu fuerza de voluntad.",
+        "Tu entorno es tu gimnasio mental. Si no lo diseñas tú, lo hará tu inercia."
       ]
     },
     "mastery": {
-      "title": "Construye el Sistema que Te Hace Imparable",
-      "subtitle": "Aprende las estrategias específicas que usan las personas más disciplinadas del mundo para mantener el rumbo incluso cuando la motivación desaparece.",
+      "title": "El sistema para convertirte en arquitecto de tu destino.",
+      "subtitle": "No se trata de ser más fuerte, sino más estratégico. Este libro es una guía práctica para fortalecer el músculo que gobierna todos los demás: tu mente.",
       "features": [
         {
+          "title": "Neurociencia de la Voluntad",
+          "description": "Comprende cómo tu córtex prefrontal dirige tus decisiones y cómo entrenarlo para resistir la distracción, el cansancio y la gratificación instantánea."
+        },
+        {
+          "title": "Mentalidad de Crecimiento",
+          "description": "Transforma tu diálogo interno. Aprende a fallar estratégicamente, a convertir cada error en retroalimentación y cada intento en progreso."
+        },
+        {
+          "title": "Los Cuatro Pilares Fisiológicos",
+          "description": "Sueño, nutrición, movimiento y gestión del estrés: los cimientos biológicos que sostienen la autodisciplina. Sin ellos, no hay voluntad que resista."
+        },
+        {
           "title": "Arquitectura de Hábitos",
-          "description": "Diseña tu entorno para que la acción correcta sea la más fácil. Deja de confiar en tu fuerza de voluntad y empieza a confiar en tu sistema."
+          "description": "Convierte tu entorno en un aliado. Diseña rutinas que automaticen el éxito y eliminen la fricción que mata la constancia."
         },
         {
-          "title": "El Poder del Mínimo Viable",
-          "description": "Descubre por qué hacer \"2 minutos\" es más poderoso que proponerse \"1 hora\". La consistencia microscópica construye momentum imparable."
+          "title": "Dominio Estratégico del Fracaso",
+          "description": "Aprende a caer sin romperte. A resetear sin culpa. A continuar con inteligencia. La diferencia entre los fuertes y los mediocres está en cómo se levantan."
         },
         {
-          "title": "Dominar la Recompensa Retrasada",
-          "description": "Aprende a reprogramar tu cerebro para disfrutar del proceso, no solo del resultado. Esta es la clave de la disciplina sostenible."
-        },
-        {
-          "title": "El Reseteo Estratégico",
-          "description": "Qué hacer cuando fallas. Cómo levantarte sin autodestrucción. Las caídas son inevitables; el abandono es opcional."
-        },
-        {
-          "title": "Identidad sobre Resultados",
-          "description": "No te enfoques en \"bajar 10 kilos\". Conviértete en \"una persona que entrena\". El cambio de identidad hace que los hábitos sean automáticos."
-        },
-        {
-          "title": "La Matriz de Energía",
-          "description": "Administra tu fuerza de voluntad como un recurso limitado. Aprende cuándo gastarla y cuándo automatizar para no depender de ella."
+          "title": "Identidad Inquebrantable",
+          "description": "Deja de intentar ser disciplinado. Conviértete en alguien que simplemente actúa desde la claridad, sin drama, sin excusas, sin autoengaños."
         }
       ]
     },
     "finalCta": {
-      "title": "La versión disciplinada de ti ya existe. Solo necesitas el mapa.",
-      "text": "Deja de esperar el momento perfecto. Empieza a construir el sistema que te llevará a donde quieres estar. La disciplina es el puente entre tus metas y tus logros.",
-      "cta": "Quiero mi Guía Ahora"
+      "title": "Tu voluntad es tu libertad.",
+      "text": "No se trata de motivación, se trata de construcción. Este libro no te grita que creas en ti: te enseña cómo reprogramarte, paso a paso, desde la biología hasta la mente. Entrena tu músculo de la voluntad y convierte cada decisión en una victoria silenciosa.",
+      "cta": "Despertar mi Disciplina"
     }
   },
   {
@@ -173,73 +174,73 @@
       "delivery": "Inmediata"
     },
     "hero": {
-      "title": "Tus palabras construyen o destruyen. Es tu elección.",
-      "subtitle": "Las estrategias reales para comunicar, corregir e influir con poder, sin generar resentimiento ni perder a nadie en el intento.",
+      "title": "Tu voz puede abrir puertas o levantar muros.",
+      "subtitle": "Aprende el arte de comunicar con poder, empatía y precisión psicológica. No para dominar a otros, sino para inspirar respeto, conexión y transformación.",
       "coverImage": "/assets/habla-conquista-cover.jpg",
-      "quote": "El manual definitivo para líderes, padres y cualquiera que desee transformar sus relaciones a través del poder de la comunicación empática.",
-      "cta": "Domina el Arte de Influir",
-      "badge": "Comunicación Estratégica"
+      "quote": "Las palabras son energía. Usadas con maestría, pueden mover mentes, sanar heridas y construir lealtad.",
+      "cta": "Dominar mi Comunicación",
+      "badge": "Liderazgo Emocional"
     },
     "problems": {
-      "title": "¿Tus intentos de \"ayudar\" terminan en conflicto? No estás solo.",
-      "subtitle": "Corregir es necesario, pero la forma en que lo hacemos puede fracturar la confianza y levantar muros. Si reconoces estas situaciones, este libro es para ti.",
+      "title": "¿Tus palabras generan distancia en lugar de conexión?",
+      "subtitle": "La mayoría no sabe comunicarse con poder. No porque no tengan buenas intenciones, sino porque nadie les enseñó a corregir sin humillar, a guiar sin imponer y a liderar sin destruir.",
       "items": [
         {
-          "title": "La Muralla Defensiva",
-          "description": "Apenas empiezas a dar feedback, la otra persona se justifica, te interrumpe o encuentra excusas. Tu mensaje nunca llega."
+          "title": "El Muro Invisible",
+          "description": "Intentas ayudar, pero tu mensaje se estrella contra una barrera de defensividad. No te escuchan; se protegen."
         },
         {
-          "title": "El Silencio Incómodo",
-          "description": "Después de corregir a alguien, se instala una tensión. La persona se distancia, la confianza se erosiona y la relación se enfría."
+          "title": "El Silencio que Enfría",
+          "description": "Después de hablar, sientes la tensión. Las palabras quedaron resonando como dagas, y lo que querías unir, se rompió un poco más."
         },
         {
-          "title": "La Motivación Destruida",
-          "description": "Tu intención era motivar, pero tu crítica, por válida que fuera, desinfló el entusiasmo de la persona, dejándola herida y sin ganas de mejorar."
+          "title": "La Crítica que Apaga",
+          "description": "Querías motivar, pero tu tono, aunque racional, desinfló la energía del otro. Su mirada se apagó. La conexión se perdió."
         }
       ]
     },
     "revelation": {
-      "title": "No critiques, no condenes, no te quejes.<br />Lidera.",
-      "subtitle": "Este libro te enseña el arte perdido de la corrección empática. No se trata de evitar el conflicto, sino de transformarlo en una oportunidad para construir lealtad y confianza.",
+      "title": "No se trata de hablar más fuerte.<br />Se trata de hablar más consciente.",
+      "subtitle": "La comunicación es una herramienta de liderazgo. Este libro te enseña cómo transformar tus palabras en puentes de confianza, autoridad y respeto. No es manipulación: es maestría emocional.",
       "quotes": [
-        "Las personas no se abren a los gritos, se abren al respeto. No cambian desde la humillación, cambian desde la comprensión.",
-        "El tono con que corriges pesa más que las palabras que usas. Las relaciones se quiebran más por CÓMO se dice algo... que por LO QUE se dice."
+        "El lenguaje no fue creado para imponer, sino para conectar. Quien domina esa diferencia, conquista sin levantar la voz.",
+        "El poder no está en tener razón, sino en saber cuándo y cómo decir lo que transforma."
       ]
     },
     "mastery": {
-      "title": "Conviértete en un Comunicador Maestro",
-      "subtitle": "Aprende a entregar verdades incómodas de una manera que inspire el cambio en lugar de provocar una guerra.",
+      "title": "Conviértete en el arquitecto de la influencia consciente.",
+      "subtitle": "Aprende las técnicas psicológicas y comunicacionales que los grandes líderes usan para inspirar acción sin manipular, persuadir sin miedo y corregir sin romper.",
       "features": [
         {
-          "title": "Corregir sin Destruir",
-          "description": "Aprende a separar a la persona del comportamiento para corregir el error sin dañar la relación ni el ego."
+          "title": "Corregir sin Herir",
+          "description": "Domina el arte de separar el error de la identidad. Corrige el comportamiento sin dañar la autoestima ni el vínculo."
         },
         {
           "title": "El Poder de Preguntar",
-          "description": "Descubre cómo una pregunta bien formulada puede llevar a la autorreflexión y al cambio, siendo más efectiva que diez críticas."
+          "description": "Una pregunta bien formulada puede abrir más puertas que un discurso entero. Aprende a guiar con curiosidad estratégica."
         },
         {
-          "title": "Empatía Estratégica",
-          "description": "Entiende la psicología detrás de la negación y la defensa para saber cómo navegar conversaciones difíciles con calma y respeto."
+          "title": "Empatía Inteligente",
+          "description": "Comprende cómo funciona la defensa psicológica y usa la empatía como herramienta de influencia, no de debilidad."
         },
         {
-          "title": "Construir Lealtad",
-          "description": "Transforma cada corrección en una oportunidad para demostrar respeto y fortalecer el vínculo, generando aliados en lugar de adversarios."
+          "title": "Construcción de Lealtad",
+          "description": "Convierte cada conversación difícil en una oportunidad para reforzar la confianza. Liderar es conectar, no controlar."
         },
         {
-          "title": "Inspirar en lugar de Exigir",
-          "description": "Adopta las técnicas de líderes como Nelson Mandela y Phil Jackson para motivar a otros a alcanzar su mejor versión."
+          "title": "Inspirar en Lugar de Imponer",
+          "description": "Adopta las estrategias de líderes que inspiran desde la calma: motivan sin exigir y guían sin herir el ego del otro."
         },
         {
-          "title": "Dominar el Tono",
-          "description": "Comprende por qué el \"cómo\" dices las cosas es más importante que el \"qué\", y aprende a modular tu comunicación para conectar."
+          "title": "El Tono que Abre Corazones",
+          "description": "Aprende a modular tu energía verbal y emocional. El tono correcto convierte una verdad dura en una oportunidad de crecimiento."
         }
       ]
     },
     "finalCta": {
-      "title": "El éxito está ligado a tu capacidad de relacionarte con las personas.",
-      "text": "Cualquier tonto puede criticar. Se necesita carácter para comprender, motivar y construir. Conviértete en la persona a la que todos escuchan y respetan.",
-      "cta": "Quiero mi Guía Ahora"
+      "title": "Comunicar con poder es liderar tu mundo.",
+      "text": "Tus palabras son el reflejo de tu conciencia. Aprende a usarlas con propósito, respeto y estrategia. Este libro es la guía definitiva para quienes desean dejar huella no por lo que gritan, sino por la claridad con la que transforman.",
+      "cta": "Desbloquear mi Poder Comunicativo"
     }
   },
   {
@@ -254,60 +255,81 @@
       "delivery": "Inmediata"
     },
     "hero": {
-      "title": "Le ascendieron por ser un experto en <strong>hacer</strong>. El éxito ahora exige que domine el arte de <strong>liderar</strong>.",
-      "subtitle": "Bienvenido a la paradoja del ascenso. Este es el manual de supervivencia y el mapa para prosperar en su nuevo rol.",
+      "title": "Te ascendieron por lo que hacías.<br/>Ahora liderarás por quién decides ser.",
+      "subtitle": "El paso más desafiante de tu carrera no es hacia arriba, sino hacia adentro. Este libro te guía en la transición del experto que ejecuta al líder que inspira, desde la ciencia, la psicología y la estrategia.",
       "coverImage": "/assets/el-ascenso-cover.jpg",
-      "quote": "El manual definitivo para el nuevo líder que busca transformar la duda en confianza y la gestión en verdadero impacto.",
-      "cta": "Iniciar mi Ascenso",
-      "badge": "Liderazgo Práctico"
+      "quote": "El verdadero liderazgo no se otorga. Se conquista desde la conciencia, la influencia y la vulnerabilidad inteligente.",
+      "cta": "Comenzar mi Ascenso",
+      "badge": "Liderazgo Consciente"
     },
     "problems": {
-      "title": "¿La calma del ascenso se siente como el ojo del huracán?",
-      "subtitle": "Si se identifica con estas situaciones, no es una señal de debilidad. Es la prueba de que está en medio de la transición más desafiante de su carrera.",
+      "title": "¿Te ascendieron... pero sientes que estás empezando de nuevo?",
+      "subtitle": "No estás solo. La mayoría de los nuevos líderes descubren que lo que los llevó al éxito técnico no es lo que los sostendrá en el éxito de liderazgo. Este libro te muestra cómo cerrar esa brecha con ciencia y estrategia.",
       "items": [
         {
           "title": "El Síndrome del Impostor",
-          "description": "Ayer eran sus colegas, hoy debe dirigirlos. Una voz en su cabeza le pregunta si de verdad está a la altura y teme que en cualquier momento \"descubran el fraude\"."
+          "description": "Pasaste de ser colega a dirigir. De pronto, la voz en tu cabeza pregunta si realmente mereces estar ahí. Te esfuerzas por demostrarlo, pero dentro de ti reina la duda."
         },
         {
           "title": "La Adrenalina Perdida",
-          "description": "Su cerebro extraña la gratificación de completar tareas. Ahora sus metas son abstractas —\"motivar\", \"desarrollar\"— y al final del día siente que no ha \"hecho\" nada."
+          "description": "Antes medías tu valor por lo que hacías. Ahora, dirigir no deja métricas tangibles al final del día. El vacío que sientes no es debilidad: es una reconfiguración de propósito."
+        },
+        {
+          "title": "El Nuevo Aislamiento",
+          "description": "Cuanto más asciendes, menos feedback honesto recibes. Te sientes observado, pero poco comprendido. El liderazgo exige navegar esa soledad con inteligencia emocional."
         }
       ]
     },
     "revelation": {
-      "title": "Deje de ser el mejor ejecutor.<br />Conviértase en el mejor líder.",
-      "subtitle": "Este libro no se trata de añadir más tareas a su día. Se trata de un cambio fundamental de identidad: de experto a catalizador.",
+      "title": "El liderazgo no se trata de control.<br/>Se trata de conciencia.",
+      "subtitle": "Basado en investigaciones de neurociencia, psicología cognitiva y liderazgo adaptativo, este libro desmonta el mito del 'líder nato' y te entrega las herramientas para convertirte en uno —desde la acción, no desde la teoría.",
       "quotes": [
-        "El verdadero líder no es el que tiene más seguidores, sino el que crea más líderes."
+        "No necesitas sentirte como un líder para empezar a actuar como uno. Es al actuar que tu mente reconfigura su identidad.",
+        "La vulnerabilidad no es debilidad. Es la forma más pura de coraje: decir 'no tengo todas las respuestas' y aún así avanzar."
       ]
     },
     "mastery": {
-      "title": "Domine las Habilidades Esenciales del Liderazgo",
-      "subtitle": "Aprenda a navegar los desafíos clave de su nuevo rol con estrategias prácticas y accionables.",
+      "title": "Del experto que ejecuta al líder que transforma.",
+      "subtitle": "Aprende los fundamentos científicos y emocionales del liderazgo moderno: influencia ética, motivación, seguridad psicológica y feedback que construye.",
       "features": [
         {
-          "title": "Arquitectura de la Confianza",
-          "description": "Utilice el Plan de Vuelo 30-60-90 para escuchar, aprender y ganar el respeto de su equipo antes de implementar cambios."
+          "title": "Psicología del Impostor",
+          "description": "Desactiva la voz interna que sabotea tu confianza. Aprende a usar la duda como catalizador de evolución, no como freno."
+        },
+        {
+          "title": "Neurociencia del Liderazgo",
+          "description": "Descubre cómo la confianza y el respeto se construyen a nivel cerebral y cómo generar entornos que eleven el desempeño."
+        },
+        {
+          "title": "Filosofía de Liderazgo Personal",
+          "description": "Diseña tu brújula interna: valores, propósito y principios que guían tus decisiones cuando todo se vuelve incierto."
         },
         {
           "title": "La Vulnerabilidad como Superpoder",
-          "description": "Descubra por qué admitir que no tiene todas las respuestas le hace un líder más fuerte y confiable, no más débil."
+          "description": "Aprende el marco BRAVING de Brené Brown para construir confianza genuina y modelar coraje en tu equipo."
         },
         {
-          "title": "Delegar para Multiplicar",
-          "description": "Deje de ser el \"héroe\" que lo hace todo. Aprenda a delegar para potenciar a su equipo y liberar su propio tiempo para la estrategia."
+          "title": "Influencia Ética",
+          "description": "Utiliza los principios de Cialdini para persuadir sin manipular. Gana credibilidad y mueve a otros desde la integridad."
         },
         {
-          "title": "Feedback que Construye",
-          "description": "Transforme las conversaciones difíciles en oportunidades de crecimiento, dando feedback que motiva en lugar de destruir."
+          "title": "Seguridad Psicológica y Motivación",
+          "description": "Crea entornos donde la gente se atreva a hablar, innovar y fallar sin miedo. Liderar es liberar el potencial de otros."
+        },
+        {
+          "title": "El Arte del Feedback",
+          "description": "Domina el modelo SBI para corregir sin destruir. Da retroalimentación que impulsa crecimiento, no resistencia."
+        },
+        {
+          "title": "Plan de los Primeros 90 Días",
+          "description": "Un mapa claro para ganar confianza, establecer autoridad y construir resultados sostenibles desde el primer trimestre."
         }
       ]
     },
     "finalCta": {
-      "title": "Su equipo espera un líder, no un jefe.",
-      "text": "No tiene que descifrarlo solo. \"El Ascenso\" le da el marco, las herramientas y la confianza para convertirse en el líder que su equipo necesita y que usted aspira a ser.",
-      "cta": "Quiero mi Guía Ahora"
+      "title": "El liderazgo no es un destino. Es una práctica diaria.",
+      "text": "‘El Ascenso’ es más que un libro: es el plano de tu evolución profesional. Te guía a dominar la psicología del liderazgo, la neurociencia de la confianza y la estrategia de la influencia ética. Este es el entrenamiento que transforma la inseguridad en claridad y la posición en propósito.",
+      "cta": "Iniciar mi Ascenso"
     }
   },
   {
@@ -322,59 +344,72 @@
       "delivery": "Inmediata"
     },
     "hero": {
-      "title": "La Crítica es el Arma del Amateur. <span class='gambito-highlight'>La Estrategia es el Arma del Maestro.</span>",
-      "subtitle": "Este es el manual de guerra para corregir un error, cambiar un comportamiento y ganar influencia sin crear un enemigo.",
+      "title": "Cualquiera puede discutir.<br/>Solo los maestros saben mover primero.",
+      "subtitle": "El poder no está en tener razón, sino en dirigir la dinámica sin que el otro lo note. Aprende las estrategias de comunicación que transforman conflictos en lealtad y desacuerdos en respeto.",
       "coverImage": "/assets/gambito-rey-cover.jpg",
-      "quote": "Para el líder que entiende que el poder no se toma, se concede. Esta es la guía para que se lo entreguen voluntariamente, incluso después de una corrección.",
+      "quote": "El líder no impone. Orquesta. Su inteligencia no humilla; guía.",
       "cta": "Dominar el Juego",
       "badge": "Poder e Influencia"
     },
     "problems": {
-      "title": "¿Gana la discusión, pero pierde al aliado? Es una victoria que cuesta demasiado.",
-      "subtitle": "Cada vez que corrige a alguien, entra en un campo minado. Un paso en falso y la relación se deteriora, la confianza se evapora y siembra un resentimiento que crecerá en silencio.",
+      "title": "¿Ganas discusiones pero pierdes relaciones?",
+      "subtitle": "Cada palabra puede ser una jugada. Algunos corrigen con fuerza, otros con estrategia. Los primeros ganan el momento, los segundos ganan el futuro.",
       "items": [
         {
           "title": "La Cicatriz del Ego",
-          "description": "Su crítica, por más justificada que sea, ataca la identidad de la persona. La herida no se ve, pero el resentimiento se convierte en un enemigo silencioso que esperará su momento."
+          "description": "Tu corrección fue precisa, pero dejó una herida invisible. Lo que era aprendizaje se convirtió en rencor silencioso. Y el rencor siempre vuelve al tablero."
         },
         {
-          "title": "El Silencio Hostil",
-          "description": "Logra que la persona obedezca, pero el precio es la lealtad. El silencio que queda después de su 'victoria' no es de acuerdo, es de sumisión... y la sumisión siempre busca la revancha."
+          "title": "El Silencio que Intoxica",
+          "description": "Obedecen tus órdenes, pero no confían en ti. Lo que parece calma es solo sumisión contenida... y la sumisión tarde o temprano se rebela."
+        },
+        {
+          "title": "El Efecto Boomerang",
+          "description": "Tu mensaje era correcto, pero tu ejecución lo traicionó. La forma destruyó el fondo, y la verdad perdió su poder."
         }
       ]
     },
     "revelation": {
-      "title": "El Gambito del Rey:<br />Ceda el Peón del Ego. Capture la Lealtad de su Oponente.",
-      "subtitle": "Este libro le enseña a ejecutar el movimiento más poderoso del tablero humano: sacrificar la satisfacción inmediata de \"tener la razón\" para ganar la influencia a largo plazo y la voluntad del otro.",
+      "title": "El Gambito del Rey:<br/>Cede el Ego. Gana la Lealtad.",
+      "subtitle": "Inspirado en la sabiduría del tablero y la ciencia del comportamiento, este libro revela el movimiento maestro: renunciar al placer inmediato de tener razón para conquistar la influencia duradera del respeto y la confianza.",
       "quotes": [
-        "Cualquier tonto puede criticar. Se necesita carácter para comprender, desarmar y conquistar."
+        "El líder no vence, persuade. No manda, orienta. No conquista a la fuerza, conquista la voluntad.",
+        "Los sabios no corrigen para ganar. Corrigen para elevar el juego del otro —y con ello, el suyo propio."
       ]
     },
     "mastery": {
-      "title": "Su Arsenal de Tácticas de Corrección Estratégica",
-      "subtitle": "Aprende las técnicas específicas para transformar una confrontación en una oportunidad de fortalecer su liderazgo y la lealtad de su equipo.",
+      "title": "El Arsenal Estratégico del Comunicador Maestro",
+      "subtitle": "Tácticas psicológicas y comunicacionales para corregir, persuadir y liderar sin despertar resistencia.",
       "features": [
         {
-          "title": "Corregir el Comportamiento, No a la Persona",
-          "description": "Aprende a separar el error de la identidad para que la persona se una a usted en la búsqueda de una solución, en lugar de defenderse de un ataque."
+          "title": "Corregir sin Desactivar",
+          "description": "Domina el arte de señalar un error sin amenazar la identidad del otro. Lo que antes generaba defensa, ahora generará apertura."
         },
         {
-          "title": "Usar Preguntas, No Acusaciones",
-          "description": "Domine el método socrático para guiar a la persona a descubrir su propio error y proponer la solución, logrando un compromiso real con el cambio."
+          "title": "Preguntar para Conquistar",
+          "description": "Usa la mayéutica socrática para llevar al otro a descubrir su propio fallo. Las conclusiones propias se obedecen con orgullo, no con resentimiento."
         },
         {
-          "title": "Preparar el Terreno Antes de Corregir",
-          "description": "Aplique el \"Efecto Franklin\" para desarmar la hostilidad y crear una conexión antes de iniciar una conversación difícil."
+          "title": "Preparar el Terreno",
+          "description": "Aplica el ‘Efecto Franklin’ para desarmar la hostilidad antes de la conversación. La influencia comienza antes de abrir la boca."
         },
         {
-          "title": "Ceder en lo Trivial para Ganar lo Esencial",
-          "description": "Aprenda a identificar y satisfacer la necesidad de ego de su interlocutor para proteger su objetivo principal, una táctica magistral demostrada por Miguel Ángel."
+          "title": "Ceder para Ganar",
+          "description": "Aprende la táctica del sacrificio estratégico: cuando ceder en lo trivial te permite conservar lo esencial. El ego se gasta; la influencia se multiplica."
+        },
+        {
+          "title": "Lectura de Tablero Emocional",
+          "description": "Detecta las jugadas invisibles de cada interacción. Aprende a leer microexpresiones, silencios y tensiones para anticiparte a la reacción del otro."
+        },
+        {
+          "title": "El Arte del Timing",
+          "description": "No toda verdad debe decirse en el mismo momento. Domina la sincronización estratégica: cuándo callar, cuándo avanzar, cuándo ganar sin mover una pieza."
         }
       ]
     },
     "finalCta": {
-      "title": "El Poder Verdadero No Se Anuncia. Se Siente.",
-      "text": "Deje de librar batallas innecesarias. Conviértase en el estratega que moldea el resultado antes de que la partida comience. Adquiera las tácticas para que la gente no solo haga lo que usted dice, sino que desee hacerlo.",
+      "title": "El verdadero poder no se demuestra.<br/>Se siente.",
+      "text": "Deja de luchar por tener razón. Aprende a mover las piezas de la mente humana con elegancia, precisión y propósito. ‘El Gambito del Rey’ no te enseña a discutir: te enseña a dominar el juego invisible donde se ganan todas las batallas importantes.",
       "cta": "Obtener mi Ventaja Estratégica"
     }
   }
