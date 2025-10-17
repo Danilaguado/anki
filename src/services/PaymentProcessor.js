@@ -92,37 +92,55 @@ export class PaymentProcessor {
     return this.expectedBanks.some((bank) => cleanedText.includes(bank));
   }
 
-  extractAmounts(text) {
-    const amounts = [];
-
-    // Patrón 1: números con formato decimal
-    const pattern1 = /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g;
-    let matches = text.match(pattern1);
-
-    if (matches) {
-      matches.forEach((match) => {
-        const normalized = match.replace(/\./g, "").replace(",", ".");
-        const amount = parseFloat(normalized);
-        if (!isNaN(amount) && amount > 0 && amount < 1000000) {
-          amounts.push(amount);
-        }
-      });
+  containsAmount(text, expectedAmount) {
+    if (!expectedAmount) {
+      return false;
     }
 
-    // Patrón 2: números enteros
-    const pattern2 = /\b(\d{2,6})\b/g;
-    matches = text.match(pattern2);
+    const expected = parseFloat(expectedAmount);
+    const amounts = this.extractAmounts(text);
 
-    if (matches) {
-      matches.forEach((match) => {
-        const amount = parseFloat(match);
-        if (!isNaN(amount) && amount > 10 && amount < 100000) {
-          amounts.push(amount);
-        }
-      });
+    console.log(`💰 Montos encontrados en texto: [${amounts.join(", ")}]`);
+    console.log(`💰 Monto esperado: ${expected}`);
+
+    // Match exacto (± 1)
+    const exactMatch = amounts.find(
+      (amount) => Math.abs(amount - expected) <= 1
+    );
+
+    if (exactMatch) {
+      console.log(`✅ Match exacto encontrado: ${exactMatch}`);
+      return true;
     }
 
-    return [...new Set(amounts)];
+    // 👇 NUEVA LÓGICA: Buscar el monto SIN el primer dígito
+    // Ejemplo: Si esperamos 889.35, también buscar 89.35 ó 9.35
+    const expectedStr = expected.toString();
+    for (let i = 1; i < expectedStr.length; i++) {
+      const partialExpected = parseFloat(expectedStr.substring(i));
+      const partialMatch = amounts.find(
+        (amount) => Math.abs(amount - partialExpected) <= 1
+      );
+      if (partialMatch) {
+        console.log(
+          `⚠️ Match parcial encontrado: ${partialMatch} (esperado: ${expected})`
+        );
+        return true; // Aceptar como válido
+      }
+    }
+
+    // Match cercano (± 20%)
+    const closeMatch = amounts.find(
+      (amount) => Math.abs(amount - expected) <= expected * 0.2
+    );
+
+    if (closeMatch) {
+      console.log(`✅ Match cercano encontrado: ${closeMatch}`);
+      return true;
+    }
+
+    console.log(`❌ No se encontró el monto esperado`);
+    return false;
   }
 
   containsAmount(text, expectedAmount) {
