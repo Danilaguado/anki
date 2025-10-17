@@ -66,7 +66,7 @@ Responde SOLO con el JSON válido, sin markdown.`;
     console.log("📤 Enviando request a Gemini API...");
 
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -93,7 +93,6 @@ Responde SOLO con el JSON válido, sin markdown.`;
         }),
       }
     );
-
     console.log("📥 Respuesta de Gemini - Status:", geminiResponse.status);
 
     if (!geminiResponse.ok) {
