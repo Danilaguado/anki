@@ -167,7 +167,7 @@ const Home = () => {
         <NewsletterSubscribe /> {/* <-- 2. Añadir el componente */}
       </section>
       <Footer />
-      <div className='secure-footer-home' style={"background:ghostwhite"}>
+      <div className='secure-footer-home' style={{ background: "ghostwhite" }}>
         <SecureBadge />
       </div>
     </div>
