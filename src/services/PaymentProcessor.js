@@ -430,6 +430,15 @@ export class PaymentProcessor {
           confidence: result.data.confidence,
           score: validCount * 100 + result.data.confidence,
         });
+
+        // 👇 NUEVA LÓGICA: Si ya tiene suficientes validaciones, detener
+        if (validCount >= 1) {
+          console.log(
+            `\n🎯 ¡VALIDACIÓN EXITOSA CON ${strategy.toUpperCase()}!`
+          );
+          console.log(`⏭️  Saltando estrategias restantes (optimización)`);
+          break; // Salir del loop
+        }
       }
 
       // Ordenar por mejor puntuación
@@ -483,7 +492,6 @@ export class PaymentProcessor {
       throw error;
     }
   }
-
   // ========================================
   // MÉTODO PRINCIPAL
   // ========================================
