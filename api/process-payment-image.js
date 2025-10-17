@@ -1,35 +1,44 @@
 // api/process-payment-image.js
 
 export default async function handler(req, res) {
+  // Log de inicio
+  console.log("🔵 API /process-payment-image llamada");
+  console.log("Method:", req.method);
+
   if (req.method !== "POST") {
     return res
       .status(405)
       .json({ success: false, message: "Método no permitido" });
   }
 
-  const { imageBase64, expectedAmount, fileName } = req.body;
-
-  if (!imageBase64 || !expectedAmount) {
-    return res.status(400).json({
-      success: false,
-      message: "Falta imageBase64 o expectedAmount",
-    });
-  }
-
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-  if (!GEMINI_API_KEY) {
-    console.error("❌ GEMINI_API_KEY no configurada en Vercel");
-    return res.status(500).json({
-      success: false,
-      message: "API key no configurada",
-    });
-  }
-
   try {
-    console.log("🤖 Procesando imagen con Gemini Vision...");
-    console.log(`📄 Archivo: ${fileName}`);
-    console.log(`💰 Monto esperado: ${expectedAmount}`);
+    const { imageBase64, expectedAmount, fileName } = req.body;
+
+    console.log("📦 Body recibido:");
+    console.log("- fileName:", fileName);
+    console.log("- expectedAmount:", expectedAmount);
+    console.log("- imageBase64 length:", imageBase64?.length || 0);
+
+    if (!imageBase64 || !expectedAmount) {
+      console.error("❌ Faltan parámetros");
+      return res.status(400).json({
+        success: false,
+        message: "Falta imageBase64 o expectedAmount",
+      });
+    }
+
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+    if (!GEMINI_API_KEY) {
+      console.error("❌ GEMINI_API_KEY no configurada");
+      return res.status(500).json({
+        success: false,
+        message: "API key no configurada en el servidor",
+      });
+    }
+
+    console.log("✅ GEMINI_API_KEY encontrada");
+    console.log(`🤖 Procesando imagen con Gemini Vision...`);
 
     const prompt = `Analiza esta imagen de un comprobante de pago móvil venezolano y extrae la siguiente información en formato JSON:
 
@@ -54,7 +63,9 @@ INSTRUCCIONES IMPORTANTES:
 
 Responde SOLO con el JSON válido, sin markdown.`;
 
-    const response = await fetch(
+    console.log("📤 Enviando request a Gemini API...");
+
+    const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
@@ -83,16 +94,33 @@ Responde SOLO con el JSON válido, sin markdown.`;
       }
     );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("❌ Error de Gemini:", errorData);
-      throw new Error(`Gemini error: ${response.status}`);
+    console.log("📥 Respuesta de Gemini - Status:", geminiResponse.status);
+
+    if (!geminiResponse.ok) {
+      const errorData = await geminiResponse.json();
+      console.error(
+        "❌ Error de Gemini API:",
+        JSON.stringify(errorData, null, 2)
+      );
+      return res.status(500).json({
+        success: false,
+        message: `Error de Gemini: ${geminiResponse.status}`,
+        error: errorData,
+      });
     }
 
-    const data = await response.json();
-    const textResponse = data.candidates[0].content.parts[0].text;
+    const data = await geminiResponse.json();
 
-    console.log("📝 Respuesta de Gemini:", textResponse);
+    if (!data.candidates || !data.candidates[0]) {
+      console.error("❌ Respuesta de Gemini sin candidates");
+      return res.status(500).json({
+        success: false,
+        message: "Respuesta de Gemini inválida",
+      });
+    }
+
+    const textResponse = data.candidates[0].content.parts[0].text;
+    console.log("📝 Texto de Gemini:", textResponse);
 
     let cleanedResponse = textResponse.trim();
     if (cleanedResponse.startsWith("```json")) {
@@ -103,7 +131,19 @@ Responde SOLO con el JSON válido, sin markdown.`;
       cleanedResponse = cleanedResponse.replace(/```\n?/g, "");
     }
 
-    const extractedData = JSON.parse(cleanedResponse);
+    let extractedData;
+    try {
+      extractedData = JSON.parse(cleanedResponse);
+      console.log("✅ JSON parseado:", extractedData);
+    } catch (parseError) {
+      console.error("❌ Error parseando JSON:", parseError);
+      console.error("Texto que falló:", cleanedResponse);
+      return res.status(500).json({
+        success: false,
+        message: "Error parseando respuesta de Gemini",
+        error: parseError.message,
+      });
+    }
 
     // Validaciones
     const expectedCedula = "23621688";
@@ -140,18 +180,15 @@ Responde SOLO con el JSON válido, sin markdown.`;
       const expected = parseFloat(expectedAmount);
 
       if (!isNaN(amount) && !isNaN(expected)) {
-        // Match exacto (± 1)
         if (Math.abs(amount - expected) <= 1) {
           hasAmount = true;
         } else {
-          // Match de dígitos
           const expectedDigits = expected.toFixed(2).replace(/[.,]/g, "");
           const amountDigits = amount.toFixed(2).replace(/[.,]/g, "");
 
           if (expectedDigits === amountDigits) {
             hasAmount = true;
           } else {
-            // Match parcial (80%)
             let matchCount = 0;
             let expectedIndex = 0;
 
@@ -200,11 +237,13 @@ Responde SOLO con el JSON válido, sin markdown.`;
       },
     });
   } catch (error) {
-    console.error("❌ Error procesando imagen:", error);
+    console.error("❌ ERROR CRÍTICO en API:", error);
+    console.error("Stack:", error.stack);
     return res.status(500).json({
       success: false,
-      message: "Error procesando imagen",
+      message: "Error interno del servidor",
       error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 }
