@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import nodemailer from "nodemailer";
 
-// --- Funciones de notificación por correo (sin cambios) ---
+// --- Funciones de notificación por correo ---
 async function notifyAdminRejectedPayment(transporter, data) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
@@ -126,6 +126,8 @@ export default async function handler(req, res) {
     phone,
   } = req.body;
 
+  console.log("📞 Teléfono recibido en submit-payment:", phone);
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD },
@@ -159,6 +161,7 @@ export default async function handler(req, res) {
   }
 
   if (!phone) {
+    console.error("❌ No se recibió el teléfono");
     return res.status(400).json({
       success: false,
       message:
@@ -186,7 +189,7 @@ export default async function handler(req, res) {
     });
     const rows = getRows.data.values || [];
 
-    // ====== VERIFICAR SI LA HOJA EXISTE Y AGREGAR HEADER SI ES NECESARIA ======
+    // ====== VERIFICAR SI LA HOJA EXISTE ======
     const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
     const sheetExists = spreadsheetInfo.data.sheets.some(
       (s) => s.properties.title === sheetName
@@ -223,10 +226,24 @@ export default async function handler(req, res) {
     let rowIndexToUpdate = -1;
     const phoneColumnIndex = 4; // Columna E
 
+    console.log(`🔍 Buscando teléfono: ${phone}`);
+    console.log(`📊 Total de filas: ${rows.length}`);
+
     for (let i = rows.length - 1; i > 0; i--) {
       const row = rows[i];
-      if (row[phoneColumnIndex] === phone && (!row[1] || !row[2])) {
+      const rowPhone = row[phoneColumnIndex];
+      const rowName = row[1];
+      const rowEmail = row[2];
+
+      console.log(
+        `Fila ${i}: Phone=${rowPhone}, Name=${rowName}, Email=${rowEmail}`
+      );
+
+      if (rowPhone === phone && (!rowName || !rowEmail)) {
         rowIndexToUpdate = i;
+        console.log(
+          `✅ Fila abierta encontrada en índice ${i} para teléfono ${phone}`
+        );
         break;
       }
     }
@@ -244,7 +261,7 @@ export default async function handler(req, res) {
 
     const referenciaUltimos4 = referencia ? referencia : "N/A";
 
-    // ====== ACTUALIZAR: Solo nombre, correo, referencia y producto ======
+    // ====== ACTUALIZAR LA FILA ======
     const rowData = [
       new Date(fecha).toLocaleString("es-ES", { timeZone: "America/Caracas" }),
       nombre,
@@ -257,6 +274,10 @@ export default async function handler(req, res) {
     const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:F${
       rowIndexToUpdate + 1
     }`;
+
+    console.log(`📝 Actualizando fila ${rowIndexToUpdate + 1}...`);
+    console.log(`Datos a actualizar:`, rowData);
+
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range: updateRange,
@@ -265,10 +286,12 @@ export default async function handler(req, res) {
     });
 
     console.log(
-      `✅ Fila ${rowIndexToUpdate + 1} actualizada para el teléfono ${phone}.`
+      `✅ Fila ${
+        rowIndexToUpdate + 1
+      } actualizada exitosamente para teléfono ${phone}`
     );
 
-    // Determinar qué PDF enviar basado en el producto
+    // ====== ENVIAR PDF ======
     const productoPDFMap = {
       "Descifrando a Eva": "descifrando-eva-cover.pdf",
       "El Músculo de la Voluntad": "musculo-voluntad-cover.pdf",
@@ -378,7 +401,7 @@ export default async function handler(req, res) {
 
     await transporter.sendMail(mailOptions);
 
-    // Notificar al admin sobre el pago aprobado
+    // Notificar al admin
     await notifyAdminApprovedPayment(transporter, {
       nombre,
       correo,
