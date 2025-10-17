@@ -121,7 +121,7 @@ const Home = () => {
                 />
                 <h3 className='home-book-title'>{book.productName}</h3>
                 <p className='home-book-badge'>
-                  {book.badge || "Desarrollo Personal"}
+                  {book.hero.badge || "Desarrollo Personal"}
                 </p>
                 <p className='home-book-description'>{book.hero.subtitle}</p>
 
