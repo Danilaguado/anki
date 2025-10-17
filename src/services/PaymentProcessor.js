@@ -185,9 +185,16 @@ export class PaymentProcessor {
     const imageData = ctx.getImageData(0, 0, width, height);
     const data = imageData.data;
 
+    // 1. Convert to Grayscale first for consistent processing
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      data[i] = data[i + 1] = data[i + 2] = gray;
+    }
+
+    // 2. Auto-Invert based on brightness
     let totalBrightness = 0;
     for (let i = 0; i < data.length; i += 4) {
-      totalBrightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+      totalBrightness += data[i]; // Already grayscale, so R, G, and B are the same
     }
     const avgBrightness = totalBrightness / (data.length / 4);
     const isDarkImage = avgBrightness < 128;
@@ -199,7 +206,7 @@ export class PaymentProcessor {
     );
 
     if (isDarkImage) {
-      console.log("🔄 Invirtiendo colores...");
+      console.log("🔄 Invirtiendo colores (imagen oscura detectada)...");
       for (let i = 0; i < data.length; i += 4) {
         data[i] = 255 - data[i];
         data[i + 1] = 255 - data[i + 1];
@@ -207,65 +214,32 @@ export class PaymentProcessor {
       }
     }
 
-    const brightnessBoost = 30;
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = Math.min(255, data[i] + brightnessBoost);
-      data[i + 1] = Math.min(255, data[i + 1] + brightnessBoost);
-      data[i + 2] = Math.min(255, data[i + 2] + brightnessBoost);
-    }
+    // 3. Apply a stronger, more controlled contrast enhancement
+    const contrast = 2.0; // A strong but safe contrast value
+    const factor =
+      (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
 
-    const contrast = 3.0;
     for (let i = 0; i < data.length; i += 4) {
-      data[i] = Math.min(255, Math.max(0, contrast * (data[i] - 128) + 128));
-      data[i + 1] = Math.min(
-        255,
-        Math.max(0, contrast * (data[i + 1] - 128) + 128)
+      data[i] = Math.max(0, Math.min(255, factor * (data[i] - 128) + 128));
+      data[i + 1] = Math.max(
+        0,
+        Math.min(255, factor * (data[i + 1] - 128) + 128)
       );
-      data[i + 2] = Math.min(
-        255,
-        Math.max(0, contrast * (data[i + 2] - 128) + 128)
+      data[i + 2] = Math.max(
+        0,
+        Math.min(255, factor * (data[i + 2] - 128) + 128)
       );
     }
 
+    // 4. Binarization (Thresholding) to make text stand out
+    const threshold = 128; // Standard threshold for binary conversion
     for (let i = 0; i < data.length; i += 4) {
-      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      data[i] = gray;
-      data[i + 1] = gray;
-      data[i + 2] = gray;
-    }
-
-    const blockSize = 50;
-    const tempData = new Uint8ClampedArray(data);
-
-    for (let y = 0; y < height; y += blockSize) {
-      for (let x = 0; x < width; x += blockSize) {
-        let sum = 0;
-        let count = 0;
-
-        for (let by = y; by < Math.min(y + blockSize, height); by++) {
-          for (let bx = x; bx < Math.min(x + blockSize, width); bx++) {
-            const i = (by * width + bx) * 4;
-            sum += tempData[i];
-            count++;
-          }
-        }
-
-        const blockThreshold = (sum / count) * 0.85;
-
-        for (let by = y; by < Math.min(y + blockSize, height); by++) {
-          for (let bx = x; bx < Math.min(x + blockSize, width); bx++) {
-            const i = (by * width + bx) * 4;
-            const value = data[i] > blockThreshold ? 255 : 0;
-            data[i] = value;
-            data[i + 1] = value;
-            data[i + 2] = value;
-          }
-        }
-      }
+      const finalValue = data[i] > threshold ? 255 : 0;
+      data[i] = data[i + 1] = data[i + 2] = finalValue;
     }
 
     ctx.putImageData(imageData, 0, 0);
-    console.log("✅ Preprocesamiento completado");
+    console.log("✅ Preprocesamiento de imagen mejorado completado.");
   }
 
   loadImage(file) {
@@ -367,64 +341,44 @@ export class PaymentProcessor {
   // MÉTODO PRINCIPAL
   // ========================================
 
-  preprocessImage(ctx, width, height) {
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
+  async processImage(file, expectedAmount = null) {
+    console.log("\n" + "=".repeat(60));
+    console.log("🚀 INICIANDO PROCESAMIENTO DE IMAGEN");
+    console.log("=".repeat(60));
+    console.log(`📄 Archivo: ${file.name}`);
+    console.log(`📏 Tamaño: ${(file.size / 1024).toFixed(2)} KB`);
+    console.log(`💰 Monto esperado: Bs. ${expectedAmount}`);
+    console.log("=".repeat(60) + "\n");
 
-    // 1. Convert to Grayscale first for consistent processing
-    for (let i = 0; i < data.length; i += 4) {
-      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      data[i] = data[i + 1] = data[i + 2] = gray;
-    }
+    try {
+      const tesseractResult = await this.processWithTesseract(
+        file,
+        expectedAmount
+      );
 
-    // 2. Auto-Invert based on brightness
-    let totalBrightness = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      totalBrightness += data[i]; // Already grayscale, so R, G, and B are the same
-    }
-    const avgBrightness = totalBrightness / (data.length / 4);
-    const isDarkImage = avgBrightness < 128;
-
-    console.log(
-      `📊 Brillo promedio: ${avgBrightness.toFixed(
-        2
-      )}, Es oscura: ${isDarkImage}`
-    );
-
-    if (isDarkImage) {
-      console.log("🔄 Invirtiendo colores (imagen oscura detectada)...");
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = 255 - data[i];
-        data[i + 1] = 255 - data[i + 1];
-        data[i + 2] = 255 - data[i + 2];
+      if (tesseractResult.success) {
+        console.log("✅ ¡VALIDACIÓN EXITOSA CON TESSERACT OCR!");
+        return tesseractResult;
       }
+
+      console.log("⚠️ Tesseract no validó correctamente");
+      return tesseractResult;
+    } catch (error) {
+      console.error("❌ ERROR CRÍTICO:", error);
+      return {
+        success: false,
+        error: error.message,
+        text: "",
+        reference: null,
+        method: "error",
+        details: {
+          hasCedula: false,
+          hasPhone: false,
+          hasBank: false,
+          hasAmount: false,
+          confidence: 0,
+        },
+      };
     }
-
-    // 3. Apply a stronger, more controlled contrast enhancement
-    const contrast = 2.0; // A strong but safe contrast value
-    const factor =
-      (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
-
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = Math.max(0, Math.min(255, factor * (data[i] - 128) + 128));
-      data[i + 1] = Math.max(
-        0,
-        Math.min(255, factor * (data[i + 1] - 128) + 128)
-      );
-      data[i + 2] = Math.max(
-        0,
-        Math.min(255, factor * (data[i + 2] - 128) + 128)
-      );
-    }
-
-    // 4. Binarization (Thresholding) to make text stand out
-    const threshold = 128; // Standard threshold for binary conversion
-    for (let i = 0; i < data.length; i += 4) {
-      const finalValue = data[i] > threshold ? 255 : 0;
-      data[i] = data[i + 1] = data[i + 2] = finalValue;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-    console.log("✅ Preprocesamiento de imagen mejorado completado.");
   }
 }
