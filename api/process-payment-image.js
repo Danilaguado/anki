@@ -65,8 +65,9 @@ Responde SOLO con el JSON válido, sin markdown.`;
     console.log("📤 Enviando request a Gemini API...");
 
     // 👇 AQUÍ ESTÁ EL CAMBIO - USA v1 EN VEZ DE v1beta
+    // The fix is in this URL, changing "gemini-1.5-flash" to "gemini-1.5-flash-latest"
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -79,8 +80,7 @@ Responde SOLO con el JSON válido, sin markdown.`;
                 { text: prompt },
                 {
                   inlineData: {
-                    // 👈 Cambio: inlineData en camelCase
-                    mimeType: "image/jpeg", // 👈 Cambio: mimeType en camelCase
+                    mimeType: "image/jpeg",
                     data: imageBase64,
                   },
                 },
