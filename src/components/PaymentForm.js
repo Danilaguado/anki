@@ -23,7 +23,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   const [formData, setFormData] = useState({
     nombre: "",
     correo: "",
-    whatsappNumber: "",
   });
   const [comprobante, setComprobante] = useState(null);
   const [errors, setErrors] = useState({});
@@ -36,7 +35,6 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
     nombre: useRef(null),
     correo: useRef(null),
     comprobante: useRef(null),
-    whatsappNumber: useRef(null),
   };
 
   const paymentData = {
@@ -169,7 +167,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
   };
 
   const resetForm = () => {
-    setFormData({ nombre: "", correo: "", whatsappNumber: "" });
+    setFormData({ nombre: "", correo: "" });
     setComprobante(null);
     setErrors({});
     if (fileInputRef.current) fileInputRef.current.value = "";
