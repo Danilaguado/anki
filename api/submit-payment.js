@@ -105,39 +105,6 @@ async function notifyAdminApprovedPayment(transporter, data) {
   await transporter.sendMail(adminMailOptions);
 }
 
-// --- NUEVA FUNCIÓN PARA BUSCAR EL TELÉFONO EN GOOGLE SHEETS ---
-async function findPhoneByEmail(sheets, spreadsheetId, email) {
-  const sheetName = "Pagos";
-  const range = `${sheetName}!A:E`;
-
-  try {
-    const getRows = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
-    const rows = getRows.data.values || [];
-
-    // Buscar desde el final hacia atrás para obtener el registro más reciente
-    for (let i = rows.length - 1; i > 0; i--) {
-      const row = rows[i];
-      const rowEmail = row[2]; // Columna C (correo)
-      const rowPhone = row[4]; // Columna E (teléfono)
-
-      // Si encontramos el correo y tiene teléfono, lo retornamos
-      if (rowEmail === email && rowPhone) {
-        console.log(`📱 Teléfono encontrado para ${email}: ${rowPhone}`);
-        return rowPhone;
-      }
-    }
-
-    console.log(`⚠️ No se encontró teléfono registrado para ${email}`);
-    return null;
-  } catch (error) {
-    console.error("Error al buscar teléfono:", error);
-    return null;
-  }
-}
-
 // --- Handler Principal ---
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -156,6 +123,7 @@ export default async function handler(req, res) {
     comprobanteBase64,
     montoEsperado,
     isRejected,
+    phone,
   } = req.body;
 
   const transporter = nodemailer.createTransport({
@@ -203,18 +171,6 @@ export default async function handler(req, res) {
     const sheetName = "Pagos";
     const range = `${sheetName}!A:F`;
 
-    // ====== BUSCAR EL TELÉFONO EN GOOGLE SHEETS ======
-    const phone = await findPhoneByEmail(sheets, spreadsheetId, correo);
-
-    if (!phone) {
-      console.error(`❌ No se encontró teléfono para el correo: ${correo}`);
-      return res.status(400).json({
-        success: false,
-        message:
-          "No se encontró un número de teléfono registrado para este correo. Por favor, contacte soporte.",
-      });
-    }
-
     const getRows = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,
@@ -257,7 +213,7 @@ export default async function handler(req, res) {
     let rowIndexToUpdate = -1;
     const phoneColumnIndex = 4; // Columna E
 
-    if (rows.length > 0) {
+    if (rows.length > 0 && phone) {
       for (let i = rows.length - 1; i > 0; i--) {
         const row = rows[i];
         if (row[phoneColumnIndex] === phone && (!row[1] || !row[2])) {
@@ -273,7 +229,7 @@ export default async function handler(req, res) {
       nombre,
       correo,
       referenciaUltimos4,
-      phone,
+      phone || "N/A",
       producto,
     ];
 
@@ -298,7 +254,7 @@ export default async function handler(req, res) {
         resource: { values: [rowData] },
       });
       console.log(
-        `ADVERTENCIA: No se encontró un lead abierto para ${phone}, se agregó una nueva fila.`
+        `Nueva fila agregada para ${correo} con teléfono ${phone || "N/A"}.`
       );
     }
 
@@ -415,7 +371,7 @@ export default async function handler(req, res) {
     // Notificar al admin sobre el pago aprobado
     await notifyAdminApprovedPayment(transporter, {
       ...req.body,
-      phone, // Incluir el teléfono encontrado
+      phone: phone || "N/A",
       referencia: referenciaUltimos4,
     });
 
