@@ -226,10 +226,6 @@ export class PaymentProcessor {
     return false;
   }
 
-  // ========================================
-  // PREPROCESAMIENTO DE IMAGEN
-  // ========================================
-
   loadImage(file) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -387,7 +383,6 @@ export class PaymentProcessor {
             if (m.status === "recognizing text") {
               const progress = Math.round(m.progress * 100);
               if (progress % 20 === 0) {
-                // Mostrar cada 20%
                 console.log(`  OCR [${strategy}]: ${progress}%`);
               }
             }
@@ -433,7 +428,7 @@ export class PaymentProcessor {
           reference,
           validCount,
           confidence: result.data.confidence,
-          score: validCount * 100 + result.data.confidence, // Puntuación combinada
+          score: validCount * 100 + result.data.confidence,
         });
       }
 
@@ -487,7 +482,52 @@ export class PaymentProcessor {
       console.error("❌ Error en Tesseract:", error);
       throw error;
     }
-  } // ========================================
-  // TESSERACT OCR
+  }
+
   // ========================================
+  // MÉTODO PRINCIPAL
+  // ========================================
+
+  async processImage(file, expectedAmount = null) {
+    console.log("\n" + "=".repeat(60));
+    console.log("🚀 INICIANDO PROCESO DE VALIDACIÓN");
+    console.log("=".repeat(60));
+    console.log(`📄 Archivo: ${file.name}`);
+    console.log(`📏 Tamaño: ${(file.size / 1024).toFixed(2)} KB`);
+    console.log(`💰 Monto esperado: Bs. ${expectedAmount}`);
+    console.log("=".repeat(60) + "\n");
+
+    try {
+      const tesseractResult = await this.processWithTesseract(
+        file,
+        expectedAmount
+      );
+
+      if (tesseractResult.success) {
+        console.log("\n✅ ¡VALIDACIÓN EXITOSA!");
+        return tesseractResult;
+      }
+
+      console.log("\n⚠️ Validación no exitosa");
+      console.log(`   Validaciones: ${tesseractResult.details.validCount}/4`);
+      return tesseractResult;
+    } catch (error) {
+      console.error("❌ ERROR CRÍTICO:", error);
+      return {
+        success: false,
+        error: error.message,
+        text: "",
+        reference: null,
+        method: "error",
+        details: {
+          hasCedula: false,
+          hasPhone: false,
+          hasBank: false,
+          hasAmount: false,
+          validCount: 0,
+          confidence: 0,
+        },
+      };
+    }
+  }
 }
