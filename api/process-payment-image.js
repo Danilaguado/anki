@@ -1,7 +1,6 @@
 // api/process-payment-image.js
 
 export default async function handler(req, res) {
-  // Log de inicio
   console.log("🔵 API /process-payment-image llamada");
   console.log("Method:", req.method);
 
@@ -65,6 +64,7 @@ Responde SOLO con el JSON válido, sin markdown.`;
 
     console.log("📤 Enviando request a Gemini API...");
 
+    // 👇 AQUÍ ESTÁ EL CAMBIO - USA v1 EN VEZ DE v1beta
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -93,6 +93,7 @@ Responde SOLO con el JSON válido, sin markdown.`;
         }),
       }
     );
+
     console.log("📥 Respuesta de Gemini - Status:", geminiResponse.status);
 
     if (!geminiResponse.ok) {
