@@ -143,10 +143,10 @@ const Home = () => {
           </div>
         </div>
       </section>
-      <MembershipBanner />
+      {/* <MembershipBanner /> */}
       <TestimonialCarousel />
       {/* Final CTA Section */}
-      {/* <section className='home-final-cta-section'>
+      <section className='home-final-cta-section'>
         <div className='home-section-container'>
           <div className='home-final-cta-content scroll-reveal'>
             <h2 className='home-final-cta-title'>
@@ -162,7 +162,7 @@ const Home = () => {
             </button>
           </div>
         </div>
-      </section> */}
+      </section>
       <section className='home-newsletter-section'>
         <NewsletterSubscribe /> {/* <-- 2. Añadir el componente */}
       </section>
