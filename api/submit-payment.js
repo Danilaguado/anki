@@ -116,7 +116,6 @@ export default async function handler(req, res) {
       .json({ success: false, message: "Método no permitido" });
   }
 
-  // =====> CORRECCIÓN #1: Añadir 'phone' a la lista <=====
   const {
     nombre,
     correo,
@@ -149,7 +148,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // =====> CORRECCIÓN #2: Añadir '!phone' a la validación <=====
   if (!nombre || !correo || !phone) {
     return res.status(400).json({
       success: false,
@@ -174,7 +172,7 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sheetName = "Pagos";
-    const range = `${sheetName}!A:E`;
+    const range = `${sheetName}!A:F`; // CAMBIO: Rango extendido a F
 
     const getRows = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -182,8 +180,43 @@ export default async function handler(req, res) {
     });
     const rows = getRows.data.values || [];
 
+    // ====== VERIFICAR SI LA HOJA EXISTE Y AGREGAR HEADER SI ES NECESARIA ======
+    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetExists = spreadsheetInfo.data.sheets.some(
+      (s) => s.properties.title === sheetName
+    );
+
+    if (!sheetExists) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        resource: {
+          requests: [{ addSheet: { properties: { title: sheetName } } }],
+        },
+      });
+
+      // CAMBIO: Header actualizado con la columna Producto (F)
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${sheetName}!A1:F1`,
+        valueInputOption: "USER_ENTERED",
+        resource: {
+          values: [
+            [
+              "Fecha",
+              "Nombre",
+              "Correo",
+              "Referencia (últimos 4)",
+              "Teléfono",
+              "Producto",
+            ],
+          ],
+        },
+      });
+    }
+    // ========================================================
+
     let rowIndexToUpdate = -1;
-    const phoneColumnIndex = 4; // Columna E, donde está el teléfono.
+    const phoneColumnIndex = 4; // Columna E
 
     if (rows.length > 0) {
       for (let i = rows.length - 1; i > 0; i--) {
@@ -196,16 +229,18 @@ export default async function handler(req, res) {
     }
 
     const referenciaUltimos4 = referencia ? referencia : "N/A";
+    // CAMBIO: Se agrega el producto como columna F
     const rowData = [
       new Date(fecha).toLocaleString("es-ES", { timeZone: "America/Caracas" }),
       nombre,
       correo,
       referenciaUltimos4,
       phone,
+      producto, // ✅ NUEVA COLUMNA F: Producto
     ];
 
     if (rowIndexToUpdate !== -1) {
-      const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:E${
+      const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:F${
         rowIndexToUpdate + 1
       }`;
       await sheets.spreadsheets.values.update({
@@ -339,8 +374,6 @@ export default async function handler(req, res) {
 
     await transporter.sendMail(mailOptions);
 
-    // --- Fin de la lógica de envío de correo ---
-
     // Notificar al admin sobre el pago aprobado
     await notifyAdminApprovedPayment(transporter, {
       ...req.body,
@@ -352,12 +385,10 @@ export default async function handler(req, res) {
       .json({ success: true, message: "Pago registrado exitosamente" });
   } catch (error) {
     console.error("Error al procesar el pago:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error al procesar el pago",
-        error: error.message,
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Error al procesar el pago",
+      error: error.message,
+    });
   }
 }
