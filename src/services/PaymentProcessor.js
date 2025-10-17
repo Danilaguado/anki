@@ -1,5 +1,4 @@
 // src/services/PaymentProcessor.js
-import Tesseract from "tesseract.js";
 
 export class PaymentProcessor {
   constructor() {
@@ -14,19 +13,23 @@ export class PaymentProcessor {
       "nacional",
       "credito",
     ];
+
+    // Buscar API key en variables de entorno
     this.geminiApiKey =
       process.env.GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY;
-    this.useGemini = !!this.geminiApiKey;
 
-    if (this.useGemini) {
-      console.log("✅ Gemini Vision disponible como respaldo");
-    } else {
-      console.log("⚠️ Solo Tesseract OCR disponible (sin Gemini fallback)");
+    if (!this.geminiApiKey) {
+      console.error(
+        "❌ ERROR: No se encontró GEMINI_API_KEY en las variables de entorno"
+      );
+      throw new Error("Falta configurar GEMINI_API_KEY");
     }
+
+    console.log("✅ Gemini Vision API configurada correctamente");
   }
 
   // ========================================
-  // MÉTODOS COMUNES
+  // MÉTODOS AUXILIARES
   // ========================================
 
   cleanText(text) {
@@ -37,304 +40,252 @@ export class PaymentProcessor {
       .toLowerCase();
   }
 
-  extractReference(text) {
-    const patterns = [
-      /(?:referencia|operaci[oó]n|nro\.?\s*de\s*referencia)[:\s]*(\d+)/gi,
-      /(?:operaci[oó]n)[:\s]*(\d+)/gi,
-      /(?:ref)[:\s]*(\d+)/gi,
-      /\b(\d{6,})\b/g,
-    ];
-
-    const allReferences = [];
-
-    for (const pattern of patterns) {
-      const matches = [...text.matchAll(pattern)];
-      matches.forEach((match) => {
-        const numbers = match[0].match(/\d+/g);
-        if (numbers && numbers.length > 0) {
-          numbers.forEach((num) => {
-            if (num.length >= 6) {
-              allReferences.push(num);
-            }
-          });
-        }
-      });
-    }
-
-    if (allReferences.length > 0) {
-      return allReferences.sort((a, b) => b.length - a.length)[0];
-    }
-
-    return null;
-  }
-
-  containsCedula(text) {
-    const cleanedText = this.cleanText(text);
-    const cedula = this.cleanText(this.expectedCedula);
-    const cedulaVariations = [cedula, `v${cedula}`, `v-${cedula}`];
-    return cedulaVariations.some((variation) =>
-      cleanedText.includes(variation)
-    );
-  }
-
-  containsPhone(text) {
-    const cleanedText = this.cleanText(text);
-    const phone = this.cleanText(this.expectedPhone);
-    const phoneVariations = [phone, phone.substring(1), phone.substring(2)];
-    return phoneVariations.some(
-      (variation) => cleanedText.includes(variation) && variation.length >= 10
-    );
-  }
-
-  containsBank(text) {
-    const cleanedText = this.cleanText(text);
-    return this.expectedBanks.some((bank) => cleanedText.includes(bank));
-  }
-
-  extractAmounts(text) {
-    const amounts = [];
-
-    // Patrón 1: números con formato decimal
-    const pattern1 = /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g;
-    let matches = text.match(pattern1);
-
-    if (matches) {
-      matches.forEach((match) => {
-        const normalized = match.replace(/\./g, "").replace(",", ".");
-        const amount = parseFloat(normalized);
-        if (!isNaN(amount) && amount > 0 && amount < 1000000) {
-          amounts.push(amount);
-        }
-      });
-    }
-
-    // Patrón 2: números enteros
-    const pattern2 = /\b(\d{2,6})\b/g;
-    matches = text.match(pattern2);
-
-    if (matches) {
-      matches.forEach((match) => {
-        const amount = parseFloat(match);
-        if (!isNaN(amount) && amount > 10 && amount < 100000) {
-          amounts.push(amount);
-        }
-      });
-    }
-
-    return [...new Set(amounts)];
-  }
-
-  containsAmount(text, expectedAmount) {
-    if (!expectedAmount) {
-      return false;
-    }
-
-    const expected = parseFloat(expectedAmount);
-    const amounts = this.extractAmounts(text);
-
-    console.log(`💰 Montos encontrados en texto: [${amounts.join(", ")}]`);
-    console.log(`💰 Monto esperado: ${expected}`);
-
-    // Match exacto (± 1)
-    const exactMatch = amounts.find(
-      (amount) => Math.abs(amount - expected) <= 1
-    );
-
-    if (exactMatch) {
-      console.log(`✅ Match exacto encontrado: ${exactMatch}`);
-      return true;
-    }
-
-    // 👇 NUEVA LÓGICA: Buscar el monto SIN el primer dígito
-    const expectedStr = expected.toString();
-    for (let i = 1; i < expectedStr.length; i++) {
-      const partialExpected = parseFloat(expectedStr.substring(i));
-      if (isNaN(partialExpected)) continue;
-
-      const partialMatch = amounts.find(
-        (amount) => Math.abs(amount - partialExpected) <= 1
-      );
-
-      if (partialMatch) {
-        console.log(
-          `⚠️ Match parcial encontrado: ${partialMatch} (esperado: ${expected})`
-        );
-        return true;
-      }
-    }
-
-    // Match cercano (± 20%)
-    const closeMatch = amounts.find(
-      (amount) => Math.abs(amount - expected) <= expected * 0.2
-    );
-
-    if (closeMatch) {
-      console.log(`✅ Match cercano encontrado: ${closeMatch}`);
-      return true;
-    }
-
-    console.log(`❌ No se encontró el monto esperado`);
-    return false;
-  }
-
-  // ========================================
-  // TESSERACT OCR (MÉTODO PRINCIPAL)
-  // ========================================
-
-  preprocessImage(ctx, width, height) {
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-
-    // 1. Convert to Grayscale first for consistent processing
-    for (let i = 0; i < data.length; i += 4) {
-      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      data[i] = data[i + 1] = data[i + 2] = gray;
-    }
-
-    // 2. Auto-Invert based on brightness
-    let totalBrightness = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      totalBrightness += data[i]; // Already grayscale, so R, G, and B are the same
-    }
-    const avgBrightness = totalBrightness / (data.length / 4);
-    const isDarkImage = avgBrightness < 128;
-
-    console.log(
-      `📊 Brillo promedio: ${avgBrightness.toFixed(
-        2
-      )}, Es oscura: ${isDarkImage}`
-    );
-
-    if (isDarkImage) {
-      console.log("🔄 Invirtiendo colores (imagen oscura detectada)...");
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = 255 - data[i];
-        data[i + 1] = 255 - data[i + 1];
-        data[i + 2] = 255 - data[i + 2];
-      }
-    }
-
-    // 3. Apply a stronger, more controlled contrast enhancement
-    const contrast = 2.0; // A strong but safe contrast value
-    const factor =
-      (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
-
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = Math.max(0, Math.min(255, factor * (data[i] - 128) + 128));
-      data[i + 1] = Math.max(
-        0,
-        Math.min(255, factor * (data[i + 1] - 128) + 128)
-      );
-      data[i + 2] = Math.max(
-        0,
-        Math.min(255, factor * (data[i + 2] - 128) + 128)
-      );
-    }
-
-    // 4. Binarization (Thresholding) to make text stand out
-    const threshold = 128; // Standard threshold for binary conversion
-    for (let i = 0; i < data.length; i += 4) {
-      const finalValue = data[i] > threshold ? 255 : 0;
-      data[i] = data[i + 1] = data[i + 2] = finalValue;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-    console.log("✅ Preprocesamiento de imagen mejorado completado.");
-  }
-
-  loadImage(file) {
+  async imageToBase64(file) {
     return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = (error) => reject(error);
-      img.src = URL.createObjectURL(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
   }
 
-  async processWithTesseract(file, expectedAmount) {
-    console.log("🔧 Procesando con Tesseract OCR...");
+  // ========================================
+  // GEMINI VISION - EXTRACCIÓN
+  // ========================================
+
+  async extractWithGemini(file, expectedAmount) {
+    console.log("🤖 Enviando imagen a Gemini Vision API...");
 
     try {
-      const img = await this.loadImage(file);
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+      const base64Image = await this.imageToBase64(file);
 
-      let width = img.width;
-      let height = img.height;
-      const maxDimension = 2000;
+      const prompt = `Analiza esta imagen de un comprobante de pago móvil venezolano y extrae la siguiente información en formato JSON:
 
-      if (width > maxDimension || height > maxDimension) {
-        const scale = maxDimension / Math.max(width, height);
-        width = Math.floor(width * scale);
-        height = Math.floor(height * scale);
+{
+  "monto": "el monto total en bolívares (solo números con decimales, ej: 889.35)",
+  "referencia": "número de referencia u operación completo",
+  "banco": "nombre del banco completo",
+  "telefono": "número de teléfono del beneficiario",
+  "cedula": "cédula del beneficiario (solo números)",
+  "fecha": "fecha de la transacción"
+}
+
+INSTRUCCIONES IMPORTANTES:
+- El MONTO es el número más grande y prominente, busca cerca de "Bs" o en el centro
+- El monto esperado es aproximadamente ${expectedAmount} Bs (pero puede tener decimales diferentes)
+- El TELÉFONO del beneficiario debe ser 04125497936 o similar (10 dígitos que empiecen con 04)
+- La CÉDULA debe ser 23621688 o similar
+- El BANCO debe contener "BNC" o "Banco Nacional" o "Nacional de Crédito"
+- La REFERENCIA es un número largo (6+ dígitos), diferente al monto
+- Si no encuentras algún campo, usa null
+- NO inventes datos que no veas claramente
+
+Responde SOLO con el JSON válido, sin markdown ni explicaciones.`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.geminiApiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  {
+                    inline_data: {
+                      mime_type: file.type,
+                      data: base64Image,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 500,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("❌ Error de Gemini API:", errorData);
+        throw new Error(
+          `Gemini API error ${response.status}: ${JSON.stringify(errorData)}`
+        );
       }
 
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
+      const data = await response.json();
 
-      this.preprocessImage(ctx, width, height);
+      if (!data.candidates || !data.candidates[0]) {
+        throw new Error("Respuesta de Gemini sin datos válidos");
+      }
 
-      const processedBlob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png", 1.0)
-      );
+      const textResponse = data.candidates[0].content.parts[0].text;
+      console.log("📝 Respuesta raw de Gemini:", textResponse);
 
-      const result = await Tesseract.recognize(processedBlob, "spa", {
-        logger: (m) => {
-          if (m.status === "recognizing text") {
-            console.log(`  OCR: ${Math.round(m.progress * 100)}%`);
-          }
-        },
-        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-        tessedit_char_whitelist:
-          "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ.,:-()Bs ",
-      });
+      // Limpiar markdown si existe
+      let cleanedResponse = textResponse.trim();
+      if (cleanedResponse.startsWith("```json")) {
+        cleanedResponse = cleanedResponse
+          .replace(/```json\n?/g, "")
+          .replace(/```\n?/g, "");
+      } else if (cleanedResponse.startsWith("```")) {
+        cleanedResponse = cleanedResponse.replace(/```\n?/g, "");
+      }
 
-      const extractedText = result.data.text;
-      console.log(
-        "📄 Texto extraído:",
-        extractedText.substring(0, 200) + "..."
-      );
+      const extractedData = JSON.parse(cleanedResponse);
+      console.log("✅ Datos extraídos por Gemini:", extractedData);
 
-      const hasCedula = this.containsCedula(extractedText);
-      const hasPhone = this.containsPhone(extractedText);
-      const hasBank = this.containsBank(extractedText);
-      const hasAmount = this.containsAmount(extractedText, expectedAmount);
-      const reference = this.extractReference(extractedText);
-
-      console.log("\n--- VALIDACIONES TESSERACT ---");
-      console.log(`🆔 Cédula: ${hasCedula ? "✅" : "❌"}`);
-      console.log(`📱 Teléfono: ${hasPhone ? "✅" : "❌"}`);
-      console.log(`🏦 Banco: ${hasBank ? "✅" : "❌"}`);
-      console.log(`💰 Monto: ${hasAmount ? "✅" : "❌"}`);
-      console.log(`📋 Referencia: ${reference || "N/A"}`);
-      console.log("----------------------------\n");
-
-      // Acepta con 2 o más validaciones correctas
-      const validCount = [hasCedula, hasPhone, hasBank, hasAmount].filter(
-        Boolean
-      ).length;
-      const isValid = validCount >= 2;
-
-      console.log(`✅ Validaciones exitosas: ${validCount}/4`);
-
-      return {
-        success: isValid,
-        text: extractedText,
-        reference: reference || "N/A",
-        method: "tesseract",
-        details: {
-          hasCedula,
-          hasPhone,
-          hasBank,
-          hasAmount,
-          confidence: result.data.confidence,
-        },
-      };
+      return extractedData;
     } catch (error) {
-      console.error("❌ Error en Tesseract:", error);
+      console.error("❌ Error en extractWithGemini:", error);
       throw error;
     }
+  }
+
+  // ========================================
+  // VALIDACIONES
+  // ========================================
+
+  validateCedula(cedula) {
+    if (!cedula) return false;
+    const cleanCedula = this.cleanText(String(cedula));
+    const expectedClean = this.cleanText(this.expectedCedula);
+    return cleanCedula.includes(expectedClean);
+  }
+
+  validatePhone(telefono) {
+    if (!telefono) return false;
+    const cleanPhone = this.cleanText(String(telefono));
+    const expectedClean = this.cleanText(this.expectedPhone);
+    // Buscar con o sin el 0 inicial
+    return (
+      cleanPhone.includes(expectedClean) ||
+      cleanPhone.includes(expectedClean.substring(1))
+    );
+  }
+
+  validateBank(banco) {
+    if (!banco) return false;
+    const cleanBank = this.cleanText(String(banco));
+    return this.expectedBanks.some((bank) => cleanBank.includes(bank));
+  }
+
+  validateAmount(monto, expectedAmount) {
+    if (!monto || !expectedAmount) return false;
+
+    const amountStr = String(monto).replace(/[,\s]/g, "");
+    const amount = parseFloat(amountStr);
+    const expected = parseFloat(expectedAmount);
+
+    if (isNaN(amount) || isNaN(expected)) return false;
+
+    // Match exacto (± 1 Bs)
+    if (Math.abs(amount - expected) <= 1) {
+      console.log(`✅ Match exacto: ${amount} ≈ ${expected}`);
+      return true;
+    }
+
+    // Comparar dígitos ignorando punto decimal
+    const expectedDigits = expected.toFixed(2).replace(/[.,]/g, "");
+    const amountDigits = amount.toFixed(2).replace(/[.,]/g, "");
+
+    if (expectedDigits === amountDigits) {
+      console.log(
+        `✅ Match de dígitos: ${amount} → "${amountDigits}" = "${expectedDigits}"`
+      );
+      return true;
+    }
+
+    // Buscar coincidencia parcial de dígitos (80% o más)
+    let matchCount = 0;
+    let expectedIndex = 0;
+
+    for (
+      let i = 0;
+      i < amountDigits.length && expectedIndex < expectedDigits.length;
+      i++
+    ) {
+      if (amountDigits[i] === expectedDigits[expectedIndex]) {
+        matchCount++;
+        expectedIndex++;
+      }
+    }
+
+    const matchPercentage = matchCount / expectedDigits.length;
+    if (matchPercentage >= 0.8) {
+      console.log(
+        `⚠️ Match parcial: ${amount} (${Math.round(
+          matchPercentage * 100
+        )}% coincidencia)`
+      );
+      return true;
+    }
+
+    // Buscar dígitos desordenados
+    const expectedSorted = expectedDigits.split("").sort().join("");
+    const amountSorted = amountDigits.split("").sort().join("");
+
+    if (expectedSorted === amountSorted) {
+      console.log(`⚠️ Match desordenado: ${amount} → dígitos coinciden`);
+      return true;
+    }
+
+    // Match cercano (± 20%)
+    if (Math.abs(amount - expected) <= expected * 0.2) {
+      console.log(
+        `✅ Match cercano: ${amount} (dentro del ±20% de ${expected})`
+      );
+      return true;
+    }
+
+    console.log(`❌ No match: ${amount} vs ${expected}`);
+    return false;
+  }
+
+  validateGeminiData(data, expectedAmount) {
+    console.log("\n--- VALIDANDO DATOS DE GEMINI ---");
+
+    const hasCedula = this.validateCedula(data.cedula);
+    const hasPhone = this.validatePhone(data.telefono);
+    const hasBank = this.validateBank(data.banco);
+    const hasAmount = this.validateAmount(data.monto, expectedAmount);
+
+    console.log(
+      `🆔 Cédula: ${data.cedula || "null"} → ${hasCedula ? "✅" : "❌"}`
+    );
+    console.log(
+      `📱 Teléfono: ${data.telefono || "null"} → ${hasPhone ? "✅" : "❌"}`
+    );
+    console.log(`🏦 Banco: ${data.banco || "null"} → ${hasBank ? "✅" : "❌"}`);
+    console.log(
+      `💰 Monto: ${data.monto || "null"} (esperado: ${expectedAmount}) → ${
+        hasAmount ? "✅" : "❌"
+      }`
+    );
+    console.log(`📋 Referencia: ${data.referencia || "N/A"}`);
+    console.log("--------------------------------\n");
+
+    const validCount = [hasCedula, hasPhone, hasBank, hasAmount].filter(
+      Boolean
+    ).length;
+
+    return {
+      hasCedula,
+      hasPhone,
+      hasBank,
+      hasAmount,
+      reference: data.referencia || "N/A",
+      validCount,
+    };
   }
 
   // ========================================
@@ -343,7 +294,7 @@ export class PaymentProcessor {
 
   async processImage(file, expectedAmount = null) {
     console.log("\n" + "=".repeat(60));
-    console.log("🚀 INICIANDO PROCESAMIENTO DE IMAGEN");
+    console.log("🚀 INICIANDO PROCESAMIENTO CON GEMINI VISION");
     console.log("=".repeat(60));
     console.log(`📄 Archivo: ${file.name}`);
     console.log(`📏 Tamaño: ${(file.size / 1024).toFixed(2)} KB`);
@@ -351,18 +302,36 @@ export class PaymentProcessor {
     console.log("=".repeat(60) + "\n");
 
     try {
-      const tesseractResult = await this.processWithTesseract(
-        file,
-        expectedAmount
+      // Extraer datos con Gemini
+      const extractedData = await this.extractWithGemini(file, expectedAmount);
+
+      // Validar datos extraídos
+      const validation = this.validateGeminiData(extractedData, expectedAmount);
+
+      // Decidir si es válido (mínimo 2 validaciones correctas)
+      const isValid = validation.validCount >= 2;
+
+      console.log(
+        `${isValid ? "✅" : "❌"} Validaciones exitosas: ${
+          validation.validCount
+        }/4`
       );
+      console.log(`${isValid ? "✅ PAGO APROBADO" : "❌ PAGO RECHAZADO"}\n`);
 
-      if (tesseractResult.success) {
-        console.log("✅ ¡VALIDACIÓN EXITOSA CON TESSERACT OCR!");
-        return tesseractResult;
-      }
-
-      console.log("⚠️ Tesseract no validó correctamente");
-      return tesseractResult;
+      return {
+        success: isValid,
+        text: JSON.stringify(extractedData, null, 2),
+        reference: validation.reference,
+        extractedData,
+        method: "gemini",
+        details: {
+          hasCedula: validation.hasCedula,
+          hasPhone: validation.hasPhone,
+          hasBank: validation.hasBank,
+          hasAmount: validation.hasAmount,
+          confidence: 95,
+        },
+      };
     } catch (error) {
       console.error("❌ ERROR CRÍTICO:", error);
       return {
