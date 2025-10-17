@@ -66,8 +66,9 @@ Responde SOLO con el JSON válido, sin markdown.`;
 
     // 👇 AQUÍ ESTÁ EL CAMBIO - USA v1 EN VEZ DE v1beta
     // The fix is in this URL, changing "gemini-1.5-flash" to "gemini-1.5-flash-latest"
+    // 👇 AQUÍ ESTÁ EL CAMBIO REAL: Usamos el modelo "gemini-pro-vision"
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
