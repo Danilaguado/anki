@@ -1,0 +1,38 @@
+.book-details-section {
+  background-color: #212121; /* Mismo fondo oscuro para consistencia */
+  padding: 32px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.book-details-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap; /* Permite que los ítems se ajusten en pantallas pequeñas */
+  gap: 20px; /* Espacio entre los ítems */
+}
+
+.book-detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 100px; /* Ancho mínimo para cada item */
+}
+
+.book-detail-label {
+  font-size: 12px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.book-detail-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}

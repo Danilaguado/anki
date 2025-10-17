@@ -2,6 +2,13 @@
   {
     "id": "descifrando-eva",
     "productName": "Descifrando a Eva",
+    "details": {
+      "pages": 53,
+      "fileSize": "2.1 MB",
+      "format": "PDF Digital",
+      "language": "Español",
+      "delivery": "Inmediata"
+    },
     "hero": {
       "title": "¿Cansado de no entenderla? Existe un código. Y ha sido descifrado.",
       "subtitle": "La guía definitiva, basada en ciencia, para transformar la confusión en una conexión inquebrantable y convertirte en el hombre que ella admira y desea.",
@@ -75,6 +82,13 @@
   {
     "id": "musculo-voluntad",
     "productName": "El Músculo de la Voluntad",
+    "details": {
+      "pages": 25,
+      "fileSize": "1.8 MB",
+      "format": "PDF Digital",
+      "language": "Español",
+      "delivery": "Inmediata"
+    },
     "hero": {
       "title": "La disciplina no es un don. Es un músculo. Y tú puedes entrenarlo.",
       "subtitle": "Descubre el sistema científico para construir autodisciplina inquebrantable y convertir tus metas en realidad inevitable.",
@@ -148,6 +162,13 @@
   {
     "id": "habla-conquista",
     "productName": "Habla y Conquista",
+    "details": {
+      "pages": 47,
+      "fileSize": "3.2 MB",
+      "format": "PDF Digital",
+      "language": "Español",
+      "delivery": "Inmediata"
+    },
     "hero": {
       "title": "Tus palabras construyen o destruyen. Es tu elección.",
       "subtitle": "Las estrategias reales para comunicar, corregir e influir con poder, sin generar resentimiento ni perder a nadie en el intento.",
@@ -221,6 +242,13 @@
   {
     "id": "el-ascenso",
     "productName": "El Ascenso",
+    "details": {
+      "pages": 36,
+      "fileSize": "4.5 MB",
+      "format": "PDF Digital",
+      "language": "Español",
+      "delivery": "Inmediata"
+    },
     "hero": {
       "title": "Le ascendieron por ser un experto en <strong>hacer</strong>. El éxito ahora exige que domine el arte de <strong>liderar</strong>.",
       "subtitle": "Bienvenido a la paradoja del ascenso. Este es el manual de supervivencia y el mapa para prosperar en su nuevo rol.",
@@ -281,6 +309,13 @@
   {
     "id": "gambito-rey",
     "productName": "El Gambito del Rey",
+    "details": {
+      "pages": 48,
+      "fileSize": "5.1 MB",
+      "format": "PDF Digital",
+      "language": "Español",
+      "delivery": "Inmediata"
+    },
     "hero": {
       "title": "La Crítica es el Arma del Amateur. <span class='gambito-highlight'>La Estrategia es el Arma del Maestro.</span>",
       "subtitle": "Este es el manual de guerra para corregir un error, cambiar un comportamiento y ganar influencia sin crear un enemigo.",
@@ -312,11 +347,11 @@
     },
     "mastery": {
       "title": "Su Arsenal de Tácticas de Corrección Estratégica",
-      "subtitle": "Aprenda las técnicas específicas para transformar una confrontación en una oportunidad de fortalecer su liderazgo y la lealtad de su equipo.",
+      "subtitle": "Aprende las técnicas específicas para transformar una confrontación en una oportunidad de fortalecer su liderazgo y la lealtad de su equipo.",
       "features": [
         {
           "title": "Corregir el Comportamiento, No a la Persona",
-          "description": "Aprenda a separar el error de la identidad para que la persona se una a usted en la búsqueda de una solución, en lugar de defenderse de un ataque."
+          "description": "Aprende a separar el error de la identidad para que la persona se una a usted en la búsqueda de una solución, en lugar de defenderse de un ataque."
         },
         {
           "title": "Usar Preguntas, No Acusaciones",

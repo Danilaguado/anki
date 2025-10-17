@@ -8,6 +8,7 @@ import bookData from "../data/bookData.json";
 import PriceDisplay from "../components/PriceDisplay";
 import "../styles/PriceDisplay.css";
 import TestimonialCarousel from "../components/TestimonialCarousel";
+import BookDetails from "../components/BookDetails";
 
 const BookPage = () => {
   const navigate = useNavigate();
@@ -143,7 +144,7 @@ const BookPage = () => {
           </div>
         </div>
       </header>
-
+      <BookDetails book={book} />
       {/* Problem Section */}
       <section id='problema' className='book-problem-section'>
         <div className='book-section-container'>
