@@ -151,10 +151,19 @@ export default async function handler(req, res) {
       message: "Faltan datos (nombre o correo).",
     });
   }
+
   if (!producto) {
     return res
       .status(400)
       .json({ success: false, message: "No se especificó el producto." });
+  }
+
+  if (!phone) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "No se encontró el número de teléfono. Por favor, intenta de nuevo.",
+    });
   }
 
   try {
@@ -210,53 +219,54 @@ export default async function handler(req, res) {
       });
     }
 
+    // ====== BUSCAR LA FILA POR TELÉFONO ======
     let rowIndexToUpdate = -1;
     const phoneColumnIndex = 4; // Columna E
 
-    if (rows.length > 0 && phone) {
-      for (let i = rows.length - 1; i > 0; i--) {
-        const row = rows[i];
-        if (row[phoneColumnIndex] === phone && (!row[1] || !row[2])) {
-          rowIndexToUpdate = i;
-          break;
-        }
+    for (let i = rows.length - 1; i > 0; i--) {
+      const row = rows[i];
+      if (row[phoneColumnIndex] === phone && (!row[1] || !row[2])) {
+        rowIndexToUpdate = i;
+        break;
       }
     }
 
+    if (rowIndexToUpdate === -1) {
+      console.error(
+        `❌ No se encontró una fila abierta para el teléfono ${phone}`
+      );
+      return res.status(400).json({
+        success: false,
+        message:
+          "No se encontró una fila abierta para este teléfono. Por favor, intenta de nuevo.",
+      });
+    }
+
     const referenciaUltimos4 = referencia ? referencia : "N/A";
+
+    // ====== ACTUALIZAR: Solo nombre, correo, referencia y producto ======
     const rowData = [
       new Date(fecha).toLocaleString("es-ES", { timeZone: "America/Caracas" }),
       nombre,
       correo,
       referenciaUltimos4,
-      phone || "N/A",
+      phone,
       producto,
     ];
 
-    if (rowIndexToUpdate !== -1) {
-      const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:F${
-        rowIndexToUpdate + 1
-      }`;
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: updateRange,
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [rowData] },
-      });
-      console.log(
-        `Fila ${rowIndexToUpdate + 1} actualizada para el teléfono ${phone}.`
-      );
-    } else {
-      await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range,
-        valueInputOption: "USER_ENTERED",
-        resource: { values: [rowData] },
-      });
-      console.log(
-        `Nueva fila agregada para ${correo} con teléfono ${phone || "N/A"}.`
-      );
-    }
+    const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:F${
+      rowIndexToUpdate + 1
+    }`;
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: updateRange,
+      valueInputOption: "USER_ENTERED",
+      resource: { values: [rowData] },
+    });
+
+    console.log(
+      `✅ Fila ${rowIndexToUpdate + 1} actualizada para el teléfono ${phone}.`
+    );
 
     // Determinar qué PDF enviar basado en el producto
     const productoPDFMap = {
@@ -370,8 +380,11 @@ export default async function handler(req, res) {
 
     // Notificar al admin sobre el pago aprobado
     await notifyAdminApprovedPayment(transporter, {
-      ...req.body,
-      phone: phone || "N/A",
+      nombre,
+      correo,
+      phone,
+      fecha,
+      producto,
       referencia: referenciaUltimos4,
     });
 

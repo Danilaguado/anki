@@ -54,6 +54,9 @@ const PrePaymentPage = () => {
       });
       const result = await response.json();
       if (response.ok && result.success) {
+        // 👇 GUARDAR EL TELÉFONO EN sessionStorage 👇
+        sessionStorage.setItem("userPhone", phone);
+
         navigate(`/payment?product=${encodeURIComponent(product)}`);
       } else {
         throw new Error(result.message || "Ocurrió un error al registrar.");
@@ -73,12 +76,10 @@ const PrePaymentPage = () => {
           alt='Proyecto Kaizen Logo'
           className='prepayment-logo'
         />
-        {/* 👇 INICIA EL TEXTO ACTUALIZADO 👇 */}
         <h1 className='prepayment-title'>Estás a un paso de tu libro</h1>
         <p className='prepayment-subtitle'>
           Ingresa tu número de celular para proteger y darte acceso a tu compra.
         </p>
-        {/* ☝️ FINALIZA EL TEXTO ACTUALIZADO ☝️ */}
 
         <form onSubmit={handleSubmit} className='prepayment-form'>
           <div className='form-group'>

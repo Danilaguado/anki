@@ -66,23 +66,62 @@ export default async function handler(req, res) {
 
     const phoneColumnIndex = 4; // Columna E
 
-    // Busca si ya existe un "lead" abierto (teléfono registrado pero sin nombre/correo)
-    const hasOpenLead = rows
-      .slice(1) // Saltar header
-      .some((row) => row[phoneColumnIndex] === phone && (!row[1] || !row[2]));
+    // ========== BUSCAR SI EL NÚMERO YA EXISTE ==========
+    let existingRow = null;
+    let existingRowIndex = -1;
 
-    if (hasOpenLead) {
-      console.log(
-        `Ya existe un lead abierto para ${phone}. No se agrega uno nuevo.`
-      );
-      // Si ya hay un lead abierto, permitir que el siguiente paso lo actualice
-      return res
-        .status(200)
-        .json({ success: true, message: "Lead abierto ya existente." });
+    for (let i = rows.length - 1; i > 0; i--) {
+      const row = rows[i];
+      if (row[phoneColumnIndex] === phone) {
+        existingRow = row;
+        existingRowIndex = i;
+        break;
+      }
     }
 
-    // Si no hay un lead abierto, crear una nueva fila
-    console.log(`Creando nuevo lead para ${phone}.`);
+    // ========== APLICAR LÓGICA ==========
+
+    // Caso 1: Existe número SIN nombre/correo (lead abierto)
+    if (existingRow && (!existingRow[1] || !existingRow[2])) {
+      console.log(
+        `✅ Lead abierto encontrado para ${phone}. Se trabajará sobre esta fila.`
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Lead abierto ya existente.",
+        phone: phone,
+      });
+    }
+
+    // Caso 2: Existe número CON nombre/correo (ya compró)
+    if (existingRow && existingRow[1] && existingRow[2]) {
+      console.log(
+        `📋 Número ${phone} ya tiene una compra. Creando nueva fila...`
+      );
+      const newRow = [
+        new Date().toLocaleString("es-ES", { timeZone: "America/Caracas" }),
+        "", // Nombre vacío
+        "", // Correo vacío
+        "", // Referencia vacía
+        phone, // Teléfono
+      ];
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range,
+        valueInputOption: "USER_ENTERED",
+        resource: { values: [newRow] },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Nuevo lead registrado (número con compra anterior).",
+        phone: phone,
+      });
+    }
+
+    // Caso 3: No existe el número
+    console.log(`🆕 Número ${phone} no existe. Registrando nuevo lead...`);
     const newRow = [
       new Date().toLocaleString("es-ES", { timeZone: "America/Caracas" }),
       "", // Nombre vacío
@@ -91,23 +130,24 @@ export default async function handler(req, res) {
       phone, // Teléfono
     ];
 
-    // CORRECCIÓN: Agregar correctamente el array
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range,
       valueInputOption: "USER_ENTERED",
-      resource: { values: [newRow] }, // newRow ya es un array, no necesita doble array
+      resource: { values: [newRow] },
     });
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Nuevo lead registrado exitosamente" });
+    return res.status(200).json({
+      success: true,
+      message: "Nuevo lead registrado exitosamente",
+      phone: phone,
+    });
   } catch (error) {
     console.error("Error en /api/register-lead:", error);
     return res.status(500).json({
       success: false,
       message: "Error al procesar la solicitud",
-      error: error.message, // Para debug
+      error: error.message,
     });
   }
 }
