@@ -66,7 +66,7 @@ Responde SOLO con el JSON válido, sin markdown.`;
 
     // 👇 AQUÍ ESTÁ EL CAMBIO - USA v1 EN VEZ DE v1beta
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -78,8 +78,9 @@ Responde SOLO con el JSON válido, sin markdown.`;
               parts: [
                 { text: prompt },
                 {
-                  inline_data: {
-                    mime_type: "image/jpeg",
+                  inlineData: {
+                    // 👈 Cambio: inlineData en camelCase
+                    mimeType: "image/jpeg", // 👈 Cambio: mimeType en camelCase
                     data: imageBase64,
                   },
                 },
@@ -93,7 +94,6 @@ Responde SOLO con el JSON válido, sin markdown.`;
         }),
       }
     );
-
     console.log("📥 Respuesta de Gemini - Status:", geminiResponse.status);
 
     if (!geminiResponse.ok) {
