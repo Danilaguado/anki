@@ -1,3 +1,10 @@
+import React, { useState, useRef } from "react";
+import "../styles/PaymentForm.css";
+import PaymentForm from "../components/PaymentForm";
+import SecureBadge from "../components/SecureBadge";
+import { ProcessingModal } from "../components/ProcessingModal";
+import { PaymentProcessor } from "../services/PaymentProcessor";
+
 function PaymentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [processingStatus, setProcessingStatus] = useState(null);
@@ -152,3 +159,5 @@ function PaymentPage() {
     </div>
   );
 }
+
+export default PaymentPage;
