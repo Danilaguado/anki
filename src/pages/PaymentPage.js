@@ -1,4 +1,3 @@
-// src/pages/PaymentPage.js
 import React, { useState, useRef } from "react";
 import "../styles/PaymentForm.css";
 import PaymentForm from "../components/PaymentForm";
@@ -23,6 +22,18 @@ function PaymentPage() {
   };
 
   const processPayment = async (data) => {
+    // 👇 DEBUG: VERIFICAR TELÉFONO 👇
+    console.log("🔍 DEBUGGEO - sessionStorage completo:");
+    console.log(sessionStorage);
+
+    const phone = sessionStorage.getItem("userPhone");
+    console.log("📱 Teléfono obtenido de sessionStorage:", phone);
+    console.log("📱 Tipo de phone:", typeof phone);
+    console.log("📱 ¿phone es null?:", phone === null);
+    console.log("📱 ¿phone es undefined?:", phone === undefined);
+    console.log("📱 Longitud de phone:", phone?.length);
+    // 👆 FIN DEBUG
+
     console.log("=== INICIANDO PROCESO DE PAGO ===");
     console.log("Monto esperado:", data.expectedAmount);
     console.log(
@@ -46,6 +57,8 @@ function PaymentPage() {
       console.log("===================================");
 
       if (validationResult.success) {
+        console.log("✅ OCR Exitoso. Teléfono a enviar:", phone);
+
         // PAGO APROBADO
         const response = await fetch("/api/submit-payment", {
           method: "POST",
@@ -62,24 +75,32 @@ function PaymentPage() {
               "El Código de la Conexión",
             montoEsperado: data.expectedAmount,
             isRejected: false,
+            phone: phone, // 👈 ENVIAR EL TELÉFONO
           }),
         });
         const result = await response.json();
 
+        console.log("📡 Respuesta del servidor:", result);
+
         if (result.success) {
+          console.log("✅ Pago registrado exitosamente");
           setProcessingStatus({ stage: "success" });
           if (formRef.current) {
             formRef.current.resetForm();
           }
+          // LIMPIAR sessionStorage DESPUÉS DEL ÉXITO
+          sessionStorage.removeItem("userPhone");
         } else {
           throw new Error(result.message || "Error al procesar el pago.");
         }
       } else {
         // PAGO RECHAZADO - Notificar al admin
-        console.error("Validación fallida:", validationResult);
+        console.error("❌ Validación fallida:", validationResult);
 
         // Convertir la imagen a Base64 para enviarla al admin
         const comprobanteBase64 = await fileToBase64(data.comprobante);
+
+        console.log("📞 Enviando teléfono en rechazo:", phone);
 
         // Enviar notificación al administrador
         await fetch("/api/submit-payment", {
@@ -98,6 +119,7 @@ function PaymentPage() {
             validationError: validationResult,
             comprobanteBase64: comprobanteBase64,
             isRejected: true,
+            phone: phone, // 👈 ENVIAR EL TELÉFONO
           }),
         });
 
@@ -105,7 +127,7 @@ function PaymentPage() {
         setProcessingStatus({ stage: "error" });
       }
     } catch (error) {
-      console.error("Error en processPayment:", error);
+      console.error("❌ Error en processPayment:", error);
       setProcessingStatus({ stage: "error" });
     } finally {
       setIsSubmitting(false);
