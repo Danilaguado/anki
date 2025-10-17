@@ -16,7 +16,7 @@ export class PaymentProcessor {
     ];
     // Vercel usa GEMINI_API_KEY, React usa REACT_APP_GEMINI_API_KEY
     this.geminiApiKey =
-      process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+      process.env.GEMINI_API_KEY || process.env.REACT_APP_GEMINI_API_KEY;
     this.useGemini = !!this.geminiApiKey;
 
     if (this.useGemini) {

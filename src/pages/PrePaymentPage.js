@@ -44,6 +44,7 @@ const PrePaymentPage = () => {
       setError("Por favor, ingresa un número de teléfono.");
       return;
     }
+    // Sin validación de longitud - acepta cualquier número
     setIsSubmitting(true);
     setError("");
     try {
@@ -54,9 +55,7 @@ const PrePaymentPage = () => {
       });
       const result = await response.json();
       if (response.ok && result.success) {
-        // 👇 GUARDAR EL TELÉFONO EN sessionStorage 👇
         sessionStorage.setItem("userPhone", phone);
-
         navigate(`/payment?product=${encodeURIComponent(product)}`);
       } else {
         throw new Error(result.message || "Ocurrió un error al registrar.");
@@ -90,10 +89,9 @@ const PrePaymentPage = () => {
               name='phone'
               value={phone}
               onChange={handlePhoneChange}
-              placeholder='Ej: 04121234567'
+              placeholder='Ej: tu número'
               disabled={isSubmitting}
               autoFocus
-              inputMode='numeric'
               pattern='[0-9]*'
             />
           </div>
