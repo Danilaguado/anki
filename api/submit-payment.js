@@ -42,9 +42,6 @@ async function notifyAdminRejectedPayment(transporter, data) {
             <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Email:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
               data.correo
             }</td></tr>
-            <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Teléfono:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-              data.phone || "No provisto"
-            }</td></tr>
             <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Producto:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
               data.producto
             }</td></tr>
@@ -93,7 +90,7 @@ async function notifyAdminApprovedPayment(transporter, data) {
               data.correo
             }</td></tr>
             <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Teléfono:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
-              data.phone
+              data.phone || "N/A"
             }</td></tr>
             <tr><td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Producto:</td><td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${
               data.producto
@@ -106,6 +103,39 @@ async function notifyAdminApprovedPayment(transporter, data) {
       </div>`,
   };
   await transporter.sendMail(adminMailOptions);
+}
+
+// --- NUEVA FUNCIÓN PARA BUSCAR EL TELÉFONO EN GOOGLE SHEETS ---
+async function findPhoneByEmail(sheets, spreadsheetId, email) {
+  const sheetName = "Pagos";
+  const range = `${sheetName}!A:E`;
+
+  try {
+    const getRows = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
+    const rows = getRows.data.values || [];
+
+    // Buscar desde el final hacia atrás para obtener el registro más reciente
+    for (let i = rows.length - 1; i > 0; i--) {
+      const row = rows[i];
+      const rowEmail = row[2]; // Columna C (correo)
+      const rowPhone = row[4]; // Columna E (teléfono)
+
+      // Si encontramos el correo y tiene teléfono, lo retornamos
+      if (rowEmail === email && rowPhone) {
+        console.log(`📱 Teléfono encontrado para ${email}: ${rowPhone}`);
+        return rowPhone;
+      }
+    }
+
+    console.log(`⚠️ No se encontró teléfono registrado para ${email}`);
+    return null;
+  } catch (error) {
+    console.error("Error al buscar teléfono:", error);
+    return null;
+  }
 }
 
 // --- Handler Principal ---
@@ -126,7 +156,6 @@ export default async function handler(req, res) {
     comprobanteBase64,
     montoEsperado,
     isRejected,
-    phone,
   } = req.body;
 
   const transporter = nodemailer.createTransport({
@@ -148,10 +177,10 @@ export default async function handler(req, res) {
     }
   }
 
-  if (!nombre || !correo || !phone) {
+  if (!nombre || !correo) {
     return res.status(400).json({
       success: false,
-      message: "Faltan datos (nombre, correo o teléfono).",
+      message: "Faltan datos (nombre o correo).",
     });
   }
   if (!producto) {
@@ -172,7 +201,19 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sheetName = "Pagos";
-    const range = `${sheetName}!A:F`; // CAMBIO: Rango extendido a F
+    const range = `${sheetName}!A:F`;
+
+    // ====== BUSCAR EL TELÉFONO EN GOOGLE SHEETS ======
+    const phone = await findPhoneByEmail(sheets, spreadsheetId, correo);
+
+    if (!phone) {
+      console.error(`❌ No se encontró teléfono para el correo: ${correo}`);
+      return res.status(400).json({
+        success: false,
+        message:
+          "No se encontró un número de teléfono registrado para este correo. Por favor, contacte soporte.",
+      });
+    }
 
     const getRows = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -194,7 +235,6 @@ export default async function handler(req, res) {
         },
       });
 
-      // CAMBIO: Header actualizado con la columna Producto (F)
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${sheetName}!A1:F1`,
@@ -213,7 +253,6 @@ export default async function handler(req, res) {
         },
       });
     }
-    // ========================================================
 
     let rowIndexToUpdate = -1;
     const phoneColumnIndex = 4; // Columna E
@@ -229,14 +268,13 @@ export default async function handler(req, res) {
     }
 
     const referenciaUltimos4 = referencia ? referencia : "N/A";
-    // CAMBIO: Se agrega el producto como columna F
     const rowData = [
       new Date(fecha).toLocaleString("es-ES", { timeZone: "America/Caracas" }),
       nombre,
       correo,
       referenciaUltimos4,
       phone,
-      producto, // ✅ NUEVA COLUMNA F: Producto
+      producto,
     ];
 
     if (rowIndexToUpdate !== -1) {
@@ -377,6 +415,7 @@ export default async function handler(req, res) {
     // Notificar al admin sobre el pago aprobado
     await notifyAdminApprovedPayment(transporter, {
       ...req.body,
+      phone, // Incluir el teléfono encontrado
       referencia: referenciaUltimos4,
     });
 
