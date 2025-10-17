@@ -86,33 +86,51 @@ export class PaymentProcessor {
   extractAmounts(text) {
     const amounts = [];
 
-    // Patrón 1: números con formato decimal
-    const pattern1 = /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/g;
+    // Patrón 1: Buscar CUALQUIER número con comas o puntos
+    const pattern1 = /(\d+[.,]\d+)/g;
     let matches = text.match(pattern1);
 
     if (matches) {
       matches.forEach((match) => {
-        const normalized = match.replace(/\./g, "").replace(",", ".");
+        const normalized = match.replace(",", ".");
         const amount = parseFloat(normalized);
-        if (!isNaN(amount) && amount > 0 && amount < 1000000) {
+        if (!isNaN(amount) && amount > 0) {
           amounts.push(amount);
         }
       });
     }
 
-    // Patrón 2: números enteros
-    const pattern2 = /\b(\d{2,6})\b/g;
-    matches = text.match(pattern2);
+    // Patrón 2: Buscar números cerca de "Bs"
+    const bsPattern = /Bs\.?\s*(\d+[.,]?\d*)/gi;
+    matches = text.match(bsPattern);
+
+    if (matches) {
+      matches.forEach((match) => {
+        const numbers = match.match(/\d+[.,]?\d*/);
+        if (numbers) {
+          const normalized = numbers[0].replace(",", ".");
+          const amount = parseFloat(normalized);
+          if (!isNaN(amount) && amount > 0) {
+            amounts.push(amount);
+          }
+        }
+      });
+    }
+
+    // Patrón 3: números grandes (3+ dígitos)
+    const pattern3 = /\b(\d{3,})\b/g;
+    matches = text.match(pattern3);
 
     if (matches) {
       matches.forEach((match) => {
         const amount = parseFloat(match);
-        if (!isNaN(amount) && amount > 10 && amount < 100000) {
+        if (!isNaN(amount) && amount > 50) {
           amounts.push(amount);
         }
       });
     }
 
+    console.log(`🔍 Todos los números encontrados: [${amounts.join(", ")}]`);
     return [...new Set(amounts)];
   }
 
@@ -212,68 +230,6 @@ export class PaymentProcessor {
   // PREPROCESAMIENTO DE IMAGEN
   // ========================================
 
-  preprocessImage(ctx, width, height) {
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-
-    // 1. Convertir a escala de grises
-    for (let i = 0; i < data.length; i += 4) {
-      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      data[i] = data[i + 1] = data[i + 2] = gray;
-    }
-
-    // 2. Detectar si es imagen oscura
-    let totalBrightness = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      totalBrightness += data[i];
-    }
-    const avgBrightness = totalBrightness / (data.length / 4);
-    const isDarkImage = avgBrightness < 128;
-
-    console.log(
-      `📊 Brillo promedio: ${avgBrightness.toFixed(
-        2
-      )}, Es oscura: ${isDarkImage}`
-    );
-
-    // 3. Invertir si es oscura
-    if (isDarkImage) {
-      console.log("🔄 Invirtiendo colores...");
-      for (let i = 0; i < data.length; i += 4) {
-        data[i] = 255 - data[i];
-        data[i + 1] = 255 - data[i + 1];
-        data[i + 2] = 255 - data[i + 2];
-      }
-    }
-
-    // 4. Aumentar contraste
-    const contrast = 2.0;
-    const factor =
-      (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
-
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = Math.max(0, Math.min(255, factor * (data[i] - 128) + 128));
-      data[i + 1] = Math.max(
-        0,
-        Math.min(255, factor * (data[i + 1] - 128) + 128)
-      );
-      data[i + 2] = Math.max(
-        0,
-        Math.min(255, factor * (data[i + 2] - 128) + 128)
-      );
-    }
-
-    // 5. Binarización
-    const threshold = 128;
-    for (let i = 0; i < data.length; i += 4) {
-      const finalValue = data[i] > threshold ? 255 : 0;
-      data[i] = data[i + 1] = data[i + 2] = finalValue;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-    console.log("✅ Preprocesamiento completado");
-  }
-
   loadImage(file) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -284,16 +240,116 @@ export class PaymentProcessor {
   }
 
   // ========================================
-  // TESSERACT OCR
+  // PREPROCESAMIENTO - 3 ESTRATEGIAS
+  // ========================================
+
+  preprocessImage(ctx, width, height, strategy = "balanced") {
+    console.log(`🎨 Aplicando estrategia: ${strategy}`);
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+
+    // Convertir a escala de grises SIEMPRE
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      data[i] = data[i + 1] = data[i + 2] = gray;
+    }
+
+    // Calcular brillo promedio
+    let totalBrightness = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      totalBrightness += data[i];
+    }
+    const avgBrightness = totalBrightness / (data.length / 4);
+    console.log(`📊 Brillo promedio: ${avgBrightness.toFixed(2)}/255`);
+
+    if (strategy === "inverted") {
+      // ESTRATEGIA 1: Invertir colores (para imágenes oscuras)
+      console.log("🔄 Invirtiendo colores...");
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = 255 - data[i];
+        data[i + 1] = 255 - data[i + 1];
+        data[i + 2] = 255 - data[i + 2];
+      }
+    } else if (strategy === "high-contrast") {
+      // ESTRATEGIA 2: Alto contraste (para imágenes claras)
+      console.log("⚡ Aplicando alto contraste...");
+      const contrast = 5.0;
+      const factor =
+        (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.max(0, Math.min(255, factor * (data[i] - 128) + 128));
+        data[i + 1] = Math.max(
+          0,
+          Math.min(255, factor * (data[i + 1] - 128) + 128)
+        );
+        data[i + 2] = Math.max(
+          0,
+          Math.min(255, factor * (data[i + 2] - 128) + 128)
+        );
+      }
+    } else {
+      // ESTRATEGIA 3: Balanceado (contraste moderado)
+      console.log("⚖️ Aplicando contraste balanceado...");
+      const contrast = 2.5;
+      const factor =
+        (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.max(0, Math.min(255, factor * (data[i] - 128) + 128));
+        data[i + 1] = Math.max(
+          0,
+          Math.min(255, factor * (data[i + 1] - 128) + 128)
+        );
+        data[i + 2] = Math.max(
+          0,
+          Math.min(255, factor * (data[i + 2] - 128) + 128)
+        );
+      }
+    }
+
+    // Binarización adaptativa
+    const blockSize = 20;
+    const tempData = new Uint8ClampedArray(data);
+
+    for (let y = 0; y < height; y += blockSize) {
+      for (let x = 0; x < width; x += blockSize) {
+        let sum = 0;
+        let count = 0;
+
+        for (let by = y; by < Math.min(y + blockSize, height); by++) {
+          for (let bx = x; bx < Math.min(x + blockSize, width); bx++) {
+            const i = (by * width + bx) * 4;
+            sum += tempData[i];
+            count++;
+          }
+        }
+
+        const blockThreshold = (sum / count) * 0.8;
+
+        for (let by = y; by < Math.min(y + blockSize, height); by++) {
+          for (let bx = x; bx < Math.min(x + blockSize, width); bx++) {
+            const i = (by * width + bx) * 4;
+            const value = data[i] > blockThreshold ? 255 : 0;
+            data[i] = data[i + 1] = data[i + 2] = value;
+          }
+        }
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    console.log(`✅ Preprocesamiento "${strategy}" completado`);
+  }
+
+  // ========================================
+  // TESSERACT - INTENTOS MÚLTIPLES
   // ========================================
 
   async processWithTesseract(file, expectedAmount) {
-    console.log("🔧 Procesando con Tesseract OCR...");
+    console.log("🔧 Procesando con Tesseract OCR - Modo Multi-Estrategia...");
 
     try {
       const img = await this.loadImage(file);
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
 
       let width = img.width;
       let height = img.height;
@@ -305,118 +361,133 @@ export class PaymentProcessor {
         height = Math.floor(height * scale);
       }
 
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
+      const strategies = ["balanced", "high-contrast", "inverted"];
+      const results = [];
 
-      this.preprocessImage(ctx, width, height);
+      // Procesar con cada estrategia
+      for (const strategy of strategies) {
+        console.log(`\n${"=".repeat(50)}`);
+        console.log(`🧪 INTENTANDO ESTRATEGIA: ${strategy.toUpperCase()}`);
+        console.log("=".repeat(50));
 
-      const processedBlob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png", 1.0)
-      );
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
 
-      const result = await Tesseract.recognize(processedBlob, "spa", {
-        logger: (m) => {
-          if (m.status === "recognizing text") {
-            console.log(`  OCR: ${Math.round(m.progress * 100)}%`);
-          }
-        },
-        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-        tessedit_char_whitelist:
-          "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ.,:-()Bs ",
-      });
+        this.preprocessImage(ctx, width, height, strategy);
 
-      const extractedText = result.data.text;
-      console.log(
-        "📄 Texto extraído:",
-        extractedText.substring(0, 200) + "..."
-      );
+        const processedBlob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/png", 1.0)
+        );
 
-      const hasCedula = this.containsCedula(extractedText);
-      const hasPhone = this.containsPhone(extractedText);
-      const hasBank = this.containsBank(extractedText);
-      const hasAmount = this.containsAmount(extractedText, expectedAmount);
-      const reference = this.extractReference(extractedText);
+        const result = await Tesseract.recognize(processedBlob, "spa", {
+          logger: (m) => {
+            if (m.status === "recognizing text") {
+              const progress = Math.round(m.progress * 100);
+              if (progress % 20 === 0) {
+                // Mostrar cada 20%
+                console.log(`  OCR [${strategy}]: ${progress}%`);
+              }
+            }
+          },
+          tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+          tessedit_char_whitelist:
+            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ.,:-()Bs ",
+        });
 
-      console.log("\n--- VALIDACIONES TESSERACT ---");
-      console.log(`🆔 Cédula: ${hasCedula ? "✅" : "❌"}`);
-      console.log(`📱 Teléfono: ${hasPhone ? "✅" : "❌"}`);
-      console.log(`🏦 Banco: ${hasBank ? "✅" : "❌"}`);
-      console.log(`💰 Monto: ${hasAmount ? "✅" : "❌"}`);
-      console.log(`📋 Referencia: ${reference || "N/A"}`);
-      console.log("----------------------------\n");
+        const extractedText = result.data.text;
+        console.log(
+          `📄 Texto extraído [${strategy}]:`,
+          extractedText.substring(0, 150) + "..."
+        );
+        console.log(`📊 Confianza OCR: ${result.data.confidence.toFixed(2)}%`);
 
-      const validCount = [hasCedula, hasPhone, hasBank, hasAmount].filter(
-        Boolean
-      ).length;
-      const isValid = validCount >= 1; // ✅ Acepta con solo 1 validación correcta
+        const hasCedula = this.containsCedula(extractedText);
+        const hasPhone = this.containsPhone(extractedText);
+        const hasBank = this.containsBank(extractedText);
+        const hasAmount = this.containsAmount(extractedText, expectedAmount);
+        const reference = this.extractReference(extractedText);
 
-      console.log(`✅ Validaciones exitosas: ${validCount}/4`);
+        const validCount = [hasCedula, hasPhone, hasBank, hasAmount].filter(
+          Boolean
+        ).length;
 
-      return {
-        success: isValid,
-        text: extractedText,
-        reference: reference || "N/A",
-        method: "tesseract",
-        details: {
+        console.log(`\n--- VALIDACIONES [${strategy}] ---`);
+        console.log(`🆔 Cédula: ${hasCedula ? "✅" : "❌"}`);
+        console.log(`📱 Teléfono: ${hasPhone ? "✅" : "❌"}`);
+        console.log(`🏦 Banco: ${hasBank ? "✅" : "❌"}`);
+        console.log(`💰 Monto: ${hasAmount ? "✅" : "❌"}`);
+        console.log(`📋 Referencia: ${reference || "N/A"}`);
+        console.log(`✅ Total: ${validCount}/4`);
+        console.log(`📊 Confianza: ${result.data.confidence.toFixed(2)}%`);
+
+        results.push({
+          strategy,
+          extractedText,
           hasCedula,
           hasPhone,
           hasBank,
           hasAmount,
+          reference,
           validCount,
           confidence: result.data.confidence,
+          score: validCount * 100 + result.data.confidence, // Puntuación combinada
+        });
+      }
+
+      // Ordenar por mejor puntuación
+      results.sort((a, b) => b.score - a.score);
+
+      console.log("\n" + "=".repeat(60));
+      console.log("🏆 RESULTADOS FINALES");
+      console.log("=".repeat(60));
+      results.forEach((r, i) => {
+        console.log(
+          `${i + 1}. ${r.strategy.toUpperCase()} - Score: ${r.score.toFixed(
+            2
+          )} (${r.validCount}/4 validaciones, ${r.confidence.toFixed(
+            2
+          )}% confianza)`
+        );
+      });
+
+      // Seleccionar el mejor resultado
+      const bestResult = results[0];
+      console.log(
+        `\n✅ MEJOR ESTRATEGIA: ${bestResult.strategy.toUpperCase()}`
+      );
+      console.log(`✅ Validaciones: ${bestResult.validCount}/4`);
+      console.log(`✅ Confianza: ${bestResult.confidence.toFixed(2)}%`);
+
+      const isValid = bestResult.validCount >= 1;
+
+      return {
+        success: isValid,
+        text: bestResult.extractedText,
+        reference: bestResult.reference || "N/A",
+        method: `tesseract-${bestResult.strategy}`,
+        details: {
+          hasCedula: bestResult.hasCedula,
+          hasPhone: bestResult.hasPhone,
+          hasBank: bestResult.hasBank,
+          hasAmount: bestResult.hasAmount,
+          validCount: bestResult.validCount,
+          confidence: bestResult.confidence,
+          allResults: results.map((r) => ({
+            strategy: r.strategy,
+            validCount: r.validCount,
+            confidence: r.confidence,
+            score: r.score,
+          })),
         },
       };
     } catch (error) {
       console.error("❌ Error en Tesseract:", error);
       throw error;
     }
-  }
-
+  } // ========================================
+  // TESSERACT OCR
   // ========================================
-  // MÉTODO PRINCIPAL
-  // ========================================
-
-  async processImage(file, expectedAmount = null) {
-    console.log("\n" + "=".repeat(60));
-    console.log("🚀 INICIANDO PROCESAMIENTO DE IMAGEN");
-    console.log("=".repeat(60));
-    console.log(`📄 Archivo: ${file.name}`);
-    console.log(`📏 Tamaño: ${(file.size / 1024).toFixed(2)} KB`);
-    console.log(`💰 Monto esperado: Bs. ${expectedAmount}`);
-    console.log("=".repeat(60) + "\n");
-
-    try {
-      const tesseractResult = await this.processWithTesseract(
-        file,
-        expectedAmount
-      );
-
-      if (tesseractResult.success) {
-        console.log("✅ ¡VALIDACIÓN EXITOSA CON TESSERACT OCR!");
-        return tesseractResult;
-      }
-
-      console.log("⚠️ Tesseract no validó correctamente");
-      console.log(`   Validaciones: ${tesseractResult.details.validCount}/4`);
-      return tesseractResult;
-    } catch (error) {
-      console.error("❌ ERROR CRÍTICO:", error);
-      return {
-        success: false,
-        error: error.message,
-        text: "",
-        reference: null,
-        method: "error",
-        details: {
-          hasCedula: false,
-          hasPhone: false,
-          hasBank: false,
-          hasAmount: false,
-          validCount: 0,
-          confidence: 0,
-        },
-      };
-    }
-  }
 }
