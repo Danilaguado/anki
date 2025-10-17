@@ -153,8 +153,6 @@ export class PaymentProcessor {
   }
 
   // FUNCIÓN MEJORADA: Preprocesamiento más inteligente
-  // src/services/PaymentProcessor.js
-
   preprocessImage(ctx, width, height) {
     const imageData = ctx.getImageData(0, 0, width, height);
     const data = imageData.data;
@@ -167,18 +165,32 @@ export class PaymentProcessor {
     const avgBrightness = totalBrightness / (data.length / 4);
     const isDarkImage = avgBrightness < 128;
 
-    // 2. INVERTIR IMAGEN SI ES OSCURA (texto blanco sobre fondo negro)
+    console.log(
+      `📊 Brillo promedio: ${avgBrightness.toFixed(
+        2
+      )}, Es oscura: ${isDarkImage}`
+    );
+
+    // 2. INVERTIR SI ES OSCURA
     if (isDarkImage) {
-      console.log("🔄 Imagen oscura detectada - invirtiendo colores");
+      console.log("🔄 Invirtiendo colores...");
       for (let i = 0; i < data.length; i += 4) {
-        data[i] = 255 - data[i]; // R
-        data[i + 1] = 255 - data[i + 1]; // G
-        data[i + 2] = 255 - data[i + 2]; // B
+        data[i] = 255 - data[i];
+        data[i + 1] = 255 - data[i + 1];
+        data[i + 2] = 255 - data[i + 2];
       }
     }
 
-    // 3. AUMENTAR CONTRASTE AGRESIVAMENTE
-    const contrast = isDarkImage ? 2.0 : 1.5;
+    // 3. AUMENTAR SATURACIÓN/BRILLO antes del contraste
+    const brightnessBoost = 30;
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = Math.min(255, data[i] + brightnessBoost);
+      data[i + 1] = Math.min(255, data[i + 1] + brightnessBoost);
+      data[i + 2] = Math.min(255, data[i + 2] + brightnessBoost);
+    }
+
+    // 4. CONTRASTE EXTREMO
+    const contrast = 3.0; // Aumentado de 1.5 a 3.0
     for (let i = 0; i < data.length; i += 4) {
       data[i] = Math.min(255, Math.max(0, contrast * (data[i] - 128) + 128));
       data[i + 1] = Math.min(
@@ -191,7 +203,7 @@ export class PaymentProcessor {
       );
     }
 
-    // 4. CONVERTIR A ESCALA DE GRISES
+    // 5. ESCALA DE GRISES
     for (let i = 0; i < data.length; i += 4) {
       const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
       data[i] = gray;
@@ -199,16 +211,42 @@ export class PaymentProcessor {
       data[i + 2] = gray;
     }
 
-    // 5. BINARIZACIÓN ADAPTATIVA (threshold dinámico)
-    const threshold = avgBrightness < 128 ? 150 : 130;
-    for (let i = 0; i < data.length; i += 4) {
-      const value = data[i] > threshold ? 255 : 0;
-      data[i] = value;
-      data[i + 1] = value;
-      data[i + 2] = value;
+    // 6. BINARIZACIÓN ADAPTATIVA MÁS AGRESIVA
+    // Calcular threshold por bloque (más efectivo para fondos grises)
+    const blockSize = 50;
+    const tempData = new Uint8ClampedArray(data);
+
+    for (let y = 0; y < height; y += blockSize) {
+      for (let x = 0; x < width; x += blockSize) {
+        // Calcular promedio del bloque
+        let sum = 0;
+        let count = 0;
+
+        for (let by = y; by < Math.min(y + blockSize, height); by++) {
+          for (let bx = x; bx < Math.min(x + blockSize, width); bx++) {
+            const i = (by * width + bx) * 4;
+            sum += tempData[i];
+            count++;
+          }
+        }
+
+        const blockThreshold = (sum / count) * 0.85; // Threshold adaptativo
+
+        // Aplicar threshold al bloque
+        for (let by = y; by < Math.min(y + blockSize, height); by++) {
+          for (let bx = x; bx < Math.min(x + blockSize, width); bx++) {
+            const i = (by * width + bx) * 4;
+            const value = data[i] > blockThreshold ? 255 : 0;
+            data[i] = value;
+            data[i + 1] = value;
+            data[i + 2] = value;
+          }
+        }
+      }
     }
 
     ctx.putImageData(imageData, 0, 0);
+    console.log("✅ Preprocesamiento completado");
   }
 
   loadImage(file) {
