@@ -181,7 +181,7 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: "v4", auth });
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const sheetName = "Pagos";
-    const range = `${sheetName}!A:F`;
+    const range = `${sheetName}!A:G`;
 
     const getRows = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -205,7 +205,7 @@ export default async function handler(req, res) {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `${sheetName}!A1:F1`,
+        range: `${sheetName}!A1:G1`,
         valueInputOption: "USER_ENTERED",
         resource: {
           values: [
@@ -216,6 +216,7 @@ export default async function handler(req, res) {
               "Referencia (últimos 4)",
               "Teléfono",
               "Producto",
+              "Monto",
             ],
           ],
         },
@@ -269,9 +270,10 @@ export default async function handler(req, res) {
       referenciaUltimos4,
       phone,
       producto,
+      montoEsperado || "",
     ];
 
-    const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:F${
+    const updateRange = `${sheetName}!A${rowIndexToUpdate + 1}:G${
       rowIndexToUpdate + 1
     }`;
 
