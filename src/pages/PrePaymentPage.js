@@ -89,7 +89,7 @@ const PrePaymentPage = () => {
               name='phone'
               value={phone}
               onChange={handlePhoneChange}
-              placeholder='Ej: tu número'
+              placeholder='Ej: 04121234567'
               disabled={isSubmitting}
               autoFocus
             />
