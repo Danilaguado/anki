@@ -52,7 +52,7 @@ const PriceDisplay = ({ centered = false }) => {
   }
 
   // --- LÓGICA DE PRECIO ---
-  const priceInBolivares = dollarRate * 3; // Puedes ajustar el '3' para cambiar el precio en USD
+  const priceInBolivares = dollarRate * 2; // Puedes ajustar el '3' para cambiar el precio en USD
   const discount = 0.33;
   const originalPrice = priceInBolivares * (1 + discount); // Cálculo corregido
   const discountPercentage = Math.round(discount * 100);

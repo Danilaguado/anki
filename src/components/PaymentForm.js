@@ -174,7 +174,7 @@ const PaymentForm = forwardRef(({ onSubmit, isSubmitting }, ref) => {
 
   useImperativeHandle(ref, () => ({ resetForm }));
 
-  const totalAmount = dollarRate ? (dollarRate * 3).toFixed(2) : null;
+  const totalAmount = dollarRate ? (dollarRate * 2).toFixed(2) : null;
   // const totalAmount = 889.35;
 
   return (
